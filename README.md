@@ -8,7 +8,7 @@ Monorepo for Minecraft Java data packs and resource packs.
 | --- | --- | --- | --- |
 | `utilities` | Data pack | `v3.2` | Originally named **整合_v3.2** |
 | `warehouse` | Data pack | `v4.0` | Minecraft Java 26.3 warehouse system |
-| `cat-door-sounds` | Resource pack | — | Minecraft Java 26.2 custom cat meow + door-open sound |
+| `cat-door-sounds` | Resource pack | `v1.0` | Minecraft Java 26.2 custom cat meow + door-open sound |
 
 ## Repository structure
 
@@ -58,3 +58,4 @@ Current releases:
 
 - Utilities v3.2
 - Warehouse v4.0
+- Cat Door Sounds v1.0
