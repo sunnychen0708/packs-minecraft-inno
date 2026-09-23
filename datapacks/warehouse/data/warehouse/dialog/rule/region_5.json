@@ -1,0 +1,124 @@
+{
+  "type": "minecraft:multi_action",
+  "title": {
+    "text": "區域 5 選擇目的箱"
+  },
+  "external_title": {
+    "text": "分類設定"
+  },
+  "body": [
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "請保持手持同一物品。選擇後會立即更新分類規則。"
+      },
+      "width": 330
+    }
+  ],
+  "pause": false,
+  "after_action": "close",
+  "columns": 3,
+  "actions": [
+    {
+      "label": {
+        "text": "51  玻璃陶瓦"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_rule_dest set 51"
+      }
+    },
+    {
+      "label": {
+        "text": "52  羊毛織染"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_rule_dest set 52"
+      }
+    },
+    {
+      "label": {
+        "text": "53  洞窟植物"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_rule_dest set 53"
+      }
+    },
+    {
+      "label": {
+        "text": "54  洞窟晶石"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_rule_dest set 54"
+      }
+    },
+    {
+      "label": {
+        "text": "55  遠古城市"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_rule_dest set 55"
+      }
+    },
+    {
+      "label": {
+        "text": "56  林地生態"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_rule_dest set 56"
+      }
+    },
+    {
+      "label": {
+        "text": "57  沼澤生態"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_rule_dest set 57"
+      }
+    },
+    {
+      "label": {
+        "text": "58  冰雪寒帶"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_rule_dest set 58"
+      }
+    },
+    {
+      "label": {
+        "text": "59  海洋生態"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_rule_dest set 59"
+      }
+    }
+  ],
+  "exit_action": {
+    "label": {
+      "text": "返回"
+    },
+    "width": 200,
+    "action": {
+      "type": "run_command",
+      "command": "trigger wh_nav set 41"
+    }
+  },
+  "can_close_with_escape": true
+}

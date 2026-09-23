@@ -1,19 +1,58 @@
-# Minecraft Vanilla Packs
+# Minecraft Inno Packs
 
-A monorepo for Minecraft Java vanilla data packs and resource packs.
+Monorepo for Minecraft Java data packs and resource packs.
 
-## Structure
+## Packs
 
-- `datapacks/vanilla-utilities/` — utility pack, current version v3.2. Originally named **整合_v3.2**.
-- `datapacks/warehouse/` — automatic warehouse sorting pack, current version v4.0 for Minecraft Java 26.3.
-- `resourcepacks/` — reserved for current and future vanilla resource packs.
-- `scripts/` — repository maintenance and release build scripts.
+| Pack | Type | Current release | Notes |
+| --- | --- | --- | --- |
+| `utilities` | Data pack | `v3.2` | Originally named **整合_v3.2** |
+| `warehouse` | Data pack | `v4.0` | Minecraft Java 26.3 warehouse system |
 
-Each data pack is stored unpacked so individual files can be reviewed, edited, diffed, and versioned normally with Git. Release ZIPs are built with `pack.mcmeta` at the archive root so they can be placed directly in a world's `datapacks` folder.
+## Repository structure
 
-## Release tags
+```text
+datapacks/
+  utilities/
+  warehouse/
+resourcepacks/
+scripts/
+  build-pack.sh
+.github/workflows/
+  release-pack.yml
+```
 
-Because multiple packs share this repository, tags include the pack name:
+Each pack is stored **unpacked** in its own directory. This keeps normal Git diffs useful and lets future updates modify individual functions, JSON files, metadata, and assets without committing development ZIP files.
 
-- `vanilla-utilities-v3.2`
-- `warehouse-v4.0`
+`resourcepacks/` is reserved for resource packs. Put each resource pack in its own subdirectory, using the same layout as the data packs.
+
+## Build a pack locally
+
+```bash
+./scripts/build-pack.sh utilities v3.2
+./scripts/build-pack.sh warehouse v4.0
+```
+
+Output goes to `dist/`, which is ignored by Git.
+
+## Create a release
+
+Release tags use:
+
+```text
+<pack-name>-v<version>
+```
+
+Examples:
+
+```text
+utilities-v3.3
+warehouse-v4.1
+```
+
+Pushing a matching tag automatically builds the corresponding directory from either `datapacks/` or `resourcepacks/` and creates a GitHub Release with the ZIP attached.
+
+Current releases:
+
+- Utilities v3.2
+- Warehouse v4.0

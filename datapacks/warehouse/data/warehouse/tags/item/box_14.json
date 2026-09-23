@@ -1,0 +1,32 @@
+{
+  "values": [
+    {
+      "id": "minecraft:iron_ore",
+      "required": false
+    },
+    {
+      "id": "minecraft:deepslate_iron_ore",
+      "required": false
+    },
+    {
+      "id": "minecraft:raw_iron",
+      "required": false
+    },
+    {
+      "id": "minecraft:raw_iron_block",
+      "required": false
+    },
+    {
+      "id": "minecraft:iron_ingot",
+      "required": false
+    },
+    {
+      "id": "minecraft:iron_nugget",
+      "required": false
+    },
+    {
+      "id": "minecraft:iron_block",
+      "required": false
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "values": [
+    {
+      "id": "minecraft:gold_ore",
+      "required": false
+    },
+    {
+      "id": "minecraft:deepslate_gold_ore",
+      "required": false
+    },
+    {
+      "id": "minecraft:nether_gold_ore",
+      "required": false
+    },
+    {
+      "id": "minecraft:raw_gold",
+      "required": false
+    },
+    {
+      "id": "minecraft:raw_gold_block",
+      "required": false
+    },
+    {
+      "id": "minecraft:gold_ingot",
+      "required": false
+    },
+    {
+      "id": "minecraft:gold_nugget",
+      "required": false
+    },
+    {
+      "id": "minecraft:gold_block",
+      "required": false
+    },
+    {
+      "id": "minecraft:ancient_debris",
+      "required": false
+    },
+    {
+      "id": "minecraft:netherite_scrap",
+      "required": false
+    },
+    {
+      "id": "minecraft:netherite_ingot",
+      "required": false
+    },
+    {
+      "id": "minecraft:netherite_block",
+      "required": false
+    }
+  ]
+}

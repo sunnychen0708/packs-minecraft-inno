@@ -1,0 +1,11 @@
+# Feature state and controls
+scoreboard objectives add su_init dummy
+scoreboard objectives add su_tree dummy
+scoreboard objectives add su_vein dummy
+scoreboard objectives add su_plant dummy
+scoreboard objectives add su_crop dummy
+scoreboard objectives add su_ctime dummy
+scoreboard objectives add su_tmp dummy
+scoreboard objectives add treecap trigger
+scoreboard objectives add veinmine trigger
+scoreboard objectives add replant trigger

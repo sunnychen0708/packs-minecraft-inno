@@ -1,0 +1,36 @@
+{
+  "values": [
+    {
+      "id": "minecraft:heavy_core",
+      "required": false
+    },
+    {
+      "id": "minecraft:breeze_rod",
+      "required": false
+    },
+    {
+      "id": "minecraft:wind_charge",
+      "required": false
+    },
+    {
+      "id": "minecraft:trial_key",
+      "required": false
+    },
+    {
+      "id": "minecraft:ominous_trial_key",
+      "required": false
+    },
+    {
+      "id": "minecraft:ominous_bottle",
+      "required": false
+    },
+    {
+      "id": "minecraft:trial_spawner",
+      "required": false
+    },
+    {
+      "id": "minecraft:vault",
+      "required": false
+    }
+  ]
+}

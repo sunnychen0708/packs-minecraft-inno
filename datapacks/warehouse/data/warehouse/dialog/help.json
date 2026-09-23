@@ -1,0 +1,64 @@
+{
+  "type": "minecraft:multi_action",
+  "title": {
+    "text": "倉庫 v3.4 使用說明"
+  },
+  "external_title": {
+    "text": "使用說明"
+  },
+  "body": [
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "選擇要查看的說明。"
+      },
+      "width": 360
+    }
+  ],
+  "pause": false,
+  "after_action": "close",
+  "columns": 2,
+  "actions": [
+    {
+      "label": {
+        "text": "基本操作"
+      },
+      "width": 150,
+      "action": {
+        "type": "show_dialog",
+        "dialog": "warehouse:help_basic"
+      }
+    },
+    {
+      "label": {
+        "text": "目前功能"
+      },
+      "width": 150,
+      "action": {
+        "type": "show_dialog",
+        "dialog": "warehouse:help_features"
+      }
+    },
+    {
+      "label": {
+        "text": "指令限制"
+      },
+      "width": 150,
+      "action": {
+        "type": "show_dialog",
+        "dialog": "warehouse:help_limits"
+      }
+    }
+  ],
+  "exit_action": {
+    "label": {
+      "text": "回主選單"
+    },
+    "width": 200,
+    "action": {
+      "type": "run_command",
+      "command": "trigger wh_nav set 1"
+    }
+  },
+  "can_close_with_escape": true
+}

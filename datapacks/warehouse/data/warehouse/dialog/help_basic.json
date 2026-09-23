@@ -1,0 +1,31 @@
+{
+  "type": "minecraft:notice",
+  "title": {
+    "text": "基本操作"
+  },
+  "external_title": {
+    "text": "使用說明"
+  },
+  "body": [
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "1. 按 G 開啟自動分類倉庫。\n2. 箱子管理可新增註冊、刪除註冊、命名箱子與查看目前註冊。\n3. 新增註冊：選擇編號後，右鍵大箱子的任一半。\n4. 同一個實體大箱可以重複綁定多個編號。\n5. 入口箱頁包含 00 物品入口與六個區域溢位箱。\n6. 六個區域頁各有 9 個主分類箱。"
+      },
+      "width": 440
+    }
+  ],
+  "pause": false,
+  "after_action": "close",
+  "can_close_with_escape": true,
+  "action": {
+    "label": {
+      "text": "返回使用說明"
+    },
+    "width": 200,
+    "action": {
+      "type": "show_dialog",
+      "dialog": "warehouse:help"
+    }
+  }
+}

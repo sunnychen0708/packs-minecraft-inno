@@ -1,0 +1,733 @@
+{
+  "version": "4.0",
+  "minecraft": "26.3",
+  "new_item_count": 121,
+  "classification": [
+    {
+      "id": "minecraft:poplar_log",
+      "name_zh_tw": "楊木原木",
+      "box": "36",
+      "box_name": "原木木材"
+    },
+    {
+      "id": "minecraft:poplar_wood",
+      "name_zh_tw": "楊木塊",
+      "box": "36",
+      "box_name": "原木木材"
+    },
+    {
+      "id": "minecraft:stripped_poplar_log",
+      "name_zh_tw": "剝皮楊木原木",
+      "box": "36",
+      "box_name": "原木木材"
+    },
+    {
+      "id": "minecraft:stripped_poplar_wood",
+      "name_zh_tw": "剝皮楊木塊",
+      "box": "36",
+      "box_name": "原木木材"
+    },
+    {
+      "id": "minecraft:poplar_planks",
+      "name_zh_tw": "楊木材",
+      "box": "36",
+      "box_name": "原木木材"
+    },
+    {
+      "id": "minecraft:poplar_stairs",
+      "name_zh_tw": "楊木階梯",
+      "box": "37",
+      "box_name": "木製建材"
+    },
+    {
+      "id": "minecraft:poplar_slab",
+      "name_zh_tw": "楊木半磚",
+      "box": "37",
+      "box_name": "木製建材"
+    },
+    {
+      "id": "minecraft:poplar_fence",
+      "name_zh_tw": "楊木柵欄",
+      "box": "37",
+      "box_name": "木製建材"
+    },
+    {
+      "id": "minecraft:poplar_fence_gate",
+      "name_zh_tw": "楊木柵欄門",
+      "box": "37",
+      "box_name": "木製建材"
+    },
+    {
+      "id": "minecraft:poplar_button",
+      "name_zh_tw": "楊木按鈕",
+      "box": "37",
+      "box_name": "木製建材"
+    },
+    {
+      "id": "minecraft:poplar_pressure_plate",
+      "name_zh_tw": "楊木壓力板",
+      "box": "37",
+      "box_name": "木製建材"
+    },
+    {
+      "id": "minecraft:poplar_door",
+      "name_zh_tw": "楊木門",
+      "box": "37",
+      "box_name": "木製建材"
+    },
+    {
+      "id": "minecraft:poplar_trapdoor",
+      "name_zh_tw": "楊木地板門",
+      "box": "37",
+      "box_name": "木製建材"
+    },
+    {
+      "id": "minecraft:poplar_sign",
+      "name_zh_tw": "楊木告示牌",
+      "box": "37",
+      "box_name": "木製建材"
+    },
+    {
+      "id": "minecraft:poplar_hanging_sign",
+      "name_zh_tw": "懸掛式楊木告示牌",
+      "box": "37",
+      "box_name": "木製建材"
+    },
+    {
+      "id": "minecraft:poplar_shelf",
+      "name_zh_tw": "楊木展示架",
+      "box": "37",
+      "box_name": "木製建材"
+    },
+    {
+      "id": "minecraft:poplar_boat",
+      "name_zh_tw": "楊木船",
+      "box": "28",
+      "box_name": "交通運輸"
+    },
+    {
+      "id": "minecraft:poplar_chest_boat",
+      "name_zh_tw": "儲物箱楊木船",
+      "box": "28",
+      "box_name": "交通運輸"
+    },
+    {
+      "id": "minecraft:poplar_sapling",
+      "name_zh_tw": "楊木樹苗",
+      "box": "56",
+      "box_name": "林地生態"
+    },
+    {
+      "id": "minecraft:red_poplar_leaves",
+      "name_zh_tw": "紅色楊木樹葉",
+      "box": "56",
+      "box_name": "林地生態"
+    },
+    {
+      "id": "minecraft:orange_poplar_leaves",
+      "name_zh_tw": "橙色楊木樹葉",
+      "box": "56",
+      "box_name": "林地生態"
+    },
+    {
+      "id": "minecraft:yellow_poplar_leaves",
+      "name_zh_tw": "黃色楊木樹葉",
+      "box": "56",
+      "box_name": "林地生態"
+    },
+    {
+      "id": "minecraft:shelf_mushroom",
+      "name_zh_tw": "層孔菇",
+      "box": "56",
+      "box_name": "林地生態"
+    },
+    {
+      "id": "minecraft:red_shrub",
+      "name_zh_tw": "紅灌木",
+      "box": "56",
+      "box_name": "林地生態"
+    },
+    {
+      "id": "minecraft:white_wool_stairs",
+      "name_zh_tw": "白色羊毛階梯",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:white_wool_slab",
+      "name_zh_tw": "白色羊毛半磚",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:orange_wool_stairs",
+      "name_zh_tw": "橙色羊毛階梯",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:orange_wool_slab",
+      "name_zh_tw": "橙色羊毛半磚",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:magenta_wool_stairs",
+      "name_zh_tw": "洋紅色羊毛階梯",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:magenta_wool_slab",
+      "name_zh_tw": "洋紅色羊毛半磚",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:light_blue_wool_stairs",
+      "name_zh_tw": "淺藍色羊毛階梯",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:light_blue_wool_slab",
+      "name_zh_tw": "淺藍色羊毛半磚",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:yellow_wool_stairs",
+      "name_zh_tw": "黃色羊毛階梯",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:yellow_wool_slab",
+      "name_zh_tw": "黃色羊毛半磚",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:lime_wool_stairs",
+      "name_zh_tw": "淺綠色羊毛階梯",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:lime_wool_slab",
+      "name_zh_tw": "淺綠色羊毛半磚",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:pink_wool_stairs",
+      "name_zh_tw": "粉紅色羊毛階梯",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:pink_wool_slab",
+      "name_zh_tw": "粉紅色羊毛半磚",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:gray_wool_stairs",
+      "name_zh_tw": "灰色羊毛階梯",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:gray_wool_slab",
+      "name_zh_tw": "灰色羊毛半磚",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:light_gray_wool_stairs",
+      "name_zh_tw": "淺灰色羊毛階梯",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:light_gray_wool_slab",
+      "name_zh_tw": "淺灰色羊毛半磚",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:cyan_wool_stairs",
+      "name_zh_tw": "青色羊毛階梯",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:cyan_wool_slab",
+      "name_zh_tw": "青色羊毛半磚",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:purple_wool_stairs",
+      "name_zh_tw": "紫色羊毛階梯",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:purple_wool_slab",
+      "name_zh_tw": "紫色羊毛半磚",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:blue_wool_stairs",
+      "name_zh_tw": "藍色羊毛階梯",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:blue_wool_slab",
+      "name_zh_tw": "藍色羊毛半磚",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:brown_wool_stairs",
+      "name_zh_tw": "棕色羊毛階梯",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:brown_wool_slab",
+      "name_zh_tw": "棕色羊毛半磚",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:green_wool_stairs",
+      "name_zh_tw": "綠色羊毛階梯",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:green_wool_slab",
+      "name_zh_tw": "綠色羊毛半磚",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:red_wool_stairs",
+      "name_zh_tw": "紅色羊毛階梯",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:red_wool_slab",
+      "name_zh_tw": "紅色羊毛半磚",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:black_wool_stairs",
+      "name_zh_tw": "黑色羊毛階梯",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:black_wool_slab",
+      "name_zh_tw": "黑色羊毛半磚",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:white_cushion",
+      "name_zh_tw": "白色坐墊",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:orange_cushion",
+      "name_zh_tw": "橙色坐墊",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:magenta_cushion",
+      "name_zh_tw": "洋紅色坐墊",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:light_blue_cushion",
+      "name_zh_tw": "淺藍色坐墊",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:yellow_cushion",
+      "name_zh_tw": "黃色坐墊",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:lime_cushion",
+      "name_zh_tw": "淺綠色坐墊",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:pink_cushion",
+      "name_zh_tw": "粉紅色坐墊",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:gray_cushion",
+      "name_zh_tw": "灰色坐墊",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:light_gray_cushion",
+      "name_zh_tw": "淺灰色坐墊",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:cyan_cushion",
+      "name_zh_tw": "青色坐墊",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:purple_cushion",
+      "name_zh_tw": "紫色坐墊",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:blue_cushion",
+      "name_zh_tw": "藍色坐墊",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:brown_cushion",
+      "name_zh_tw": "棕色坐墊",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:green_cushion",
+      "name_zh_tw": "綠色坐墊",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:red_cushion",
+      "name_zh_tw": "紅色坐墊",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:black_cushion",
+      "name_zh_tw": "黑色坐墊",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:straw_bed",
+      "name_zh_tw": "乾草床",
+      "box": "52",
+      "box_name": "羊毛織染"
+    },
+    {
+      "id": "minecraft:white_concrete_stairs",
+      "name_zh_tw": "白色混凝土階梯",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:white_concrete_slab",
+      "name_zh_tw": "白色混凝土半磚",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:orange_concrete_stairs",
+      "name_zh_tw": "橙色混凝土階梯",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:orange_concrete_slab",
+      "name_zh_tw": "橙色混凝土半磚",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:magenta_concrete_stairs",
+      "name_zh_tw": "洋紅色混凝土階梯",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:magenta_concrete_slab",
+      "name_zh_tw": "洋紅色混凝土半磚",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:light_blue_concrete_stairs",
+      "name_zh_tw": "淺藍色混凝土階梯",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:light_blue_concrete_slab",
+      "name_zh_tw": "淺藍色混凝土半磚",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:yellow_concrete_stairs",
+      "name_zh_tw": "黃色混凝土階梯",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:yellow_concrete_slab",
+      "name_zh_tw": "黃色混凝土半磚",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:lime_concrete_stairs",
+      "name_zh_tw": "淺綠色混凝土階梯",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:lime_concrete_slab",
+      "name_zh_tw": "淺綠色混凝土半磚",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:pink_concrete_stairs",
+      "name_zh_tw": "粉紅色混凝土階梯",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:pink_concrete_slab",
+      "name_zh_tw": "粉紅色混凝土半磚",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:gray_concrete_stairs",
+      "name_zh_tw": "灰色混凝土階梯",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:gray_concrete_slab",
+      "name_zh_tw": "灰色混凝土半磚",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:light_gray_concrete_stairs",
+      "name_zh_tw": "淺灰色混凝土階梯",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:light_gray_concrete_slab",
+      "name_zh_tw": "淺灰色混凝土半磚",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:cyan_concrete_stairs",
+      "name_zh_tw": "青色混凝土階梯",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:cyan_concrete_slab",
+      "name_zh_tw": "青色混凝土半磚",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:purple_concrete_stairs",
+      "name_zh_tw": "紫色混凝土階梯",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:purple_concrete_slab",
+      "name_zh_tw": "紫色混凝土半磚",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:blue_concrete_stairs",
+      "name_zh_tw": "藍色混凝土階梯",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:blue_concrete_slab",
+      "name_zh_tw": "藍色混凝土半磚",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:brown_concrete_stairs",
+      "name_zh_tw": "棕色混凝土階梯",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:brown_concrete_slab",
+      "name_zh_tw": "棕色混凝土半磚",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:green_concrete_stairs",
+      "name_zh_tw": "綠色混凝土階梯",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:green_concrete_slab",
+      "name_zh_tw": "綠色混凝土半磚",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:red_concrete_stairs",
+      "name_zh_tw": "紅色混凝土階梯",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:red_concrete_slab",
+      "name_zh_tw": "紅色混凝土半磚",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:black_concrete_stairs",
+      "name_zh_tw": "黑色混凝土階梯",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:black_concrete_slab",
+      "name_zh_tw": "黑色混凝土半磚",
+      "box": "35",
+      "box_name": "沙岩建材"
+    },
+    {
+      "id": "minecraft:ocean_monument_map",
+      "name_zh_tw": "海底遺跡地圖",
+      "box": "41",
+      "box_name": "探索導航"
+    },
+    {
+      "id": "minecraft:woodland_mansion_map",
+      "name_zh_tw": "綠林府邸地圖",
+      "box": "41",
+      "box_name": "探索導航"
+    },
+    {
+      "id": "minecraft:buried_trial_chambers_map",
+      "name_zh_tw": "埋沒的試煉密室地圖",
+      "box": "41",
+      "box_name": "探索導航"
+    },
+    {
+      "id": "minecraft:jungle_pyramid_map",
+      "name_zh_tw": "叢林遺跡地圖",
+      "box": "41",
+      "box_name": "探索導航"
+    },
+    {
+      "id": "minecraft:swamp_hut_map",
+      "name_zh_tw": "沼澤小屋地圖",
+      "box": "41",
+      "box_name": "探索導航"
+    },
+    {
+      "id": "minecraft:desert_village_map",
+      "name_zh_tw": "沙漠村莊地圖",
+      "box": "41",
+      "box_name": "探索導航"
+    },
+    {
+      "id": "minecraft:plains_village_map",
+      "name_zh_tw": "平原村莊地圖",
+      "box": "41",
+      "box_name": "探索導航"
+    },
+    {
+      "id": "minecraft:savanna_village_map",
+      "name_zh_tw": "莽原村莊地圖",
+      "box": "41",
+      "box_name": "探索導航"
+    },
+    {
+      "id": "minecraft:snowy_village_map",
+      "name_zh_tw": "雪原村莊地圖",
+      "box": "41",
+      "box_name": "探索導航"
+    },
+    {
+      "id": "minecraft:taiga_village_map",
+      "name_zh_tw": "針葉林村莊地圖",
+      "box": "41",
+      "box_name": "探索導航"
+    },
+    {
+      "id": "minecraft:buried_treasure_map",
+      "name_zh_tw": "藏寶圖",
+      "box": "41",
+      "box_name": "探索導航"
+    },
+    {
+      "id": "minecraft:buried_ancient_city_map",
+      "name_zh_tw": "埋沒的遠古城市地圖",
+      "box": "41",
+      "box_name": "探索導航"
+    },
+    {
+      "id": "minecraft:buried_mineshaft_map",
+      "name_zh_tw": "埋沒的礦坑地圖",
+      "box": "41",
+      "box_name": "探索導航"
+    },
+    {
+      "id": "minecraft:desert_pyramid_map",
+      "name_zh_tw": "沙漠神殿地圖",
+      "box": "41",
+      "box_name": "探索導航"
+    },
+    {
+      "id": "minecraft:abandoned_camp_map",
+      "name_zh_tw": "廢棄營地地圖",
+      "box": "41",
+      "box_name": "探索導航"
+    },
+    {
+      "id": "minecraft:warm_ocean_ruins_map",
+      "name_zh_tw": "溫暖海底廢墟地圖",
+      "box": "41",
+      "box_name": "探索導航"
+    }
+  ]
+}

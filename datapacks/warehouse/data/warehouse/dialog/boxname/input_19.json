@@ -1,0 +1,66 @@
+{
+  "type": "minecraft:multi_action",
+  "title": {
+    "text": "箱子命名"
+  },
+  "external_title": {
+    "text": "箱子命名"
+  },
+  "body": [
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "目前項目：19 生存工具\n輸入新名稱後按「儲存名稱」。"
+      },
+      "width": 390
+    }
+  ],
+  "inputs": [
+    {
+      "type": "minecraft:text",
+      "key": "name",
+      "label": {
+        "text": "新名稱"
+      },
+      "width": 260,
+      "max_length": 24,
+      "initial": ""
+    }
+  ],
+  "pause": false,
+  "after_action": "close",
+  "columns": 2,
+  "actions": [
+    {
+      "label": {
+        "text": "儲存名稱"
+      },
+      "width": 150,
+      "action": {
+        "type": "minecraft:dynamic/run_command",
+        "template": "data modify storage warehouse:boxnames c19.text set value \"$(name)\""
+      }
+    },
+    {
+      "label": {
+        "text": "恢復預設名稱"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "data modify storage warehouse:boxnames c19 set value {text:\"生存工具\"}"
+      }
+    }
+  ],
+  "exit_action": {
+    "label": {
+      "text": "取消"
+    },
+    "width": 200,
+    "action": {
+      "type": "show_dialog",
+      "dialog": "warehouse:boxname/index"
+    }
+  },
+  "can_close_with_escape": true
+}

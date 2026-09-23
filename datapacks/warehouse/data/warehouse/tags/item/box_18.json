@@ -1,0 +1,116 @@
+{
+  "values": [
+    {
+      "id": "minecraft:wooden_sword",
+      "required": false
+    },
+    {
+      "id": "minecraft:wooden_spear",
+      "required": false
+    },
+    {
+      "id": "minecraft:copper_sword",
+      "required": false
+    },
+    {
+      "id": "minecraft:copper_spear",
+      "required": false
+    },
+    {
+      "id": "minecraft:stone_sword",
+      "required": false
+    },
+    {
+      "id": "minecraft:stone_spear",
+      "required": false
+    },
+    {
+      "id": "minecraft:golden_sword",
+      "required": false
+    },
+    {
+      "id": "minecraft:golden_spear",
+      "required": false
+    },
+    {
+      "id": "minecraft:iron_sword",
+      "required": false
+    },
+    {
+      "id": "minecraft:iron_spear",
+      "required": false
+    },
+    {
+      "id": "minecraft:diamond_sword",
+      "required": false
+    },
+    {
+      "id": "minecraft:diamond_spear",
+      "required": false
+    },
+    {
+      "id": "minecraft:netherite_sword",
+      "required": false
+    },
+    {
+      "id": "minecraft:netherite_spear",
+      "required": false
+    },
+    {
+      "id": "minecraft:bow",
+      "required": false
+    },
+    {
+      "id": "minecraft:crossbow",
+      "required": false
+    },
+    {
+      "id": "minecraft:trident",
+      "required": false
+    },
+    {
+      "id": "minecraft:mace",
+      "required": false
+    },
+    {
+      "id": "minecraft:arrow",
+      "required": false
+    },
+    {
+      "id": "minecraft:spectral_arrow",
+      "required": false
+    },
+    {
+      "id": "minecraft:tipped_arrow",
+      "required": false
+    },
+    {
+      "id": "minecraft:wooden_axe",
+      "required": false
+    },
+    {
+      "id": "minecraft:copper_axe",
+      "required": false
+    },
+    {
+      "id": "minecraft:stone_axe",
+      "required": false
+    },
+    {
+      "id": "minecraft:golden_axe",
+      "required": false
+    },
+    {
+      "id": "minecraft:iron_axe",
+      "required": false
+    },
+    {
+      "id": "minecraft:diamond_axe",
+      "required": false
+    },
+    {
+      "id": "minecraft:netherite_axe",
+      "required": false
+    }
+  ]
+}

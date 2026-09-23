@@ -1,0 +1,1 @@
+$dialog show @s {"type":"minecraft:notice","title":{"text":"$(title)"},"external_title":{"text":"箱子內容"},"body":[{"type":"minecraft:plain_message","contents":{"text":"目前沒有物品"},"width":420}],"pause":false,"after_action":"close","can_close_with_escape":true,"action":{"label":{"text":"返回"},"width":200,"action":{"type":"run_command","command":"trigger wh_nav set 30"}}}

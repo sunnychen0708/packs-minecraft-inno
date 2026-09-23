@@ -1,0 +1,196 @@
+{
+  "type": "minecraft:multi_action",
+  "title": {
+    "text": "區域 2 箱子註冊"
+  },
+  "external_title": {
+    "text": "區域 2"
+  },
+  "body": [
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "21–29 = 區域 2 的 3×3 主分類箱。溢位箱 20 在上一頁。"
+      },
+      "width": 330
+    }
+  ],
+  "pause": false,
+  "after_action": "close",
+  "columns": 3,
+  "actions": [
+    {
+      "label": [
+        {
+          "text": "21"
+        },
+        {
+          "text": "  食物料理"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "21 食物料理"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 21"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "22"
+        },
+        {
+          "text": "  農業作物"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "22 農業作物"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 22"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "23"
+        },
+        {
+          "text": "  怪物掉落"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "23 怪物掉落"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 23"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "24"
+        },
+        {
+          "text": "  動物素材"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "24 動物素材"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 24"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "25"
+        },
+        {
+          "text": "  釀造材料"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "25 釀造材料"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 25"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "26"
+        },
+        {
+          "text": "  書籍附魔"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "26 書籍附魔"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 26"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "27"
+        },
+        {
+          "text": "  功能方塊"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "27 功能方塊"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 27"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "28"
+        },
+        {
+          "text": "  交通運輸"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "28 交通運輸"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 28"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "29"
+        },
+        {
+          "text": "  日常用品"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "29 日常用品"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 29"
+      }
+    }
+  ],
+  "exit_action": {
+    "label": {
+      "text": "返回"
+    },
+    "width": 200,
+    "action": {
+      "type": "run_command",
+      "command": "trigger wh_nav set 3"
+    }
+  },
+  "can_close_with_escape": true
+}

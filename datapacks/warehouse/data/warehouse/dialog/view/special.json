@@ -1,0 +1,125 @@
+{
+  "type": "minecraft:multi_action",
+  "title": {
+    "text": "入口箱"
+  },
+  "external_title": {
+    "text": "入口箱"
+  },
+  "body": [
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "選擇要查看的物品入口或區域溢位箱。"
+      },
+      "width": 430
+    }
+  ],
+  "pause": false,
+  "can_close_with_escape": true,
+  "after_action": "close",
+  "columns": 2,
+  "actions": [
+    {
+      "label": {
+        "text": "00 物品入口"
+      },
+      "width": 150,
+      "tooltip": {
+        "text": "查看物品入口真實內容"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_view set 100"
+      }
+    },
+    {
+      "label": {
+        "text": "10 一區溢位"
+      },
+      "width": 150,
+      "tooltip": {
+        "text": "查看 10 區域溢位箱真實內容"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_view set 10"
+      }
+    },
+    {
+      "label": {
+        "text": "20 二區溢位"
+      },
+      "width": 150,
+      "tooltip": {
+        "text": "查看 20 區域溢位箱真實內容"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_view set 20"
+      }
+    },
+    {
+      "label": {
+        "text": "30 三區溢位"
+      },
+      "width": 150,
+      "tooltip": {
+        "text": "查看 30 區域溢位箱真實內容"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_view set 30"
+      }
+    },
+    {
+      "label": {
+        "text": "40 四區溢位"
+      },
+      "width": 150,
+      "tooltip": {
+        "text": "查看 40 區域溢位箱真實內容"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_view set 40"
+      }
+    },
+    {
+      "label": {
+        "text": "50 五區溢位"
+      },
+      "width": 150,
+      "tooltip": {
+        "text": "查看 50 區域溢位箱真實內容"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_view set 50"
+      }
+    },
+    {
+      "label": {
+        "text": "60 六區溢位"
+      },
+      "width": 150,
+      "tooltip": {
+        "text": "查看 60 區域溢位箱真實內容"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_view set 60"
+      }
+    }
+  ],
+  "exit_action": {
+    "label": {
+      "text": "返回查看倉庫"
+    },
+    "width": 200,
+    "action": {
+      "type": "show_dialog",
+      "dialog": "warehouse:view/index"
+    }
+  }
+}

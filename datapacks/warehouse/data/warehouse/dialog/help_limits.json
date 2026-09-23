@@ -1,0 +1,31 @@
+{
+  "type": "minecraft:notice",
+  "title": {
+    "text": "指令與限制"
+  },
+  "external_title": {
+    "text": "使用說明"
+  },
+  "body": [
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "自動整理（需 OP）\n/function warehouse:system/on　啟用\n/function warehouse:system/off　暫停\n/function warehouse:system/toggle　切換\n\n自動整理預設開啟。\n文字搜尋仍會出現 Minecraft 原版的高權限指令確認頁。\n倉庫區塊未載入時，不保證分類、搬移或背景整理持續執行。"
+      },
+      "width": 440
+    }
+  ],
+  "pause": false,
+  "after_action": "close",
+  "can_close_with_escape": true,
+  "action": {
+    "label": {
+      "text": "返回使用說明"
+    },
+    "width": 200,
+    "action": {
+      "type": "show_dialog",
+      "dialog": "warehouse:help"
+    }
+  }
+}

@@ -1,0 +1,5 @@
+data modify storage warehouse:boxnames c57 set value {text:"沼澤生態"}
+data modify storage warehouse:runtime rename.code set value "57"
+data modify storage warehouse:runtime rename.current set from storage warehouse:boxnames c57
+scoreboard players set @s wh_target 0
+function warehouse:boxname/show_saved with storage warehouse:runtime rename

@@ -1,0 +1,196 @@
+{
+  "type": "minecraft:multi_action",
+  "title": {
+    "text": "區域 5 箱子註冊"
+  },
+  "external_title": {
+    "text": "區域 5"
+  },
+  "body": [
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "51–59 = 區域 5 的 3×3 主分類箱。溢位箱 50 在上一頁。"
+      },
+      "width": 330
+    }
+  ],
+  "pause": false,
+  "after_action": "close",
+  "columns": 3,
+  "actions": [
+    {
+      "label": [
+        {
+          "text": "51"
+        },
+        {
+          "text": "  玻璃陶瓦"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "51 玻璃陶瓦"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 51"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "52"
+        },
+        {
+          "text": "  羊毛織染"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "52 羊毛織染"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 52"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "53"
+        },
+        {
+          "text": "  洞窟植物"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "53 洞窟植物"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 53"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "54"
+        },
+        {
+          "text": "  洞窟晶石"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "54 洞窟晶石"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 54"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "55"
+        },
+        {
+          "text": "  遠古城市"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "55 遠古城市"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 55"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "56"
+        },
+        {
+          "text": "  林地生態"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "56 林地生態"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 56"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "57"
+        },
+        {
+          "text": "  沼澤生態"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "57 沼澤生態"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 57"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "58"
+        },
+        {
+          "text": "  冰雪寒帶"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "58 冰雪寒帶"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 58"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "59"
+        },
+        {
+          "text": "  海洋生態"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "59 海洋生態"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 59"
+      }
+    }
+  ],
+  "exit_action": {
+    "label": {
+      "text": "返回"
+    },
+    "width": 200,
+    "action": {
+      "type": "run_command",
+      "command": "trigger wh_nav set 3"
+    }
+  },
+  "can_close_with_escape": true
+}

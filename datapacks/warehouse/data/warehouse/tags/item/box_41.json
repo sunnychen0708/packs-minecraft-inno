@@ -1,0 +1,104 @@
+{
+  "values": [
+    {
+      "id": "minecraft:compass",
+      "required": false
+    },
+    {
+      "id": "minecraft:recovery_compass",
+      "required": false
+    },
+    {
+      "id": "minecraft:clock",
+      "required": false
+    },
+    {
+      "id": "minecraft:map",
+      "required": false
+    },
+    {
+      "id": "minecraft:filled_map",
+      "required": false
+    },
+    {
+      "id": "minecraft:firework_rocket",
+      "required": false
+    },
+    {
+      "id": "minecraft:firework_star",
+      "required": false
+    },
+    {
+      "id": "minecraft:name_tag",
+      "required": false
+    },
+    {
+      "id": "minecraft:goat_horn",
+      "required": false
+    },
+    {
+      "id": "minecraft:ocean_monument_map",
+      "required": false
+    },
+    {
+      "id": "minecraft:woodland_mansion_map",
+      "required": false
+    },
+    {
+      "id": "minecraft:buried_trial_chambers_map",
+      "required": false
+    },
+    {
+      "id": "minecraft:jungle_pyramid_map",
+      "required": false
+    },
+    {
+      "id": "minecraft:swamp_hut_map",
+      "required": false
+    },
+    {
+      "id": "minecraft:desert_village_map",
+      "required": false
+    },
+    {
+      "id": "minecraft:plains_village_map",
+      "required": false
+    },
+    {
+      "id": "minecraft:savanna_village_map",
+      "required": false
+    },
+    {
+      "id": "minecraft:snowy_village_map",
+      "required": false
+    },
+    {
+      "id": "minecraft:taiga_village_map",
+      "required": false
+    },
+    {
+      "id": "minecraft:buried_treasure_map",
+      "required": false
+    },
+    {
+      "id": "minecraft:buried_ancient_city_map",
+      "required": false
+    },
+    {
+      "id": "minecraft:buried_mineshaft_map",
+      "required": false
+    },
+    {
+      "id": "minecraft:desert_pyramid_map",
+      "required": false
+    },
+    {
+      "id": "minecraft:abandoned_camp_map",
+      "required": false
+    },
+    {
+      "id": "minecraft:warm_ocean_ruins_map",
+      "required": false
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "values": [
+    {
+      "id": "minecraft:ender_pearl",
+      "required": false
+    },
+    {
+      "id": "minecraft:shulker_shell",
+      "required": false
+    }
+  ]
+}
