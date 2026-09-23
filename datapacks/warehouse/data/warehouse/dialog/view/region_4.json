@@ -1,0 +1,196 @@
+{
+  "type": "minecraft:multi_action",
+  "title": {
+    "text": "區域 4 查看倉庫"
+  },
+  "external_title": {
+    "text": "區域 4"
+  },
+  "body": [
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "選擇要查看的主分類箱。入口箱與溢位箱在上一頁。"
+      },
+      "width": 330
+    }
+  ],
+  "pause": false,
+  "after_action": "close",
+  "columns": 3,
+  "can_close_with_escape": true,
+  "actions": [
+    {
+      "label": [
+        {
+          "text": "41"
+        },
+        {
+          "text": "  探索導航"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "41 探索導航"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_view set 41"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "42"
+        },
+        {
+          "text": "  音樂唱片"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "42 音樂唱片"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_view set 42"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "43"
+        },
+        {
+          "text": "  考古文物"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "43 考古文物"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_view set 43"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "44"
+        },
+        {
+          "text": "  模板旗幟"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "44 模板旗幟"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_view set 44"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "45"
+        },
+        {
+          "text": "  首領收藏"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "45 首領收藏"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_view set 45"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "46"
+        },
+        {
+          "text": "  稀有實用"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "46 稀有實用"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_view set 46"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "47"
+        },
+        {
+          "text": "  裝飾收藏"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "47 裝飾收藏"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_view set 47"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "48"
+        },
+        {
+          "text": "  試煉密室"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "48 試煉密室"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_view set 48"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "49"
+        },
+        {
+          "text": "  容器收納"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "49 容器收納"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_view set 49"
+      }
+    }
+  ],
+  "exit_action": {
+    "label": {
+      "text": "返回"
+    },
+    "width": 200,
+    "action": {
+      "type": "run_command",
+      "command": "trigger wh_nav set 30"
+    }
+  }
+}

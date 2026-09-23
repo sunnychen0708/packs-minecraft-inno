@@ -1,0 +1,100 @@
+{
+  "type": "minecraft:multi_action",
+  "title": {
+    "text": "選擇目的區域"
+  },
+  "external_title": {
+    "text": "分類設定"
+  },
+  "body": [
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "選擇要把目前選取的物品分到哪一區。"
+      },
+      "width": 390
+    }
+  ],
+  "pause": false,
+  "after_action": "close",
+  "columns": 2,
+  "actions": [
+    {
+      "label": {
+        "text": "區域 1"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_nav set 42"
+      }
+    },
+    {
+      "label": {
+        "text": "區域 2"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_nav set 43"
+      }
+    },
+    {
+      "label": {
+        "text": "區域 3"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_nav set 44"
+      }
+    },
+    {
+      "label": {
+        "text": "區域 4"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_nav set 45"
+      }
+    },
+    {
+      "label": {
+        "text": "區域 5"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_nav set 46"
+      }
+    },
+    {
+      "label": {
+        "text": "區域 6"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_nav set 47"
+      }
+    },
+    {
+      "label": {
+        "text": "取消"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_rule set 4"
+      }
+    }
+  ],
+  "exit_action": {
+    "label": {
+      "text": "關閉"
+    },
+    "width": 200
+  },
+  "can_close_with_escape": true
+}

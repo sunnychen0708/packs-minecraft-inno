@@ -1,0 +1,196 @@
+{
+  "type": "minecraft:multi_action",
+  "title": {
+    "text": "區域 1 查看倉庫"
+  },
+  "external_title": {
+    "text": "區域 1"
+  },
+  "body": [
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "選擇要查看的主分類箱。入口箱與溢位箱在上一頁。"
+      },
+      "width": 330
+    }
+  ],
+  "pause": false,
+  "after_action": "close",
+  "columns": 3,
+  "can_close_with_escape": true,
+  "actions": [
+    {
+      "label": [
+        {
+          "text": "11"
+        },
+        {
+          "text": "  鑽石綠寶"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "11 鑽石綠寶"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_view set 11"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "12"
+        },
+        {
+          "text": "  紅石青金"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "12 紅石青金"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_view set 12"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "13"
+        },
+        {
+          "text": "  煤炭火把"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "13 煤炭火把"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_view set 13"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "14"
+        },
+        {
+          "text": "  鐵礦材料"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "14 鐵礦材料"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_view set 14"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "15"
+        },
+        {
+          "text": "  黃金獄髓"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "15 黃金獄髓"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_view set 15"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "16"
+        },
+        {
+          "text": "  銅礦材料"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "16 銅礦材料"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_view set 16"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "17"
+        },
+        {
+          "text": "  防具裝備"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "17 防具裝備"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_view set 17"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "18"
+        },
+        {
+          "text": "  戰鬥武器"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "18 戰鬥武器"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_view set 18"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "19"
+        },
+        {
+          "text": "  生存工具"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "19 生存工具"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_view set 19"
+      }
+    }
+  ],
+  "exit_action": {
+    "label": {
+      "text": "返回"
+    },
+    "width": 200,
+    "action": {
+      "type": "run_command",
+      "command": "trigger wh_nav set 30"
+    }
+  }
+}

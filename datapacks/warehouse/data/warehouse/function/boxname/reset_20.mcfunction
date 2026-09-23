@@ -1,0 +1,5 @@
+data modify storage warehouse:boxnames c20 set value {text:"二區溢位"}
+data modify storage warehouse:runtime rename.code set value "20"
+data modify storage warehouse:runtime rename.current set from storage warehouse:boxnames c20
+scoreboard players set @s wh_target 0
+function warehouse:boxname/show_saved with storage warehouse:runtime rename

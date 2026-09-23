@@ -1,0 +1,28 @@
+{
+  "values": [
+    {
+      "id": "minecraft:coal",
+      "required": false
+    },
+    {
+      "id": "minecraft:charcoal",
+      "required": false
+    },
+    {
+      "id": "minecraft:coal_block",
+      "required": false
+    },
+    {
+      "id": "minecraft:coal_ore",
+      "required": false
+    },
+    {
+      "id": "minecraft:deepslate_coal_ore",
+      "required": false
+    },
+    {
+      "id": "minecraft:torch",
+      "required": false
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "values": [
+    {
+      "id": "minecraft:sculk",
+      "required": false
+    },
+    {
+      "id": "minecraft:sculk_vein",
+      "required": false
+    },
+    {
+      "id": "minecraft:sculk_sensor",
+      "required": false
+    },
+    {
+      "id": "minecraft:calibrated_sculk_sensor",
+      "required": false
+    },
+    {
+      "id": "minecraft:sculk_catalyst",
+      "required": false
+    },
+    {
+      "id": "minecraft:sculk_shrieker",
+      "required": false
+    },
+    {
+      "id": "minecraft:echo_shard",
+      "required": false
+    },
+    {
+      "id": "minecraft:reinforced_deepslate",
+      "required": false
+    }
+  ]
+}

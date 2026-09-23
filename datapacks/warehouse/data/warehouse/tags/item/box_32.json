@@ -1,0 +1,36 @@
+{
+  "values": [
+    {
+      "id": "minecraft:cobblestone",
+      "required": false
+    },
+    {
+      "id": "minecraft:mossy_cobblestone",
+      "required": false
+    },
+    {
+      "id": "minecraft:cobblestone_slab",
+      "required": false
+    },
+    {
+      "id": "minecraft:mossy_cobblestone_slab",
+      "required": false
+    },
+    {
+      "id": "minecraft:cobblestone_stairs",
+      "required": false
+    },
+    {
+      "id": "minecraft:mossy_cobblestone_stairs",
+      "required": false
+    },
+    {
+      "id": "minecraft:cobblestone_wall",
+      "required": false
+    },
+    {
+      "id": "minecraft:mossy_cobblestone_wall",
+      "required": false
+    }
+  ]
+}

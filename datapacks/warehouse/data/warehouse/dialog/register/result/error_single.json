@@ -1,0 +1,60 @@
+{
+  "type": "minecraft:multi_action",
+  "title": {
+    "text": "無法註冊"
+  },
+  "external_title": {
+    "text": "無法註冊"
+  },
+  "body": [
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "目前點到的是單箱。倉庫系統需要大箱子（大箱子）。"
+      },
+      "width": 360
+    }
+  ],
+  "pause": false,
+  "after_action": "close",
+  "columns": 2,
+  "actions": [
+    {
+      "label": {
+        "text": "重試同一編號"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_action set 4"
+      }
+    },
+    {
+      "label": {
+        "text": "回箱子註冊"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_nav set 2"
+      }
+    },
+    {
+      "label": {
+        "text": "回主選單"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_nav set 1"
+      }
+    }
+  ],
+  "exit_action": {
+    "label": {
+      "text": "關閉"
+    },
+    "width": 200
+  },
+  "can_close_with_escape": true
+}

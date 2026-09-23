@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:notice",
+  "title": {
+    "text": "無法查看"
+  },
+  "body": [
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "這個箱位尚未註冊。請先到「箱子註冊」完成設定。"
+      },
+      "width": 350
+    }
+  ],
+  "pause": false,
+  "after_action": "close",
+  "can_close_with_escape": true,
+  "exit_action": {
+    "label": {
+      "text": "返回"
+    },
+    "width": 200,
+    "action": {
+      "type": "run_command",
+      "command": "trigger wh_nav set 30"
+    }
+  }
+}

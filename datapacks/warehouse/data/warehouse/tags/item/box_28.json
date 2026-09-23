@@ -1,0 +1,196 @@
+{
+  "values": [
+    {
+      "id": "minecraft:rail",
+      "required": false
+    },
+    {
+      "id": "minecraft:powered_rail",
+      "required": false
+    },
+    {
+      "id": "minecraft:detector_rail",
+      "required": false
+    },
+    {
+      "id": "minecraft:activator_rail",
+      "required": false
+    },
+    {
+      "id": "minecraft:minecart",
+      "required": false
+    },
+    {
+      "id": "minecraft:chest_minecart",
+      "required": false
+    },
+    {
+      "id": "minecraft:furnace_minecart",
+      "required": false
+    },
+    {
+      "id": "minecraft:tnt_minecart",
+      "required": false
+    },
+    {
+      "id": "minecraft:hopper_minecart",
+      "required": false
+    },
+    {
+      "id": "minecraft:saddle",
+      "required": false
+    },
+    {
+      "id": "minecraft:white_harness",
+      "required": false
+    },
+    {
+      "id": "minecraft:orange_harness",
+      "required": false
+    },
+    {
+      "id": "minecraft:magenta_harness",
+      "required": false
+    },
+    {
+      "id": "minecraft:light_blue_harness",
+      "required": false
+    },
+    {
+      "id": "minecraft:yellow_harness",
+      "required": false
+    },
+    {
+      "id": "minecraft:lime_harness",
+      "required": false
+    },
+    {
+      "id": "minecraft:pink_harness",
+      "required": false
+    },
+    {
+      "id": "minecraft:gray_harness",
+      "required": false
+    },
+    {
+      "id": "minecraft:light_gray_harness",
+      "required": false
+    },
+    {
+      "id": "minecraft:cyan_harness",
+      "required": false
+    },
+    {
+      "id": "minecraft:purple_harness",
+      "required": false
+    },
+    {
+      "id": "minecraft:blue_harness",
+      "required": false
+    },
+    {
+      "id": "minecraft:brown_harness",
+      "required": false
+    },
+    {
+      "id": "minecraft:green_harness",
+      "required": false
+    },
+    {
+      "id": "minecraft:red_harness",
+      "required": false
+    },
+    {
+      "id": "minecraft:black_harness",
+      "required": false
+    },
+    {
+      "id": "minecraft:oak_boat",
+      "required": false
+    },
+    {
+      "id": "minecraft:oak_chest_boat",
+      "required": false
+    },
+    {
+      "id": "minecraft:spruce_boat",
+      "required": false
+    },
+    {
+      "id": "minecraft:spruce_chest_boat",
+      "required": false
+    },
+    {
+      "id": "minecraft:birch_boat",
+      "required": false
+    },
+    {
+      "id": "minecraft:birch_chest_boat",
+      "required": false
+    },
+    {
+      "id": "minecraft:jungle_boat",
+      "required": false
+    },
+    {
+      "id": "minecraft:jungle_chest_boat",
+      "required": false
+    },
+    {
+      "id": "minecraft:acacia_boat",
+      "required": false
+    },
+    {
+      "id": "minecraft:acacia_chest_boat",
+      "required": false
+    },
+    {
+      "id": "minecraft:cherry_boat",
+      "required": false
+    },
+    {
+      "id": "minecraft:cherry_chest_boat",
+      "required": false
+    },
+    {
+      "id": "minecraft:dark_oak_boat",
+      "required": false
+    },
+    {
+      "id": "minecraft:dark_oak_chest_boat",
+      "required": false
+    },
+    {
+      "id": "minecraft:pale_oak_boat",
+      "required": false
+    },
+    {
+      "id": "minecraft:pale_oak_chest_boat",
+      "required": false
+    },
+    {
+      "id": "minecraft:mangrove_boat",
+      "required": false
+    },
+    {
+      "id": "minecraft:mangrove_chest_boat",
+      "required": false
+    },
+    {
+      "id": "minecraft:bamboo_raft",
+      "required": false
+    },
+    {
+      "id": "minecraft:bamboo_chest_raft",
+      "required": false
+    },
+    {
+      "id": "minecraft:poplar_boat",
+      "required": false
+    },
+    {
+      "id": "minecraft:poplar_chest_boat",
+      "required": false
+    }
+  ]
+}

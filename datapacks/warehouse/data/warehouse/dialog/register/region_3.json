@@ -1,0 +1,196 @@
+{
+  "type": "minecraft:multi_action",
+  "title": {
+    "text": "區域 3 箱子註冊"
+  },
+  "external_title": {
+    "text": "區域 3"
+  },
+  "body": [
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "31–39 = 區域 3 的 3×3 主分類箱。溢位箱 30 在上一頁。"
+      },
+      "width": 330
+    }
+  ],
+  "pause": false,
+  "after_action": "close",
+  "columns": 3,
+  "actions": [
+    {
+      "label": [
+        {
+          "text": "31"
+        },
+        {
+          "text": "  石頭方塊"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "31 石頭方塊"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 31"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "32"
+        },
+        {
+          "text": "  鵝卵石材"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "32 鵝卵石材"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 32"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "33"
+        },
+        {
+          "text": "  深板岩塊"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "33 深板岩塊"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 33"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "34"
+        },
+        {
+          "text": "  土礫黏土"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "34 土礫黏土"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 34"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "35"
+        },
+        {
+          "text": "  沙岩建材"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "35 沙岩建材"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 35"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "36"
+        },
+        {
+          "text": "  原木木材"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "36 原木木材"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 36"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "37"
+        },
+        {
+          "text": "  木製建材"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "37 木製建材"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 37"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "38"
+        },
+        {
+          "text": "  其他石頭"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "38 其他石頭"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 38"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "39"
+        },
+        {
+          "text": "  石磚銅材"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "39 石磚銅材"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 39"
+      }
+    }
+  ],
+  "exit_action": {
+    "label": {
+      "text": "返回"
+    },
+    "width": 200,
+    "action": {
+      "type": "run_command",
+      "command": "trigger wh_nav set 3"
+    }
+  },
+  "can_close_with_escape": true
+}

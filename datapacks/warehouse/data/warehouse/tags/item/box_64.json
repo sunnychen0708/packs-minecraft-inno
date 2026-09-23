@@ -1,0 +1,112 @@
+{
+  "values": [
+    {
+      "id": "minecraft:nether_bricks",
+      "required": false
+    },
+    {
+      "id": "minecraft:nether_brick",
+      "required": false
+    },
+    {
+      "id": "minecraft:cracked_nether_bricks",
+      "required": false
+    },
+    {
+      "id": "minecraft:chiseled_nether_bricks",
+      "required": false
+    },
+    {
+      "id": "minecraft:nether_brick_fence",
+      "required": false
+    },
+    {
+      "id": "minecraft:nether_brick_stairs",
+      "required": false
+    },
+    {
+      "id": "minecraft:nether_brick_slab",
+      "required": false
+    },
+    {
+      "id": "minecraft:nether_brick_wall",
+      "required": false
+    },
+    {
+      "id": "minecraft:red_nether_bricks",
+      "required": false
+    },
+    {
+      "id": "minecraft:red_nether_brick_stairs",
+      "required": false
+    },
+    {
+      "id": "minecraft:red_nether_brick_slab",
+      "required": false
+    },
+    {
+      "id": "minecraft:red_nether_brick_wall",
+      "required": false
+    },
+    {
+      "id": "minecraft:blackstone",
+      "required": false
+    },
+    {
+      "id": "minecraft:blackstone_stairs",
+      "required": false
+    },
+    {
+      "id": "minecraft:blackstone_slab",
+      "required": false
+    },
+    {
+      "id": "minecraft:blackstone_wall",
+      "required": false
+    },
+    {
+      "id": "minecraft:gilded_blackstone",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_blackstone",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_blackstone_stairs",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_blackstone_slab",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_blackstone_wall",
+      "required": false
+    },
+    {
+      "id": "minecraft:chiseled_polished_blackstone",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_blackstone_bricks",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_blackstone_brick_stairs",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_blackstone_brick_slab",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_blackstone_brick_wall",
+      "required": false
+    },
+    {
+      "id": "minecraft:cracked_polished_blackstone_bricks",
+      "required": false
+    }
+  ]
+}

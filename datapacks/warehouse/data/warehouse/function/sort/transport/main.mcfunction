@@ -1,0 +1,1 @@
+$execute in $(dest_dimension) if loaded $(dest_a_x) $(dest_a_y) $(dest_a_z) if loaded $(dest_b_x) $(dest_b_y) $(dest_b_z) if block $(dest_a_x) $(dest_a_y) $(dest_a_z) #warehouse:storage_chests if block $(dest_b_x) $(dest_b_y) $(dest_b_z) #warehouse:storage_chests run function warehouse:sort/transport/main_valid with storage warehouse:runtime move

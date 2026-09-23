@@ -1,0 +1,144 @@
+{
+  "values": [
+    {
+      "id": "minecraft:granite",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_granite",
+      "required": false
+    },
+    {
+      "id": "minecraft:granite_stairs",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_granite_stairs",
+      "required": false
+    },
+    {
+      "id": "minecraft:granite_slab",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_granite_slab",
+      "required": false
+    },
+    {
+      "id": "minecraft:granite_wall",
+      "required": false
+    },
+    {
+      "id": "minecraft:diorite",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_diorite",
+      "required": false
+    },
+    {
+      "id": "minecraft:diorite_stairs",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_diorite_stairs",
+      "required": false
+    },
+    {
+      "id": "minecraft:diorite_slab",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_diorite_slab",
+      "required": false
+    },
+    {
+      "id": "minecraft:diorite_wall",
+      "required": false
+    },
+    {
+      "id": "minecraft:andesite",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_andesite",
+      "required": false
+    },
+    {
+      "id": "minecraft:andesite_stairs",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_andesite_stairs",
+      "required": false
+    },
+    {
+      "id": "minecraft:andesite_slab",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_andesite_slab",
+      "required": false
+    },
+    {
+      "id": "minecraft:andesite_wall",
+      "required": false
+    },
+    {
+      "id": "minecraft:tuff",
+      "required": false
+    },
+    {
+      "id": "minecraft:tuff_slab",
+      "required": false
+    },
+    {
+      "id": "minecraft:tuff_stairs",
+      "required": false
+    },
+    {
+      "id": "minecraft:tuff_wall",
+      "required": false
+    },
+    {
+      "id": "minecraft:chiseled_tuff",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_tuff",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_tuff_slab",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_tuff_stairs",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_tuff_wall",
+      "required": false
+    },
+    {
+      "id": "minecraft:tuff_bricks",
+      "required": false
+    },
+    {
+      "id": "minecraft:tuff_brick_slab",
+      "required": false
+    },
+    {
+      "id": "minecraft:tuff_brick_stairs",
+      "required": false
+    },
+    {
+      "id": "minecraft:tuff_brick_wall",
+      "required": false
+    },
+    {
+      "id": "minecraft:chiseled_tuff_bricks",
+      "required": false
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "values": [
+    {
+      "id": "minecraft:wheat",
+      "required": false
+    },
+    {
+      "id": "minecraft:wheat_seeds",
+      "required": false
+    },
+    {
+      "id": "minecraft:carrot",
+      "required": false
+    },
+    {
+      "id": "minecraft:potato",
+      "required": false
+    },
+    {
+      "id": "minecraft:poisonous_potato",
+      "required": false
+    },
+    {
+      "id": "minecraft:pumpkin",
+      "required": false
+    },
+    {
+      "id": "minecraft:carved_pumpkin",
+      "required": false
+    },
+    {
+      "id": "minecraft:jack_o_lantern",
+      "required": false
+    },
+    {
+      "id": "minecraft:pumpkin_seeds",
+      "required": false
+    },
+    {
+      "id": "minecraft:melon",
+      "required": false
+    },
+    {
+      "id": "minecraft:melon_slice",
+      "required": false
+    },
+    {
+      "id": "minecraft:melon_seeds",
+      "required": false
+    },
+    {
+      "id": "minecraft:beetroot",
+      "required": false
+    },
+    {
+      "id": "minecraft:beetroot_seeds",
+      "required": false
+    },
+    {
+      "id": "minecraft:torchflower",
+      "required": false
+    },
+    {
+      "id": "minecraft:torchflower_seeds",
+      "required": false
+    },
+    {
+      "id": "minecraft:pitcher_plant",
+      "required": false
+    },
+    {
+      "id": "minecraft:pitcher_pod",
+      "required": false
+    },
+    {
+      "id": "minecraft:sugar_cane",
+      "required": false
+    },
+    {
+      "id": "minecraft:sugar",
+      "required": false
+    },
+    {
+      "id": "minecraft:dried_kelp_block",
+      "required": false
+    },
+    {
+      "id": "minecraft:hay_block",
+      "required": false
+    }
+  ]
+}

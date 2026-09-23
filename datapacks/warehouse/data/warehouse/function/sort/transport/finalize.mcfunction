@@ -1,0 +1,2 @@
+$execute if score #moved wh_tmp matches 1.. if score #remaining wh_tmp matches 0 in $(src_dimension) run item replace block $(src_x) $(src_y) $(src_z) container.$(src_slot) with minecraft:air
+$execute if score #moved wh_tmp matches 1.. if score #remaining wh_tmp matches 1.. in $(src_dimension) store result block $(src_x) $(src_y) $(src_z) Items[{Slot:$(src_slot)b}].count int 1 run scoreboard players get #remaining wh_tmp

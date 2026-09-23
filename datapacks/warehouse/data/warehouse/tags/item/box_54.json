@@ -1,0 +1,164 @@
+{
+  "values": [
+    {
+      "id": "minecraft:sulfur",
+      "required": false
+    },
+    {
+      "id": "minecraft:potent_sulfur",
+      "required": false
+    },
+    {
+      "id": "minecraft:sulfur_slab",
+      "required": false
+    },
+    {
+      "id": "minecraft:sulfur_stairs",
+      "required": false
+    },
+    {
+      "id": "minecraft:sulfur_wall",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_sulfur",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_sulfur_slab",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_sulfur_stairs",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_sulfur_wall",
+      "required": false
+    },
+    {
+      "id": "minecraft:sulfur_bricks",
+      "required": false
+    },
+    {
+      "id": "minecraft:sulfur_brick_slab",
+      "required": false
+    },
+    {
+      "id": "minecraft:sulfur_brick_stairs",
+      "required": false
+    },
+    {
+      "id": "minecraft:sulfur_brick_wall",
+      "required": false
+    },
+    {
+      "id": "minecraft:chiseled_sulfur",
+      "required": false
+    },
+    {
+      "id": "minecraft:cinnabar",
+      "required": false
+    },
+    {
+      "id": "minecraft:cinnabar_slab",
+      "required": false
+    },
+    {
+      "id": "minecraft:cinnabar_stairs",
+      "required": false
+    },
+    {
+      "id": "minecraft:cinnabar_wall",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_cinnabar",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_cinnabar_slab",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_cinnabar_stairs",
+      "required": false
+    },
+    {
+      "id": "minecraft:polished_cinnabar_wall",
+      "required": false
+    },
+    {
+      "id": "minecraft:cinnabar_bricks",
+      "required": false
+    },
+    {
+      "id": "minecraft:cinnabar_brick_slab",
+      "required": false
+    },
+    {
+      "id": "minecraft:cinnabar_brick_stairs",
+      "required": false
+    },
+    {
+      "id": "minecraft:cinnabar_brick_wall",
+      "required": false
+    },
+    {
+      "id": "minecraft:chiseled_cinnabar",
+      "required": false
+    },
+    {
+      "id": "minecraft:sulfur_spike",
+      "required": false
+    },
+    {
+      "id": "minecraft:dripstone_block",
+      "required": false
+    },
+    {
+      "id": "minecraft:pointed_dripstone",
+      "required": false
+    },
+    {
+      "id": "minecraft:calcite",
+      "required": false
+    },
+    {
+      "id": "minecraft:smooth_basalt",
+      "required": false
+    },
+    {
+      "id": "minecraft:amethyst_block",
+      "required": false
+    },
+    {
+      "id": "minecraft:amethyst_shard",
+      "required": false
+    },
+    {
+      "id": "minecraft:small_amethyst_bud",
+      "required": false
+    },
+    {
+      "id": "minecraft:medium_amethyst_bud",
+      "required": false
+    },
+    {
+      "id": "minecraft:large_amethyst_bud",
+      "required": false
+    },
+    {
+      "id": "minecraft:amethyst_cluster",
+      "required": false
+    },
+    {
+      "id": "minecraft:sulfur_cube_bucket",
+      "required": false
+    },
+    {
+      "id": "minecraft:budding_amethyst",
+      "required": false
+    }
+  ]
+}

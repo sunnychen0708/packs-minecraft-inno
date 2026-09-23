@@ -1,0 +1,108 @@
+{
+  "values": [
+    {
+      "id": "minecraft:angler_pottery_sherd",
+      "required": false
+    },
+    {
+      "id": "minecraft:archer_pottery_sherd",
+      "required": false
+    },
+    {
+      "id": "minecraft:arms_up_pottery_sherd",
+      "required": false
+    },
+    {
+      "id": "minecraft:blade_pottery_sherd",
+      "required": false
+    },
+    {
+      "id": "minecraft:brewer_pottery_sherd",
+      "required": false
+    },
+    {
+      "id": "minecraft:burn_pottery_sherd",
+      "required": false
+    },
+    {
+      "id": "minecraft:danger_pottery_sherd",
+      "required": false
+    },
+    {
+      "id": "minecraft:explorer_pottery_sherd",
+      "required": false
+    },
+    {
+      "id": "minecraft:flow_pottery_sherd",
+      "required": false
+    },
+    {
+      "id": "minecraft:friend_pottery_sherd",
+      "required": false
+    },
+    {
+      "id": "minecraft:guster_pottery_sherd",
+      "required": false
+    },
+    {
+      "id": "minecraft:heart_pottery_sherd",
+      "required": false
+    },
+    {
+      "id": "minecraft:heartbreak_pottery_sherd",
+      "required": false
+    },
+    {
+      "id": "minecraft:howl_pottery_sherd",
+      "required": false
+    },
+    {
+      "id": "minecraft:miner_pottery_sherd",
+      "required": false
+    },
+    {
+      "id": "minecraft:mourner_pottery_sherd",
+      "required": false
+    },
+    {
+      "id": "minecraft:plenty_pottery_sherd",
+      "required": false
+    },
+    {
+      "id": "minecraft:prize_pottery_sherd",
+      "required": false
+    },
+    {
+      "id": "minecraft:scrape_pottery_sherd",
+      "required": false
+    },
+    {
+      "id": "minecraft:sheaf_pottery_sherd",
+      "required": false
+    },
+    {
+      "id": "minecraft:shelter_pottery_sherd",
+      "required": false
+    },
+    {
+      "id": "minecraft:skull_pottery_sherd",
+      "required": false
+    },
+    {
+      "id": "minecraft:snort_pottery_sherd",
+      "required": false
+    },
+    {
+      "id": "minecraft:decorated_pot",
+      "required": false
+    },
+    {
+      "id": "minecraft:suspicious_sand",
+      "required": false
+    },
+    {
+      "id": "minecraft:suspicious_gravel",
+      "required": false
+    }
+  ]
+}

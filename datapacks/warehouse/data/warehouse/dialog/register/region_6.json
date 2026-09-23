@@ -1,0 +1,196 @@
+{
+  "type": "minecraft:multi_action",
+  "title": {
+    "text": "區域 6 箱子註冊"
+  },
+  "external_title": {
+    "text": "區域 6"
+  },
+  "body": [
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "61–69 = 區域 6 的 3×3 主分類箱。溢位箱 60 在上一頁。"
+      },
+      "width": 330
+    }
+  ],
+  "pause": false,
+  "after_action": "close",
+  "columns": 3,
+  "actions": [
+    {
+      "label": [
+        {
+          "text": "61"
+        },
+        {
+          "text": "  地獄岩石"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "61 地獄岩石"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 61"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "62"
+        },
+        {
+          "text": "  地獄自然"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "62 地獄自然"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 62"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "63"
+        },
+        {
+          "text": "  地獄植物"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "63 地獄植物"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 63"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "64"
+        },
+        {
+          "text": "  地獄建材"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "64 地獄建材"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 64"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "65"
+        },
+        {
+          "text": "  石英材料"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "65 石英材料"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 65"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "66"
+        },
+        {
+          "text": "  終界素材"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "66 終界素材"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 66"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "67"
+        },
+        {
+          "text": "  地獄掉落"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "67 地獄掉落"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 67"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "68"
+        },
+        {
+          "text": "  終界掉落"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "68 終界掉落"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 68"
+      }
+    },
+    {
+      "label": [
+        {
+          "text": "69"
+        },
+        {
+          "text": "  維度特殊"
+        }
+      ],
+      "width": 150,
+      "tooltip": {
+        "text": "69 維度特殊"
+      },
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_register set 69"
+      }
+    }
+  ],
+  "exit_action": {
+    "label": {
+      "text": "返回"
+    },
+    "width": 200,
+    "action": {
+      "type": "run_command",
+      "command": "trigger wh_nav set 3"
+    }
+  },
+  "can_close_with_escape": true
+}
