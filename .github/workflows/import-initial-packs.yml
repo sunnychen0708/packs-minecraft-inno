@@ -1,0 +1,65 @@
+name: Import initial packs and create releases
+
+on:
+  push:
+    paths:
+      - "transport/READY"
+
+permissions:
+  contents: write
+
+jobs:
+  import-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct uploaded archives
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat transport/vanilla-utilities.part-* > /tmp/vanilla-utilities.b64
+          base64 --decode /tmp/vanilla-utilities.b64 > /tmp/vanilla-utilities.zip
+          cat transport/warehouse.part-* > /tmp/warehouse.b64
+          base64 --decode /tmp/warehouse.b64 > /tmp/warehouse.zip
+
+      - name: Import unpacked data-pack source
+        shell: bash
+        run: |
+          set -euo pipefail
+          unzip -oq /tmp/vanilla-utilities.zip -d datapacks/vanilla-utilities
+          unzip -oq /tmp/warehouse.zip -d datapacks/warehouse
+          rm -rf transport
+
+      - name: Commit unpacked source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add datapacks transport
+          git commit -m "Import initial datapack sources"
+          git push
+
+      - name: Build release ZIPs
+        shell: bash
+        run: |
+          chmod +x scripts/build-releases.sh
+          scripts/build-releases.sh
+
+      - name: Create Vanilla Utilities v3.2 release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh release create vanilla-utilities-v3.2             dist/vanilla-utilities-v3.2.zip             --target main             --title "Vanilla Utilities v3.2"             --notes "Minecraft Java 26.3 vanilla utility datapack. Original package name: 整合_v3.2."
+
+      - name: Create Warehouse v4.0 release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh release create warehouse-v4.0             dist/warehouse-v4.0.zip             --target main             --title "Warehouse v4.0"             --notes "Minecraft Java 26.3 automatic sorting warehouse datapack."
