@@ -10,7 +10,7 @@
 
 | Pack | Type | Version | Minecraft | Description |
 | --- | --- | ---: | --- | --- |
-| [`utilities`](datapacks/utilities) | Data pack | [`v3.2`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/vanilla-utilities-v3.2) | Java 26.3 | Teleportation, waypoints, coordinate display, and general survival utility systems. |
+| [`utilities`](datapacks/utilities) | Data pack | [`v3.2`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/utilities-v3.2) | Java 26.3 | Teleportation, waypoints, coordinate display, and general survival utility systems. |
 | [`warehouse`](datapacks/warehouse) | Data pack | [`v4.0`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/warehouse-v4.0) | Java 26.3 | Automatic item sorting and warehouse-management system. |
 | [`cat-door-sounds`](resourcepacks/cat-door-sounds) | Resource pack | [`v1.0`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/cat-door-sounds-v1.0) | Java 26.2 | Custom cat meow replacement and an extra wooden-door opening sound layer. |
 
