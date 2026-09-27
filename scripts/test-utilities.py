@@ -39,6 +39,8 @@ def static_checks():
     for path in DATA.rglob('*.mcfunction'):
         for namespace, function in re.findall(r'\bfunction ([a-z_]+):([a-z0-9_/]+)', path.read_text(encoding='utf-8')):
             assert (DATA / namespace / 'function' / (function + '.mcfunction')).is_file(), (path, function)
+    modifier = DATA / 'survival_utils/item_modifier/damage_one.json'
+    assert json.loads(modifier.read_text()) == {'type': 'minecraft:set_damage', 'damage': 1, 'add': True}
     for folder in ('predicate', 'item_modifier'):
         for path in DATA.glob(f'*/{folder}/*.json'):
             obj = json.loads(path.read_text())
