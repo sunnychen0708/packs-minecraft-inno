@@ -10,7 +10,7 @@
 
 | Pack | Type | Version | Minecraft | Description |
 | --- | --- | ---: | --- | --- |
-| [`utilities`](datapacks/utilities) | Data pack | [`v3.3`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/utilities-v3.3) | Java 26.3 | Teleportation, waypoints, coordinate display, and general survival utility systems. |
+| [`utilities`](datapacks/utilities) | Data pack | [`v3.4`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/utilities-v3.4) | Java 26.3 | Teleportation, waypoints, coordinate display, and general survival utility systems. |
 | [`warehouse`](datapacks/warehouse) | Data pack | [`v4.0`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/warehouse-v4.0) | Java 26.3 | Automatic item sorting and warehouse-management system. |
 | [`cat-door-sounds`](resourcepacks/cat-door-sounds) | Resource pack | [`v1.0`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/cat-door-sounds-v1.0) | Java 26.2 | Custom cat meow replacement and an extra wooden-door opening sound layer. |
 
@@ -80,7 +80,7 @@ Generated ZIP files go to `dist/`, which is ignored by Git.
 ### Build locally
 
 ```bash
-./scripts/build-pack.sh utilities v3.3
+./scripts/build-pack.sh utilities v3.4
 ./scripts/build-pack.sh warehouse v4.0
 ./scripts/build-pack.sh cat-door-sounds v1.0
 ```
@@ -98,7 +98,7 @@ All packs use the same tag format:
 Examples:
 
 ```text
-utilities-v3.3
+utilities-v3.4
 warehouse-v4.1
 cat-door-sounds-v1.1
 ```

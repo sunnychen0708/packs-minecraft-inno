@@ -1,18 +1,18 @@
-屁眼派對 — Minecraft Java 26.3（Utilities v3.3）
+屁眼派對 — Minecraft Java 26.3（Utilities v3.4）
 （整合：生存便利三合一＋回家與自訂據點＋座標顯示）
 
 安裝／更新：
-1. 以「utilities-v3.3.zip」取代舊版資料包（utilities-v3.2.zip、整合_v3.2.zip 或 vanilla-utilities-v3.2.zip），不要同時載入兩份，也不要刪除世界資料。
+1. 以「utilities-v3.4.zip」取代舊版資料包（utilities-v3.3.zip、utilities-v3.2.zip、整合_v3.2.zip 或 vanilla-utilities-v3.2.zip），不要同時載入兩份，也不要刪除世界資料。
 2. ZIP 不用解壓，放進世界的 datapacks 資料夾。
 3. 進入世界後輸入 /reload。
 4. 輸入 /trigger help 查看功能。
 
-v3.3 主要變更：
+v3.4 主要變更：
 - 補齊 Poplar 原木挖掘計分板與事件重置，蹲下持斧砍原木可觸發三色 Poplar 連鎖砍樹。
 - 保留附近樹葉檢查、64 根上限；無葉倒木不會自動連鎖。
-- 修正連鎖砍樹／挖礦原本會修復工具的錯誤：現在每塊扣 1 點耐久，支援耐久附魔、不毀與創造模式免耗，工具耗盡即停止連鎖。
+- 依使用者要求撤回 v3.3 的連鎖砍樹／挖礦耐久修正，完整恢復 v3.2 的工具耐久處理。
 - 完成 Minecraft Java 26.3 格式與命令審核；詳見 COMPATIBILITY-26.3.md。
-- utilities-v3.2 release 保留供舊版下載。
+- utilities-v3.2 與 utilities-v3.3 release、標籤及附件保持不變。
 
 v3.2 保留功能：
 - 共用據點固定為 8 格；v3.0 曾預留的 9～16 格已從資料包移除，載入時也會清掉 sunny_nav:shared 的 s9～s16 舊欄位。

@@ -30,7 +30,7 @@ scoreboard objectives add deathloc trigger
 scoreboard objectives add sunny_deaths deathCount
 scoreboard objectives add sunny_dseen dummy
 
-data modify storage sunny_nav:meta version set value "26.3-3.3"
+data modify storage sunny_nav:meta version set value "26.3-3.4"
 
 # Remove obsolete v3.0 shared slots 9-16 (confirmed unused)
 data remove storage sunny_nav:shared s9

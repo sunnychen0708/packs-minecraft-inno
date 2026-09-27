@@ -1,6 +1,6 @@
-# Utilities v3.3
+# Utilities v3.4
 
-> Release: **utilities-v3.3** · Download: **utilities-v3.3.zip** · Previous package name: **整合_v3.2**.
+> Release: **utilities-v3.4** · Download: **utilities-v3.4.zip** · Previous package name: **整合_v3.2**.
 
 Minecraft Java 26.3 data pack combining survival utilities, teleport/home and custom waypoints, and coordinate display.
 
@@ -32,12 +32,15 @@ The actual pack source lives directly in this directory. Keep `pack.mcmeta` and 
 | **3.1** | 共用據點恢復 8 格；`[改位置]` 改回 `[覆蓋]`；第一次設定據點可**同時命名＋儲存位置**；重新加入可點擊、自動填入的「指令教學」；保留 Back／死亡地點 |
 | **3.2** | 正式刪除共用據點 9～16 的相關資料與功能；help 改為**指令教學在上、操作按鈕在下**；固定據點取消直接按鈕；Dialog 按鈕改白色；**Esc／取消不再送出任何指令**，只有確認設定／儲存才會修改資料 |
 | **3.3** | 補齊 Poplar 原木挖掘事件及重置，修復三色 Poplar 連鎖砍樹；修正砍樹／挖礦共用耐久扣除、Unbreaking／Unbreakable 與工具耗盡停止；完成 26.3 相容性審核與官方伺服器回歸測試。 |
+| **3.4** | 依使用者要求撤回 v3.3 的砍樹／挖礦耐久修正，完整恢復 v3.2 的工具耐久處理；保留 Poplar 挖掘事件與 26.3 相容性修正。v3.2、v3.3 release 保持不變。 |
 
 ## 安裝與更新
 
-下載 [utilities-v3.3.zip](https://github.com/sunnychen0708/packs-minecraft-inno/releases/download/utilities-v3.3/utilities-v3.3.zip)，移除世界 `datapacks/` 中的舊 Utilities ZIP，再放入新版並執行 `/reload`。不要同時載入兩份。既有據點、名稱、座標及功能開關沿用。
+下載 [utilities-v3.4.zip](https://github.com/sunnychen0708/packs-minecraft-inno/releases/download/utilities-v3.4/utilities-v3.4.zip)，移除世界 `datapacks/` 中的舊 Utilities ZIP，再放入新版並執行 `/reload`。不要同時載入兩份。既有據點、名稱、座標及功能開關沿用。
 
 蹲下並持斧頭挖掉 Poplar 原木即可觸發；紅／橙／黃葉皆支援。單次最多連鎖 64 根，仍需附近有樹葉；無葉倒木及建築木材不會因這次更新取消保護。
+
+工具耐久處理已恢復為 v3.2 行為；v3.3 新增的逐塊扣耐久與耗盡停止邏輯已撤回。
 
 詳見 [26.3 相容性審核與測試](COMPATIBILITY-26.3.md)。
 
@@ -47,4 +50,4 @@ Use `utilities-v<version>` for release tags and `utilities-v<version>.zip` for d
 
 [Utilities v3.2](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/utilities-v3.2) replaces the former `vanilla-utilities-v3.2` release name. This naming-only re-release preserves v3.2 gameplay and saved data; the original Git tag remains as a historical alias. Replace the old ZIP rather than loading both copies.
 
-Example: `utilities-v3.3`
+Example: `utilities-v3.4`

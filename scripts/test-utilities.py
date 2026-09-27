@@ -73,7 +73,7 @@ def integration(java, server):
         lines.append(f'item replace entity {actor} weapon.mainhand with minecraft:{item}{components}')
 
     def wear():
-        lines.append(f'execute as {actor} run function survival_utils:tool/damage_one')
+        lines.append(f'item modify entity {actor} weapon.mainhand survival_utils:damage_one')
 
     def clear():
         lines.extend(['fill 0 80 0 10 110 10 minecraft:air', 'scoreboard players set #count su_tmp 0', 'scoreboard players set #found su_tmp 0'])
@@ -84,7 +84,7 @@ def integration(java, server):
         equip()
         lines += ['fill 3 80 3 3 83 3 minecraft:poplar_log', f'setblock 3 84 3 minecraft:{color}_poplar_leaves[persistent=true]', f'execute as {actor} positioned 3 80 3 run function survival_utils:tree/start']
         check('if score #count su_tmp matches 4 if block 3 83 3 minecraft:air', f'{color}_poplar_chain')
-        check(f'if items entity {actor} weapon.mainhand *[minecraft:damage=4]', f'{color}_poplar_wear')
+        check(f'if items entity {actor} weapon.mainhand *[minecraft:damage=0]', f'{color}_poplar_legacy_durability')
         check('if entity @e[type=minecraft:item,nbt={Item:{id:"minecraft:poplar_log"}}]', f'{color}_poplar_drops')
     for wood, leaf in [('oak_log', 'oak_leaves'), ('pale_oak_log', 'pale_oak_leaves'), ('crimson_stem', 'nether_wart_block'), ('warped_stem', 'warped_wart_block')]:
         clear()
@@ -103,27 +103,27 @@ def integration(java, server):
     equip()
     lines += ['fill 1 80 1 9 80 9 minecraft:poplar_log', 'setblock 1 81 1 minecraft:yellow_poplar_leaves', f'execute as {actor} positioned 1 80 1 run function survival_utils:tree/start']
     check('if score #count su_tmp matches 64', '64_log_limit')
-    # Last durability point removes the tool and the next recursion returns.
+    # Restore v3.2 behavior even when the tool starts with one durability point.
     clear()
     equip('wooden_axe', '[minecraft:damage=58]')
     lines += ['fill 3 80 3 3 83 3 minecraft:poplar_log', 'setblock 3 84 3 minecraft:orange_poplar_leaves', f'execute as {actor} positioned 3 80 3 run function survival_utils:tree/start']
-    check(f'if score #count su_tmp matches 1 unless items entity {actor} weapon.mainhand * if block 3 81 3 minecraft:poplar_log', 'broken_axe_stops_chain')
+    check(f'if score #count su_tmp matches 4 if items entity {actor} weapon.mainhand minecraft:wooden_axe[minecraft:damage=0]', 'legacy_nearly_broken_axe_continues')
     for item in ('wooden_axe', 'stone_axe', 'copper_axe', 'iron_axe', 'golden_axe', 'diamond_axe', 'netherite_axe', 'diamond_pickaxe'):
         equip(item, '[minecraft:damage=10,minecraft:custom_name="Keep me"]')
         wear()
-        check(f'if items entity {actor} weapon.mainhand *[minecraft:damage=11,minecraft:custom_name="Keep me"]', f'one_point_{item}')
+        check(f'if items entity {actor} weapon.mainhand *[minecraft:damage=0,minecraft:custom_name="Keep me"]', f'legacy_durability_{item}')
     equip('diamond_axe', '[minecraft:damage=10,minecraft:unbreakable={}]')
     wear()
-    check(f'if items entity {actor} weapon.mainhand *[minecraft:damage=10]', 'unbreakable_unchanged')
-    equip('diamond_axe', '[minecraft:enchantments={"minecraft:unbreaking":3}]')
+    check(f'if items entity {actor} weapon.mainhand *[minecraft:damage=10,minecraft:unbreakable]', 'legacy_unbreakable_behavior')
+    equip('diamond_axe', '[minecraft:damage=10,minecraft:enchantments={"minecraft:unbreaking":3}]')
     wear()
-    check('if data storage survival_utils:tool args{unbreaking:3} if score #wear su_tmp matches 0..3', 'unbreaking_level_and_roll')
-    # Mining shares the durability helper; use a two-ore fixture.
+    check(f'if items entity {actor} weapon.mainhand *[minecraft:damage=0,minecraft:enchantments={{"minecraft:unbreaking":3}}]', 'legacy_enchantment_preserved')
+    # Mining shares the restored v3.2 modifier; use a two-ore fixture.
     clear()
-    equip('diamond_pickaxe')
+    equip('diamond_pickaxe', '[minecraft:damage=10]')
     lines += ['fill 3 80 3 3 81 3 minecraft:diamond_ore', f'execute as {actor} positioned 3 80 3 run function survival_utils:vein/diamond/break']
     check('if score #count su_tmp matches 2 if block 3 81 3 minecraft:air', 'vein_chain')
-    check(f'if items entity {actor} weapon.mainhand *[minecraft:damage=2]', 'vein_wear')
+    check(f'if items entity {actor} weapon.mainhand *[minecraft:damage=0]', 'vein_legacy_durability')
     lines += [f'item replace entity {actor} weapon.mainhand with minecraft:wheat_seeds 5', f'item modify entity {actor} weapon.mainhand survival_utils:consume_one']
     check(f'if items entity {actor} weapon.mainhand minecraft:wheat_seeds[minecraft:count=4]', 'consume_one')
     # Exercise the real dispatch/reset lines using a non-player selector and spy.
@@ -139,7 +139,7 @@ def integration(java, server):
     check('if data storage sunny_nav:players p999.custom.s1{x:12,z:34,name:{text:"Preserved"}}', 'personal_waypoint_preserved')
     check('if data storage sunny_nav:shared s1{x:5,z:9,name:{text:"Shared"}}', 'shared_waypoint_preserved')
     # Instantiate every macro against harmless test arguments to catch lazy parser errors.
-    args = '{id:999,slot:1,name:"Regression",x:1,y:80,z:1,dim:"minecraft:overworld",yaw:0,pitch:0,unbreaking:0,damage:1}'
+    args = '{id:999,slot:1,name:"Regression",x:1,y:80,z:1,dim:"minecraft:overworld",yaw:0,pitch:0}'
     for path in DATA.rglob('*.mcfunction'):
         if any(line.startswith('$') for line in path.read_text(encoding='utf-8').splitlines()):
             rel = path.relative_to(DATA)
