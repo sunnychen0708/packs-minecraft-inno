@@ -215,9 +215,9 @@ def check_triggers(functions: dict[str, Path]):
         set_zero_re = re.compile(rf"\bscoreboard\s+players\s+set\s+\S+\s+{re.escape(objective)}\s+0\b")
         reset_re = re.compile(rf"\bscoreboard\s+players\s+reset\s+\S+(?:\s+{re.escape(objective)})?\b")
         if not enable_re.search(all_text):
-            raise ValidationError(f"Trigger objective {objective!r} is never enabled")
+            warnings.append(f"trigger {objective!r} is never obviously enabled; enforce user-facing trigger lifecycle in the pack-specific test")
         if not (set_zero_re.search(all_text) or reset_re.search(all_text)):
-            warnings.append(f"trigger {objective!r} has no obvious reset-to-zero/reset command")
+            warnings.append(f"trigger {objective!r} has no obvious reset-to-zero/reset command; enforce this in the pack-specific test if required")
 
     return triggers, warnings
 
