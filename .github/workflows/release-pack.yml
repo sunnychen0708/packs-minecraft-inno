@@ -38,9 +38,17 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "kind=$KIND" >> "$GITHUB_OUTPUT"
 
-      - name: Validate Utilities
-        if: steps.pack.outputs.pack == 'utilities'
-        run: python3 scripts/test-utilities.py
+      - name: Validate datapack
+        if: steps.pack.outputs.kind == 'datapack'
+        shell: bash
+        run: |
+          set -euo pipefail
+          PACK="${{ steps.pack.outputs.pack }}"
+          python3 scripts/validate-datapack.py "$PACK"
+          TEST_SCRIPT="scripts/test-$PACK.py"
+          if [[ -f "$TEST_SCRIPT" ]]; then
+            python3 "$TEST_SCRIPT"
+          fi
 
       - name: Build ZIP
         shell: bash
@@ -53,4 +61,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          gh release create "${{ steps.pack.outputs.tag }}"             "dist/${{ steps.pack.outputs.pack }}-${{ steps.pack.outputs.version }}.zip"             --verify-tag             --title "${{ steps.pack.outputs.pack }} ${{ steps.pack.outputs.version }}"             --generate-notes
+          gh release create "${{ steps.pack.outputs.tag }}" \
+            "dist/${{ steps.pack.outputs.pack }}-${{ steps.pack.outputs.version }}.zip" \
+            --verify-tag \
+            --title "${{ steps.pack.outputs.pack }} ${{ steps.pack.outputs.version }}" \
+            --generate-notes

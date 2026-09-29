@@ -58,9 +58,13 @@ packs-minecraft-inno/
 ├─ resourcepacks/
 │  └─ cat-door-sounds/
 ├─ scripts/
-│  └─ build-pack.sh
+│  ├─ build-pack.sh
+│  └─ validate-datapack.py
+├─ docs/
+│  └─ datapack-validation.md
 └─ .github/
    └─ workflows/
+      ├─ validate-datapacks.yml
       └─ release-pack.yml
 ```
 
@@ -89,6 +93,29 @@ Generated ZIP files go to `dist/`, which is ignored by Git.
 ```
 
 The resulting ZIP is written to `dist/` with the correct Minecraft pack structure at the archive root.
+
+### Validate datapacks
+
+Run the generic validator before treating a datapack build as ready:
+
+```bash
+python3 scripts/validate-datapack.py utilities
+python3 scripts/validate-datapack.py warehouse
+python3 scripts/validate-datapack.py copy-paste
+```
+
+If a pack has `scripts/test-<pack-name>.py`, that pack-specific regression suite is also part of the validation gate. GitHub Actions runs both automatically on datapack-related pushes and pull requests, and the release workflow repeats them before building a datapack release.
+
+For an isolated vanilla server smoke test:
+
+```bash
+python3 scripts/validate-datapack.py copy-paste \
+  --java /path/to/java \
+  --server-jar /path/to/server.jar \
+  --accept-eula
+```
+
+See [`docs/datapack-validation.md`](docs/datapack-validation.md) for the validation levels, release rules, and what each result does or does not prove.
 
 ## Releases
 

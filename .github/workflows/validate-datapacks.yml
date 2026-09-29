@@ -1,0 +1,45 @@
+name: Validate datapacks
+
+on:
+  pull_request:
+    paths:
+      - "datapacks/**"
+      - "scripts/**"
+      - "docs/datapack-validation.md"
+      - ".github/workflows/validate-datapacks.yml"
+      - ".github/workflows/release-pack.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "datapacks/**"
+      - "scripts/**"
+      - "docs/datapack-validation.md"
+      - ".github/workflows/validate-datapacks.yml"
+      - ".github/workflows/release-pack.yml"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate every datapack
+        shell: bash
+        run: |
+          set -euo pipefail
+          for dir in datapacks/*; do
+            [[ -d "$dir" ]] || continue
+            pack="$(basename "$dir")"
+            echo "::group::Generic validation: $pack"
+            python3 scripts/validate-datapack.py "$pack"
+            echo "::endgroup::"
+
+            test_script="scripts/test-$pack.py"
+            if [[ -f "$test_script" ]]; then
+              echo "::group::Pack regression: $pack"
+              python3 "$test_script"
+              echo "::endgroup::"
+            fi
+          done
