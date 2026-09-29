@@ -12,7 +12,7 @@
 | --- | --- | ---: | --- | --- |
 | [`utilities`](datapacks/utilities) | Data pack | [`v3.4`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/utilities-v3.4) | Java 26.3 | Teleportation, waypoints, coordinate display, and general survival utility systems. |
 | [`warehouse`](datapacks/warehouse) | Data pack | [`v4.0`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/warehouse-v4.0) | Java 26.3 | Automatic item sorting and warehouse-management system. |
-| [`copy-paste`](datapacks/copy-paste) | Data pack | `v0.1` | Java 26.3 | Crosshair-based rectangular region copy/paste with per-player clipboard snapshots and cross-dimension support. |
+| [`copy-paste`](datapacks/copy-paste) | Data pack | [`v0.1`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/copy-paste-v0.1) | Java 26.3 | Crosshair-based rectangular region copy/paste with per-player clipboard snapshots and cross-dimension support. |
 | [`cat-door-sounds`](resourcepacks/cat-door-sounds) | Resource pack | [`v1.0`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/cat-door-sounds-v1.0) | Java 26.2 | Custom cat meow replacement and an extra wooden-door opening sound layer. |
 
 Each pack is stored as unpacked source. Release ZIPs are generated artifacts rather than development source.
