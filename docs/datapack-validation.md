@@ -20,8 +20,8 @@ The validator checks:
 - Every literal function reference resolves to an existing function.
 - Function tags resolve to existing functions or function tags.
 - Macro functions are not called without arguments.
-- Trigger objectives are actually enabled.
-- Trigger objectives without an obvious reset are reported as warnings.
+- Trigger objectives are inventoried; missing obvious enable/reset handling is reported as a warning.
+- User-facing trigger lifecycle is enforced in the pack-specific regression test when the pack depends on it.
 - A test ZIP can be built with `pack.mcmeta` and `data/` at archive root.
 - ZIP CRC passes and there is no accidental extra parent directory.
 
