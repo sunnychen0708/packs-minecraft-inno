@@ -28,8 +28,8 @@ DATAPACKS = ROOT / "datapacks"
 
 NAMESPACE_RE = re.compile(r"^[a-z0-9_.-]+$")
 PATH_RE = re.compile(r"^[a-z0-9_./-]+$")
-FUNCTION_REF_RE = re.compile(r"\b(?:return\s+run\s+)?function\s+([a-z0-9_.-]+:[a-z0-9_./-]+)")
-SCHEDULE_REF_RE = re.compile(r"\bschedule\s+function\s+([a-z0-9_.-]+:[a-z0-9_./-]+)")
+FUNCTION_TOKEN_RE = re.compile(r"\bfunction\s+([^\s{]+)")
+SCHEDULE_TOKEN_RE = re.compile(r"\bschedule\s+function\s+([^\s{]+)")
 TRIGGER_ADD_RE = re.compile(r"\bscoreboard\s+objectives\s+add\s+([A-Za-z0-9_.+\-]+)\s+trigger\b")
 MACRO_ARG_RE = re.compile(r"\$\(([A-Za-z0-9_.\-]+)\)")
 
@@ -152,6 +152,17 @@ def resolve_tag_values(data_root: Path, functions: dict[str, Path], tags: dict[s
                 raise ValidationError(f"Function tag {tid} references missing function {value}")
 
 
+def static_function_tokens(line: str):
+    """Return literal function ids, skipping tags and macro-generated paths."""
+    tokens = list(FUNCTION_TOKEN_RE.findall(line)) + list(SCHEDULE_TOKEN_RE.findall(line))
+    for token in tokens:
+        token = token.rstrip(",")
+        if token.startswith("#") or "$(" in token:
+            continue
+        if ":" in token:
+            yield token
+
+
 def check_function_references(functions: dict[str, Path]):
     missing = []
     direct_macro_calls = []
@@ -168,13 +179,15 @@ def check_function_references(functions: dict[str, Path]):
 
     for source_id, path in functions.items():
         text = path.read_text(encoding="utf-8")
-        refs = set(FUNCTION_REF_RE.findall(text)) | set(SCHEDULE_REF_RE.findall(text))
+        refs = set()
+        for line in text.splitlines():
+            refs.update(static_function_tokens(line))
         for ref in sorted(refs):
             if ref not in functions:
                 missing.append((source_id, ref))
 
         for line_no, line in enumerate(text.splitlines(), 1):
-            for ref in FUNCTION_REF_RE.findall(line):
+            for ref in static_function_tokens(line):
                 if ref in macro_functions:
                     tail = line.split(f"function {ref}", 1)[1].strip()
                     if not (tail.startswith("with ") or tail.startswith("{")):
