@@ -57,4 +57,4 @@ scoreboard players set #base mcc_id 20000000
 scoreboard players set #cbz mcc_id 20000000
 scoreboard players set #one mcc_id 1
 
-tellraw @a [{"text":"[Copy/Paste] ","color":"gold"},{"text":"v0.1 已載入。輸入 ","color":"gray"},{"text":"/trigger mcc_help","color":"yellow"},{"text":" 查看用法。","color":"gray"}]
+tellraw @a [{"text":"[Copy/Paste] ","color":"gold"},{"text":"v0.2 已載入。輸入 ","color":"gray"},{"text":"/trigger mcc_help","color":"yellow"},{"text":" 查看用法。","color":"gray"}]
