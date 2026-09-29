@@ -1,4 +1,4 @@
-# Copy/Paste v0.1
+# Copy/Paste v0.2
 
 Minecraft Java 26.3 data pack for selecting, copying, and pasting rectangular block regions without mods or plugins.
 
@@ -6,9 +6,9 @@ The actual pack source lives directly in this directory. Keep `pack.mcmeta` and 
 
 ## Release
 
-Repository tag: `copy-paste-v0.1`
+Repository tag: `copy-paste-v0.2`
 
-Release ZIP: `copy-paste-v0.1.zip`
+Release ZIP: `copy-paste-v0.2.zip`
 
 ## Commands
 
@@ -23,7 +23,7 @@ Release ZIP: `copy-paste-v0.1.zip`
 | `/trigger mcc_mode` | Toggle Replace / Masked paste mode |
 | `/trigger mcc_help` | Show in-game help |
 
-## v0.1 behavior
+## Behavior
 
 - Crosshair raycast range: 128 blocks.
 - Pos1, Pos2, and Anchor use the block hit by the crosshair.
@@ -36,6 +36,13 @@ Release ZIP: `copy-paste-v0.1.zip`
 - Total volume must stay within `minecraft:max_block_modifications`.
 - Clipboard data is stored in a reserved far-away Overworld area and temporarily force-loaded only during copy/paste operations.
 
+## Version history
+
+| Version | Changes |
+| --- | --- |
+| **0.1** | Initial copy/paste implementation. |
+| **0.2** | Fix crosshair raycasts starting from the tick-function origin instead of the player; align hit positions to exact block coordinates, including negative coordinates. |
+
 ## Installation
 
-Build or download `copy-paste-v0.1.zip`, place it in `<world>/datapacks/`, then run `/reload` or reopen the world.
+Download `copy-paste-v0.2.zip`, place it in `<world>/datapacks/`, remove older Copy/Paste versions, then run `/reload` or reopen the world.
