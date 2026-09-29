@@ -1,0 +1,40 @@
+name: Bootstrap copy-paste v0.1 release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/release-copy-paste-v0.1.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build copy-paste v0.1
+        shell: bash
+        run: |
+          chmod +x scripts/build-pack.sh
+          scripts/build-pack.sh copy-paste v0.1
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          if gh release view copy-paste-v0.1 >/dev/null 2>&1; then
+            echo "Release already exists."
+            exit 0
+          fi
+
+          gh release create copy-paste-v0.1 \
+            "dist/copy-paste-v0.1.zip" \
+            --target "${GITHUB_SHA}" \
+            --title "copy-paste v0.1" \
+            --notes "Initial Java 26.3 copy/paste datapack release. Includes crosshair-based region selection, per-player clipboard snapshots, Replace/Masked paste modes, custom anchors, and Overworld/Nether/End support."
