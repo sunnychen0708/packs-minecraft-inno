@@ -103,7 +103,7 @@ def integration(java: Path, server: Path):
     run_as('mcc:paste/dispatch')
     scan()
     check('if block 12 80 3 air if block 14 80 4 air','copy_v_no_real_blocks')
-    check('positioned 12 80 3 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:{id:"minecraft:gold_block"}},limit=1]','blueprint_gold_state')
+    check('positioned 12 80 3 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]','blueprint_gold_state')
     check('positioned 12 80 4 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:{id:"minecraft:oak_stairs",properties:{facing:"east",half:"bottom",shape:"straight",waterlogged:"false"}}},limit=1]','blueprint_stair_state')
     check('if block 3 80 3 gold_block if block 5 80 4 iron_block','copy_source_unchanged')
     run_as('mcc:blueprint/clear_internal')
