@@ -84,11 +84,22 @@ jobs:
             --server-jar "$PWD/server.jar" \
             --accept-eula
 
+      - name: Run Copy/Paste v0.5 behavioral regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/test-copy-paste-runtime.py \
+            --java "$(command -v java)" \
+            --server-jar "$PWD/server.jar" \
+            --accept-eula
+
       - name: Upload vanilla smoke evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: copy-paste-26.3-smoke-${{ github.run_id }}
-          path: dist/validation/copy-paste-*
+          path: |
+            dist/validation/copy-paste-*
+            dist/copy-paste-runtime-*
           if-no-files-found: ignore
           retention-days: 14
