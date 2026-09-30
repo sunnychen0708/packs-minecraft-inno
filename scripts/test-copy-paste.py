@@ -7,9 +7,9 @@ from __future__ import annotations
 import argparse, json, random, re
 from pathlib import Path
 
-RE_FUNC = re.compile(r'\\bfunction\\s+(mcc:[a-z0-9_./-]+)')
-RE_OBJ = re.compile(r'^scoreboard objectives add (\\S+) (\\S+)', re.M)
-RE_TRIGGER = re.compile(r'^scoreboard objectives add (\\S+) trigger$', re.M)
+RE_FUNC = re.compile(r'\bfunction\s+(mcc:[a-z0-9_./-]+)')
+RE_OBJ = re.compile(r'^scoreboard objectives add (\S+) (\S+)', re.M)
+RE_TRIGGER = re.compile(r'^scoreboard objectives add (\S+) trigger$', re.M)
 USER_TRIGGERS = {
     'copypaste','pos1','pos2','anchor','c','v','cut','undo','mode','rotate','mirror',
     'right','left','up','down','forward','backward','flipx','flipz'
