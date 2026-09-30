@@ -16,5 +16,6 @@ execute if score @s mcc_hasa matches 1 run scoreboard players operation @s mcc_t
 execute if score @s mcc_hasa matches 1 run scoreboard players operation @s mcc_tmp += @s mcc_maxx
 execute if score @s mcc_hasa matches 1 run scoreboard players operation @s mcc_tmp -= @s mcc_anx
 execute if score @s mcc_hasa matches 1 run scoreboard players operation @s mcc_anx = @s mcc_tmp
+scoreboard players set @s mcc_redo 0
 tellraw @s [{"text":"[Copy/Paste] Flip X 完成，可用 /trigger undo。","color":"green"}]
 return 1

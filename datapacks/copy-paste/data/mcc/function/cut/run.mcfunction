@@ -1,4 +1,4 @@
-execute store success score @s mcc_tmp run function mcc:copy/run
+execute store success score @s mcc_tmp run function mcc:copy/snapshot
 execute unless score @s mcc_tmp matches 1 run return fail
 
 scoreboard players operation @s mcc_fsx = @s mcc_sx
@@ -45,5 +45,7 @@ scoreboard players operation @s mcc_uy2 = @s mcc_maxy
 scoreboard players operation @s mcc_uz2 = @s mcc_maxz
 scoreboard players set @s mcc_usel 0
 scoreboard players set @s mcc_undo 1
-tellraw @s [{"text":"[Copy/Paste] Cut 完成，可用 /trigger undo Undo。","color":"green"}]
+scoreboard players set @s mcc_redo 0
+scoreboard players set @s mcc_cliptype 2
+tellraw @s [{"text":"[Copy/Paste] Cut 完成。使用 /trigger v 會真正搬到目標位置，成功後 Cut Clipboard 會被消耗。","color":"green"}]
 return 1

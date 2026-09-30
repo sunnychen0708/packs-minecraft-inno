@@ -11,6 +11,8 @@
 - Clipboard：`X = #base + mcc_id × #slot`，Z lane = `#cbz`
 - Undo：相同玩家 X lane，Z lane = `#ubz`
 - Work：相同玩家 X lane，Z lane = `#workz`
+- Redo：相同玩家 X lane，Z lane = `#redoz`
+- Blueprint 快照：相同玩家 X lane，Z lane = `#bpz`
 
 目前 `#slot = 256`，一般選取每軸上限 128，因此不同玩家的 X 範圍不會碰到；三種 buffer 的 Z lane 也彼此分開。
 
@@ -83,3 +85,12 @@ python scripts/build-copy-paste-multiplayer-test.py
 測試只使用遠離正式建築的固定測試區，仍請只在備份過的測試世界執行。
 
 目前 v0.4.3 的 CI 驗證多人隔離架構；真正的雙人 client/server runtime 結果要在兩位真人登入後才算 multiplayer runtime validated。
+
+
+## v0.5.0 Blueprint
+
+Copy 的 `V` 不再寫入目標世界方塊，而是建立所有玩家可見的 `block_display` Blueprint。每位玩家的 Blueprint 建立前會先快照到自己的 Blueprint Buffer，所以兩位玩家同時 Copy/V 不會混用來源資料。
+
+Cut 改用 `/trigger x`；Cut 的 `V` 仍是真實世界移動，而且成功後 Cut Clipboard 立即消耗。
+
+Undo/Redo Buffer 同樣是 per-player。CI 會檢查 64 位玩家的 Clipboard / Undo / Work / Redo / Blueprint lane 不互撞。

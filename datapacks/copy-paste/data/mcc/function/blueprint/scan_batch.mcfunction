@@ -1,0 +1,16 @@
+execute if score @s mcc_bpscan matches 1 run function mcc:blueprint/scan_step
+execute if score @s mcc_bpscan matches 1 run function mcc:blueprint/scan_step
+execute if score @s mcc_bpscan matches 1 run function mcc:blueprint/scan_step
+execute if score @s mcc_bpscan matches 1 run function mcc:blueprint/scan_step
+execute if score @s mcc_bpscan matches 1 run function mcc:blueprint/scan_step
+execute if score @s mcc_bpscan matches 1 run function mcc:blueprint/scan_step
+execute if score @s mcc_bpscan matches 1 run function mcc:blueprint/scan_step
+execute if score @s mcc_bpscan matches 1 run function mcc:blueprint/scan_step
+execute if score @s mcc_bpscan matches 1 run function mcc:blueprint/scan_step
+execute if score @s mcc_bpscan matches 1 run function mcc:blueprint/scan_step
+execute if score @s mcc_bpscan matches 1 run function mcc:blueprint/scan_step
+execute if score @s mcc_bpscan matches 1 run function mcc:blueprint/scan_step
+execute if score @s mcc_bpscan matches 1 run function mcc:blueprint/scan_step
+execute if score @s mcc_bpscan matches 1 run function mcc:blueprint/scan_step
+execute if score @s mcc_bpscan matches 1 run function mcc:blueprint/scan_step
+execute if score @s mcc_bpscan matches 1 run function mcc:blueprint/scan_step

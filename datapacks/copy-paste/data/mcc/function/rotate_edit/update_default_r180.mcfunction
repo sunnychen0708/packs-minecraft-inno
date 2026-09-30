@@ -1,0 +1,10 @@
+scoreboard players operation @s mcc_tmp = @s mcc_p2x
+scoreboard players operation @s mcc_tmp -= @s mcc_p1x
+scoreboard players operation @s mcc_tmp *= #neg mcc_id
+scoreboard players operation @s mcc_tmp2 = @s mcc_p2z
+scoreboard players operation @s mcc_tmp2 -= @s mcc_p1z
+scoreboard players operation @s mcc_tmp2 *= #neg mcc_id
+scoreboard players operation @s mcc_p2x = @s mcc_p1x
+scoreboard players operation @s mcc_p2x += @s mcc_tmp
+scoreboard players operation @s mcc_p2z = @s mcc_p1z
+scoreboard players operation @s mcc_p2z += @s mcc_tmp2
