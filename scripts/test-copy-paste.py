@@ -62,8 +62,8 @@ def check_objectives(pack: Path):
 def check_trigger_lifecycle(pack: Path):
     tick=read(pack/'data/mcc/function/tick.mcfunction')
     for t in USER_TRIGGERS:
-        assert re.search(rf'scores=\\{{{re.escape(t)}=',tick), f'no dispatch/reset selector for {t}'
-        assert re.search(rf'scoreboard players set @a\\[scores=\\{{{re.escape(t)}=.*?\\}}\\] {re.escape(t)} 0',tick), f'no reset for {t}'
+        assert re.search(rf'scores=\{{{re.escape(t)}=',tick), f'no dispatch/reset selector for {t}'
+        assert re.search(rf'scoreboard players set @a\[scores=\{{{re.escape(t)}=.*?\}}\] {re.escape(t)} 0',tick), f'no reset for {t}'
         assert f'scoreboard players enable @a {t}' in tick, f'no enable for {t}'
 
 def check_no_trigger_collisions(pack: Path, repo: Path|None):
