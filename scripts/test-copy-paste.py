@@ -11,8 +11,9 @@ RE_FUNC = re.compile(r'\bfunction\s+(mcc:[a-z0-9_./-]+)')
 RE_OBJ = re.compile(r'^scoreboard objectives add (\S+) (\S+)', re.M)
 RE_TRIGGER = re.compile(r'^scoreboard objectives add (\S+) trigger$', re.M)
 USER_TRIGGERS = {
-    'copypaste','pos1','pos2','anchor','c','v','cut','undo','mode','rotate','mirror',
-    'right','left','up','down','forward','backward','flipx','flipz'
+    'copypaste','pos1','pos2','anchor','c','x','v','undo','redo','mode','rotate','mirror',
+    'right','left','up','down','forward','backward','flipx','flipz',
+    'rotate90','rotate180','rotate270','previewclear'
 }
 
 def read(p: Path) -> str:
@@ -33,7 +34,7 @@ def check_json(pack: Path):
         json.loads(read(p)); count+=1
     meta=json.loads(read(pack/'pack.mcmeta'))
     assert meta['pack']['min_format']==121 and meta['pack']['max_format']==121
-    assert 'v0.4.3' in meta['pack']['description']
+    assert 'v0.5.0' in meta['pack']['description']
     return count
 
 def check_refs(pack: Path):
@@ -68,7 +69,7 @@ def check_trigger_lifecycle(pack: Path):
 
 def check_upgrade_and_mode(pack: Path):
     tick=read(pack/'data/mcc/function/tick.mcfunction')
-    for objective,valid in [('mcc_rot','0..3'),('mcc_mir','0..2'),('mcc_usel','0..1')]:
+    for objective,valid in [('mcc_rot','0..3'),('mcc_mir','0..2'),('mcc_usel','0..1'),('mcc_cliptype','0..2'),('mcc_redo','0..1'),('mcc_bpscan','0..1')]:
         migration=f'execute as @a unless score @s {objective} matches {valid} run scoreboard players set @s {objective} 0'
         assert migration in tick, f'missing non-destructive upgrade for {objective}'
         assert tick.index(migration)<tick.index('scores={copypaste='), 'migrate before dispatch'
@@ -143,7 +144,7 @@ def check_selection_math(pack: Path):
     for axis in 'xyz':
         assert f'mcc_sel{axis}' in prep
         assert f'mcc_soff{axis}' in prep
-    copy=read(pack/'data/mcc/function/copy/run.mcfunction')
+    copy=read(pack/'data/mcc/function/copy/snapshot.mcfunction')
     for axis in 'xyz':
         assert f'mcc_s{axis} = @s mcc_sel{axis}' in copy
         assert f'mcc_off{axis} = @s mcc_soff{axis}' in copy
@@ -188,15 +189,16 @@ def check_multiplayer_isolation(pack: Path):
     cbz=constant('cbz')
     ubz=constant('ubz')
     workz=constant('workz')
+    redoz=constant('redoz')
+    bpz=constant('bpz')
     assert slot >= 256, f'player X slot too small: {slot}'
-    assert len({cbz,ubz,workz}) == 3
-    assert min(abs(cbz-ubz),abs(cbz-workz),abs(ubz-workz)) >= 128
+    assert len({cbz,ubz,workz,redoz,bpz}) == 5
 
     rects=[]
     for player_id in range(1,65):
         x0=base+player_id*slot
         x1=x0+127
-        for kind,z0 in [('clipboard',cbz),('undo',ubz),('work',workz)]:
+        for kind,z0 in [('clipboard',cbz),('undo',ubz),('work',workz),('redo',redoz),('blueprint',bpz)]:
             rects.append((player_id,kind,x0,x1,z0,z0+127))
     for i,a in enumerate(rects):
         for b in rects[i+1:]:
@@ -231,6 +233,101 @@ def check_multiplayer_isolation(pack: Path):
         assert 'summon minecraft:marker' in text
 
     return 64
+
+def check_v050_semantics(pack: Path):
+    load=read(pack/'data/mcc/function/load.mcfunction')
+    tick=read(pack/'data/mcc/function/tick.mcfunction')
+    assert 'scoreboard objectives add x trigger' in load
+    assert 'scoreboard objectives add cut trigger' not in load
+    assert 'scoreboard objectives add redo trigger' in load
+    assert 'scoreboard objectives add rotate90 trigger' in load
+    assert 'scoreboard objectives add rotate180 trigger' in load
+    assert 'scoreboard objectives add rotate270 trigger' in load
+    assert 'scoreboard objectives add previewclear trigger' in load
+    assert 'scores={x=1..}' in tick and 'function mcc:cut/run' in tick
+
+    copy=read(pack/'data/mcc/function/copy/run.mcfunction')
+    snapshot=read(pack/'data/mcc/function/copy/snapshot.mcfunction')
+    cut=read(pack/'data/mcc/function/cut/run.mcfunction')
+    dispatch=read(pack/'data/mcc/function/paste/dispatch.mcfunction')
+    cut_paste=read(pack/'data/mcc/function/paste/cut_run.mcfunction')
+    assert 'function mcc:copy/snapshot' in copy
+    assert 'scoreboard players set @s mcc_cliptype 1' in copy
+    assert 'function mcc:copy/snapshot' in cut
+    assert 'scoreboard players set @s mcc_cliptype 2' in cut
+    assert 'function mcc:blueprint/create' in dispatch
+    assert 'function mcc:paste/cut_run' in dispatch
+    assert 'scoreboard players set @s mcc_clip 0' in cut_paste
+    assert 'scoreboard players set @s mcc_cliptype 0' in cut_paste
+    assert 'mcc_sx = @s mcc_selx' in snapshot
+
+    # Undo must first capture post-edit state into Redo; Redo must rebuild Undo.
+    undo=read(pack/'data/mcc/function/undo/run.mcfunction')
+    redo=read(pack/'data/mcc/function/redo/run.mcfunction')
+    assert 'function mcc:redo/setup_buffer' in undo
+    assert 'function mcc:redo/backup_from_' in undo
+    assert 'scoreboard players set @s mcc_redo 1' in undo
+    assert 'function mcc:undo/setup_buffer' in redo
+    assert 'function mcc:undo/backup_from_' in redo
+    assert 'function mcc:redo/restore_' in redo
+    assert 'scoreboard players set @s mcc_undo 1' in redo
+    assert 'scoreboard players set @s mcc_redo 0' in redo
+
+    for p in (
+        pack/'data/mcc/function/move/run.mcfunction',
+        pack/'data/mcc/function/flip/x.mcfunction',
+        pack/'data/mcc/function/flip/z.mcfunction',
+        pack/'data/mcc/function/cut/run.mcfunction',
+        pack/'data/mcc/function/rotate_edit/run.mcfunction',
+    ):
+        assert 'scoreboard players set @s mcc_redo 0' in read(p), f'new world edit must invalidate Redo: {p}'
+
+    rotate=read(pack/'data/mcc/function/rotate_edit/run.mcfunction')
+    assert 'function mcc:work/snapshot_selection' in rotate
+    assert 'function mcc:undo/backup_from_' in rotate
+    assert 'function mcc:cut/clear_' in rotate
+    assert 'function mcc:rotate_edit/place_' in rotate
+    assert rotate.index('function mcc:work/snapshot_selection') < rotate.index('function mcc:cut/clear_')
+    assert rotate.index('function mcc:undo/backup_from_') < rotate.index('function mcc:cut/clear_')
+    for name in ('r90.mcfunction','r180.mcfunction','r270.mcfunction'):
+        assert (pack/'data/mcc/function/rotate_edit'/name).is_file()
+
+    bp=pack/'data/mcc/function/blueprint'
+    create=read(bp/'create.mcfunction')
+    direct=read(bp/'init_direct.mcfunction')
+    transformed=read(bp/'init_transformed.mcfunction')
+    summon=read(bp/'summon.mcfunction')
+    assert 'mcc_cliptype matches 1' in create
+    assert 'function mcc:blueprint/init_direct' in create
+    assert 'function mcc:blueprint/init_transformed' in create
+    assert 'function mcc:blueprint/copy_direct_buffer' in direct
+    assert 'clone from minecraft:overworld' in read(bp/'copy_direct_buffer.mcfunction')
+    assert 'function mcc:paste/save_template' in transformed
+    assert 'execute in minecraft:overworld run function mcc:paste/do_place' in transformed
+    assert 'summon minecraft:block_display' in summon
+    assert 'block_state set from storage mcc:temp state' in summon
+
+    # Generated exact-state dispatcher: every non-air 26.3 block appears in exactly one group.
+    tag_dir=pack/'data/mcc/tags/block/blueprint/generated'
+    group_dir=pack/'data/mcc/function/blueprint/generated'
+    tags=sorted(tag_dir.glob('g_*.json'))
+    groups=sorted(group_dir.glob('group_*.mcfunction'))
+    assert len(tags)==128 and len(groups)==128
+    block_ids=[]
+    for p in tags:
+        obj=json.loads(read(p))
+        block_ids.extend(obj['values'])
+    assert len(block_ids)==len(set(block_ids))==1283
+    matcher_states=sum(read(p).count('run data modify storage mcc:temp state set value') for p in groups)
+    assert matcher_states==35720, matcher_states
+    root=read(group_dir/'root.mcfunction')
+    for i in range(128):
+        assert f'#mcc:blueprint/generated/g_{i}' in root
+        assert f'function mcc:blueprint/generated/group_{i}' in root
+
+    # Blueprint generation may create temporary hidden buffer blocks, but Copy-V never routes to real Paste.
+    assert 'mcc_cliptype matches 1 run return run function mcc:blueprint/create' in dispatch
+    return matcher_states
 
 def check_tellraw_json(pack: Path):
     checked=0
@@ -268,7 +365,8 @@ def main():
     check_flip_anchor_formula(pack)
     check_move_model()
     mp=check_multiplayer_isolation(pack)
+    states=check_v050_semantics(pack)
     tj=check_tellraw_json(pack)
-    print(f'PASS copy-paste regression: {j} JSON, {f} functions, {o} objectives, {t} triggers, {tj} tellraw JSON, {mp}-player buffer isolation, clipboard isolation, rollback, move/flip properties')
+    print(f'PASS copy-paste regression: {j} JSON, {f} functions, {o} objectives, {t} triggers, {tj} tellraw JSON, {mp}-player buffer isolation, {states} exact blueprint states, copy-v blueprint semantics, undo/redo, real rotate, clipboard isolation, rollback, move/flip properties')
 
 if __name__=='__main__': main()
