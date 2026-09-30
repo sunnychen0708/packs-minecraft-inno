@@ -1,0 +1,137 @@
+Baseline v0.4.1 (4910705)
+[17:48:01] [Render thread/INFO]: [System] [CHAT] MCCT FAIL upgrade defaults
+[17:48:04] [Render thread/INFO]: [System] [CHAT] MCCT PASS raycast pos1/pos2
+[17:48:06] [Render thread/INFO]: [System] [CHAT] MCCT PASS anchor
+[17:48:07] [Render thread/INFO]: [System] [CHAT] MCCT PASS clear anchor
+[17:48:08] [Render thread/INFO]: [System] [CHAT] MCCT PASS copy
+[17:48:11] [Render thread/INFO]: [System] [CHAT] MCCT PASS replace paste
+[17:48:11] [Render thread/INFO]: [System] [CHAT] MCCT PASS paste undo
+[17:48:13] [Render thread/INFO]: [System] [CHAT] MCCT FAIL masked paste
+[17:48:14] [Render thread/INFO]: [System] [CHAT] MCCT PASS masked undo
+[17:48:15] [Render thread/INFO]: [System] [CHAT] MCCT PASS cut
+[17:48:16] [Render thread/INFO]: [System] [CHAT] MCCT PASS cut undo
+[17:48:18] [Render thread/INFO]: [System] [CHAT] MCCT PASS move right
+[17:48:19] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo right
+[17:48:20] [Render thread/INFO]: [System] [CHAT] MCCT PASS move left
+[17:48:21] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo left
+[17:48:23] [Render thread/INFO]: [System] [CHAT] MCCT PASS move up
+[17:48:24] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo up
+[17:48:25] [Render thread/INFO]: [System] [CHAT] MCCT PASS move down
+[17:48:26] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo down
+[17:48:28] [Render thread/INFO]: [System] [CHAT] MCCT PASS move forward
+[17:48:29] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo forward
+[17:48:30] [Render thread/INFO]: [System] [CHAT] MCCT PASS move backward
+[17:48:31] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo backward
+[17:48:32] [Render thread/INFO]: [System] [CHAT] MCCT PASS flipx
+[17:48:33] [Render thread/INFO]: [System] [CHAT] MCCT PASS flipx undo
+[17:48:34] [Render thread/INFO]: [System] [CHAT] MCCT PASS flipz
+[17:48:35] [Render thread/INFO]: [System] [CHAT] MCCT PASS flipz undo
+[17:48:38] [Render thread/INFO]: [System] [CHAT] MCCT PASS paste r0 m0
+[17:48:39] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo r0 m0
+[17:48:42] [Render thread/INFO]: [System] [CHAT] MCCT PASS paste r0 m1
+[17:48:43] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo r0 m1
+[17:48:46] [Render thread/INFO]: [System] [CHAT] MCCT PASS paste r0 m2
+[17:48:47] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo r0 m2
+[17:48:50] [Render thread/INFO]: [System] [CHAT] MCCT PASS paste r1 m0
+[17:48:51] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo r1 m0
+[17:48:54] [Render thread/INFO]: [System] [CHAT] MCCT PASS paste r1 m1
+[17:48:55] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo r1 m1
+[17:48:58] [Render thread/INFO]: [System] [CHAT] MCCT PASS paste r1 m2
+[17:48:59] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo r1 m2
+[17:49:02] [Render thread/INFO]: [System] [CHAT] MCCT PASS paste r2 m0
+[17:49:03] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo r2 m0
+[17:49:06] [Render thread/INFO]: [System] [CHAT] MCCT PASS paste r2 m1
+[17:49:07] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo r2 m1
+[17:49:10] [Render thread/INFO]: [System] [CHAT] MCCT PASS paste r2 m2
+[17:49:11] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo r2 m2
+[17:49:14] [Render thread/INFO]: [System] [CHAT] MCCT PASS paste r3 m0
+[17:49:15] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo r3 m0
+[17:49:18] [Render thread/INFO]: [System] [CHAT] MCCT PASS paste r3 m1
+[17:49:19] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo r3 m1
+[17:49:22] [Render thread/INFO]: [System] [CHAT] MCCT PASS paste r3 m2
+[17:49:23] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo r3 m2
+[17:49:25] [Render thread/INFO]: [System] [CHAT] MCCT DONE pass=49 fail=2
+
+Corrected runtime (mode + migration fixes)
+[17:51:11] [Render thread/INFO]: [System] [CHAT] MCCT PASS upgrade defaults
+[17:51:14] [Render thread/INFO]: [System] [CHAT] MCCT PASS raycast pos1/pos2
+[17:51:16] [Render thread/INFO]: [System] [CHAT] MCCT PASS anchor
+[17:51:17] [Render thread/INFO]: [System] [CHAT] MCCT PASS clear anchor
+[17:51:18] [Render thread/INFO]: [System] [CHAT] MCCT PASS copy
+[17:51:19] [Render thread/INFO]: [System] [CHAT] MCCT PASS replace paste
+[17:51:20] [Render thread/INFO]: [System] [CHAT] MCCT PASS paste undo
+[17:51:23] [Render thread/INFO]: [System] [CHAT] MCCT PASS masked paste
+[17:51:24] [Render thread/INFO]: [System] [CHAT] MCCT PASS masked undo
+[17:51:25] [Render thread/INFO]: [System] [CHAT] MCCT PASS cut
+[17:51:26] [Render thread/INFO]: [System] [CHAT] MCCT PASS cut undo
+[17:51:28] [Render thread/INFO]: [System] [CHAT] MCCT PASS move right
+[17:51:29] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo right
+[17:51:30] [Render thread/INFO]: [System] [CHAT] MCCT PASS move left
+[17:51:31] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo left
+[17:51:33] [Render thread/INFO]: [System] [CHAT] MCCT PASS move up
+[17:51:34] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo up
+[17:51:35] [Render thread/INFO]: [System] [CHAT] MCCT PASS move down
+[17:51:36] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo down
+[17:51:38] [Render thread/INFO]: [System] [CHAT] MCCT PASS move forward
+[17:51:39] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo forward
+[17:51:40] [Render thread/INFO]: [System] [CHAT] MCCT PASS move backward
+[17:51:41] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo backward
+[17:51:42] [Render thread/INFO]: [System] [CHAT] MCCT PASS flipx
+[17:51:43] [Render thread/INFO]: [System] [CHAT] MCCT PASS flipx undo
+[17:51:44] [Render thread/INFO]: [System] [CHAT] MCCT PASS flipz
+[17:51:45] [Render thread/INFO]: [System] [CHAT] MCCT PASS flipz undo
+[17:51:48] [Render thread/INFO]: [System] [CHAT] MCCT PASS paste r0 m0
+[17:51:49] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo r0 m0
+[17:51:52] [Render thread/INFO]: [System] [CHAT] MCCT PASS paste r0 m1
+[17:51:53] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo r0 m1
+[17:51:56] [Render thread/INFO]: [System] [CHAT] MCCT PASS paste r0 m2
+[17:51:57] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo r0 m2
+[17:52:00] [Render thread/INFO]: [System] [CHAT] MCCT PASS paste r1 m0
+[17:52:01] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo r1 m0
+[17:52:04] [Render thread/INFO]: [System] [CHAT] MCCT PASS paste r1 m1
+[17:52:05] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo r1 m1
+[17:52:08] [Render thread/INFO]: [System] [CHAT] MCCT PASS paste r1 m2
+[17:52:09] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo r1 m2
+[17:52:12] [Render thread/INFO]: [System] [CHAT] MCCT PASS paste r2 m0
+[17:52:13] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo r2 m0
+[17:52:16] [Render thread/INFO]: [System] [CHAT] MCCT PASS paste r2 m1
+[17:52:17] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo r2 m1
+[17:52:20] [Render thread/INFO]: [System] [CHAT] MCCT PASS paste r2 m2
+[17:52:21] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo r2 m2
+[17:52:24] [Render thread/INFO]: [System] [CHAT] MCCT PASS paste r3 m0
+[17:52:25] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo r3 m0
+[17:52:28] [Render thread/INFO]: [System] [CHAT] MCCT PASS paste r3 m1
+[17:52:29] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo r3 m1
+[17:52:32] [Render thread/INFO]: [System] [CHAT] MCCT PASS paste r3 m2
+[17:52:33] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo r3 m2
+[17:52:35] [Render thread/INFO]: [System] [CHAT] MCCT PASS rotate cycle 1
+[17:52:36] [Render thread/INFO]: [System] [CHAT] MCCT PASS rotate cycle 2
+[17:52:37] [Render thread/INFO]: [System] [CHAT] MCCT PASS rotate cycle 3
+[17:52:38] [Render thread/INFO]: [System] [CHAT] MCCT PASS rotate cycle 0
+[17:52:39] [Render thread/INFO]: [System] [CHAT] MCCT PASS mirror cycle 1
+[17:52:40] [Render thread/INFO]: [System] [CHAT] MCCT PASS mirror cycle 2
+[17:52:41] [Render thread/INFO]: [System] [CHAT] MCCT PASS mirror cycle 0
+[17:52:47] [Render thread/INFO]: [System] [CHAT] MCCT PASS custom anchor paste
+[17:52:48] [Render thread/INFO]: [System] [CHAT] MCCT PASS move anchor
+[17:52:49] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo anchor
+[17:52:50] [Render thread/INFO]: [System] [CHAT] MCCT PASS flip anchor
+[17:52:51] [Render thread/INFO]: [System] [CHAT] MCCT PASS undo flip anchor
+[17:52:58] [Render thread/INFO]: [System] [CHAT] MCCT PASS clipboard survives other Move/Flip
+[17:53:02] [Render thread/INFO]: [System] [CHAT] MCCT PASS reject move 129
+[17:53:04] [Render thread/INFO]: [System] [CHAT] MCCT PASS cross dimension paste the_nether
+[17:53:05] [Render thread/INFO]: [System] [CHAT] MCCT PASS cross dimension undo the_nether
+[17:53:09] [Render thread/INFO]: [System] [CHAT] MCCT PASS copy from the_nether
+[17:53:10] [Render thread/INFO]: [System] [CHAT] MCCT PASS move in the_nether
+[17:53:11] [Render thread/INFO]: [System] [CHAT] MCCT PASS flip in the_nether
+[17:53:14] [Render thread/INFO]: [System] [CHAT] MCCT PASS cross dimension paste the_end
+[17:53:15] [Render thread/INFO]: [System] [CHAT] MCCT PASS cross dimension undo the_end
+[17:53:19] [Render thread/INFO]: [System] [CHAT] MCCT PASS copy from the_end
+[17:53:20] [Render thread/INFO]: [System] [CHAT] MCCT PASS move in the_end
+[17:53:21] [Render thread/INFO]: [System] [CHAT] MCCT PASS flip in the_end
+[17:53:24] [Render thread/INFO]: [System] [CHAT] MCCT PASS cross dimension paste overworld
+[17:53:25] [Render thread/INFO]: [System] [CHAT] MCCT PASS cross dimension undo overworld
+[17:53:29] [Render thread/INFO]: [System] [CHAT] MCCT PASS copy from overworld
+[17:53:30] [Render thread/INFO]: [System] [CHAT] MCCT PASS move in overworld
+[17:53:31] [Render thread/INFO]: [System] [CHAT] MCCT PASS flip in overworld
+[17:53:32] [Render thread/INFO]: [System] [CHAT] MCCT DONE pass=80 fail=0
+[17:57:08] [Render thread/INFO]: [System] [CHAT] MCCT PASS missing-state migration preserves player data
