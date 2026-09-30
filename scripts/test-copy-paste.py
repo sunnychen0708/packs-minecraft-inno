@@ -33,7 +33,7 @@ def check_json(pack: Path):
         json.loads(read(p)); count+=1
     meta=json.loads(read(pack/'pack.mcmeta'))
     assert meta['pack']['min_format']==121 and meta['pack']['max_format']==121
-    assert 'v0.4.1' in meta['pack']['description']
+    assert 'v0.4.2' in meta['pack']['description']
     return count
 
 def check_refs(pack: Path):
@@ -65,6 +65,18 @@ def check_trigger_lifecycle(pack: Path):
         assert re.search(rf'scores=\{{{re.escape(t)}=',tick), f'no dispatch/reset selector for {t}'
         assert re.search(rf'scoreboard players set @a\[scores=\{{{re.escape(t)}=.*?\}}\] {re.escape(t)} 0',tick), f'no reset for {t}'
         assert f'scoreboard players enable @a {t}' in tick, f'no enable for {t}'
+
+def check_upgrade_and_mode(pack: Path):
+    tick=read(pack/'data/mcc/function/tick.mcfunction')
+    for objective,valid in [('mcc_rot','0..3'),('mcc_mir','0..2'),('mcc_usel','0..1')]:
+        migration=f'execute as @a unless score @s {objective} matches {valid} run scoreboard players set @s {objective} 0'
+        assert migration in tick, f'missing non-destructive upgrade for {objective}'
+        assert tick.index(migration)<tick.index('scores={copypaste='), 'migrate before dispatch'
+    mode=read(pack/'data/mcc/function/mode_toggle.mcfunction').splitlines()
+    assert mode == [
+        'execute if score @s mcc_mask matches 0 run return run function mcc:mode/to_masked',
+        'return run function mcc:mode/to_replace',
+    ], 'mode toggle must return before evaluating the changed state'
 
 def check_no_trigger_collisions(pack: Path, repo: Path|None):
     if repo is None or not (repo/'datapacks').is_dir(): return 0
@@ -191,6 +203,7 @@ def main():
     f=check_refs(pack)
     o,t=check_objectives(pack)
     check_trigger_lifecycle(pack)
+    check_upgrade_and_mode(pack)
     check_no_trigger_collisions(pack,repo)
     check_clipboard_isolation(pack)
     check_ordering(pack)

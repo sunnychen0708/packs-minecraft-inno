@@ -1,4 +1,4 @@
-Minecraft Copy/Paste Datapack v0.4.1
+Minecraft Copy/Paste Datapack v0.4.2
 適用：Minecraft Java Edition 26.3（Data Pack 121.0）
 
 使用 Trigger，不使用 G / ESC / Dialog。
@@ -68,3 +68,8 @@ v0.4.1 stability changes:
 - Move / Flip 失敗時會確認自動 rollback 是否成功。
 - 若 rollback 也失敗，會保留 Undo 備份供再次嘗試。
 - 針對中小型建築優化；未特別處理超大型 Move 的 forceload 邊界。
+
+v0.4.2 fixes:
+- 修正 `/trigger mode` 在同一次呼叫中從 Replace 切到 Masked 又切回 Replace 的問題。
+- 舊版玩家升級時補上缺少的旋轉、鏡像與 Undo 選取框狀態，保留既有 ID、Clipboard 和選取座標。
+- 實機測試方式與結果見 [LIVE-VALIDATION.md](LIVE-VALIDATION.md)。

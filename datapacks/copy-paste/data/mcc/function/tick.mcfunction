@@ -1,4 +1,8 @@
 execute as @a unless score @s mcc_id matches 1.. run function mcc:player_init
+# Initialize newly introduced state for existing players without resetting their clipboard.
+execute as @a unless score @s mcc_rot matches 0..3 run scoreboard players set @s mcc_rot 0
+execute as @a unless score @s mcc_mir matches 0..2 run scoreboard players set @s mcc_mir 0
+execute as @a unless score @s mcc_usel matches 0..1 run scoreboard players set @s mcc_usel 0
 execute as @a[scores={copypaste=1..}] run function mcc:panel
 
 execute as @a[scores={pos1=1..}] at @s run function mcc:select/start_pos1
