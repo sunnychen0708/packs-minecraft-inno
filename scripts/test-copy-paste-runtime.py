@@ -53,10 +53,12 @@ def integration(java: Path, server: Path):
     def check(condition,label):
         assertions.append(label)
         lines.extend([
-            f'execute {condition} run scoreboard players add #pass mccst 1',
-            f'execute {condition} run say MCCST_PASS_{label}',
-            f'execute unless {condition} run scoreboard players add #fail mccst 1',
-            f'execute unless {condition} run say MCCST_FAIL_{label}',
+            'scoreboard players set #ok mccst 0',
+            f'execute {condition} run scoreboard players set #ok mccst 1',
+            'execute if score #ok mccst matches 1 run scoreboard players add #pass mccst 1',
+            f'execute if score #ok mccst matches 1 run say MCCST_PASS_{label}',
+            'execute unless score #ok mccst matches 1 run scoreboard players add #fail mccst 1',
+            f'execute unless score #ok mccst matches 1 run say MCCST_FAIL_{label}',
         ])
 
     def fixture(x=3,y=80,z=3):
