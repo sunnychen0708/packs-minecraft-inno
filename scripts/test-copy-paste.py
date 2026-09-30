@@ -180,46 +180,7 @@ def check_multiplayer_isolation(pack: Path):
     """Prove the per-player address/name layout cannot collide for normal max selections."""
     load=read(pack/'data/mcc/function/load.mcfunction')
     def constant(name):
-        m=re.search(rf'^scoreboard players set #{name} mcc_id (-?\d+)    checked=0
-    for p in pack.rglob('*.mcfunction'):
-        for line in read(p).splitlines():
-            idx=line.find('tellraw ')
-            if idx<0: continue
-            tail=line[idx:].split(' ',2)
-            if len(tail)<3: continue
-            payload=tail[2]
-            if payload.startswith('[') or payload.startswith('{'):
-                json.loads(payload); checked+=1
-    return checked
-
-def main():
-    ap=argparse.ArgumentParser()
-    ap.add_argument('--pack-root',type=Path)
-    ap.add_argument('--repo-root',type=Path)
-    args=ap.parse_args()
-    if args.pack_root:
-        pack=args.pack_root.resolve(); repo=args.repo_root.resolve() if args.repo_root else None
-    else:
-        repo=Path(__file__).resolve().parents[1]
-        pack=repo/'datapacks/copy-paste'
-    j=check_json(pack)
-    f=check_refs(pack)
-    o,t=check_objectives(pack)
-    check_trigger_lifecycle(pack)
-    check_upgrade_and_mode(pack)
-    check_no_trigger_collisions(pack,repo)
-    check_clipboard_isolation(pack)
-    check_ordering(pack)
-    check_rollback(pack)
-    check_selection_math(pack)
-    check_flip_anchor_formula(pack)
-    check_move_model()
-    mp=check_multiplayer_isolation(pack)
-    tj=check_tellraw_json(pack)
-    print(f'PASS copy-paste regression: {j} JSON, {f} functions, {o} objectives, {t} triggers, {tj} tellraw JSON, {mp}-player buffer isolation, clipboard isolation, rollback, move/flip properties')
-
-if __name__=='__main__': main()
-,load,re.M)
+        m=re.search(rf'^scoreboard players set #{name} mcc_id (-?\d+)$',load,re.M)
         assert m, f'missing #{name} constant'
         return int(m.group(1))
     slot=constant('slot')
@@ -252,8 +213,6 @@ if __name__=='__main__': main()
     assert 'mcc:clipboard_$(id)' in clip_template
     assert 'mcc:work_$(id)' in work_template
 
-    # Shared mcc:temp and the temporary ray marker are safe only because edit
-    # operations are synchronous: no mcc function is scheduled into a later tick.
     scheduled=[]
     broad_selectors=[]
     for p in (pack/'data/mcc/function').rglob('*.mcfunction'):
@@ -308,7 +267,8 @@ def main():
     check_selection_math(pack)
     check_flip_anchor_formula(pack)
     check_move_model()
+    mp=check_multiplayer_isolation(pack)
     tj=check_tellraw_json(pack)
-    print(f'PASS copy-paste regression: {j} JSON, {f} functions, {o} objectives, {t} triggers, {tj} tellraw JSON, clipboard isolation, rollback, move/flip properties')
+    print(f'PASS copy-paste regression: {j} JSON, {f} functions, {o} objectives, {t} triggers, {tj} tellraw JSON, {mp}-player buffer isolation, clipboard isolation, rollback, move/flip properties')
 
 if __name__=='__main__': main()
