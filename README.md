@@ -17,8 +17,8 @@
 
 Each pack is stored as unpacked source. Release ZIPs are generated artifacts rather than development source.
 
-Copy/Paste source is currently **v0.4.2** (the release link above is the last published v0.2).
-See its [live validation report](datapacks/copy-paste/LIVE-VALIDATION.md) for the v0.4.1 fixes.
+Copy/Paste source is currently **v0.4.3** (the release link above is the last published v0.2).
+See its [live validation report](datapacks/copy-paste/LIVE-VALIDATION.md) and [multiplayer validation notes](datapacks/copy-paste/MULTIPLAYER-VALIDATION.md).
 
 ## Installation
 
