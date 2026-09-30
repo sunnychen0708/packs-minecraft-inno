@@ -4,10 +4,14 @@ scoreboard objectives add pos2 trigger
 scoreboard objectives add anchor trigger
 scoreboard objectives add c trigger
 scoreboard objectives add v trigger
-scoreboard objectives add cut trigger
+scoreboard objectives add x trigger
 scoreboard objectives add undo trigger
+scoreboard objectives add redo trigger
 scoreboard objectives add mode trigger
 scoreboard objectives add rotate trigger
+scoreboard objectives add rotate90 trigger
+scoreboard objectives add rotate180 trigger
+scoreboard objectives add rotate270 trigger
 scoreboard objectives add mirror trigger
 scoreboard objectives add right trigger
 scoreboard objectives add left trigger
@@ -17,6 +21,7 @@ scoreboard objectives add forward trigger
 scoreboard objectives add backward trigger
 scoreboard objectives add flipx trigger
 scoreboard objectives add flipz trigger
+scoreboard objectives add previewclear trigger
 scoreboard objectives add mcc_id dummy
 scoreboard objectives add mcc_has1 dummy
 scoreboard objectives add mcc_has2 dummy
@@ -135,6 +140,49 @@ scoreboard objectives add mcc_uanx dummy
 scoreboard objectives add mcc_uany dummy
 scoreboard objectives add mcc_uanz dummy
 scoreboard objectives add mcc_uhasa dummy
+scoreboard objectives add mcc_cliptype dummy
+scoreboard objectives add mcc_redo dummy
+scoreboard objectives add mcc_rdim dummy
+scoreboard objectives add mcc_rx dummy
+scoreboard objectives add mcc_ry dummy
+scoreboard objectives add mcc_rz dummy
+scoreboard objectives add mcc_rx2 dummy
+scoreboard objectives add mcc_ry2 dummy
+scoreboard objectives add mcc_rz2 dummy
+scoreboard objectives add mcc_rsel dummy
+scoreboard objectives add mcc_rp1x dummy
+scoreboard objectives add mcc_rp1y dummy
+scoreboard objectives add mcc_rp1z dummy
+scoreboard objectives add mcc_rp2x dummy
+scoreboard objectives add mcc_rp2y dummy
+scoreboard objectives add mcc_rp2z dummy
+scoreboard objectives add mcc_ranx dummy
+scoreboard objectives add mcc_rany dummy
+scoreboard objectives add mcc_ranz dummy
+scoreboard objectives add mcc_rhasa dummy
+scoreboard objectives add mcc_rbx dummy
+scoreboard objectives add mcc_rbx2 dummy
+scoreboard objectives add mcc_rby2 dummy
+scoreboard objectives add mcc_rbz2 dummy
+scoreboard objectives add mcc_bpscan dummy
+scoreboard objectives add mcc_bpkind dummy
+scoreboard objectives add mcc_bpsx0 dummy
+scoreboard objectives add mcc_bpsy0 dummy
+scoreboard objectives add mcc_bpsz0 dummy
+scoreboard objectives add mcc_bpsx dummy
+scoreboard objectives add mcc_bpsy dummy
+scoreboard objectives add mcc_bpsz dummy
+scoreboard objectives add mcc_bpsx2 dummy
+scoreboard objectives add mcc_bpsy2 dummy
+scoreboard objectives add mcc_bpsz2 dummy
+scoreboard objectives add mcc_bptx0 dummy
+scoreboard objectives add mcc_bpty0 dummy
+scoreboard objectives add mcc_bptz0 dummy
+scoreboard objectives add mcc_bptx dummy
+scoreboard objectives add mcc_bpty dummy
+scoreboard objectives add mcc_bptz dummy
+scoreboard objectives add mcc_bpx dummy
+scoreboard objectives add mcc_erot dummy
 scoreboard objectives add mcc_ok dummy
 scoreboard players add #next mcc_id 0
 scoreboard players set #slot mcc_id 256
@@ -142,8 +190,11 @@ scoreboard players set #base mcc_id 20000000
 scoreboard players set #cbz mcc_id 20000000
 scoreboard players set #ubz mcc_id 20000200
 scoreboard players set #workz mcc_id 20000400
+scoreboard players set #redoz mcc_id 20001000
+scoreboard players set #bpz mcc_id 20002000
+scoreboard players set #bpofs mcc_id 64
 scoreboard players set #one mcc_id 1
 scoreboard players set #zero mcc_id 0
 scoreboard players set #neg mcc_id -1
 
-tellraw @a [{"text":"[Copy/Paste] ","color":"gold"},{"text":"v0.4.3 已載入。輸入 ","color":"gray"},{"text":"/trigger copypaste","color":"yellow"},{"text":" 開啟 Trigger 控制面板。","color":"gray"}]
+tellraw @a [{"text":"[Copy/Paste] ","color":"gold"},{"text":"v0.5.0 已載入。輸入 ","color":"gray"},{"text":"/trigger copypaste","color":"yellow"},{"text":" 開啟 Trigger 控制面板。","color":"gray"}]

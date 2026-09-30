@@ -124,5 +124,6 @@ execute if score @s mcc_hasa matches 1 run scoreboard players operation @s mcc_a
 execute if score @s mcc_hasa matches 1 run scoreboard players operation @s mcc_any += @s mcc_dy
 execute if score @s mcc_hasa matches 1 run scoreboard players operation @s mcc_anz += @s mcc_dz
 
+scoreboard players set @s mcc_redo 0
 tellraw @s [{"text":"[Copy/Paste] Move 完成；選取框與 Anchor 已一起移動，可用 /trigger undo 還原。","color":"green"}]
 return 1

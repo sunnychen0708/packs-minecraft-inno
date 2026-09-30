@@ -69,5 +69,6 @@ execute if score @s mcc_dstd matches 2 run execute in minecraft:the_nether run f
 execute if score @s mcc_dstd matches 3 run execute in minecraft:the_end run function mcc:paste/do_place
 execute unless score @s mcc_ok matches 1 run tellraw @s [{"text":"[Copy/Paste] 旋轉/鏡像貼上失敗。","color":"red"}]
 execute unless score @s mcc_ok matches 1 run return fail
+scoreboard players set @s mcc_redo 0
 tellraw @s [{"text":"[Copy/Paste] 旋轉/鏡像貼上完成，可用 /trigger undo。","color":"green"}]
 return 1

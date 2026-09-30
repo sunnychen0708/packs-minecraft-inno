@@ -1,4 +1,4 @@
-Minecraft Copy/Paste Datapack v0.4.3
+Minecraft Copy/Paste Datapack v0.5.0
 適用：Minecraft Java Edition 26.3（Data Pack 121.0）
 
 使用 Trigger，不使用 G / ESC / Dialog。
@@ -17,7 +17,7 @@ Minecraft Copy/Paste Datapack v0.4.3
 /trigger anchor set 2     清除 Anchor，恢復使用 Pos1
 /trigger c                Copy
 /trigger v                Paste
-/trigger cut              Cut
+/trigger x              Cut
 /trigger undo             Undo（1 層）
 /trigger mode             Replace / Masked
 /trigger rotate           0°→90°→180°→270°→0°
@@ -75,7 +75,7 @@ v0.4.2 fixes:
 - 實機測試方式與結果見 [LIVE-VALIDATION.md](LIVE-VALIDATION.md)。
 
 
-v0.4.3 multiplayer hardening:
+v0.5.0 multiplayer hardening:
 - 每位玩家使用獨立 mcc_id、Clipboard、Undo Buffer、Work Buffer 與動態 Structure Template 名稱。
 - 多位玩家可在同一 tick 送出 Copy/Paste/Move/Flip/Undo；資料不共用。
 - datapack 的世界編輯 function 不使用 schedule，因此全域 mcc:temp 只作同步 macro 暫存，不會跨 tick 保留操作。
