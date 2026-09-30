@@ -146,4 +146,4 @@ scoreboard players set #one mcc_id 1
 scoreboard players set #zero mcc_id 0
 scoreboard players set #neg mcc_id -1
 
-tellraw @a [{"text":"[Copy/Paste] ","color":"gold"},{"text":"v0.4.2 已載入。輸入 ","color":"gray"},{"text":"/trigger copypaste","color":"yellow"},{"text":" 開啟 Trigger 控制面板。","color":"gray"}]
+tellraw @a [{"text":"[Copy/Paste] ","color":"gold"},{"text":"v0.4.3 已載入。輸入 ","color":"gray"},{"text":"/trigger copypaste","color":"yellow"},{"text":" 開啟 Trigger 控制面板。","color":"gray"}]
