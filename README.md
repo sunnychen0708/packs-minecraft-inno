@@ -12,13 +12,13 @@
 | --- | --- | ---: | --- | --- |
 | [`utilities`](datapacks/utilities) | Data pack | [`v3.4`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/utilities-v3.4) | Java 26.3 | Teleportation, waypoints, coordinate display, and general survival utility systems. |
 | [`warehouse`](datapacks/warehouse) | Data pack | [`v4.0`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/warehouse-v4.0) | Java 26.3 | Automatic item sorting and warehouse-management system. |
-| [`copy-paste`](datapacks/copy-paste) | Data pack | [`v0.2`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/copy-paste-v0.2) | Java 26.3 | Crosshair-based rectangular region copy/paste with per-player clipboard snapshots and cross-dimension support. |
+| [`copy-paste`](datapacks/copy-paste) | Data pack | [`v0.2`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/copy-paste-v0.2) | Java 26.3 | Survival-safe building editor: Copy creates shared visual Blueprints, Cut moves real blocks once, with Move/Rotate/Flip and Undo/Redo. |
 | [`cat-door-sounds`](resourcepacks/cat-door-sounds) | Resource pack | [`v1.0`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/cat-door-sounds-v1.0) | Java 26.2 | Custom cat meow replacement and an extra wooden-door opening sound layer. |
 
 Each pack is stored as unpacked source. Release ZIPs are generated artifacts rather than development source.
 
 Copy/Paste source is currently **v0.5.0** (the release link above is the last published v0.2).
-See its [live validation report](datapacks/copy-paste/LIVE-VALIDATION.md) and [multiplayer validation notes](datapacks/copy-paste/MULTIPLAYER-VALIDATION.md).
+Copy/Paste v0.5.0 adds non-destructive shared Blueprints, Cut-once semantics, direct real-block rotation, and one-step Undo/Redo. See its [live validation report](datapacks/copy-paste/LIVE-VALIDATION.md) and [multiplayer validation notes](datapacks/copy-paste/MULTIPLAYER-VALIDATION.md).
 
 ## Installation
 
@@ -91,7 +91,7 @@ Generated ZIP files go to `dist/`, which is ignored by Git.
 ```bash
 ./scripts/build-pack.sh utilities v3.4
 ./scripts/build-pack.sh warehouse v4.0
-./scripts/build-pack.sh copy-paste v0.2
+./scripts/build-pack.sh copy-paste v0.5.0
 ./scripts/build-pack.sh cat-door-sounds v1.0
 ```
 
