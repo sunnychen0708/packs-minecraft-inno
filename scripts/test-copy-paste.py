@@ -33,7 +33,7 @@ def check_json(pack: Path):
         json.loads(read(p)); count+=1
     meta=json.loads(read(pack/'pack.mcmeta'))
     assert meta['pack']['min_format']==121 and meta['pack']['max_format']==121
-    assert 'v0.4.2' in meta['pack']['description']
+    assert 'v0.4.3' in meta['pack']['description']
     return count
 
 def check_refs(pack: Path):
@@ -175,6 +175,103 @@ def check_move_model():
             world[(pos[0]+dx,pos[1]+dy,pos[2]+dz)]=val
         world=before
         assert world==before
+
+def check_multiplayer_isolation(pack: Path):
+    """Prove the per-player address/name layout cannot collide for normal max selections."""
+    load=read(pack/'data/mcc/function/load.mcfunction')
+    def constant(name):
+        m=re.search(rf'^scoreboard players set #{name} mcc_id (-?\d+)    checked=0
+    for p in pack.rglob('*.mcfunction'):
+        for line in read(p).splitlines():
+            idx=line.find('tellraw ')
+            if idx<0: continue
+            tail=line[idx:].split(' ',2)
+            if len(tail)<3: continue
+            payload=tail[2]
+            if payload.startswith('[') or payload.startswith('{'):
+                json.loads(payload); checked+=1
+    return checked
+
+def main():
+    ap=argparse.ArgumentParser()
+    ap.add_argument('--pack-root',type=Path)
+    ap.add_argument('--repo-root',type=Path)
+    args=ap.parse_args()
+    if args.pack_root:
+        pack=args.pack_root.resolve(); repo=args.repo_root.resolve() if args.repo_root else None
+    else:
+        repo=Path(__file__).resolve().parents[1]
+        pack=repo/'datapacks/copy-paste'
+    j=check_json(pack)
+    f=check_refs(pack)
+    o,t=check_objectives(pack)
+    check_trigger_lifecycle(pack)
+    check_upgrade_and_mode(pack)
+    check_no_trigger_collisions(pack,repo)
+    check_clipboard_isolation(pack)
+    check_ordering(pack)
+    check_rollback(pack)
+    check_selection_math(pack)
+    check_flip_anchor_formula(pack)
+    check_move_model()
+    mp=check_multiplayer_isolation(pack)
+    tj=check_tellraw_json(pack)
+    print(f'PASS copy-paste regression: {j} JSON, {f} functions, {o} objectives, {t} triggers, {tj} tellraw JSON, {mp}-player buffer isolation, clipboard isolation, rollback, move/flip properties')
+
+if __name__=='__main__': main()
+,load,re.M)
+        assert m, f'missing #{name} constant'
+        return int(m.group(1))
+    slot=constant('slot')
+    base=constant('base')
+    cbz=constant('cbz')
+    ubz=constant('ubz')
+    workz=constant('workz')
+    assert slot >= 256, f'player X slot too small: {slot}'
+    assert len({cbz,ubz,workz}) == 3
+    assert min(abs(cbz-ubz),abs(cbz-workz),abs(ubz-workz)) >= 128
+
+    rects=[]
+    for player_id in range(1,65):
+        x0=base+player_id*slot
+        x1=x0+127
+        for kind,z0 in [('clipboard',cbz),('undo',ubz),('work',workz)]:
+            rects.append((player_id,kind,x0,x1,z0,z0+127))
+    for i,a in enumerate(rects):
+        for b in rects[i+1:]:
+            overlap_x=not (a[3] < b[2] or b[3] < a[2])
+            overlap_z=not (a[5] < b[4] or b[5] < a[4])
+            assert not (overlap_x and overlap_z), f'buffer collision: {a} vs {b}'
+
+    pinit=read(pack/'data/mcc/function/player_init.mcfunction')
+    assert 'scoreboard players add #next mcc_id 1' in pinit
+    assert 'scoreboard players operation @s mcc_id = #next mcc_id' in pinit
+
+    clip_template=read(pack/'data/mcc/function/paste/save_template.mcfunction')
+    work_template=read(pack/'data/mcc/function/work/save_template.mcfunction')
+    assert 'mcc:clipboard_$(id)' in clip_template
+    assert 'mcc:work_$(id)' in work_template
+
+    # Shared mcc:temp and the temporary ray marker are safe only because edit
+    # operations are synchronous: no mcc function is scheduled into a later tick.
+    scheduled=[]
+    broad_selectors=[]
+    for p in (pack/'data/mcc/function').rglob('*.mcfunction'):
+        text=read(p)
+        for line in text.splitlines():
+            if re.search(r'\bschedule function mcc:',line):
+                scheduled.append(str(p.relative_to(pack)))
+        if p.name not in {'tick.mcfunction','load.mcfunction'} and '@a' in text:
+            broad_selectors.append(str(p.relative_to(pack)))
+    assert not scheduled, f'cross-tick shared scratch use: {scheduled}'
+    assert not broad_selectors, f'player operation touches @a: {broad_selectors}'
+
+    for name in ('hit_pos1.mcfunction','hit_pos2.mcfunction','hit_anchor.mcfunction','hit_paste.mcfunction'):
+        text=read(pack/'data/mcc/function/ray'/name)
+        assert text.count('kill @e[type=minecraft:marker,tag=mcc_temp_hit]') >= 2
+        assert 'summon minecraft:marker' in text
+
+    return 64
 
 def check_tellraw_json(pack: Path):
     checked=0
