@@ -10,7 +10,7 @@ execute if dimension minecraft:the_nether run scoreboard players set @s mcc_p1d 
 execute if dimension minecraft:the_end run scoreboard players set @s mcc_p1d 3
 
 kill @e[type=minecraft:marker,tag=mcc_temp_hit]
-execute unless score @s mcc_p1d matches 1..3 run tellraw @s [{"text":"[Copy/Paste] v0.2 目前只支援主世界、地獄、終界。","color":"red"}]
+execute unless score @s mcc_p1d matches 1..3 run tellraw @s [{"text":"[Copy/Paste] 目前只支援主世界、地獄、終界。","color":"red"}]
 execute unless score @s mcc_p1d matches 1..3 run return fail
 scoreboard players set @s mcc_has1 1
 tellraw @s [{"text":"[Copy/Paste] Pos1 已設定。","color":"green"}]

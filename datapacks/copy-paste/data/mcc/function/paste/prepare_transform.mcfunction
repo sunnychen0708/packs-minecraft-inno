@@ -1,0 +1,12 @@
+execute if score @s mcc_rot matches 0 if score @s mcc_mir matches 0 run function mcc:paste/prepare_r0_m0
+execute if score @s mcc_rot matches 0 if score @s mcc_mir matches 1 run function mcc:paste/prepare_r0_m1
+execute if score @s mcc_rot matches 0 if score @s mcc_mir matches 2 run function mcc:paste/prepare_r0_m2
+execute if score @s mcc_rot matches 1 if score @s mcc_mir matches 0 run function mcc:paste/prepare_r1_m0
+execute if score @s mcc_rot matches 1 if score @s mcc_mir matches 1 run function mcc:paste/prepare_r1_m1
+execute if score @s mcc_rot matches 1 if score @s mcc_mir matches 2 run function mcc:paste/prepare_r1_m2
+execute if score @s mcc_rot matches 2 if score @s mcc_mir matches 0 run function mcc:paste/prepare_r2_m0
+execute if score @s mcc_rot matches 2 if score @s mcc_mir matches 1 run function mcc:paste/prepare_r2_m1
+execute if score @s mcc_rot matches 2 if score @s mcc_mir matches 2 run function mcc:paste/prepare_r2_m2
+execute if score @s mcc_rot matches 3 if score @s mcc_mir matches 0 run function mcc:paste/prepare_r3_m0
+execute if score @s mcc_rot matches 3 if score @s mcc_mir matches 1 run function mcc:paste/prepare_r3_m1
+execute if score @s mcc_rot matches 3 if score @s mcc_mir matches 2 run function mcc:paste/prepare_r3_m2

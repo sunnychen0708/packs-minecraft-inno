@@ -1,0 +1,12 @@
+execute if score @s mcc_rot matches 0 if score @s mcc_mir matches 0 run function mcc:paste/place_r0_m0 with storage mcc:temp
+execute if score @s mcc_rot matches 0 if score @s mcc_mir matches 1 run function mcc:paste/place_r0_m1 with storage mcc:temp
+execute if score @s mcc_rot matches 0 if score @s mcc_mir matches 2 run function mcc:paste/place_r0_m2 with storage mcc:temp
+execute if score @s mcc_rot matches 1 if score @s mcc_mir matches 0 run function mcc:paste/place_r1_m0 with storage mcc:temp
+execute if score @s mcc_rot matches 1 if score @s mcc_mir matches 1 run function mcc:paste/place_r1_m1 with storage mcc:temp
+execute if score @s mcc_rot matches 1 if score @s mcc_mir matches 2 run function mcc:paste/place_r1_m2 with storage mcc:temp
+execute if score @s mcc_rot matches 2 if score @s mcc_mir matches 0 run function mcc:paste/place_r2_m0 with storage mcc:temp
+execute if score @s mcc_rot matches 2 if score @s mcc_mir matches 1 run function mcc:paste/place_r2_m1 with storage mcc:temp
+execute if score @s mcc_rot matches 2 if score @s mcc_mir matches 2 run function mcc:paste/place_r2_m2 with storage mcc:temp
+execute if score @s mcc_rot matches 3 if score @s mcc_mir matches 0 run function mcc:paste/place_r3_m0 with storage mcc:temp
+execute if score @s mcc_rot matches 3 if score @s mcc_mir matches 1 run function mcc:paste/place_r3_m1 with storage mcc:temp
+execute if score @s mcc_rot matches 3 if score @s mcc_mir matches 2 run function mcc:paste/place_r3_m2 with storage mcc:temp
