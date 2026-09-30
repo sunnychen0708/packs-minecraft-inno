@@ -182,6 +182,7 @@ scoreboard objectives add mcc_bptx dummy
 scoreboard objectives add mcc_bpty dummy
 scoreboard objectives add mcc_bptz dummy
 scoreboard objectives add mcc_bpx dummy
+scoreboard objectives add mcc_bpdst dummy
 scoreboard objectives add mcc_erot dummy
 scoreboard objectives add mcc_ok dummy
 scoreboard players add #next mcc_id 0
