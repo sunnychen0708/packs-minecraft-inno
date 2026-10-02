@@ -530,6 +530,8 @@ def make_harness(harness: Path) -> tuple[int, list[str]]:
     lines = [
         "data remove storage warehouse:migration active",
         "data modify storage warehouse:migration queue set value []",
+        "data modify block 1 80 1 Items set value []",
+        "data modify block 1 80 3 Items set value []",
         "data modify block 3 80 1 Items set value []",
         "data modify block 3 80 3 Items set value []",
         "data modify block 7 80 1 Items set value []",
