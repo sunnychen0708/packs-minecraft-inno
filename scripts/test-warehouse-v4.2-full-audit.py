@@ -67,7 +67,7 @@ def static_audit(pack_zip: Path) -> dict[str, int]:
             text = path.read_text(encoding="utf-8")
             for rx in (function_re, schedule_re):
                 for ref in rx.findall(text):
-                    if "$(" not in ref and not func_path(ref).is_file():
+                    if not ref.endswith("/") and not func_path(ref).is_file():
                         missing_functions.add(ref)
             for ref in dialog_re.findall(text):
                 if "$(" not in ref and not dialog_path(ref).is_file():
@@ -88,7 +88,7 @@ def static_audit(pack_zip: Path) -> dict[str, int]:
             obj = json.loads(path.read_text(encoding="utf-8"))
             for s in walk(obj):
                 for ref in function_re.findall(s):
-                    if "$(" not in ref and not func_path(ref).is_file():
+                    if not ref.endswith("/") and not func_path(ref).is_file():
                         missing_functions.add(ref)
 
         assert not missing_functions, f"missing function refs: {sorted(missing_functions)[:20]}"
