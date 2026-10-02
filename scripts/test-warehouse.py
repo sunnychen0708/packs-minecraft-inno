@@ -97,7 +97,7 @@ def main() -> None:
     assert "data get storage warehouse:api work.stack.components" in api_count_stack
     assert "result.available" in api_count
     assert "result.stale_sources" in api_count
-    assert "function warehouse:api/material_sources/refresh" in api_take
+    assert "function warehouse:api/count_item" in api_take
     assert "insufficient_stock" in api_take
     assert "function warehouse:api/count_item" in api_take
     assert "source_unavailable" in api_take
