@@ -209,6 +209,9 @@ scoreboard objectives add mcc_matleft dummy
 scoreboard objectives add mcc_matmiss dummy
 scoreboard objectives add mcc_matkind dummy
 scoreboard objectives add mcc_mattotal dummy
+scoreboard objectives add mcc_histmat dummy
+scoreboard objectives add mcc_umat dummy
+scoreboard objectives add mcc_rmat dummy
 scoreboard players add #next mcc_id 0
 scoreboard players set #slot mcc_id 256
 scoreboard players set #base mcc_id 20000000

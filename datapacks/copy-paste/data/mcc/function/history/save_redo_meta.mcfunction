@@ -17,3 +17,4 @@ $execute store result storage mcc:history r_p$(id)_s$(slot).anx int 1 run scoreb
 $execute store result storage mcc:history r_p$(id)_s$(slot).any int 1 run scoreboard players get @s mcc_rany
 $execute store result storage mcc:history r_p$(id)_s$(slot).anz int 1 run scoreboard players get @s mcc_ranz
 $execute store result storage mcc:history r_p$(id)_s$(slot).hasa int 1 run scoreboard players get @s mcc_rhasa
+$execute store result storage mcc:history r_p$(id)_s$(slot).mat int 1 run scoreboard players get @s mcc_rmat

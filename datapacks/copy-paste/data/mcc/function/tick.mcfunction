@@ -15,6 +15,9 @@ execute as @a unless score @s mcc_bpready matches 0..1 run scoreboard players se
 execute as @a unless score @s mcc_bpbad matches 0..1 run scoreboard players set @s mcc_bpbad 0
 execute as @a unless score @s mcc_matphase matches 0..2 run scoreboard players set @s mcc_matphase 0
 execute as @a unless score @s mcc_matleft matches 0.. run scoreboard players set @s mcc_matleft 0
+execute as @a unless score @s mcc_histmat matches 0..1 run scoreboard players set @s mcc_histmat 0
+execute as @a unless score @s mcc_umat matches 0..1 run scoreboard players set @s mcc_umat 0
+execute as @a unless score @s mcc_rmat matches 0..1 run scoreboard players set @s mcc_rmat 0
 execute as @a[scores={copypaste=1..}] run function mcc:panel
 
 execute as @a[scores={pos1=1..}] at @s run function mcc:select/start_pos1

@@ -63,6 +63,7 @@ execute unless score @s mcc_ok matches 1 run tellraw @s [{"text":"[Copy/Paste] æ
 execute unless score @s mcc_ok matches 1 run function mcc:materials/refund_taken_start
 execute unless score @s mcc_ok matches 1 run scoreboard players set @s mcc_matphase 0
 execute unless score @s mcc_ok matches 1 run return fail
+scoreboard players set @s mcc_histmat 1
 function mcc:history/commit_edit
 scoreboard players set @s mcc_matphase 0
 function mcc:blueprint/clear_internal

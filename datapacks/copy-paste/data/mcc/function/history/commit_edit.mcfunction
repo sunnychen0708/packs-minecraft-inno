@@ -33,6 +33,7 @@ execute unless score @s mcc_ok matches 1 run scoreboard players set @s mcc_ucnt 
 execute unless score @s mcc_ok matches 1 run scoreboard players set @s mcc_uhead 0
 execute unless score @s mcc_ok matches 1 run scoreboard players set @s mcc_undo 1
 execute unless score @s mcc_ok matches 1 run tellraw @s [{"text":"[Copy/Paste] 多層 Undo 歷史寫入失敗；這次仍保留單層 Undo。","color":"yellow"}]
+execute unless score @s mcc_ok matches 1 run scoreboard players set @s mcc_histmat 0
 execute unless score @s mcc_ok matches 1 run return fail
 
 scoreboard players operation @s mcc_uhead = @s mcc_hslot
@@ -40,5 +41,6 @@ execute if score @s mcc_ucnt matches ..4 run scoreboard players add @s mcc_ucnt 
 execute store result storage mcc:temp id int 1 run scoreboard players get @s mcc_id
 execute store result storage mcc:temp slot int 1 run scoreboard players get @s mcc_uhead
 function mcc:history/save_undo_meta with storage mcc:temp
+scoreboard players set @s mcc_histmat 0
 scoreboard players set @s mcc_undo 1
 return 1

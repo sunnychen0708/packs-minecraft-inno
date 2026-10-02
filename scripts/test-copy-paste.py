@@ -301,6 +301,12 @@ def check_v100_semantics(pack: Path):
     assert 'scoreboard players remove @s mcc_rcnt 1' in hredo
     for name,key in [('save_undo_meta.mcfunction','u_p$(id)_s$(slot)'),('load_undo_meta.mcfunction','u_p$(id)_s$(slot)'),('save_redo_meta.mcfunction','r_p$(id)_s$(slot)'),('load_redo_meta.mcfunction','r_p$(id)_s$(slot)')]:
         assert key in read(pack/'data/mcc/function/history'/name)
+    save_u=read(pack/'data/mcc/function/history/save_undo_meta.mcfunction')
+    load_u=read(pack/'data/mcc/function/history/load_undo_meta.mcfunction')
+    assert '.mat int 1 run scoreboard players get @s mcc_histmat' in save_u
+    assert '.materials.items set from storage mcc:materials p$(id).items' in save_u
+    assert '.materials.bom set from storage mcc:materials p$(id).bom' in save_u
+    assert 'scoreboard players set @s mcc_umat 0' in load_u
 
     for p in (
         pack/'data/mcc/function/move/run.mcfunction',
@@ -374,6 +380,7 @@ def check_v100_semantics(pack: Path):
     assert 'function mcc:materials/sanitize_block' in scan
     assert 'function mcc:materials/queue_boxes' in build
     assert 'function mcc:materials/place_buffer' in place
+    assert 'scoreboard players set @s mcc_histmat 1' in place
     assert (pack/'data/mcc/tags/block/material_chests.json').is_file()
     assert (pack/'data/mcc/tags/block/material_unsupported.json').is_file()
     panel=read(pack/'data/mcc/function/panel.mcfunction')
