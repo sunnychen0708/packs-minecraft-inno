@@ -17,7 +17,4 @@ $execute store result score @s mcc_uanx run data get storage mcc:history u_p$(id
 $execute store result score @s mcc_uany run data get storage mcc:history u_p$(id)_s$(slot).any 1
 $execute store result score @s mcc_uanz run data get storage mcc:history u_p$(id)_s$(slot).anz 1
 $execute store result score @s mcc_uhasa run data get storage mcc:history u_p$(id)_s$(slot).hasa 1
-$execute store result score @s mcc_umat run data get storage mcc:history u_p$(id)_s$(slot).mat 1
-$execute if data storage mcc:history u_p$(id)_s$(slot).materials run data modify storage mcc:debug material_load set value {id:$(id),slot:$(slot),stage:"loaded"}
-execute if data storage mcc:debug material_load store result storage mcc:debug material_load.umat int 1 run scoreboard players get @s mcc_umat
-$execute if data storage mcc:history u_p$(id)_s$(slot).materials run data modify storage mcc:debug material_load.saved_mat set from storage mcc:history u_p$(id)_s$(slot).mat
+$execute if data storage mcc:history u_p$(id)_s$(slot){mat:1} run scoreboard players set @s mcc_umat 1
