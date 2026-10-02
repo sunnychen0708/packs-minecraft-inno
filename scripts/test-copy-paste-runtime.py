@@ -141,6 +141,16 @@ def integration(java: Path, server: Path):
     check(f'if block 12 80 3 emerald_block if score {actor} mcc_ucnt matches 1','build_undo_guard_refuses_modified_world')
     lines.append('setblock 12 80 3 gold_block')
     run_as('mcc:undo/run')
+    lines.extend([
+        f'execute if score {actor} mcc_umat matches 1 run say MCCST_DEBUG_UMAT_1',
+        'execute if data storage mcc:history u_p77_s1.materials.items[0].id run say MCCST_DEBUG_HISTORY_ITEMS',
+        'execute if data storage mcc:history u_p77_s1.materials.bom."minecraft:gold_block"{taken:1} run say MCCST_DEBUG_HISTORY_TAKEN',
+        'execute if data storage mcc:temp txitem.id run say MCCST_DEBUG_TXITEM',
+        'execute if data storage mcc:temp refund.item_id run say MCCST_DEBUG_REFUND_ID',
+        'execute if data storage mcc:temp refund.count run say MCCST_DEBUG_REFUND_COUNT',
+        'execute if data storage warehouse:api result{operation:"take_item"} run say MCCST_DEBUG_API_TAKE',
+        'execute if data storage warehouse:api result{operation:"refund_item"} run say MCCST_DEBUG_API_REFUND',
+    ])
     check(f'if block 12 80 3 air if block 14 80 4 air if score {actor} mcc_rcnt matches 1','build_undo_world')
     check('if data storage warehouse:api result{operation:"refund_item",ok:1b,complete:1b}','build_undo_called_refund_api')
     check('unless data storage warehouse:api pending_refunds[0].item_id','build_undo_refund_not_pending')
@@ -292,6 +302,9 @@ def integration(java: Path, server: Path):
     (work/'console.log').write_text(report,encoding='utf-8')
     failures=[label for label in assertions if f'MCCST_PASS_{label}' not in report]
     parse_errors=[line.strip() for line in output if any(x in line.lower() for x in ('failed to load function','failed to parse','whilst instantiating','invalid macro','missing argument','unknown function'))]
+    if failures:
+        debug=[line.strip() for line in output if 'MCCST_DEBUG_' in line]
+        print('Copy/Paste refund debug: ' + ' | '.join(debug), flush=True)
     assert not failures, f'Runtime assertion failures: {failures}'
     assert not parse_errors, f'Runtime parser/macro errors: {parse_errors[:20]}'
     assert 'MCCST_REGRESSION_SUCCESS' in report
