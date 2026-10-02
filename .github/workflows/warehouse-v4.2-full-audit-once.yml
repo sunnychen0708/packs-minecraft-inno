@@ -51,7 +51,8 @@ jobs:
           python3 scripts/test-warehouse-v4.2-full-audit.py \
             --pack-zip "$PWD/audit-release/warehouse-v4.2.zip" \
             --java "$(command -v java)" \
-            --server-jar "$PWD/server.jar"
+            --server-jar "$PWD/server.jar" \
+            --phase compat
 
       - name: Upload audit evidence
         if: always()
