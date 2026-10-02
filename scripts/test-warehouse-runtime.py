@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Isolated vanilla 26.3 behavioral regression for Warehouse registration reset."""
+"""Isolated vanilla 26.3 behavioral regression for Warehouse."""
 from __future__ import annotations
 
 import argparse
@@ -27,6 +27,7 @@ ERROR_PATTERNS = (
     "invalid macro",
     "whilst instantiating",
     "missing argument",
+    "command execution stopped due to limit",
 )
 
 
@@ -82,8 +83,10 @@ def integration(java: Path, server: Path) -> None:
         )
 
     check(f"if entity {actor}", "test_actor_spawned")
+    check("if data storage warehouse:meta {v42:1b,search_ready:1b}", "search_index_ready")
+    check('if data storage warehouse:search_index terms."- Pigstep"', "search_index_populated")
+    check("if score #search_index wh_sys matches 72", "search_index_all_shards")
 
-    # Seed every slot as registered/valid. Add representative persisted metadata.
     for code in CODES:
         lines.extend(
             [
@@ -103,7 +106,6 @@ def integration(java: Path, server: Path) -> None:
         ]
     )
 
-    # Exercise the exact function that previously failed to parse on server load/reload.
     lines.append(f"execute as {actor} at @s run function warehouse:admin/reset_registrations")
 
     for code in CODES:
@@ -125,7 +127,6 @@ def integration(java: Path, server: Path) -> None:
         "classification_override_preserved",
     )
 
-    # Verify a cleared slot can be registered again through Warehouse's normal save path.
     lines.extend(
         [
             f"scoreboard players set {actor} wh_target 11",
@@ -227,7 +228,7 @@ def integration(java: Path, server: Path) -> None:
     assert not parse_errors, f"Runtime parser/datapack errors: {parse_errors[:20]}"
     assert "WHST_REGRESSION_SUCCESS" in report
     print(
-        f"PASS Warehouse vanilla 26.3 reset regression: {len(assertions)} assertions; evidence: {work}",
+        f"PASS Warehouse vanilla 26.3 runtime regression: {len(assertions)} assertions; evidence: {work}",
         flush=True,
     )
 

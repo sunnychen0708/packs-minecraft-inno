@@ -48,7 +48,25 @@ def main() -> None:
     }
     assert not missing, f"incomplete registration reset: {missing}"
     assert sum(len(fields) for fields in seen.values()) == 122
-    print("PASS warehouse regression: reset touches exactly registered/valid for all 61 slots")
+
+    v14 = (PACK / "data/warehouse/function/migrate_v14.mcfunction").read_text(encoding="utf-8")
+    v40 = (PACK / "data/warehouse/function/migrate_v40.mcfunction").read_text(encoding="utf-8")
+    assert "function warehouse:search/index/init_" not in v14
+    assert "function warehouse:search/index/init_" not in v40
+
+    tick = (PACK / "data/warehouse/function/search/index/rebuild_tick.mcfunction").read_text(encoding="utf-8")
+    calls = re.findall(r"function warehouse:search/index/init_(\d{3})", tick)
+    assert calls == [f"{i:03d}" for i in range(72)], "search-index rebuild must dispatch exactly 000..071"
+    assert "schedule function warehouse:search/index/rebuild_tick 1t replace" in tick
+
+    run = (PACK / "data/warehouse/function/search/run.mcfunction").read_text(encoding="utf-8")
+    assert "warehouse:meta search_ready" in run
+    assert "return fail" in run
+
+    load = (PACK / "data/warehouse/function/load.mcfunction").read_text(encoding="utf-8")
+    assert "execute unless data storage warehouse:meta v42 run function warehouse:migrate_v42" in load
+
+    print("PASS warehouse regression: reset is scoped; search-index rebuild is bounded to one shard per tick")
 
 
 if __name__ == "__main__":
