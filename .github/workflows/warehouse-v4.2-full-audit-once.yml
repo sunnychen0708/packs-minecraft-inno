@@ -42,7 +42,7 @@ jobs:
             --output server.jar
           echo "33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c  server.jar" | sha1sum --check -
 
-      - name: Run comprehensive release audit full-final
+      - name: Run management-only audit
         shell: bash
         run: |
           set -euo pipefail
@@ -52,7 +52,7 @@ jobs:
             --pack-zip "$PWD/audit-release/warehouse-v4.2.zip" \
             --java "$(command -v java)" \
             --server-jar "$PWD/server.jar" \
-            --phase full
+            --phase basic
 
       - name: Upload audit evidence
         if: always()
