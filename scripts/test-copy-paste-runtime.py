@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Isolated vanilla 26.3 behavioral regression for Copy/Paste v0.6.
+"""Isolated vanilla 26.3 behavioral regression for Copy/Paste v1.0.
 
 Uses a non-player armor stand test actor to exercise internal datapack functions.
 This complements (not replaces) the opt-in real-player trigger/client harnesses.
@@ -30,7 +30,7 @@ def integration(java: Path, server: Path):
     harness=packs/'regression'
     funcs=harness/'data/mcc_server_test/function'
     funcs.mkdir(parents=True)
-    (harness/'pack.mcmeta').write_text(json.dumps({'pack':{'min_format':121,'max_format':121,'description':'CopyPaste v0.6 server regression'}}),encoding='utf-8')
+    (harness/'pack.mcmeta').write_text(json.dumps({'pack':{'min_format':121,'max_format':121,'description':'CopyPaste v1.0 server regression'}}),encoding='utf-8')
 
     actor='@e[type=minecraft:armor_stand,tag=mcc_server_actor,limit=1]'
     lines=[
@@ -111,6 +111,24 @@ def integration(java: Path, server: Path):
     check('positioned 12 80 3 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]','blueprint_gold_state')
     check('positioned 12 80 4 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:{id:"minecraft:oak_stairs",properties:{facing:"east",half:"bottom",shape:"straight",waterlogged:"false"}}},limit=1]','blueprint_stair_state')
     check('if block 3 80 3 gold_block if block 5 80 4 iron_block','copy_source_unchanged')
+
+    # 1b. v1.0 material-backed Build: missing materials do nothing; complete stock consumes then builds.
+    lines.extend([
+        'setblock 8 80 8 chest',
+        'data modify block 8 80 8 Items set value [{Slot:0b,id:"minecraft:gold_block",count:1},{Slot:1b,id:"minecraft:diamond_block",count:1},{Slot:2b,id:"minecraft:oak_stairs",count:1}]',
+        'data modify storage mcc:materials p77.boxes set value [{x:8,y:80,z:8,dimension:"minecraft:overworld"}]',
+    ])
+    run_as('mcc:materials/build_start')
+    for _ in range(3): run_as('mcc:materials/process_batch')
+    check(f'if block 12 80 3 air if block 14 80 4 air if score {actor} mcc_matphase matches 0 if score {actor} mcc_bpactive matches 1','build_missing_all_or_nothing')
+    check('if data block 8 80 8 Items[{id:"minecraft:gold_block",count:1}] if data block 8 80 8 Items[{id:"minecraft:diamond_block",count:1}]','build_missing_no_consume')
+    lines.append('data modify block 8 80 8 Items append value {Slot:3b,id:"minecraft:iron_block",count:1}')
+    run_as('mcc:materials/build_start')
+    for _ in range(4): run_as('mcc:materials/process_batch')
+    check(f'if block 12 80 3 gold_block if block 14 80 3 diamond_block if block 12 80 4 oak_stairs[facing=east] if block 14 80 4 iron_block if score {actor} mcc_bpactive matches 0','build_material_success')
+    check('unless data block 8 80 8 Items[0]','build_materials_consumed')
+    run_as('mcc:undo/run')
+    check('if block 12 80 3 air if block 14 80 4 air','build_undo_world')
     run_as('mcc:blueprint/clear_internal')
     check('unless entity @e[type=minecraft:block_display,tag=mcc_blueprint]','blueprint_clear')
 

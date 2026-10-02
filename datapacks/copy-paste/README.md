@@ -1,107 +1,77 @@
-# Minecraft Copy/Paste Datapack v0.6.0
+# Minecraft Copy/Paste Datapack v1.0
 
 適用：Minecraft Java Edition 26.3（Data Pack 121.0）
 
-純 Vanilla datapack。操作使用 Trigger，不使用 G、ESC 或 Dialog。
+純 Vanilla datapack。操作使用 Trigger，不依賴 Warehouse 或其他資料包。
 
-## 核心原則
+## v1.0 核心流程
 
-v0.5.0 開始把 **Copy** 和 **Cut** 明確分開：
+Copy 現在是「先 Blueprint、再用真實材料施工」：
 
-- `/trigger c`：Copy。保存個人 Clipboard，但 `V` **不會生成真實方塊**；只建立所有玩家都看得到的 Blueprint 預覽。
-- `/trigger x`：Cut。真正移除來源方塊；之後 `V` 會真正貼到目標位置，成功後 Cut Clipboard 立即消耗，不能重複貼上。
-- Move / Flip / Rotate：仍然直接修改真實世界方塊。
-- Undo / Redo：最近一次真實世界修改可在前後狀態來回切換。
+```text
+選取 → /trigger c → /trigger v
+                    ↓
+             Blueprint 預覽
+                    ↓
+          rotate / mirror / 重新 V 定位
+                    ↓
+              /trigger build
+                    ↓
+     掃描所有已註冊材料來源
+          ↙                 ↘
+      全部足夠             有缺料
+      扣除材料             不扣材料
+      真正施工             不修改世界
+      清除預覽             保留 Blueprint
+                         精確列出缺少 ID × 數量
+```
 
-因此 Copy 不再能用來複製鑽石方塊、信標、箱子內容等物資。
+Cut、Move、Flip、直接 Rotate 仍維持原本直接修改真實世界的方式。
 
-## 安裝
+## 材料來源
 
-1. 把 ZIP 放進 `world/datapacks/`
-2. 移除舊版 Copy/Paste ZIP
-3. 重啟伺服器或執行 `/reload`
-4. `/trigger copypaste` 顯示控制面板
+瞄準箱子後：
 
-## 選取
+```mcfunction
+/trigger matbox
+```
+
+註冊材料來源。可重複註冊，**沒有寫死固定數量上限**。實際可用數量只受世界資料量與掃描時間影響。
+
+支援：
+
+- 箱子 / 陷阱箱
+- 26.3 的各種銅箱
+- 木桶
+- 大箱子會自動把兩半都註冊
+
+取消瞄準中的材料來源：
+
+```mcfunction
+/trigger matremove
+```
+
+查看目前註冊紀錄數：
+
+```mcfunction
+/trigger matlist
+```
+
+施工時每 tick 分批掃描材料來源，不會把所有箱子硬塞進同一 tick。
+
+## Copy / Blueprint / Build
 
 ```mcfunction
 /trigger pos1
 /trigger pos2
 /trigger anchor
-/trigger anchor set 2
-```
-
-Pos1 / Pos2 / Anchor 都以準星看向的方塊設定。未自訂 Anchor 時使用 Pos1。
-
-## Copy → Blueprint
-
-```mcfunction
 /trigger c
 /trigger v
 ```
 
-`c` 保存當下選取內容；`v` 看向目標方塊旁邊的位置後建立 Blueprint。
+`v` 只建立或重定位 Blueprint，不會直接生成真實方塊。
 
-未套用 `rotate / mirror` 時，準星指到的「目標方塊旁邊那一格」就是 Blueprint 的起始格（選取範圍最小 X/Y/Z），不再套用 Anchor 位移。只有使用 `rotate / mirror` 時，才以 Copy 時保存的 Anchor 作為旋轉／鏡像定位基準。
-
-Blueprint：
-
-- 使用 `block_display`，不會放置真實方塊。
-- 保留 Minecraft 26.3 的原始 block state，包括樓梯方向、原木軸向、門狀態等。
-- 所有附近玩家都看得到。
-- 每位玩家各自最多保留一份目前的 Blueprint；再次 `v` 會替換自己的上一份。
-- `/trigger previewclear` 清除自己的 Blueprint。
-- Blueprint 建立分批執行，避免中小型建築一次生成大量 display entity 卡住伺服器。
-- Copy 之後即使在 Blueprint 還沒畫完前又 Copy 其他東西，Blueprint 會使用自己的快照，不會混到新 Clipboard。
-
-若 `rotate / mirror` 不是預設值，Blueprint 會先在隱藏 Work 區用 Vanilla Structure Template 轉換，再讀取轉換後的 block state，因此方向性方塊由 Minecraft 本身處理。
-
-注意：Block Entity 的內容不會被 Blueprint 複製；例如箱子內容不會出現在預覽中。
-
-## Cut
-
-```mcfunction
-/trigger x
-/trigger v
-```
-
-`x` 取代舊的 `/trigger cut`。
-
-Cut 會真正清除來源並把快照保存為 Cut Clipboard。下一次 `v` 會真正貼上；成功後 Clipboard 被消耗，所以不能連續 `v` 複製同一份材料。
-
-## 直接移動真實選取
-
-```mcfunction
-/trigger right set <1..128>
-/trigger left set <1..128>
-/trigger up set <1..128>
-/trigger down set <1..128>
-/trigger forward set <1..128>
-/trigger backward set <1..128>
-```
-
-水平四方向依玩家當下水平朝向；up/down 永遠是世界 Y 軸。Pos1、Pos2、Anchor 一起移動。
-
-## 直接鏡像真實選取
-
-```mcfunction
-/trigger flipx
-/trigger flipz
-```
-
-Flip 在原地修改真實方塊。自訂 Anchor 會跟著對稱變換。
-
-## 直接旋轉真實選取
-
-```mcfunction
-/trigger rotate90
-/trigger rotate180
-/trigger rotate270
-```
-
-以自訂 Anchor 為中心；沒有自訂 Anchor 時以 Pos1 為中心。使用 Vanilla Structure Template，所以直接 Rotate 的 X/Y/Z 每軸上限為 48 格。
-
-## Blueprint / Cut Paste 的旋轉與鏡像設定
+Blueprint 建立完成後可以先設定：
 
 ```mcfunction
 /trigger rotate
@@ -116,12 +86,66 @@ Flip 在原地修改真實方塊。自訂 Anchor 會跟著對稱變換。
 /trigger mirror set 30
 ```
 
-設定值：
+如果 Blueprint 已存在，改 Rotate / Mirror 會直接重建目前預覽，不必重新 Copy。
 
-- Rotate：0° / 90° / 180° / 270°
-- Mirror：無 / X / Z
+確認後：
 
-這組設定只影響下一次 `v` 的 Blueprint 或 Cut Paste；要直接旋轉現有真實建築請用 `rotate90/180/270`。
+```mcfunction
+/trigger build
+```
+
+系統先建立 BOM（Bill of Materials），再掃描所有已註冊材料來源。只有所有材料都足夠才進入扣料與施工。
+
+材料不足時會顯示例如：
+
+```text
+[Copy/Paste] 材料不足，未施工；Blueprint 已保留。
+缺少材料：
+  minecraft:stone_bricks ×12
+  minecraft:lantern ×3
+共缺少 2 種、15 個物品。
+```
+
+目前缺料名稱使用精確 Minecraft item ID，因此不受客戶端語言影響。
+
+## 生存安全
+
+v1.0 不會把 Copy 當成免費 Clone：
+
+- 施工只消耗已註冊容器中的一般、無自訂 components 的物品堆疊。
+- Block Entity 的物品內容在 Blueprint buffer 中會被移除；箱子、熔爐、木桶、潛影盒等不會複製內含物。
+- 沒有可對應生存材料、或會把儲存資源狀態直接複製出來的方塊會拒絕施工。
+- 材料不足時完全不修改目標世界，也不扣除任何材料。
+- 若扣料期間材料箱被其他人改動，施工會取消，已扣的普通材料會退還給施工玩家。
+
+## Cut
+
+```mcfunction
+/trigger x
+/trigger v
+```
+
+Cut 是搬移，不需要材料箱。來源先被真正移除，下一次 `v` 真正貼上，成功後 Cut Clipboard 被消耗。
+
+## Move / Flip / Rotate
+
+直接修改真實選取：
+
+```mcfunction
+/trigger right set <1..128>
+/trigger left set <1..128>
+/trigger up set <1..128>
+/trigger down set <1..128>
+/trigger forward set <1..128>
+/trigger backward set <1..128>
+
+/trigger flipx
+/trigger flipz
+
+/trigger rotate90
+/trigger rotate180
+/trigger rotate270
+```
 
 ## Undo / Redo
 
@@ -130,44 +154,25 @@ Flip 在原地修改真實方塊。自訂 Anchor 會跟著對稱變換。
 /trigger redo
 ```
 
-v0.6.0 起每位玩家各自保留 **最近 5 次**成功的真實世界修改，Undo 與 Redo 都是 5 層歷史：
+每位玩家保留最近 5 次真實世界修改。Build 成功也會進入世界 Undo/Redo 歷史。
 
-1. Move / Flip / Rotate / Cut / 真實 Paste 成功後，操作前狀態推入 Undo 歷史。
-2. 每次 Undo 會把目前狀態推入 Redo，再還原上一層 Undo。
-3. 可以連續 Undo 最多 5 次，再依序 Redo 回去，行為接近 Ctrl+Z / Ctrl+Y。
-4. 超過 5 次時會自動捨棄最舊的一筆。
-5. Undo 後只要做新的真實世界修改，Redo 分支就會清空。
-
-例如：
-
-```text
-修改 A → 修改 B → 修改 C
-                     ↓ undo
-                  回到 B
-                     ↓ undo
-                  回到 A
-                     ↓ redo
-                  回到 B
-```
-
-Copy、建立/清除 Blueprint 不修改世界，因此不會消耗 Undo，也不會清除 Redo。
+目前 v1.0 的 Undo/Redo 只還原世界方塊；Build 已消耗的材料不會因 Undo 自動退回，也不會因 Redo 再次扣除。這避免現階段產生材料複製漏洞，但若把 Build 當作試擺工具，請先用 Blueprint 確認好位置再施工。
 
 ## 多人
 
-- 每位玩家有獨立 `mcc_id`
-- Clipboard / 5 層 Undo / 5 層 Redo / Work / Blueprint Buffer 都依玩家分離
-- Clipboard 與 Undo 不會互相串到其他玩家
-- Blueprint display 是共享可見，所有玩家都能一起看建築預覽
-- 若兩個玩家刻意同時修改相同的真實世界方塊，最後結果仍依伺服器命令執行順序決定；目前不做區域鎖
+- 每位玩家有獨立 Clipboard、Blueprint、BOM、材料箱註冊表與 5 層 Undo/Redo。
+- Blueprint display 所有附近玩家都看得到。
+- 材料來源註冊屬於玩家自己；不同玩家可以註冊同一個實體箱子。
+- 如果多人同時從同一材料箱施工，第二階段會重新實際扣料並檢查，材料被搶走時不會免費施工。
 
 ## 限制
 
-- Raycast：128 格
-- 一般 Copy / Cut / 無變換資料：每軸最多 128 格，總體積受 `minecraft:max_block_modifications` 限制
-- Rotate / Mirror Structure Template：每軸 ≤ 48
-- Blueprint 目前針對中小型建築設計
-- Blueprint exact-state matcher 覆蓋 Java 26.3 的 1,283 種非空氣 block IDs、35,720 個 block states
-- 實體不包含在 Copy/Cut/Blueprint 中
+- Raycast：128 格。
+- 一般 Copy / Cut：每軸最多 128 格，總體積受 `minecraft:max_block_modifications` 限制。
+- Rotate / Mirror Structure Template：每軸 ≤ 48。
+- Material box 數量沒有固定硬上限，但越多箱子檢查時間越長；目前每位玩家每 tick 最多處理 4 個註冊來源。
+- Blueprint exact-state matcher覆蓋 Java 26.3 的 1,283 種非空氣 block IDs、35,720 個 block states。
+- 實體不包含在 Copy/Cut/Blueprint 中。
 
 ## 驗證
 
@@ -176,4 +181,4 @@ python3 scripts/validate-datapack.py copy-paste
 python3 scripts/test-copy-paste.py
 ```
 
-多人架構與測試方式見 [MULTIPLAYER-VALIDATION.md](MULTIPLAYER-VALIDATION.md)。v0.4.2 的實機基準結果保留在 [LIVE-VALIDATION.md](LIVE-VALIDATION.md)。
+CI 另外會使用官方 Minecraft 26.3 server 執行 runtime smoke test；v1.0 tag 只有在 main 的驗證通過後才自動建立並交給 release workflow 發布 ZIP。

@@ -13,7 +13,7 @@ RE_TRIGGER = re.compile(r'^scoreboard objectives add (\S+) trigger$', re.M)
 USER_TRIGGERS = {
     'copypaste','pos1','pos2','anchor','c','x','v','undo','redo','mode','rotate','mirror',
     'right','left','up','down','forward','backward','flipx','flipz',
-    'rotate90','rotate180','rotate270','previewclear'
+    'rotate90','rotate180','rotate270','previewclear','build','matbox','matremove','matlist'
 }
 
 def read(p: Path) -> str:
@@ -34,7 +34,7 @@ def check_json(pack: Path):
         json.loads(read(p)); count+=1
     meta=json.loads(read(pack/'pack.mcmeta'))
     assert meta['pack']['min_format']==121 and meta['pack']['max_format']==121
-    assert 'v0.6.0' in meta['pack']['description']
+    assert 'v1.0' in meta['pack']['description']
     return count
 
 def check_refs(pack: Path):
@@ -69,7 +69,7 @@ def check_trigger_lifecycle(pack: Path):
 
 def check_upgrade_and_mode(pack: Path):
     tick=read(pack/'data/mcc/function/tick.mcfunction')
-    for objective,valid in [('mcc_rot','0..3'),('mcc_mir','0..2'),('mcc_usel','0..1'),('mcc_cliptype','0..2'),('mcc_redo','0..1'),('mcc_ucnt','0..5'),('mcc_uhead','0..5'),('mcc_rcnt','0..5'),('mcc_rhead','0..5'),('mcc_bpscan','0..1')]:
+    for objective,valid in [('mcc_rot','0..3'),('mcc_mir','0..2'),('mcc_usel','0..1'),('mcc_cliptype','0..2'),('mcc_redo','0..1'),('mcc_ucnt','0..5'),('mcc_uhead','0..5'),('mcc_rcnt','0..5'),('mcc_rhead','0..5'),('mcc_bpscan','0..1'),('mcc_bpactive','0..1'),('mcc_bpready','0..1'),('mcc_bpbad','0..1'),('mcc_matphase','0..2'),('mcc_matleft','0..')]:
         migration=f'execute as @a unless score @s {objective} matches {valid} run scoreboard players set @s {objective} 0'
         assert migration in tick, f'missing non-destructive upgrade for {objective}'
         assert tick.index(migration)<tick.index('scores={copypaste='), 'migrate before dispatch'
@@ -247,7 +247,7 @@ def check_multiplayer_isolation(pack: Path):
 
     return 64
 
-def check_v060_semantics(pack: Path):
+def check_v100_semantics(pack: Path):
     load=read(pack/'data/mcc/function/load.mcfunction')
     tick=read(pack/'data/mcc/function/tick.mcfunction')
     assert 'scoreboard objectives add x trigger' in load
@@ -257,6 +257,10 @@ def check_v060_semantics(pack: Path):
     assert 'scoreboard objectives add rotate180 trigger' in load
     assert 'scoreboard objectives add rotate270 trigger' in load
     assert 'scoreboard objectives add previewclear trigger' in load
+    assert 'scoreboard objectives add build trigger' in load
+    assert 'scoreboard objectives add matbox trigger' in load
+    assert 'scoreboard objectives add matremove trigger' in load
+    assert 'scoreboard objectives add matlist trigger' in load
     assert 'scores={x=1..}' in tick and 'function mcc:cut/run' in tick
 
     copy=read(pack/'data/mcc/function/copy/run.mcfunction')
@@ -359,14 +363,27 @@ def check_v060_semantics(pack: Path):
         assert f'#mcc:blueprint/generated/g_{i}' in root
         assert f'function mcc:blueprint/generated/group_{i}' in root
 
-    # Blueprint generation may create temporary hidden buffer blocks, but Copy-V never routes to real Paste.
+    # Copy-V stays preview-only; v1.0 construction is a separate, material-gated Build step.
     assert 'mcc_cliptype matches 1 run return run function mcc:blueprint/create' in dispatch
+    build=read(pack/'data/mcc/function/materials/build_start.mcfunction')
+    place=read(pack/'data/mcc/function/materials/place.mcfunction')
+    scan=read(pack/'data/mcc/function/blueprint/scan_one.mcfunction')
+    assert 'mcc_bpready matches 1' in build
+    assert 'function mcc:materials/bom_reset' in create
+    assert 'function mcc:materials/bom_from_block' in scan
+    assert 'function mcc:materials/sanitize_block' in scan
+    assert 'function mcc:materials/queue_boxes' in build
+    assert 'function mcc:materials/place_buffer' in place
+    assert (pack/'data/mcc/tags/block/material_chests.json').is_file()
+    assert (pack/'data/mcc/tags/block/material_unsupported.json').is_file()
+    panel=read(pack/'data/mcc/function/panel.mcfunction')
+    assert '/trigger build' in panel and '/trigger matbox' in panel
     return matcher_states
 
 def check_version_labels(pack: Path):
     meta=json.loads(read(pack/'pack.mcmeta'))
     desc=meta['pack']['description']
-    m=re.search(r'v(\d+\.\d+\.\d+)',desc)
+    m=re.search(r'v(\d+\.\d+(?:\.\d+)?)',desc)
     assert m, f'pack description has no semantic version: {desc}'
     version=m.group(1)
     load=read(pack/'data/mcc/function/load.mcfunction')
@@ -411,9 +428,9 @@ def main():
     check_flip_anchor_formula(pack)
     check_move_model()
     mp=check_multiplayer_isolation(pack)
-    states=check_v060_semantics(pack)
+    states=check_v100_semantics(pack)
     version=check_version_labels(pack)
     tj=check_tellraw_json(pack)
-    print(f'PASS copy-paste regression v{version}: {j} JSON, {f} functions, {o} objectives, {t} triggers, {tj} tellraw JSON, {mp}-player buffer isolation, {states} exact blueprint states, copy-v blueprint semantics, five-level undo/redo, real rotate, clipboard isolation, rollback, move/flip properties')
+    print(f'PASS copy-paste regression v{version}: {j} JSON, {f} functions, {o} objectives, {t} triggers, {tj} tellraw JSON, {mp}-player buffer isolation, {states} exact blueprint states, copy-v blueprint/material-build semantics, five-level undo/redo, real rotate, clipboard isolation, rollback, move/flip properties')
 
 if __name__=='__main__': main()

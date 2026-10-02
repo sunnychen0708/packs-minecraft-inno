@@ -103,3 +103,29 @@ jobs:
             dist/copy-paste-runtime-*
           if-no-files-found: ignore
           retention-days: 14
+
+
+  release-copy-paste-v1:
+    name: Publish Copy/Paste v1.0 tag
+    needs: copy-paste-runtime-smoke
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Tag validated v1.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'Minecraft Copy/Paste v1.0' datapacks/copy-paste/pack.mcmeta
+          if git ls-remote --exit-code --tags origin refs/tags/copy-paste-v1.0 >/dev/null 2>&1; then
+            echo "copy-paste-v1.0 already exists"
+            exit 0
+          fi
+          git tag copy-paste-v1.0 "$GITHUB_SHA"
+          git push origin copy-paste-v1.0

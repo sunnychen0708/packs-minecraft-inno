@@ -1,2 +1,3 @@
 $execute positioned $(sx) $(sy) $(sz) unless block ~ ~ ~ #minecraft:air run function mcc:blueprint/generated/root
-$execute if score @s mcc_bpkind matches 1 positioned $(sx) $(sy) $(sz) run setblock ~ ~ ~ air
+$execute positioned $(sx) $(sy) $(sz) unless block ~ ~ ~ #minecraft:air run function mcc:materials/sanitize_block
+$execute positioned $(sx) $(sy) $(sz) unless block ~ ~ ~ #minecraft:air run function mcc:materials/bom_from_block
