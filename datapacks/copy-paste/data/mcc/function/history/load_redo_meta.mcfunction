@@ -17,4 +17,4 @@ $execute store result score @s mcc_ranx run data get storage mcc:history r_p$(id
 $execute store result score @s mcc_rany run data get storage mcc:history r_p$(id)_s$(slot).any 1
 $execute store result score @s mcc_ranz run data get storage mcc:history r_p$(id)_s$(slot).anz 1
 $execute store result score @s mcc_rhasa run data get storage mcc:history r_p$(id)_s$(slot).hasa 1
-$execute store result score @s mcc_rmat run data get storage mcc:history r_p$(id)_s$(slot).mat 1
+$execute if data storage mcc:history r_p$(id)_s$(slot){mat:1} run scoreboard players set @s mcc_rmat 1

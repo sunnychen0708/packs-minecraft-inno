@@ -304,6 +304,9 @@ def check_v100_semantics(pack: Path):
     assert '.materials.items set from storage mcc:materials p$(id).items' in save_u
     assert '.materials.bom set from storage mcc:materials p$(id).bom' in save_u
     assert 'scoreboard players set @s mcc_umat 0' in load_u
+    assert 'u_p$(id)_s$(slot){mat:1} run scoreboard players set @s mcc_umat 1' in load_u
+    load_r=read(pack/'data/mcc/function/history/load_redo_meta.mcfunction')
+    assert 'r_p$(id)_s$(slot){mat:1} run scoreboard players set @s mcc_rmat 1' in load_r
     undo_hist=read(pack/'data/mcc/function/history/undo.mcfunction')
     redo_hist=read(pack/'data/mcc/function/history/redo.mcfunction')
     redo_apply=read(pack/'data/mcc/function/history/redo_apply.mcfunction')
