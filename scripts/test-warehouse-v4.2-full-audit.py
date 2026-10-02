@@ -274,6 +274,108 @@ def make_harness(harness: Path, phase: str = "full") -> tuple[int, list[str]]:
     
         return len(assertions), assertions
 
+    if phase == "routing":
+        # Minimal physical setup for automatic sorting / overflow / safe fallback.
+        lines = [
+            "function warehouse:system/off",
+            "data remove storage warehouse:migration active",
+            "data modify storage warehouse:migration queue set value []",
+            "data modify storage warehouse:rules overrides set value {}",
+            "setblock 1 80 1 minecraft:chest",
+            "setblock 1 80 3 minecraft:chest",
+            "setblock 3 80 1 minecraft:chest",
+            "setblock 3 80 3 minecraft:chest",
+            "setblock 5 80 1 minecraft:chest",
+            "setblock 5 80 3 minecraft:chest",
+            f"execute as {actor} run function warehouse:register/save_00 {{a_x:1,a_y:80,a_z:1,b_x:1,b_y:80,b_z:3,dimension:\"minecraft:overworld\"}}",
+            f"scoreboard players set {actor} wh_target 31",
+            f"execute as {actor} run function warehouse:register/save_nonzero {{code:31,a_x:3,a_y:80,a_z:1,b_x:3,b_y:80,b_z:3,dimension:\"minecraft:overworld\"}}",
+            f"scoreboard players set {actor} wh_target 30",
+            f"execute as {actor} run function warehouse:register/save_nonzero {{code:30,a_x:5,a_y:80,a_z:1,b_x:5,b_y:80,b_z:3,dimension:\"minecraft:overworld\"}}",
+            "data modify block 1 80 1 Items set value []",
+            "data modify block 1 80 3 Items set value []",
+            "data modify block 3 80 1 Items set value []",
+            "data modify block 3 80 3 Items set value []",
+            "data modify block 5 80 1 Items set value []",
+            "data modify block 5 80 3 Items set value []",
+            "say WFTA_PHASE_ROUTING_SETUP_DONE",
+        ]
+        (funcs / "routing_setup.mcfunction").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        lines = [
+            'data remove storage warehouse:rules overrides."minecraft:stone"',
+            "item replace block 1 80 1 container.0 with minecraft:stone 32",
+            "scoreboard players set #cursor wh_sys 0",
+            "function warehouse:system/on",
+            "say WFTA_PHASE_PREPARE_AUTO_SORT_DONE",
+        ]
+        (funcs / "prepare_auto_sort.mcfunction").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        lines, check = phase("auto_sort")
+        lines += ["function warehouse:system/off"]
+        check("unless items block 1 80 1 container.0 *", "source_empty")
+        check("if items block 3 80 1 container.0 minecraft:stone", "dest_item")
+        lines += [
+            "scoreboard players set #tmp wfta 0",
+            "execute store result score #tmp wfta run data get block 3 80 1 Items[{Slot:0b}].count 1",
+        ]
+        check("if score #tmp wfta matches 32", "dest_count")
+        lines.append("say WFTA_PHASE_VERIFY_AUTO_SORT_DONE")
+        (funcs / "verify_auto_sort.mcfunction").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        lines, check = phase("routing")
+        lines += [
+            "data modify block 1 80 1 Items set value []",
+            "data modify block 1 80 3 Items set value []",
+            "data modify block 3 80 1 Items set value []",
+            "data modify block 3 80 3 Items set value []",
+            "data modify block 5 80 1 Items set value []",
+            "data modify block 5 80 3 Items set value []",
+        ]
+        for z in (1, 3):
+            for slot in range(27):
+                lines.append(f"item replace block 3 80 {z} container.{slot} with minecraft:stone 64")
+        lines += [
+            "item replace block 1 80 1 container.1 with minecraft:stone 10",
+            "scoreboard players set #cursor wh_sys 1",
+            "function warehouse:system/on",
+            "say WFTA_PHASE_ROUTING_OVERFLOW_STARTED",
+        ]
+        (funcs / "routing_overflow_start.mcfunction").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        lines, check = phase("routing_overflow")
+        lines += ["function warehouse:system/off"]
+        check("unless items block 1 80 1 container.1 *", "source_empty")
+        check("if items block 5 80 1 container.0 minecraft:stone", "dest_item")
+        lines += [
+            "scoreboard players set #tmp wfta 0",
+            "execute store result score #tmp wfta run data get block 5 80 1 Items[{Slot:0b}].count 1",
+        ]
+        check("if score #tmp wfta matches 10", "dest_count")
+        for z in (1, 3):
+            for slot in range(27):
+                lines.append(f"item replace block 5 80 {z} container.{slot} with minecraft:stone 64")
+        lines += [
+            "item replace block 1 80 1 container.2 with minecraft:stone 5",
+            "scoreboard players set #cursor wh_sys 2",
+            "function warehouse:system/on",
+            "say WFTA_PHASE_ROUTING_SAFE_STARTED",
+        ]
+        (funcs / "routing_overflow_verify_and_safe_start.mcfunction").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        lines, check = phase("routing_safe")
+        lines += ["function warehouse:system/off"]
+        check("if items block 1 80 1 container.2 minecraft:stone", "source_item")
+        lines += [
+            "scoreboard players set #tmp wfta 0",
+            "execute store result score #tmp wfta run data get block 1 80 1 Items[{Slot:2b}].count 1",
+        ]
+        check("if score #tmp wfta matches 5", "source_count")
+        lines.append("say WFTA_PHASE_ROUTING_DONE")
+        (funcs / "routing_safe_verify.mcfunction").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        return len(assertions), assertions
+
     # Simulate an actual v3.4 world: all pre-v4 markers and persistent user state exist.
     lines = [
         'data modify storage warehouse:meta initialized set value 1b',
@@ -744,6 +846,24 @@ def runtime_audit(pack_zip: Path, java: Path, server: Path, phase: str = "full")
         if phase == "basic":
             send("function warehouse_full_test:basic")
             wait_marker("WFTA_PHASE_BASIC_DONE")
+        elif phase == "routing":
+            send("function warehouse_full_test:routing_setup")
+            wait_marker("WFTA_PHASE_ROUTING_SETUP_DONE")
+
+            send("function warehouse_full_test:prepare_auto_sort")
+            wait_marker("WFTA_PHASE_PREPARE_AUTO_SORT_DONE")
+            time.sleep(0.8)
+            send("function warehouse_full_test:verify_auto_sort")
+            wait_marker("WFTA_PHASE_VERIFY_AUTO_SORT_DONE")
+
+            send("function warehouse_full_test:routing_overflow_start")
+            wait_marker("WFTA_PHASE_ROUTING_OVERFLOW_STARTED")
+            time.sleep(0.8)
+            send("function warehouse_full_test:routing_overflow_verify_and_safe_start")
+            wait_marker("WFTA_PHASE_ROUTING_SAFE_STARTED")
+            time.sleep(0.8)
+            send("function warehouse_full_test:routing_safe_verify")
+            wait_marker("WFTA_PHASE_ROUTING_DONE")
         else:
             send("function warehouse_full_test:seed_v34")
             wait_marker("WFTA_PHASE_SEED_V34_DONE")
@@ -822,6 +942,11 @@ def runtime_audit(pack_zip: Path, java: Path, server: Path, phase: str = "full")
             label for label in assertion_labels
             if label.startswith(("fresh_", "basic_"))
         ]
+    elif phase == "routing":
+        labels_to_check = [
+            label for label in assertion_labels
+            if label.startswith(("fresh_", "auto_sort_", "routing_overflow_", "routing_safe_"))
+        ]
     failures = [label for label in labels_to_check if f"WFTA_PASS_{label}" not in report]
     explicit_fails = [line.strip() for line in output if "WFTA_FAIL_" in line]
     parser_errors = [
@@ -844,7 +969,7 @@ def main():
     ap.add_argument("--pack-zip", type=Path, required=True)
     ap.add_argument("--java", type=Path, required=True)
     ap.add_argument("--server-jar", type=Path, required=True)
-    ap.add_argument("--phase", choices=("compat", "basic", "full"), default="full")
+    ap.add_argument("--phase", choices=("compat", "basic", "routing", "full"), default="full")
     args = ap.parse_args()
 
     stats = static_audit(args.pack_zip.resolve())
