@@ -11,7 +11,7 @@
 | Pack | Type | Version | Minecraft | Description |
 | --- | --- | ---: | --- | --- |
 | [`utilities`](datapacks/utilities) | Data pack | [`v3.4`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/utilities-v3.4) | Java 26.3 | Teleportation, waypoints, coordinate display, and general survival utility systems. |
-| [`warehouse`](datapacks/warehouse) | Data pack | [`v4.0`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/warehouse-v4.0) | Java 26.3 | Automatic item sorting and warehouse-management system. |
+| [`warehouse`](datapacks/warehouse) | Data pack | [`v4.1`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/warehouse-v4.1) | Java 26.3 | Automatic item sorting and warehouse-management system. |
 | [`copy-paste`](datapacks/copy-paste) | Data pack | [`v1.0`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/copy-paste-v1.0) | Java 26.3 | Survival building editor: Blueprint preview plus material-backed construction from registered storage, with Cut/Move/Rotate/Flip and Undo/Redo. |
 | [`cat-door-sounds`](resourcepacks/cat-door-sounds) | Resource pack | [`v1.0`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/cat-door-sounds-v1.0) | Java 26.2 | Custom cat meow replacement and an extra wooden-door opening sound layer. |
 
@@ -89,7 +89,7 @@ Generated ZIP files go to `dist/`, which is ignored by Git.
 
 ```bash
 ./scripts/build-pack.sh utilities v3.4
-./scripts/build-pack.sh warehouse v4.0
+./scripts/build-pack.sh warehouse v4.1
 ./scripts/build-pack.sh copy-paste v1.0
 ./scripts/build-pack.sh cat-door-sounds v1.0
 ```
