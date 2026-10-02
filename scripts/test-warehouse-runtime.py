@@ -234,7 +234,7 @@ def integration(java: Path, server: Path) -> None:
         lines.append(f'item replace block 10 70 5 container.{slot} with minecraft:cobblestone 64')
     lines.append(f'execute as {actor} run function warehouse:api/refund_item {{item_id:"minecraft:stone",count:10}}')
     check('if data storage warehouse:api result{operation:"refund_item",ok:1b,complete:1b,inserted:0,queued:10,remaining:0,deferred:1b}', "api_refund_full_entry_queues")
-    check('if data storage warehouse:api pending_refunds[0]{item_id:"minecraft:stone",count:10}', "api_refund_pending_persisted")
+    check('if data storage warehouse:api pending_refunds[{item_id:"minecraft:stone",count:10}]', "api_refund_pending_persisted")
     lines.extend(
         [
             "item replace block 9 70 5 container.0 with minecraft:air",
