@@ -81,6 +81,8 @@ def integration(java: Path, server: Path) -> None:
             ]
         )
 
+    check(f"if entity {actor}", "test_actor_spawned")
+
     # Seed every slot as registered/valid. Add representative persisted metadata.
     for code in CODES:
         lines.extend(
@@ -192,9 +194,13 @@ def integration(java: Path, server: Path) -> None:
     try:
         assert ready.wait(90), "Server did not become ready"
         assert proc.stdin is not None
+        proc.stdin.write("forceload add 0 0\n")
+        proc.stdin.flush()
+        time.sleep(2)
         proc.stdin.write("reload\n")
         proc.stdin.flush()
         time.sleep(8)
+        proc.stdin.write("forceload add 0 0\n")
         proc.stdin.write("function warehouse_server_test:run\n")
         proc.stdin.flush()
         assert done.wait(60), "Warehouse runtime regression did not complete"
