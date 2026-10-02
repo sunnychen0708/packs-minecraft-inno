@@ -128,6 +128,8 @@ def main() -> None:
     show_classified = (PACK / "data/warehouse/function/rule/show_classified.mcfunction").read_text(encoding="utf-8")
     assert "warehouse:chests c$(code)" in highlight_slot
     assert highlight_slot.splitlines()[0] == "data remove storage warehouse:api work.highlight"
+    assert all(not line.startswith("$") or "$(" in line for line in highlight_slot.splitlines()), "Highlight macro lines must reference a macro variable"
+    assert "return run function warehouse:api/highlight_slot with storage warehouse:api request" in api_highlight
     assert "particle minecraft:end_rod" in highlight_box
     assert "force @s" in highlight_box
     assert "Highlight 箱子" in show_classified
