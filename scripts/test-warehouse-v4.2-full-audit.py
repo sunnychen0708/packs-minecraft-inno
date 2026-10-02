@@ -597,6 +597,7 @@ def runtime_audit(pack_zip: Path, java: Path, server: Path) -> tuple[int, Path]:
             time.sleep(0.1)
         raise AssertionError(f"timeout waiting for {marker}")
 
+    caught = None
     try:
         assert ready.wait(90), "server did not become ready"
         send("forceload add 0 0")
@@ -650,6 +651,8 @@ def runtime_audit(pack_zip: Path, java: Path, server: Path) -> tuple[int, Path]:
 
         send("function warehouse_full_test:reset")
         wait_marker("WFTA_PHASE_RESET_DONE")
+    except BaseException as exc:
+        caught = exc
     finally:
         if proc.poll() is None:
             try:
@@ -658,9 +661,13 @@ def runtime_audit(pack_zip: Path, java: Path, server: Path) -> tuple[int, Path]:
             except Exception:
                 proc.terminate()
         thread.join(timeout=5)
+        report = "".join(output)
+        console_path = work / "console.log"
+        console_path.write_text(report, encoding="utf-8")
+        print(f"AUDIT_EVIDENCE {console_path}", flush=True)
 
-    report = "".join(output)
-    (work / "console.log").write_text(report, encoding="utf-8")
+    if caught is not None:
+        raise caught
 
     failures = [label for label in assertion_labels if f"WFTA_PASS_{label}" not in report]
     explicit_fails = [line.strip() for line in output if "WFTA_FAIL_" in line]
