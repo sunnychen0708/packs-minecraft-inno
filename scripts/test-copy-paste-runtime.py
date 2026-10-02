@@ -118,9 +118,12 @@ def integration(java: Path, server: Path):
 
     # 1b. v1.0 material-backed Build: missing materials do nothing; complete stock consumes then builds.
     lines.extend([
+        'setblock 6 80 8 chest',
+        'setblock 7 80 8 chest',
         'setblock 8 80 8 chest',
         'setblock 9 80 8 chest',
         'data modify block 8 80 8 Items set value [{Slot:0b,id:"minecraft:gold_block",count:1},{Slot:1b,id:"minecraft:diamond_block",count:1},{Slot:2b,id:"minecraft:oak_stairs",count:1}]',
+        'data modify storage warehouse:chests c00 set value {registered:1b,valid:1b,dimension:"minecraft:overworld",a_x:6,a_y:80,a_z:8,b_x:7,b_y:80,b_z:8}',
         'data modify storage warehouse:chests c11 set value {registered:1b,valid:1b,dimension:"minecraft:overworld",a_x:8,a_y:80,a_z:8,b_x:9,b_y:80,b_z:8}',
     ])
     run_as('mcc:materials/build_start')
@@ -138,7 +141,7 @@ def integration(java: Path, server: Path):
     lines.append('setblock 12 80 3 gold_block')
     run_as('mcc:undo/run')
     check(f'if block 12 80 3 air if block 14 80 4 air if score {actor} mcc_rcnt matches 1','build_undo_world')
-    lines.append('data modify block 8 80 8 Items set value [{Slot:0b,id:"minecraft:gold_block",count:1},{Slot:1b,id:"minecraft:diamond_block",count:1},{Slot:2b,id:"minecraft:oak_stairs",count:1},{Slot:3b,id:"minecraft:iron_block",count:1}]')
+    check('if data block 6 80 8 Items[{id:"minecraft:gold_block",count:1}] if data block 6 80 8 Items[{id:"minecraft:diamond_block",count:1}] if data block 6 80 8 Items[{id:"minecraft:oak_stairs",count:1}] if data block 6 80 8 Items[{id:"minecraft:iron_block",count:1}]','build_undo_refunds_to_warehouse_entry')
     check('if block 8 80 8 #warehouse:storage_chests if block 9 80 8 #warehouse:storage_chests','warehouse_source_blocks_before_redo')
     check('if data storage warehouse:chests c11{registered:1b,valid:1b,dimension:"minecraft:overworld",a_x:8,a_y:80,a_z:8,b_x:9,b_y:80,b_z:8}','warehouse_source_registration_before_redo')
     lines.append(f'execute as {actor} run function warehouse:api/count_item {{item_id:"minecraft:iron_block"}}')
@@ -146,9 +149,10 @@ def integration(java: Path, server: Path):
     run_as('mcc:redo/run')
     for _ in range(8): run_as('mcc:materials/process_batch')
     check(f'if block 12 80 3 gold_block if block 14 80 4 iron_block if score {actor} mcc_ucnt matches 1 if score {actor} mcc_rcnt matches 0','build_redo_material_success')
-    check('unless data block 8 80 8 Items[0]','build_redo_materials_consumed')
+    check('unless data block 6 80 8 Items[0] if block 8 80 8 #warehouse:storage_chests','build_redo_materials_consumed_from_warehouse')
     run_as('mcc:undo/run')
     check('if block 12 80 3 air if block 14 80 4 air','build_second_undo_world')
+    check('if data block 6 80 8 Items[{id:"minecraft:iron_block",count:1}]','build_second_undo_refunds_to_warehouse')
     run_as('mcc:blueprint/clear_internal')
     check('unless entity @e[type=minecraft:block_display,tag=mcc_blueprint]','blueprint_clear')
 

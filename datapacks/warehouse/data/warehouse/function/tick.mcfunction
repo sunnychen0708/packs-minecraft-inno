@@ -53,6 +53,7 @@ execute as @a[scores={wh_rule_dest=50}] run scoreboard players set @s wh_rule_de
 execute as @a[scores={wh_rule_dest=60}] run scoreboard players set @s wh_rule_dest 0
 execute as @a[scores={wh_rule_dest=70..}] run scoreboard players set @s wh_rule_dest 0
 execute if score #enabled wh_sys matches 1 if data storage warehouse:chests c00{registered:1b,valid:1b} run function warehouse:sort/tick
+function warehouse:api/pending_refunds/tick
 execute as @a[scores={wh_unreg=10..69}] run function warehouse:unregister/prepare
 execute as @a[scores={wh_unreg=100}] run function warehouse:unregister/prepare
 execute as @a[scores={wh_unreg_do=1}] run function warehouse:unregister/do

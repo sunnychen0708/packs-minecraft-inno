@@ -88,6 +88,8 @@ def main() -> None:
     api_take_stack = (PACK / "data/warehouse/function/api/internal/take_stack.mcfunction").read_text(encoding="utf-8")
     api_refund = (PACK / "data/warehouse/function/api/refund_item.mcfunction").read_text(encoding="utf-8")
     api_refund_entry = (PACK / "data/warehouse/function/api/internal/refund_entry.mcfunction").read_text(encoding="utf-8")
+    api_refund_finalize = (PACK / "data/warehouse/function/api/internal/refund_finalize.mcfunction").read_text(encoding="utf-8")
+    api_pending_tick = (PACK / "data/warehouse/function/api/pending_refunds/tick.mcfunction").read_text(encoding="utf-8")
     assert "function warehouse:api/material_sources/refresh" in api_count
     assert "source_limit:64" in api_count
     assert "forceload query" in api_count_source
@@ -109,8 +111,13 @@ def main() -> None:
     assert "probe_max_stack" in api_refund_entry
     assert "entry_full" in api_refund_entry
     assert "scoreboard players set #api_plain wh_tmp 1" in api_refund_entry
+    assert "warehouse:sort/transport/main_valid" in api_refund_entry
+    assert "pending_refunds append" in api_refund_finalize
+    assert "result.queued" in api_refund_finalize
+    assert "pending_refunds[0]" in api_pending_tick
+    assert "work.saved_result" in api_pending_tick
 
-    print("PASS warehouse regression: reset/search are bounded; shared count/take/refund API is present and component-safe")
+    print("PASS warehouse regression: reset/search are bounded; shared count/take/refund API is component-safe and refund-persistent")
 
 
 if __name__ == "__main__":

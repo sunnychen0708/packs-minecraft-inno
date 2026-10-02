@@ -393,6 +393,11 @@ def check_v100_semantics(pack: Path):
     assert 'warehouse:api/take_item' in take_one
     assert 'mcc:materials/warehouse_count_one' in process_next
     assert 'mcc:materials/warehouse_take_one' in process_next
+    refund_taken=read(pack/'data/mcc/function/materials/refund_taken_one.mcfunction')
+    refund_undo=read(pack/'data/mcc/function/history/refund_undo_materials_one.mcfunction')
+    assert 'warehouse:api/refund_item' in refund_taken
+    assert 'warehouse:api/refund_item' in refund_undo
+    assert 'give @s' not in refund_taken and 'give @s' not in refund_undo
     assert 'function mcc:materials/place_buffer' in place
     assert 'scoreboard players set @s mcc_histmat 1' in place
     assert (pack/'data/mcc/tags/block/material_unsupported.json').is_file()
