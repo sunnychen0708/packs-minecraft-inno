@@ -79,12 +79,13 @@ def main() -> None:
     api_count = (PACK / "data/warehouse/function/api/count_item.mcfunction").read_text(encoding="utf-8")
     api_count_source = (PACK / "data/warehouse/function/api/internal/count_source.mcfunction").read_text(encoding="utf-8")
     api_count_loop = (PACK / "data/warehouse/function/api/internal/count_inv_loop.mcfunction").read_text(encoding="utf-8")
+    api_count_stack = (PACK / "data/warehouse/function/api/internal/count_stack.mcfunction").read_text(encoding="utf-8")
     assert "function warehouse:api/material_sources/refresh" in api_count
     assert "source_limit:64" in api_count
     assert "forceload query" in api_count_source
     assert "forceload add" in api_count_source
     assert "forceload remove" in api_count_source
-    assert 'id:"$(item_id)"' in api_count_loop
+    assert 'id:"$(item_id)"' in api_count_stack
     assert "result.available" in api_count
     assert "result.stale_sources" in api_count
 
