@@ -5,6 +5,10 @@ execute as @a unless score @s mcc_mir matches 0..2 run scoreboard players set @s
 execute as @a unless score @s mcc_usel matches 0..1 run scoreboard players set @s mcc_usel 0
 execute as @a unless score @s mcc_cliptype matches 0..2 run scoreboard players set @s mcc_cliptype 0
 execute as @a unless score @s mcc_redo matches 0..1 run scoreboard players set @s mcc_redo 0
+execute as @a unless score @s mcc_ucnt matches 0..5 run scoreboard players set @s mcc_ucnt 0
+execute as @a unless score @s mcc_uhead matches 0..5 run scoreboard players set @s mcc_uhead 0
+execute as @a unless score @s mcc_rcnt matches 0..5 run scoreboard players set @s mcc_rcnt 0
+execute as @a unless score @s mcc_rhead matches 0..5 run scoreboard players set @s mcc_rhead 0
 execute as @a unless score @s mcc_bpscan matches 0..1 run scoreboard players set @s mcc_bpscan 0
 execute as @a[scores={copypaste=1..}] run function mcc:panel
 

@@ -84,7 +84,7 @@ jobs:
             --server-jar "$PWD/server.jar" \
             --accept-eula
 
-      - name: Run Copy/Paste v0.5 behavioral regression
+      - name: Run Copy/Paste v0.6 behavioral regression
         shell: bash
         run: |
           set -euo pipefail

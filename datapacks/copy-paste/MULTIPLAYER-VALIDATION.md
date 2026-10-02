@@ -9,9 +9,11 @@
 五種隱藏 buffer 都以玩家 ID 分配獨立 X lane：
 
 - Clipboard：`X = #base + mcc_id × #slot`，Z lane = `#cbz`
-- Undo：相同玩家 X lane，Z lane = `#ubz`
+- Undo scratch：相同玩家 X lane，Z lane = `#ubz`
+- Undo history：每位玩家 5 個 ring slots，從 `#uhistz` 起、間隔 `#hgap`
 - Work：相同玩家 X lane，Z lane = `#workz`
-- Redo：相同玩家 X lane，Z lane = `#redoz`
+- Redo scratch：相同玩家 X lane，Z lane = `#redoz`
+- Redo history：每位玩家 5 個 ring slots，從 `#rhistz` 起、間隔 `#hgap`
 - Blueprint 快照：相同玩家 X lane，Z lane = `#bpz`
 
 目前 `#slot = 256`，一般選取每軸上限 128，因此不同玩家的 X 範圍不會碰到；三種 buffer 的 Z lane 也彼此分開。
@@ -21,7 +23,7 @@
 - `mcc:clipboard_<id>`
 - `mcc:work_<id>`
 
-玩家的 Pos1、Pos2、Anchor、Mode、Rotate、Mirror、Undo metadata 都存在各自的 scoreboard score，不是全域 fake-player 狀態。
+玩家的 Pos1、Pos2、Anchor、Mode、Rotate、Mirror 與 history pointer 都存在各自的 scoreboard score；每一層 Undo/Redo metadata 則以玩家 ID + slot 存在 `mcc:history` command storage，不會共用。
 
 ## 為什麼共用 mcc:temp 不會把兩個玩家資料混在一起
 
@@ -93,4 +95,4 @@ Copy 的 `V` 不再寫入目標世界方塊，而是建立所有玩家可見的 
 
 Cut 改用 `/trigger x`；Cut 的 `V` 仍是真實世界移動，而且成功後 Cut Clipboard 立即消耗。
 
-Undo/Redo Buffer 同樣是 per-player。CI 會檢查 64 位玩家的 Clipboard / Undo / Work / Redo / Blueprint lane 不互撞。
+Undo/Redo history 同樣是 per-player。每位玩家各有 5 個 Undo 與 5 個 Redo ring slots；CI 會檢查 history slot 間距與玩家 X lane 隔離。

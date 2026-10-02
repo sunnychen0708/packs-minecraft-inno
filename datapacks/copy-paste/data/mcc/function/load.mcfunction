@@ -142,6 +142,14 @@ scoreboard objectives add mcc_uanz dummy
 scoreboard objectives add mcc_uhasa dummy
 scoreboard objectives add mcc_cliptype dummy
 scoreboard objectives add mcc_redo dummy
+scoreboard objectives add mcc_ucnt dummy
+scoreboard objectives add mcc_uhead dummy
+scoreboard objectives add mcc_rcnt dummy
+scoreboard objectives add mcc_rhead dummy
+scoreboard objectives add mcc_hslot dummy
+scoreboard objectives add mcc_hnext dummy
+scoreboard objectives add mcc_hz dummy
+scoreboard objectives add mcc_hz2 dummy
 scoreboard objectives add mcc_rdim dummy
 scoreboard objectives add mcc_rx dummy
 scoreboard objectives add mcc_ry dummy
@@ -194,8 +202,11 @@ scoreboard players set #workz mcc_id 20000400
 scoreboard players set #redoz mcc_id 20001000
 scoreboard players set #bpz mcc_id 20002000
 scoreboard players set #bpofs mcc_id 64
+scoreboard players set #uhistz mcc_id 20003040
+scoreboard players set #rhistz mcc_id 20005120
+scoreboard players set #hgap mcc_id 320
 scoreboard players set #one mcc_id 1
 scoreboard players set #zero mcc_id 0
 scoreboard players set #neg mcc_id -1
 
-tellraw @a [{"text":"[Copy/Paste] ","color":"gold"},{"text":"v0.5.0 已載入。輸入 ","color":"gray"},{"text":"/trigger copypaste","color":"yellow"},{"text":" 開啟 Trigger 控制面板。","color":"gray"}]
+tellraw @a [{"text":"[Copy/Paste] ","color":"gold"},{"text":"v0.6.0 已載入。輸入 ","color":"gray"},{"text":"/trigger copypaste","color":"yellow"},{"text":" 開啟 Trigger 控制面板。","color":"gray"}]
