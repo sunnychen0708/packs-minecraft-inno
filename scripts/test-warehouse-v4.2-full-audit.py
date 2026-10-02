@@ -137,7 +137,7 @@ def static_audit(pack_zip: Path) -> dict[str, int]:
         }
 
 
-def make_harness(harness: Path) -> tuple[int, list[str]]:
+def make_harness(harness: Path, phase: str = "full") -> tuple[int, list[str]]:
     funcs = harness / "data/warehouse_full_test/function"
     funcs.mkdir(parents=True)
     (harness / "pack.mcmeta").write_text(
@@ -326,6 +326,9 @@ def make_harness(harness: Path) -> tuple[int, list[str]]:
     check("if score #tmp wfta matches 14", "physical_count")
     lines.append("say WFTA_PHASE_VERIFY_V41_DONE")
     (funcs / "verify_v41.mcfunction").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    if phase == "compat":
+        return len(assertions), assertions
 
     # Core management functions.
     lines, check = phase("basic")
@@ -594,7 +597,7 @@ def runtime_audit(pack_zip: Path, java: Path, server: Path, phase: str = "full")
     world_packs = work / "world/datapacks"
     world_packs.mkdir(parents=True)
     shutil.copy2(pack_zip, world_packs / "warehouse-v4.2.zip")
-    expected_count, assertion_labels = make_harness(world_packs / "audit-harness")
+    expected_count, assertion_labels = make_harness(world_packs / "audit-harness", phase)
 
     (work / "eula.txt").write_text("eula=true\n", encoding="utf-8")
     (work / "server.properties").write_text(
