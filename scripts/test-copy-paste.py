@@ -69,7 +69,7 @@ def check_trigger_lifecycle(pack: Path):
 
 def check_upgrade_and_mode(pack: Path):
     tick=read(pack/'data/mcc/function/tick.mcfunction')
-    for objective,valid in [('mcc_rot','0..3'),('mcc_mir','0..2'),('mcc_usel','0..1'),('mcc_cliptype','0..2'),('mcc_redo','0..1'),('mcc_ucnt','0..5'),('mcc_uhead','0..5'),('mcc_rcnt','0..5'),('mcc_rhead','0..5'),('mcc_bpscan','0..1'),('mcc_bpactive','0..1'),('mcc_bpready','0..1'),('mcc_bpbad','0..1'),('mcc_matphase','0..2'),('mcc_matleft','0..'),('mcc_bpover','0..'),('mcc_buildconfirm','0..1')]:
+    for objective,valid in [('mcc_rot','0..3'),('mcc_mir','0..2'),('mcc_usel','0..1'),('mcc_cliptype','0..2'),('mcc_redo','0..1'),('mcc_ucnt','0..5'),('mcc_uhead','0..5'),('mcc_rcnt','0..5'),('mcc_rhead','0..5'),('mcc_bpscan','0..1'),('mcc_bpactive','0..1'),('mcc_bpready','0..1'),('mcc_bpbad','0..1'),('mcc_matphase','0..2'),('mcc_matleft','0..'),('mcc_bpover','0..'),('mcc_buildconfirm','0..1'),('mcc_bpover_scan','0..1'),('mcc_bpoindex','0..')]:
         migration=f'execute as @a unless score @s {objective} matches {valid} run scoreboard players set @s {objective} 0'
         assert migration in tick, f'missing non-destructive upgrade for {objective}'
         assert tick.index(migration)<tick.index('scores={copypaste='), 'migrate before dispatch'
@@ -404,6 +404,8 @@ def check_v100_semantics(pack: Path):
     assert (pack/'data/mcc/function/materials/check_start.mcfunction').is_file()
     assert (pack/'data/mcc/function/materials/report_all_start.mcfunction').is_file()
     assert (pack/'data/mcc/function/blueprint/nudge/run.mcfunction').is_file()
+    assert 'function mcc:blueprint/recount_start' in read(pack/'data/mcc/function/blueprint/nudge/run.mcfunction')
+    assert 'mcc_bpover_scan' in read(pack/'data/mcc/function/tick.mcfunction')
     assert (pack/'data/mcc/dialog/main.json').is_file()
     assert 'scoreboard players set @s mcc_histmat 1' in place
     assert (pack/'data/mcc/tags/block/material_unsupported.json').is_file()
