@@ -1,0 +1,75 @@
+name: Release Warehouse v4.2 once
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/release-warehouse-v4.2-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Warehouse v4.2 tag
+        uses: actions/checkout@v4
+        with:
+          ref: warehouse-v4.2
+          fetch-depth: 0
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Validate Warehouse
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/validate-datapack.py warehouse
+          python3 scripts/test-warehouse.py
+
+      - name: Download official Minecraft 26.3 server
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 \
+            https://piston-data.mojang.com/v1/objects/33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c/server.jar \
+            --output server.jar
+          echo "33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c  server.jar" | sha1sum --check -
+
+      - name: Run Warehouse 26.3 runtime gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/test-warehouse-runtime.py \
+            --java "$(command -v java)" \
+            --server-jar "$PWD/server.jar" \
+            --accept-eula
+
+      - name: Build Warehouse v4.2 ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x scripts/build-pack.sh
+          scripts/build-pack.sh warehouse v4.2
+
+      - name: Create Warehouse v4.2 release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view warehouse-v4.2 >/dev/null 2>&1; then
+            echo "warehouse-v4.2 release already exists"
+            exit 0
+          fi
+          gh release create warehouse-v4.2 \
+            dist/warehouse-v4.2.zip \
+            --verify-tag \
+            --title "Warehouse v4.2" \
+            --notes "Minecraft Java 26.3 Warehouse v4.2. Fixes fresh-world/upgrade initialization hitting the 65,536 command-chain limit by rebuilding the 72 search-index shards across ticks. Also avoids duplicate item-name initialization. Includes the v4.1 reset-registration fix. Runtime-validated on the official 26.3 server."
