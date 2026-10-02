@@ -146,6 +146,37 @@ def integration(java: Path, server: Path) -> None:
         "reregister_keeps_classification_override",
     )
 
+    # Shared Warehouse material API: count across both halves of one registered source.
+    lines.extend(
+        [
+            "setblock 5 70 5 minecraft:chest[facing=north,type=left]",
+            "setblock 6 70 5 minecraft:chest[facing=north,type=right]",
+            'data modify block 5 70 5 Items set value [{Slot:0b,id:"minecraft:stone",count:20},{Slot:1b,id:"minecraft:dirt",count:5}]',
+            'data modify block 6 70 5 Items set value [{Slot:0b,id:"minecraft:stone",count:12}]',
+            f'execute as {actor} run function warehouse:api/count_item {{item_id:"minecraft:stone"}}',
+        ]
+    )
+    check(
+        'if data storage warehouse:api result{ok:1b,complete:1b,item_id:"minecraft:stone",available:32,sources_scanned:1,stale_sources:0,source_limit:64}',
+        "api_count_stone_across_double_chest",
+    )
+    check(
+        'if data storage warehouse:api {material_source_count:1,meta:{material_source_limit:64}}',
+        "api_material_source_snapshot",
+    )
+
+    # A stale registration must not silently look like a complete inventory total.
+    lines.extend(
+        [
+            "setblock 6 70 5 air",
+            f'execute as {actor} run function warehouse:api/count_item {{item_id:"minecraft:stone"}}',
+        ]
+    )
+    check(
+        'if data storage warehouse:api result{ok:0b,complete:0b,available:0,sources_scanned:1,stale_sources:1,source_limit:64}',
+        "api_count_rejects_stale_source",
+    )
+
     lines.extend(
         [
             f"execute if score #pass whst matches {len(assertions)} if score #fail whst matches 0 run say WHST_REGRESSION_SUCCESS",

@@ -76,7 +76,19 @@ def main() -> None:
     assert "material_source_count" in api_refresh
     assert "material_sources append from storage warehouse:chests c$(code)" in api_append
 
-    print("PASS warehouse regression: reset is scoped; search-index rebuild is bounded to one shard per tick")
+    api_count = (PACK / "data/warehouse/function/api/count_item.mcfunction").read_text(encoding="utf-8")
+    api_count_source = (PACK / "data/warehouse/function/api/internal/count_source.mcfunction").read_text(encoding="utf-8")
+    api_count_loop = (PACK / "data/warehouse/function/api/internal/count_inv_loop.mcfunction").read_text(encoding="utf-8")
+    assert "function warehouse:api/material_sources/refresh" in api_count
+    assert "source_limit:64" in api_count
+    assert "forceload query" in api_count_source
+    assert "forceload add" in api_count_source
+    assert "forceload remove" in api_count_source
+    assert 'id:"$(item_id)"' in api_count_loop
+    assert "result.available" in api_count
+    assert "result.stale_sources" in api_count
+
+    print("PASS warehouse regression: reset is scoped; search-index rebuild is bounded; shared material count API is present")
 
 
 if __name__ == "__main__":
