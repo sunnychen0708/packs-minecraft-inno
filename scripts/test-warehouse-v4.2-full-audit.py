@@ -469,6 +469,108 @@ def make_harness(harness: Path, mode: str = "full") -> tuple[int, list[str]]:
 
         return len(assertions), assertions
 
+    if mode == "viewmigration":
+        # Minimal setup for viewer aggregation, search resolution, and stock migration.
+        lines = [
+            "function warehouse:system/off",
+            "data remove storage warehouse:migration active",
+            "data modify storage warehouse:migration queue set value []",
+            "data modify storage warehouse:rules overrides set value {}",
+            "setblock 3 80 1 minecraft:chest",
+            "setblock 3 80 3 minecraft:chest",
+            "setblock 7 80 1 minecraft:chest",
+            "setblock 7 80 3 minecraft:chest",
+            "setblock 9 80 1 minecraft:chest",
+            "setblock 9 80 3 minecraft:chest",
+            f"scoreboard players set {actor} wh_target 31",
+            f"execute as {actor} run function warehouse:register/save_nonzero {{code:31,a_x:3,a_y:80,a_z:1,b_x:3,b_y:80,b_z:3,dimension:\"minecraft:overworld\"}}",
+            f"scoreboard players set {actor} wh_target 42",
+            f"execute as {actor} run function warehouse:register/save_nonzero {{code:42,a_x:7,a_y:80,a_z:1,b_x:7,b_y:80,b_z:3,dimension:\"minecraft:overworld\"}}",
+            f"scoreboard players set {actor} wh_target 11",
+            f"execute as {actor} run function warehouse:register/save_nonzero {{code:11,a_x:9,a_y:80,a_z:1,b_x:9,b_y:80,b_z:3,dimension:\"minecraft:overworld\"}}",
+            "data modify block 3 80 1 Items set value []",
+            "data modify block 3 80 3 Items set value []",
+            "data modify block 7 80 1 Items set value []",
+            "data modify block 7 80 3 Items set value []",
+            "data modify block 9 80 1 Items set value []",
+            "data modify block 9 80 3 Items set value []",
+            "item replace block 3 80 1 container.0 with minecraft:stone 10",
+            "item replace block 3 80 3 container.0 with minecraft:stone 20",
+            "item replace block 9 80 1 container.0 with minecraft:diamond 3",
+            "say WFTA_PHASE_VIEWMIG_SETUP_DONE",
+        ]
+        (funcs / "viewmig_setup.mcfunction").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        # Viewer backend: aggregate both physical halves into one total.
+        lines, check = phase("viewer")
+        lines += [
+            'data modify storage warehouse:runtime viewer.title set value "31  石頭方塊"',
+            f"execute as {actor} run function warehouse:view/build with storage warehouse:chests c31",
+        ]
+        check('if data storage warehouse:runtime {viewer:{current_total:{id:"minecraft:stone",count:30}}}', "current_total")
+        check('if data storage warehouse:runtime {viewer:{render:{l01:"石頭方塊 ×30",count:1}}}', "render_line")
+        check(f"if score {actor} wh_viewlines matches 1", "line_count")
+        lines.append("say WFTA_PHASE_VIEWER_DONE")
+        (funcs / "viewmig_viewer.mcfunction").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        # Search backend: query, default classification, stock state, and override resolution.
+        lines, check = phase("search")
+        lines += [
+            f'execute as {actor} run function warehouse:search/run {{q:"鑽石"}}',
+        ]
+        check("if data storage warehouse:runtime search.match", "query_match")
+        lines += [
+            'data remove storage warehouse:rules overrides."minecraft:diamond"',
+            f"execute as {actor} run function warehouse:search/item/0",
+        ]
+        check('if data storage warehouse:runtime {search:{item_id:"minecraft:diamond",stock:"有庫存"}}', "item_and_stock")
+        check("if score #search_box wh_search matches 11", "default_box")
+        check("if score #search_override wh_search matches 0", "default_no_override")
+        lines += [
+            'function warehouse:rule/write_override {item_id:"minecraft:diamond",dest:42}',
+            f"execute as {actor} run function warehouse:search/item/0",
+        ]
+        check("if score #search_override wh_search matches 1", "override_flag")
+        check("if score #search_box wh_search matches 42", "override_box")
+        lines += [
+            'data remove storage warehouse:rules overrides."minecraft:diamond"',
+            "say WFTA_PHASE_SEARCH_DONE",
+        ]
+        (funcs / "viewmig_search.mcfunction").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        # Migration backend: physically move old stock from 31 to 42.
+        lines = [
+            "data remove storage warehouse:migration active",
+            "data modify storage warehouse:migration queue set value []",
+            "data modify block 3 80 1 Items set value []",
+            "data modify block 3 80 3 Items set value []",
+            "data modify block 7 80 1 Items set value []",
+            "data modify block 7 80 3 Items set value []",
+            "item replace block 3 80 1 container.0 with minecraft:stone 12",
+            'function warehouse:migration/enqueue {item_id:"minecraft:stone",old_box:31,dest:42}',
+            "function warehouse:system/on",
+            "say WFTA_PHASE_MIGRATION_STARTED",
+        ]
+        (funcs / "viewmig_migration_start.mcfunction").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        lines, check = phase("migration")
+        lines += [
+            "function warehouse:system/off",
+        ]
+        check("unless items block 3 80 1 container.0 *", "source_empty")
+        check("if items block 7 80 1 container.0 minecraft:stone", "dest_item")
+        lines += [
+            "scoreboard players set #tmp wfta 0",
+            "execute store result score #tmp wfta run data get block 7 80 1 Items[{Slot:0b}].count 1",
+        ]
+        check("if score #tmp wfta matches 12", "dest_count")
+        check("unless data storage warehouse:migration active", "active_done")
+        check("unless data storage warehouse:migration queue[0]", "queue_done")
+        lines.append("say WFTA_PHASE_VIEWMIG_DONE")
+        (funcs / "viewmig_migration_verify.mcfunction").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        return len(assertions), assertions
+
     # Simulate an actual v3.4 world: all pre-v4 markers and persistent user state exist.
     lines = [
         'data modify storage warehouse:meta initialized set value 1b',
@@ -978,6 +1080,21 @@ def runtime_audit(pack_zip: Path, java: Path, server: Path, phase: str = "full")
             time.sleep(0.8)
             send("function warehouse_full_test:compact_case3_verify")
             wait_marker("WFTA_PHASE_COMPACT_DONE")
+        elif phase == "viewmigration":
+            send("function warehouse_full_test:viewmig_setup")
+            wait_marker("WFTA_PHASE_VIEWMIG_SETUP_DONE")
+
+            send("function warehouse_full_test:viewmig_viewer")
+            wait_marker("WFTA_PHASE_VIEWER_DONE")
+
+            send("function warehouse_full_test:viewmig_search")
+            wait_marker("WFTA_PHASE_SEARCH_DONE")
+
+            send("function warehouse_full_test:viewmig_migration_start")
+            wait_marker("WFTA_PHASE_MIGRATION_STARTED")
+            time.sleep(3)
+            send("function warehouse_full_test:viewmig_migration_verify")
+            wait_marker("WFTA_PHASE_VIEWMIG_DONE")
         else:
             send("function warehouse_full_test:seed_v34")
             wait_marker("WFTA_PHASE_SEED_V34_DONE")
@@ -1066,6 +1183,11 @@ def runtime_audit(pack_zip: Path, java: Path, server: Path, phase: str = "full")
             label for label in assertion_labels
             if label.startswith(("fresh_", "compact_merge_", "compact_full_", "compact_mismatch_"))
         ]
+    elif phase == "viewmigration":
+        labels_to_check = [
+            label for label in assertion_labels
+            if label.startswith(("fresh_", "viewer_", "search_", "migration_"))
+        ]
     failures = [label for label in labels_to_check if f"WFTA_PASS_{label}" not in report]
     explicit_fails = [line.strip() for line in output if "WFTA_FAIL_" in line]
     parser_errors = [
@@ -1088,7 +1210,7 @@ def main():
     ap.add_argument("--pack-zip", type=Path, required=True)
     ap.add_argument("--java", type=Path, required=True)
     ap.add_argument("--server-jar", type=Path, required=True)
-    ap.add_argument("--phase", choices=("compat", "basic", "routing", "compact", "full"), default="full")
+    ap.add_argument("--phase", choices=("compat", "basic", "routing", "compact", "viewmigration", "full"), default="full")
     args = ap.parse_args()
 
     stats = static_audit(args.pack_zip.resolve())
