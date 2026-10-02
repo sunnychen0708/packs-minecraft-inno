@@ -193,6 +193,87 @@ def make_harness(harness: Path, phase: str = "full") -> tuple[int, list[str]]:
     lines.append("say WFTA_PHASE_FRESH_DONE")
     (funcs / "fresh.mcfunction").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
+    if phase == "basic":
+        # Core management functions.
+        lines, check = phase("basic")
+        lines += [
+            "data remove storage warehouse:migration active",
+            "data modify storage warehouse:migration queue set value []",
+            "data modify storage warehouse:rules overrides set value {}",
+            "scoreboard players set #enabled wh_sys 0",
+            "setblock 1 80 1 minecraft:chest",
+            "setblock 1 80 3 minecraft:chest",
+            "setblock 3 80 1 minecraft:chest",
+            "setblock 3 80 3 minecraft:chest",
+            "setblock 5 80 1 minecraft:chest",
+            "setblock 5 80 3 minecraft:chest",
+            "setblock 7 80 1 minecraft:chest",
+            "setblock 7 80 3 minecraft:chest",
+            "setblock 9 80 1 minecraft:chest",
+            "setblock 9 80 3 minecraft:chest",
+            "setblock 11 80 1 minecraft:copper_chest",
+            f"execute as {actor} run function warehouse:register/save_00 {{a_x:1,a_y:80,a_z:1,b_x:1,b_y:80,b_z:3,dimension:\"minecraft:overworld\"}}",
+            f"scoreboard players set {actor} wh_target 31",
+            f"execute as {actor} run function warehouse:register/save_nonzero {{code:31,a_x:3,a_y:80,a_z:1,b_x:3,b_y:80,b_z:3,dimension:\"minecraft:overworld\"}}",
+            f"scoreboard players set {actor} wh_target 30",
+            f"execute as {actor} run function warehouse:register/save_nonzero {{code:30,a_x:5,a_y:80,a_z:1,b_x:5,b_y:80,b_z:3,dimension:\"minecraft:overworld\"}}",
+            f"scoreboard players set {actor} wh_target 42",
+            f"execute as {actor} run function warehouse:register/save_nonzero {{code:42,a_x:7,a_y:80,a_z:1,b_x:7,b_y:80,b_z:3,dimension:\"minecraft:overworld\"}}",
+            f"scoreboard players set {actor} wh_target 11",
+            f"execute as {actor} run function warehouse:register/save_nonzero {{code:11,a_x:9,a_y:80,a_z:1,b_x:9,b_y:80,b_z:3,dimension:\"minecraft:overworld\"}}",
+        ]
+        check('if data storage warehouse:chests {c00:{registered:1b,valid:1b,a_x:1,a_y:80,a_z:1,b_x:1,b_y:80,b_z:3}}', "register_00")
+        for code, x in (("31",3),("30",5),("42",7),("11",9)):
+            check(f'if data storage warehouse:chests {{c{code}:{{registered:1b,valid:1b,a_x:{x},a_y:80,a_z:1,b_x:{x},b_y:80,b_z:3}}}}', f"register_{code}")
+        check("if block 11 80 1 #warehouse:storage_chests", "copper_chest_tag")
+        lines += [
+            "function warehouse:system/on",
+        ]
+        check("if score #enabled wh_sys matches 1", "system_on")
+        lines += ["function warehouse:system/off"]
+        check("if score #enabled wh_sys matches 0", "system_off")
+        lines += ["function warehouse:system/toggle"]
+        check("if score #enabled wh_sys matches 1", "system_toggle_on")
+        lines += ["function warehouse:system/toggle"]
+        check("if score #enabled wh_sys matches 0", "system_toggle_off")
+        lines += [
+            'data modify storage warehouse:runtime rename.new set value {text:"CI_RENAMED_STONE"}',
+            f"execute as {actor} run function warehouse:boxname/save_31",
+        ]
+        check('if data storage warehouse:boxnames {c31:{text:"CI_RENAMED_STONE"}}', "rename")
+        lines += [f"execute as {actor} run function warehouse:boxname/reset_31"]
+        check('if data storage warehouse:boxnames {c31:{text:"石頭方塊"}}', "rename_reset")
+        lines += [
+            f"scoreboard players set {actor} wh_target 11",
+            f"scoreboard players set {actor} wh_unreg_do 1",
+            f"execute as {actor} run function warehouse:unregister/do_11",
+        ]
+        check('if data storage warehouse:chests {c11:{registered:0b,valid:0b}}', "unregister")
+        lines += [
+            f"scoreboard players set {actor} wh_target 11",
+            f"execute as {actor} run function warehouse:register/save_nonzero {{code:11,a_x:9,a_y:80,a_z:1,b_x:9,b_y:80,b_z:3,dimension:\"minecraft:overworld\"}}",
+            f"scoreboard players set {actor} wh_rule_item 1",
+            f"scoreboard players set {actor} wh_rule_dest 42",
+            'data remove storage warehouse:rules overrides."minecraft:diamond"',
+            f"execute as {actor} run function warehouse:rule/apply_selected",
+        ]
+        check('if data storage warehouse:rules {overrides:{"minecraft:diamond":42}}', "rule_apply")
+        check('if data storage warehouse:migration {queue:[{item_id:"minecraft:diamond",from:11,to:42}]}', "rule_enqueues_migration")
+        lines += [
+            "data modify storage warehouse:migration queue set value []",
+            f"scoreboard players set {actor} wh_rule_item 1",
+            f"execute as {actor} run function warehouse:rule/remove_selected",
+        ]
+        check('if data storage warehouse:rules {overrides:{"minecraft:diamond":0}}', "rule_remove")
+        lines += [
+            'data remove storage warehouse:rules overrides."minecraft:diamond"',
+            "say WFTA_PHASE_BASIC_DONE",
+        ]
+        (funcs / "basic.mcfunction").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    
+    
+        return len(assertions), assertions
+
     # Simulate an actual v3.4 world: all pre-v4 markers and persistent user state exist.
     lines = [
         'data modify storage warehouse:meta initialized set value 1b',
@@ -660,54 +741,58 @@ def runtime_audit(pack_zip: Path, java: Path, server: Path, phase: str = "full")
         send("function warehouse_full_test:fresh")
         wait_marker("WFTA_PHASE_FRESH_DONE")
 
-        send("function warehouse_full_test:seed_v34")
-        wait_marker("WFTA_PHASE_SEED_V34_DONE")
-        send("reload")
-        time.sleep(8)
-        send("forceload add 0 0")
-        send("function warehouse_full_test:verify_v34")
-        wait_marker("WFTA_PHASE_VERIFY_V34_DONE")
-
-        send("function warehouse_full_test:seed_v41")
-        wait_marker("WFTA_PHASE_SEED_V41_DONE")
-        send("reload")
-        time.sleep(8)
-        send("forceload add 0 0")
-        send("function warehouse_full_test:verify_v41")
-        wait_marker("WFTA_PHASE_VERIFY_V41_DONE")
-
-        if phase == "compat":
-            send("say WFTA_PHASE_COMPAT_DONE")
-        else:
+        if phase == "basic":
             send("function warehouse_full_test:basic")
             wait_marker("WFTA_PHASE_BASIC_DONE")
+        else:
+            send("function warehouse_full_test:seed_v34")
+            wait_marker("WFTA_PHASE_SEED_V34_DONE")
+            send("reload")
+            time.sleep(8)
+            send("forceload add 0 0")
+            send("function warehouse_full_test:verify_v34")
+            wait_marker("WFTA_PHASE_VERIFY_V34_DONE")
 
-            send("function warehouse_full_test:prepare_auto_sort")
-            wait_marker("WFTA_PHASE_PREPARE_AUTO_SORT_DONE")
-            time.sleep(0.7)
-            send("function warehouse_full_test:verify_auto_sort")
-            wait_marker("WFTA_PHASE_VERIFY_AUTO_SORT_DONE")
+            send("function warehouse_full_test:seed_v41")
+            wait_marker("WFTA_PHASE_SEED_V41_DONE")
+            send("reload")
+            time.sleep(8)
+            send("forceload add 0 0")
+            send("function warehouse_full_test:verify_v41")
+            wait_marker("WFTA_PHASE_VERIFY_V41_DONE")
 
-            send("function warehouse_full_test:routing")
-            wait_marker("WFTA_PHASE_ROUTING_DONE")
+            if phase == "compat":
+                send("say WFTA_PHASE_COMPAT_DONE")
+            else:
+                send("function warehouse_full_test:basic")
+                wait_marker("WFTA_PHASE_BASIC_DONE")
 
-            send("function warehouse_full_test:prepare_compact")
-            wait_marker("WFTA_PHASE_PREPARE_COMPACT_DONE")
-            time.sleep(0.8)
-            send("function warehouse_full_test:verify_compact")
-            wait_marker("WFTA_PHASE_VERIFY_COMPACT_DONE")
+                send("function warehouse_full_test:prepare_auto_sort")
+                wait_marker("WFTA_PHASE_PREPARE_AUTO_SORT_DONE")
+                time.sleep(0.7)
+                send("function warehouse_full_test:verify_auto_sort")
+                wait_marker("WFTA_PHASE_VERIFY_AUTO_SORT_DONE")
 
-            send("function warehouse_full_test:view_search")
-            wait_marker("WFTA_PHASE_VIEW_SEARCH_DONE")
+                send("function warehouse_full_test:routing")
+                wait_marker("WFTA_PHASE_ROUTING_DONE")
 
-            send("function warehouse_full_test:prepare_migration")
-            wait_marker("WFTA_PHASE_PREPARE_MIGRATION_DONE")
-            time.sleep(3)
-            send("function warehouse_full_test:verify_migration")
-            wait_marker("WFTA_PHASE_VERIFY_MIGRATION_DONE")
+                send("function warehouse_full_test:prepare_compact")
+                wait_marker("WFTA_PHASE_PREPARE_COMPACT_DONE")
+                time.sleep(0.8)
+                send("function warehouse_full_test:verify_compact")
+                wait_marker("WFTA_PHASE_VERIFY_COMPACT_DONE")
 
-            send("function warehouse_full_test:reset")
-            wait_marker("WFTA_PHASE_RESET_DONE")
+                send("function warehouse_full_test:view_search")
+                wait_marker("WFTA_PHASE_VIEW_SEARCH_DONE")
+
+                send("function warehouse_full_test:prepare_migration")
+                wait_marker("WFTA_PHASE_PREPARE_MIGRATION_DONE")
+                time.sleep(3)
+                send("function warehouse_full_test:verify_migration")
+                wait_marker("WFTA_PHASE_VERIFY_MIGRATION_DONE")
+
+                send("function warehouse_full_test:reset")
+                wait_marker("WFTA_PHASE_RESET_DONE")
     except BaseException as exc:
         caught = exc
     finally:
@@ -732,6 +817,11 @@ def runtime_audit(pack_zip: Path, java: Path, server: Path, phase: str = "full")
             label for label in assertion_labels
             if label.startswith(("fresh_", "upgrade_v34_", "upgrade_v41_"))
         ]
+    elif phase == "basic":
+        labels_to_check = [
+            label for label in assertion_labels
+            if label.startswith(("fresh_", "basic_"))
+        ]
     failures = [label for label in labels_to_check if f"WFTA_PASS_{label}" not in report]
     explicit_fails = [line.strip() for line in output if "WFTA_FAIL_" in line]
     parser_errors = [
@@ -754,7 +844,7 @@ def main():
     ap.add_argument("--pack-zip", type=Path, required=True)
     ap.add_argument("--java", type=Path, required=True)
     ap.add_argument("--server-jar", type=Path, required=True)
-    ap.add_argument("--phase", choices=("compat", "full"), default="full")
+    ap.add_argument("--phase", choices=("compat", "basic", "full"), default="full")
     args = ap.parse_args()
 
     stats = static_audit(args.pack_zip.resolve())
