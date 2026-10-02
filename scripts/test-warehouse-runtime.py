@@ -156,10 +156,12 @@ def integration(java: Path, server: Path) -> None:
             f'execute as {actor} run function warehouse:api/count_item {{item_id:"minecraft:stone"}}',
         ]
     )
-    check(
-        'if data storage warehouse:api result{ok:1b,complete:1b,item_id:"minecraft:stone",available:32,sources_scanned:1,stale_sources:0,source_limit:64}',
-        "api_count_stone_across_double_chest",
-    )
+    check('if data storage warehouse:api result{ok:1b}', "api_count_ok")
+    check('if data storage warehouse:api result{complete:1b}', "api_count_complete")
+    check('if data storage warehouse:api result{item_id:"minecraft:stone"}', "api_count_item_id")
+    check('if data storage warehouse:api result{available:32}', "api_count_available_32")
+    check('if data storage warehouse:api result{sources_scanned:1}', "api_count_sources_1")
+    check('if data storage warehouse:api result{stale_sources:0,source_limit:64}', "api_count_metadata")
     check(
         'if data storage warehouse:api {material_source_count:1,meta:{material_source_limit:64}}',
         "api_material_source_snapshot",
