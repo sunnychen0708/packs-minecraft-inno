@@ -590,7 +590,7 @@ def make_harness(harness: Path) -> tuple[int, list[str]]:
     return len(assertions), assertions
 
 
-def runtime_audit(pack_zip: Path, java: Path, server: Path) -> tuple[int, Path]:
+def runtime_audit(pack_zip: Path, java: Path, server: Path, phase: str = "full") -> tuple[int, Path]:
     work = Path(tempfile.mkdtemp(prefix="warehouse-full-audit-"))
     world_packs = work / "world/datapacks"
     world_packs.mkdir(parents=True)
@@ -674,39 +674,40 @@ def runtime_audit(pack_zip: Path, java: Path, server: Path) -> tuple[int, Path]:
         send("function warehouse_full_test:verify_v41")
         wait_marker("WFTA_PHASE_VERIFY_V41_DONE")
 
-        send("function warehouse_full_test:basic")
-        wait_marker("WFTA_PHASE_BASIC_DONE")
+        if phase == "compat":
+            send("say WFTA_PHASE_COMPAT_DONE")
+        else:
+            send("function warehouse_full_test:basic")
+            wait_marker("WFTA_PHASE_BASIC_DONE")
 
-        send("function warehouse_full_test:prepare_auto_sort")
-        wait_marker("WFTA_PHASE_PREPARE_AUTO_SORT_DONE")
-        time.sleep(0.7)
-        send("function warehouse_full_test:verify_auto_sort")
-        wait_marker("WFTA_PHASE_VERIFY_AUTO_SORT_DONE")
+            send("function warehouse_full_test:prepare_auto_sort")
+            wait_marker("WFTA_PHASE_PREPARE_AUTO_SORT_DONE")
+            time.sleep(0.7)
+            send("function warehouse_full_test:verify_auto_sort")
+            wait_marker("WFTA_PHASE_VERIFY_AUTO_SORT_DONE")
 
-        send("function warehouse_full_test:routing")
-        wait_marker("WFTA_PHASE_ROUTING_DONE")
+            send("function warehouse_full_test:routing")
+            wait_marker("WFTA_PHASE_ROUTING_DONE")
 
-        send("function warehouse_full_test:prepare_compact")
-        wait_marker("WFTA_PHASE_PREPARE_COMPACT_DONE")
-        time.sleep(0.8)
-        send("function warehouse_full_test:verify_compact")
-        wait_marker("WFTA_PHASE_VERIFY_COMPACT_DONE")
+            send("function warehouse_full_test:prepare_compact")
+            wait_marker("WFTA_PHASE_PREPARE_COMPACT_DONE")
+            time.sleep(0.8)
+            send("function warehouse_full_test:verify_compact")
+            wait_marker("WFTA_PHASE_VERIFY_COMPACT_DONE")
 
-        send("function warehouse_full_test:view_search")
-        wait_marker("WFTA_PHASE_VIEW_SEARCH_DONE")
+            send("function warehouse_full_test:view_search")
+            wait_marker("WFTA_PHASE_VIEW_SEARCH_DONE")
 
-        send("function warehouse_full_test:prepare_migration")
-        wait_marker("WFTA_PHASE_PREPARE_MIGRATION_DONE")
-        time.sleep(3)
-        send("function warehouse_full_test:verify_migration")
-        wait_marker("WFTA_PHASE_VERIFY_MIGRATION_DONE")
+            send("function warehouse_full_test:prepare_migration")
+            wait_marker("WFTA_PHASE_PREPARE_MIGRATION_DONE")
+            time.sleep(3)
+            send("function warehouse_full_test:verify_migration")
+            wait_marker("WFTA_PHASE_VERIFY_MIGRATION_DONE")
 
-        send("function warehouse_full_test:reset")
-        wait_marker("WFTA_PHASE_RESET_DONE")
+            send("function warehouse_full_test:reset")
+            wait_marker("WFTA_PHASE_RESET_DONE")
     except BaseException as exc:
         caught = exc
-    except BaseException as exc:
-        failure = exc
     finally:
         if proc.poll() is None:
             try:
@@ -723,7 +724,13 @@ def runtime_audit(pack_zip: Path, java: Path, server: Path) -> tuple[int, Path]:
     if caught is not None:
         raise caught
 
-    failures = [label for label in assertion_labels if f"WFTA_PASS_{label}" not in report]
+    labels_to_check = assertion_labels
+    if phase == "compat":
+        labels_to_check = [
+            label for label in assertion_labels
+            if label.startswith(("fresh_", "upgrade_v34_", "upgrade_v41_"))
+        ]
+    failures = [label for label in labels_to_check if f"WFTA_PASS_{label}" not in report]
     explicit_fails = [line.strip() for line in output if "WFTA_FAIL_" in line]
     parser_errors = [
         line.strip()
@@ -737,7 +744,7 @@ def runtime_audit(pack_zip: Path, java: Path, server: Path) -> tuple[int, Path]:
     assert not parser_errors, f"datapack/runtime parser errors: {parser_errors[:20]}"
     assert not server_errors, f"server ERROR lines: {server_errors[:20]}"
 
-    return expected_count, work
+    return len(labels_to_check), work
 
 
 def main():
@@ -745,11 +752,12 @@ def main():
     ap.add_argument("--pack-zip", type=Path, required=True)
     ap.add_argument("--java", type=Path, required=True)
     ap.add_argument("--server-jar", type=Path, required=True)
+    ap.add_argument("--phase", choices=("compat", "full"), default="full")
     args = ap.parse_args()
 
     stats = static_audit(args.pack_zip.resolve())
     print("STATIC_PASS " + json.dumps(stats, ensure_ascii=False), flush=True)
-    count, evidence = runtime_audit(args.pack_zip.resolve(), args.java.resolve(), args.server_jar.resolve())
+    count, evidence = runtime_audit(args.pack_zip.resolve(), args.java.resolve(), args.server_jar.resolve(), args.phase)
     print(f"RUNTIME_PASS assertions={count} evidence={evidence}", flush=True)
 
 
