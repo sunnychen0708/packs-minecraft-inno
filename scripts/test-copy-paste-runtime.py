@@ -116,6 +116,28 @@ def integration(java: Path, server: Path):
     check('positioned 12 80 4 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:{id:"minecraft:oak_stairs",properties:{facing:"east",half:"bottom",shape:"straight",waterlogged:"false"}}},limit=1]','blueprint_stair_state')
     check('if block 3 80 3 gold_block if block 5 80 4 iron_block','copy_source_unchanged')
 
+    # 1a. Phase 3 Blueprint micro-adjust moves displays without rebuilding the BOM.
+    lines.append(f'scoreboard players set {actor} bpright 1')
+    run_as('mcc:blueprint/nudge/right')
+    run_as('mcc:blueprint/recount_batch')
+    check(f'positioned 11 80 3 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] if score {actor} mcc_bptx0 matches 11 if score {actor} mcc_bpover_scan matches 0','phase3_blueprint_nudge_right')
+    lines.append(f'scoreboard players set {actor} bpleft 1')
+    run_as('mcc:blueprint/nudge/left')
+    run_as('mcc:blueprint/recount_batch')
+    check(f'positioned 12 80 3 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] if score {actor} mcc_bptx0 matches 12 if score {actor} mcc_bpover_scan matches 0','phase3_blueprint_nudge_left_restore')
+
+    # Phase 3 overwrite guard: recount target blocks and require a second Build confirmation.
+    lines.append('setblock 12 80 3 stone')
+    run_as('mcc:blueprint/recount_start')
+    run_as('mcc:blueprint/recount_batch')
+    check(f'if score {actor} mcc_bpover matches 1 if score {actor} mcc_bpover_scan matches 0','phase3_overlap_recount')
+    run_as('mcc:materials/build_start')
+    check(f'if block 12 80 3 stone if score {actor} mcc_buildconfirm matches 1 if score {actor} mcc_matphase matches 0','phase3_overlap_first_build_warns')
+    lines.append('setblock 12 80 3 air')
+    run_as('mcc:blueprint/recount_start')
+    run_as('mcc:blueprint/recount_batch')
+    check(f'if score {actor} mcc_bpover matches 0 if score {actor} mcc_buildconfirm matches 0','phase3_overlap_recount_resets_confirmation')
+
     # 1b. v1.0 material-backed Build: missing materials do nothing; complete stock consumes then builds.
     lines.extend([
         'setblock 6 80 8 chest',
@@ -126,6 +148,12 @@ def integration(java: Path, server: Path):
         'data modify storage warehouse:chests c00 set value {registered:1b,valid:1b,dimension:"minecraft:overworld",a_x:6,a_y:80,a_z:8,b_x:7,b_y:80,b_z:8}',
         'data modify storage warehouse:chests c11 set value {registered:1b,valid:1b,dimension:"minecraft:overworld",a_x:8,a_y:80,a_z:8,b_x:9,b_y:80,b_z:8}',
     ])
+    # Phase 3 material report is read-only even when Warehouse is missing stock.
+    run_as('mcc:materials/check_start')
+    for _ in range(4): run_as('mcc:materials/process_batch')
+    check(f'if score {actor} mcc_matphase matches 0 if score {actor} mcc_matjob matches 0 if score {actor} mcc_matkind matches 1 if score {actor} mcc_mattotal matches 1','phase3_material_report_missing_summary')
+    check('if data block 8 80 8 Items[{id:"minecraft:gold_block",count:1}] if data block 8 80 8 Items[{id:"minecraft:diamond_block",count:1}] if data block 8 80 8 Items[{id:"minecraft:oak_stairs",count:1}]','phase3_material_report_no_consume')
+
     run_as('mcc:materials/build_start')
     for _ in range(4): run_as('mcc:materials/process_batch')
     check(f'if block 12 80 3 air if block 14 80 4 air if score {actor} mcc_matphase matches 0 if score {actor} mcc_bpactive matches 1','build_missing_all_or_nothing')
@@ -143,7 +171,7 @@ def integration(java: Path, server: Path):
     run_as('mcc:undo/run')
     check(f'if block 12 80 3 air if block 14 80 4 air if score {actor} mcc_rcnt matches 1','build_undo_world')
     check('if data storage warehouse:api result{operation:"refund_item",ok:1b,complete:1b}','build_undo_called_refund_api')
-    check('unless data storage warehouse:api pending_refunds[0].item_id','build_undo_refund_not_pending')
+    check('unless data storage warehouse:api pending_refunds[0]','build_undo_refund_not_pending')
     check('if data block 6 80 8 Items[{id:"minecraft:gold_block",count:1}] if data block 6 80 8 Items[{id:"minecraft:diamond_block",count:1}] if data block 6 80 8 Items[{id:"minecraft:oak_stairs",count:1}] if data block 6 80 8 Items[{id:"minecraft:iron_block",count:1}]','build_undo_refunds_to_warehouse_entry')
     check('if block 8 80 8 #warehouse:storage_chests if block 9 80 8 #warehouse:storage_chests','warehouse_source_blocks_before_redo')
     check('if data storage warehouse:chests c11{registered:1b,valid:1b,dimension:"minecraft:overworld",a_x:8,a_y:80,a_z:8,b_x:9,b_y:80,b_z:8}','warehouse_source_registration_before_redo')

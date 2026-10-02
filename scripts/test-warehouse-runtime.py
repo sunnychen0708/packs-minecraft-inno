@@ -241,7 +241,7 @@ def integration(java: Path, server: Path) -> None:
             "function warehouse:api/pending_refunds/tick",
         ]
     )
-    check('unless data storage warehouse:api pending_refunds[0].item_id', "api_refund_pending_drained")
+    check('unless data storage warehouse:api pending_refunds[0]', "api_refund_pending_drained")
     check('if data block 9 70 5 Items[{Slot:0b,id:"minecraft:stone",count:10}]', "api_refund_pending_materialized")
 
     lines.extend(

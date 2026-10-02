@@ -4,6 +4,7 @@ execute store result storage mcc:temp x2 int 1 run scoreboard players get @s mcc
 execute store result storage mcc:temp z2 int 1 run scoreboard players get @s mcc_bpsz2
 function mcc:blueprint/forceload_add with storage mcc:temp
 scoreboard players set @s mcc_bpover 0
+scoreboard players set @s mcc_buildconfirm 0
 scoreboard players set @s mcc_bpoindex 0
 scoreboard players operation @s mcc_bpsx = @s mcc_bpsx0
 scoreboard players operation @s mcc_bpsy = @s mcc_bpsy0
