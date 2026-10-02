@@ -55,6 +55,11 @@ def integration(java: Path, server: Path):
         f'scoreboard players set {actor} mcc_uhead 0',
         f'scoreboard players set {actor} mcc_rcnt 0',
         f'scoreboard players set {actor} mcc_rhead 0',
+        f'scoreboard players set {actor} mcc_matphase 0',
+        f'scoreboard players set {actor} mcc_matjob 0',
+        f'scoreboard players set {actor} mcc_buildconfirm 0',
+        f'scoreboard players set {actor} mcc_bpover 0',
+        f'scoreboard players set {actor} mcc_bpover_scan 0',
         'fill 0 78 0 40 90 30 air',
     ]
     assertions=[]
@@ -163,7 +168,7 @@ def integration(java: Path, server: Path):
     for _ in range(8): run_as('mcc:materials/process_batch')
     check(f'if block 12 80 3 gold_block if block 14 80 3 diamond_block if block 12 80 4 oak_stairs[facing=east] if block 14 80 4 iron_block if score {actor} mcc_bpactive matches 0','build_material_success')
     check('unless data block 8 80 8 Items[0]','build_materials_consumed')
-    check('if data storage mcc:history u_p77_s1.materials.bom."minecraft:gold_block"{taken:1} if data storage mcc:history u_p77_s1.materials.bom."minecraft:diamond_block"{taken:1} if data storage mcc:history u_p77_s1.materials.bom."minecraft:oak_stairs"{taken:1} if data storage mcc:history u_p77_s1.materials.bom."minecraft:iron_block"{taken:1}','build_history_archives_taken')
+    check('if data storage mcc:history u_p77_s1.materials.bom."minecraft:gold_block"{taken:1} if data storage mcc:history u_p77_s1.materials.bom."minecraft:diamond_block"{taken:1} if data storage mcc:history u_p77_s1.materials.bom."minecraft:oak_stairs"{taken:1} if data storage mcc:history u_p77_s1.materials.bom."minecraft:iron_block"{taken:1} if data storage mcc:history u_p77_s1.materials.items[{id:"minecraft:gold_block",taken:1}] if data storage mcc:history u_p77_s1.materials.items[{id:"minecraft:iron_block",taken:1}]','build_history_archives_taken')
     lines.append('setblock 12 80 3 emerald_block')
     run_as('mcc:undo/run')
     check(f'if block 12 80 3 emerald_block if score {actor} mcc_ucnt matches 1','build_undo_guard_refuses_modified_world')

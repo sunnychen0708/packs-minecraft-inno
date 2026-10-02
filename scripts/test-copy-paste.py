@@ -391,12 +391,15 @@ def check_v100_semantics(pack: Path):
     take_one=read(pack/'data/mcc/function/materials/warehouse_take_one.mcfunction')
     assert 'warehouse:api/count_item' in count_one
     assert 'warehouse:api/take_item' in take_one
+    assert 'items[{id:"$(id)"}].taken' in take_one
     assert 'mcc:materials/warehouse_count_one' in process_next
     assert 'mcc:materials/warehouse_take_one' in process_next
     refund_taken=read(pack/'data/mcc/function/materials/refund_taken_one.mcfunction')
     refund_undo=read(pack/'data/mcc/function/history/refund_undo_materials_one.mcfunction')
     assert 'warehouse:api/refund_item' in refund_taken
     assert 'warehouse:api/refund_item' in refund_undo
+    assert 'mcc:temp mat.taken' in refund_taken
+    assert 'mcc:temp txitem.taken' in refund_undo
     assert 'give @s' not in refund_taken and 'give @s' not in refund_undo
     assert 'function mcc:materials/place_buffer' in place
     assert 'mcc_bpover' in read(pack/'data/mcc/function/blueprint/scan_one.mcfunction')
