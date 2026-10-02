@@ -1,7 +1,7 @@
 execute if block ~ ~ ~ #mcc:material_unsupported run scoreboard players set @s mcc_bpbad 1
 execute if block ~ ~ ~ #mcc:material_unsupported run return 0
 setblock 20008008 64 20008008 minecraft:barrel
-loot replace block 20008008 64 20008008 container.0 27 mine ~ ~ ~ minecraft:netherite_pickaxe[minecraft:enchantments={levels:{"minecraft:silk_touch":1}}]
+loot replace block 20008008 64 20008008 container.0 27 mine ~ ~ ~ minecraft:netherite_pickaxe[minecraft:enchantments={"minecraft:silk_touch":1}]
 data remove storage mcc:temp loot
 data modify storage mcc:temp loot set from block 20008008 64 20008008 Items
 setblock 20008008 64 20008008 air
