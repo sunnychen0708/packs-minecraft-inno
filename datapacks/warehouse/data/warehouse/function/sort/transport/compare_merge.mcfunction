@@ -1,5 +1,10 @@
 scoreboard players set #transfer wh_tmp 0
 $execute unless data storage warehouse:runtime move.candidate{id:"$(item_id)"} run return 0
+# API plain-refund mode requires an exactly empty component map. NBT compound
+# pattern matching alone is subset-based, so components:{} would also match custom items.
+execute if score #api_plain wh_tmp matches 1 run scoreboard players set #api_components wh_tmp 0
+execute if score #api_plain wh_tmp matches 1 if data storage warehouse:runtime move.candidate.components store result score #api_components wh_tmp run data get storage warehouse:runtime move.candidate.components
+execute if score #api_plain wh_tmp matches 1 unless score #api_components wh_tmp matches 0 run return 0
 $execute unless data storage warehouse:runtime move.candidate{components:$(components)} run return 0
 $execute unless data storage warehouse:runtime move.stack{id:"$(candidate_id)"} run return 0
 $execute unless data storage warehouse:runtime move.stack{components:$(candidate_components)} run return 0

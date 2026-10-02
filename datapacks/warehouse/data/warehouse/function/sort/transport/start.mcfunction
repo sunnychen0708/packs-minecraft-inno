@@ -1,3 +1,4 @@
+scoreboard players set #api_plain wh_tmp 0
 scoreboard players set #moved wh_tmp 0
 scoreboard players set #main_ok wh_tmp 0
 execute store result score #remaining wh_tmp run data get storage warehouse:runtime move.count

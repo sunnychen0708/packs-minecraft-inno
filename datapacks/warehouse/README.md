@@ -23,7 +23,7 @@ The shared material-source snapshot is rebuilt with:
 
 `function warehouse:api/material_sources/refresh`
 
-It exports registered and valid Warehouse containers to `storage warehouse:api material_sources`, writes the number of exported sources to `material_source_count`, and publishes `material_source_limit:64`. The current Warehouse layout has 61 possible registered containers, so it fits inside the 64-source contract without changing existing registration data.
+It exports registered and valid Warehouse containers to `storage warehouse:api material_sources`, writes the number of exported sources to `material_source_count`, and publishes `material_source_limit:64`. The current Warehouse layout has 61 registration slots, so it fits inside the 64-source contract without changing existing registration data. If the same physical large chest is registered under multiple codes, the public snapshot exports it only once (including reversed A/B registration) so inventory cannot be double-counted.
 
 ### Count item
 
@@ -55,9 +55,9 @@ The endpoint refreshes the public material-source snapshot first, temporarily fo
 function warehouse:api/take_item {item_id:"minecraft:stone",count:50}
 ```
 
-The endpoint consumes only **plain stacks** of the requested item ID. Stacks carrying custom components are intentionally skipped so another pack cannot accidentally consume named/container/custom-data variants merely because the base item ID matches.
+The endpoint consumes only **plain stacks** of the requested item ID. A stack is plain when its `components` compound is absent or has zero direct children; named/container/custom-data variants are skipped.
 
-The result is written to `storage warehouse:api result` with `requested`, `taken`, `remaining`, `sources_scanned`, and `stale_sources`. `ok:1b,complete:1b` means the full requested amount was removed. A partial withdrawal reports `error:"insufficient_stock"` and leaves the exact partial amount in `taken` so a caller can compensate safely.
+Withdrawal is **all-or-nothing**. The API first counts the same plain stacks across a deduplicated snapshot of physical Warehouse containers. If any source is stale or the total is below `count`, it removes nothing and reports `error:"source_unavailable"` or `error:"insufficient_stock"`. If preflight succeeds, count and withdrawal run synchronously in the same function call, then the exact requested amount is removed.
 
 ### Refund item
 

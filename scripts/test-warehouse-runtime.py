@@ -158,6 +158,7 @@ def integration(java: Path, server: Path) -> None:
             'data modify block 5 70 5 Items set value [{Slot:0b,id:"minecraft:stone",count:20},{Slot:1b,id:"minecraft:stone",count:7,components:{"minecraft:custom_data":{warehouse_api_test:1b}}}]',
             'data modify block 6 70 5 Items set value [{Slot:0b,id:"minecraft:stone",count:12}]',
             'data modify block 7 70 5 Items set value [{Slot:0b,id:"minecraft:stone",count:40}]',
+            'data modify block 9 70 5 Items set value [{Slot:0b,id:"minecraft:stone",count:7,components:{"minecraft:custom_data":{warehouse_api_entry_custom:1b}}}]',
             "data modify storage warehouse:chests c12.registered set value 1b",
             "data modify storage warehouse:chests c12.valid set value 1b",
             'data modify storage warehouse:chests c12.dimension set value "minecraft:overworld"',
@@ -167,6 +168,16 @@ def integration(java: Path, server: Path) -> None:
             "data modify storage warehouse:chests c12.b_x set value 8",
             "data modify storage warehouse:chests c12.b_y set value 70",
             "data modify storage warehouse:chests c12.b_z set value 5",
+            # Duplicate registration of the same physical source with A/B reversed.
+            "data modify storage warehouse:chests c13.registered set value 1b",
+            "data modify storage warehouse:chests c13.valid set value 1b",
+            'data modify storage warehouse:chests c13.dimension set value "minecraft:overworld"',
+            "data modify storage warehouse:chests c13.a_x set value 8",
+            "data modify storage warehouse:chests c13.a_y set value 70",
+            "data modify storage warehouse:chests c13.a_z set value 5",
+            "data modify storage warehouse:chests c13.b_x set value 7",
+            "data modify storage warehouse:chests c13.b_y set value 70",
+            "data modify storage warehouse:chests c13.b_z set value 5",
             "data modify storage warehouse:chests c00.registered set value 1b",
             "data modify storage warehouse:chests c00.valid set value 1b",
             'data modify storage warehouse:chests c00.dimension set value "minecraft:overworld"',
@@ -182,7 +193,7 @@ def integration(java: Path, server: Path) -> None:
     check('if data storage warehouse:api result{ok:1b,complete:1b}', "api_count_ok")
     check('if data storage warehouse:api result{item_id:"minecraft:stone",available:72}', "api_count_plain_72")
     check('if data storage warehouse:api result{sources_scanned:3,stale_sources:0,source_limit:64}', "api_count_three_sources")
-    check('if data storage warehouse:api {material_source_count:3,meta:{material_source_limit:64}}', "api_material_source_snapshot")
+    check('if data storage warehouse:api {material_source_count:3,meta:{material_source_limit:64}}', "api_material_source_snapshot_dedupes_alias")
 
     lines.append(f'execute as {actor} run function warehouse:api/take_item {{item_id:"minecraft:stone",count:50}}')
     check('if data storage warehouse:api result{operation:"take_item",ok:1b,complete:1b,requested:50,taken:50,remaining:0,stale_sources:0}', "api_take_exact_amount")
@@ -191,9 +202,16 @@ def integration(java: Path, server: Path) -> None:
     lines.append(f'execute as {actor} run function warehouse:api/count_item {{item_id:"minecraft:stone"}}')
     check('if data storage warehouse:api result{ok:1b,complete:1b,available:22,stale_sources:0}', "api_count_after_take")
 
+    # Insufficient withdrawal is all-or-nothing.
+    lines.append(f'execute as {actor} run function warehouse:api/take_item {{item_id:"minecraft:stone",count:23}}')
+    check('if data storage warehouse:api result{operation:"take_item",ok:0b,complete:0b,requested:23,taken:0,remaining:23,available:22,error:"insufficient_stock"}', "api_take_insufficient_is_atomic")
+    lines.append(f'execute as {actor} run function warehouse:api/count_item {{item_id:"minecraft:stone"}}')
+    check('if data storage warehouse:api result{ok:1b,complete:1b,available:22}', "api_take_insufficient_changed_nothing")
+
     lines.append(f'execute as {actor} run function warehouse:api/refund_item {{item_id:"minecraft:stone",count:50}}')
     check('if data storage warehouse:api result{operation:"refund_item",ok:1b,complete:1b,requested:50,inserted:50,remaining:0}', "api_refund_to_entry")
     check('if data block 9 70 5 Items[{id:"minecraft:stone",count:50}]', "api_refund_materialized_in_entry")
+    check('if data block 9 70 5 Items[{Slot:0b,id:"minecraft:stone",count:7,components:{"minecraft:custom_data":{warehouse_api_entry_custom:1b}}}]', "api_refund_preserves_custom_entry_stack")
 
     lines.append(f'execute as {actor} run function warehouse:api/count_item {{item_id:"minecraft:stone"}}')
     check('if data storage warehouse:api result{ok:1b,complete:1b,available:72,stale_sources:0}', "api_count_after_refund")
@@ -206,6 +224,8 @@ def integration(java: Path, server: Path) -> None:
         ]
     )
     check('if data storage warehouse:api result{ok:0b,complete:0b,available:50,sources_scanned:3,stale_sources:1,source_limit:64}', "api_count_rejects_stale_source")
+    lines.append(f'execute as {actor} run function warehouse:api/take_item {{item_id:"minecraft:stone",count:1}}')
+    check('if data storage warehouse:api result{operation:"take_item",ok:0b,complete:0b,taken:0,error:"source_unavailable"}', "api_take_refuses_stale_snapshot")
 
     lines.extend(
         [
