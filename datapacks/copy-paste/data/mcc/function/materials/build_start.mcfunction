@@ -12,9 +12,10 @@ execute if score @s mcc_matphase matches 1.. run tellraw @s [{"text":"[Copy/Past
 execute if score @s mcc_matphase matches 1.. run return fail
 function mcc:materials/ensure_player
 function mcc:materials/reset_have_start
+scoreboard players set @s mcc_materr 0
 scoreboard players set @s mcc_matjob 0
 scoreboard players set @s mcc_matphase 1
-function mcc:materials/queue_boxes
-tellraw @s [{"text":"[Copy/Paste] 正在分批檢查所有已註冊材料來源…","color":"aqua"}]
+function mcc:materials/queue_items
+tellraw @s [{"text":"[Copy/Paste] 正在透過 Warehouse API 分批檢查施工材料…","color":"aqua"}]
 execute if score @s mcc_matleft matches 0 run return run function mcc:materials/count_done
 return 1

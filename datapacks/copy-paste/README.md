@@ -2,7 +2,7 @@
 
 適用：Minecraft Java Edition 26.3（Data Pack 121.0）
 
-純 Vanilla datapack。操作使用 Trigger，不依賴 Warehouse 或其他資料包。
+純 Vanilla datapack。操作使用 Trigger。材料施工依賴同 repo 的 Warehouse datapack，並直接使用 Warehouse 共用註冊資料與 API。
 
 ## v1.0 核心流程
 
@@ -30,34 +30,11 @@ Cut、Move、Flip、直接 Rotate 仍維持原本直接修改真實世界的方�
 
 ## 材料來源
 
-瞄準箱子後：
+Copy/Paste 不再維護自己的材料箱註冊表。施工與材料型 Redo 直接使用 Warehouse 的共用材料來源。
 
-```mcfunction
-/trigger matbox
-```
+Warehouse API 會從已註冊且有效的 Warehouse 容器建立最多 64 個材料來源；目前 Warehouse 既有配置為 61 個可能容器，因此不需要重複註冊。
 
-註冊材料來源。可重複註冊，**沒有寫死固定數量上限**。實際可用數量只受世界資料量與掃描時間影響。
-
-支援：
-
-- 箱子 / 陷阱箱
-- 26.3 的各種銅箱
-- 木桶
-- 大箱子會自動把兩半都註冊
-
-取消瞄準中的材料來源：
-
-```mcfunction
-/trigger matremove
-```
-
-查看目前註冊紀錄數：
-
-```mcfunction
-/trigger matlist
-```
-
-施工時每 tick 分批掃描材料來源，不會把所有箱子硬塞進同一 tick。
+`/trigger build` 會依 BOM 逐項呼叫 Warehouse API 查庫存；全部足夠後，再逐項由 Warehouse API 原子扣除。若 Warehouse 有失效的註冊來源，施工會停止，而不是把不完整的庫存統計當成可信結果。
 
 ## Copy / Blueprint / Build
 
@@ -94,7 +71,7 @@ Blueprint 建立完成後可以先設定：
 /trigger build
 ```
 
-系統先建立 BOM（Bill of Materials），再掃描所有已註冊材料來源。只有所有材料都足夠才進入扣料與施工。
+系統先建立 BOM（Bill of Materials），再透過 Warehouse API 檢查共用庫存。只有所有材料都足夠才進入扣料與施工。
 
 材料不足時會顯示例如：
 
@@ -112,11 +89,11 @@ Blueprint 建立完成後可以先設定：
 
 v1.0 不會把 Copy 當成免費 Clone：
 
-- 施工只消耗已註冊容器中的一般、無自訂 components 的物品堆疊。
+- 施工只消耗 Warehouse 共用材料來源中的一般、無自訂 components 的物品堆疊。
 - Block Entity 的物品內容在 Blueprint buffer 中會被移除；箱子、熔爐、木桶、潛影盒等不會複製內含物。
 - 沒有可對應生存材料、或會把儲存資源狀態直接複製出來的方塊會拒絕施工。
 - 材料不足時完全不修改目標世界，也不扣除任何材料。
-- 若扣料期間材料箱被其他人改動，施工會取消，已扣的普通材料會退還給施工玩家。
+- 若 Warehouse 在檢查與扣料之間被其他玩家改動，施工會取消；已扣的普通材料仍沿用既有交易補償流程。
 
 ## Cut
 
@@ -160,17 +137,17 @@ Build 的 Undo/Redo 會連材料交易一起處理：Undo 在施工區仍與 Bui
 
 ## 多人
 
-- 每位玩家有獨立 Clipboard、Blueprint、BOM、材料箱註冊表與 5 層 Undo/Redo。
+- 每位玩家有獨立 Clipboard、Blueprint、BOM 與 5 層 Undo/Redo；材料來源則是全伺服器共用的 Warehouse。
 - Blueprint display 所有附近玩家都看得到。
-- 材料來源註冊屬於玩家自己；不同玩家可以註冊同一個實體箱子。
-- 如果多人同時從同一材料箱施工，第二階段會重新實際扣料並檢查，材料被搶走時不會免費施工。
+- Warehouse 材料來源是共用財產；Copy/Paste 不再保存玩家私人材料箱座標。
+- 多人同時施工時，每次 Build/Redo 都會透過 Warehouse API 重新原子扣料；材料在前一次檢查後被其他玩家取走時，不會免費施工。
 
 ## 限制
 
 - Raycast：128 格。
 - 一般 Copy / Cut：每軸最多 128 格，總體積受 `minecraft:max_block_modifications` 限制。
 - Rotate / Mirror Structure Template：每軸 ≤ 48。
-- Material box 數量沒有固定硬上限，但越多箱子檢查時間越長；目前每位玩家每 tick 最多處理 4 個註冊來源。
+- Warehouse 共用材料來源上限為 64；Copy/Paste 不再有自己的材料箱上限或註冊資料。
 - Blueprint exact-state matcher覆蓋 Java 26.3 的 1,283 種非空氣 block IDs、35,720 個 block states。
 - 實體不包含在 Copy/Cut/Blueprint 中。
 

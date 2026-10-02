@@ -13,7 +13,7 @@ RE_TRIGGER = re.compile(r'^scoreboard objectives add (\S+) trigger$', re.M)
 USER_TRIGGERS = {
     'copypaste','pos1','pos2','anchor','c','x','v','undo','redo','mode','rotate','mirror',
     'right','left','up','down','forward','backward','flipx','flipz',
-    'rotate90','rotate180','rotate270','previewclear','build','matbox','matremove','matlist'
+    'rotate90','rotate180','rotate270','previewclear','build'
 }
 
 def read(p: Path) -> str:
@@ -258,9 +258,6 @@ def check_v100_semantics(pack: Path):
     assert 'scoreboard objectives add rotate270 trigger' in load
     assert 'scoreboard objectives add previewclear trigger' in load
     assert 'scoreboard objectives add build trigger' in load
-    assert 'scoreboard objectives add matbox trigger' in load
-    assert 'scoreboard objectives add matremove trigger' in load
-    assert 'scoreboard objectives add matlist trigger' in load
     assert 'scores={x=1..}' in tick and 'function mcc:cut/run' in tick
 
     copy=read(pack/'data/mcc/function/copy/run.mcfunction')
@@ -387,13 +384,22 @@ def check_v100_semantics(pack: Path):
     assert 'function mcc:materials/bom_reset' in create
     assert 'function mcc:materials/bom_from_block' in scan
     assert 'function mcc:materials/sanitize_block' in scan
-    assert 'function mcc:materials/queue_boxes' in build
+    assert 'function mcc:materials/queue_items' in build
+    assert 'function mcc:materials/queue_boxes' not in build
+    process_next=read(pack/'data/mcc/function/materials/process_next.mcfunction')
+    count_one=read(pack/'data/mcc/function/materials/warehouse_count_one.mcfunction')
+    take_one=read(pack/'data/mcc/function/materials/warehouse_take_one.mcfunction')
+    assert 'warehouse:api/count_item' in count_one
+    assert 'warehouse:api/take_item' in take_one
+    assert 'mcc:materials/warehouse_count_one' in process_next
+    assert 'mcc:materials/warehouse_take_one' in process_next
     assert 'function mcc:materials/place_buffer' in place
     assert 'scoreboard players set @s mcc_histmat 1' in place
-    assert (pack/'data/mcc/tags/block/material_chests.json').is_file()
     assert (pack/'data/mcc/tags/block/material_unsupported.json').is_file()
     panel=read(pack/'data/mcc/function/panel.mcfunction')
-    assert '/trigger build' in panel and '/trigger matbox' in panel
+    assert '/trigger build' in panel
+    assert '/trigger matbox' not in panel and '/trigger matremove' not in panel and '/trigger matlist' not in panel
+    assert 'Warehouse 共用倉庫' in panel
     return matcher_states
 
 def check_version_labels(pack: Path):

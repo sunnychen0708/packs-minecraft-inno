@@ -1,5 +1,6 @@
-$data modify storage mcc:temp box set from storage mcc:materials p$(pid).work_boxes[0]
-$data modify storage mcc:temp box.pid set value $(pid)
-function mcc:materials/scan_box with storage mcc:temp box
-$data remove storage mcc:materials p$(pid).work_boxes[0]
+$data modify storage mcc:temp mat set from storage mcc:materials p$(pid).work[0]
+$data modify storage mcc:temp mat.pid set value $(pid)
+execute if score @s mcc_matphase matches 1 run function mcc:materials/warehouse_count_one with storage mcc:temp mat
+execute if score @s mcc_matphase matches 2 run function mcc:materials/warehouse_take_one with storage mcc:temp mat
+$data remove storage mcc:materials p$(pid).work[0]
 return 1

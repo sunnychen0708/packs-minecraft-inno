@@ -16,6 +16,7 @@ import zipfile
 
 ROOT=Path(__file__).resolve().parents[1]
 PACK=ROOT/'datapacks/copy-paste'
+WAREHOUSE=ROOT/'datapacks/warehouse'
 
 def integration(java: Path, server: Path):
     work=ROOT/'dist'/('copy-paste-runtime-'+uuid.uuid4().hex[:8])
@@ -26,6 +27,9 @@ def integration(java: Path, server: Path):
     with zipfile.ZipFile(packs/'copy-paste.zip','w',zipfile.ZIP_DEFLATED) as z:
         for p in PACK.rglob('*'):
             if p.is_file(): z.write(p,p.relative_to(PACK).as_posix())
+    with zipfile.ZipFile(packs/'warehouse.zip','w',zipfile.ZIP_DEFLATED) as z:
+        for p in WAREHOUSE.rglob('*'):
+            if p.is_file(): z.write(p,p.relative_to(WAREHOUSE).as_posix())
 
     harness=packs/'regression'
     funcs=harness/'data/mcc_server_test/function'
@@ -115,16 +119,17 @@ def integration(java: Path, server: Path):
     # 1b. v1.0 material-backed Build: missing materials do nothing; complete stock consumes then builds.
     lines.extend([
         'setblock 8 80 8 chest',
+        'setblock 9 80 8 chest',
         'data modify block 8 80 8 Items set value [{Slot:0b,id:"minecraft:gold_block",count:1},{Slot:1b,id:"minecraft:diamond_block",count:1},{Slot:2b,id:"minecraft:oak_stairs",count:1}]',
-        'data modify storage mcc:materials p77.boxes set value [{x:8,y:80,z:8,dimension:"minecraft:overworld"}]',
+        'data modify storage warehouse:chests c11 set value {registered:1b,valid:1b,dimension:"minecraft:overworld",a_x:8,a_y:80,a_z:8,b_x:9,b_y:80,b_z:8}',
     ])
     run_as('mcc:materials/build_start')
-    for _ in range(3): run_as('mcc:materials/process_batch')
+    for _ in range(4): run_as('mcc:materials/process_batch')
     check(f'if block 12 80 3 air if block 14 80 4 air if score {actor} mcc_matphase matches 0 if score {actor} mcc_bpactive matches 1','build_missing_all_or_nothing')
     check('if data block 8 80 8 Items[{id:"minecraft:gold_block",count:1}] if data block 8 80 8 Items[{id:"minecraft:diamond_block",count:1}]','build_missing_no_consume')
     lines.append('data modify block 8 80 8 Items append value {Slot:3b,id:"minecraft:iron_block",count:1}')
     run_as('mcc:materials/build_start')
-    for _ in range(4): run_as('mcc:materials/process_batch')
+    for _ in range(8): run_as('mcc:materials/process_batch')
     check(f'if block 12 80 3 gold_block if block 14 80 3 diamond_block if block 12 80 4 oak_stairs[facing=east] if block 14 80 4 iron_block if score {actor} mcc_bpactive matches 0','build_material_success')
     check('unless data block 8 80 8 Items[0]','build_materials_consumed')
     lines.append('setblock 12 80 3 emerald_block')
@@ -135,7 +140,7 @@ def integration(java: Path, server: Path):
     check(f'if block 12 80 3 air if block 14 80 4 air if score {actor} mcc_rcnt matches 1','build_undo_world')
     lines.append('data modify block 8 80 8 Items set value [{Slot:0b,id:"minecraft:gold_block",count:1},{Slot:1b,id:"minecraft:diamond_block",count:1},{Slot:2b,id:"minecraft:oak_stairs",count:1},{Slot:3b,id:"minecraft:iron_block",count:1}]')
     run_as('mcc:redo/run')
-    for _ in range(4): run_as('mcc:materials/process_batch')
+    for _ in range(8): run_as('mcc:materials/process_batch')
     check(f'if block 12 80 3 gold_block if block 14 80 4 iron_block if score {actor} mcc_ucnt matches 1 if score {actor} mcc_rcnt matches 0','build_redo_material_success')
     check('unless data block 8 80 8 Items[0]','build_redo_materials_consumed')
     run_as('mcc:undo/run')

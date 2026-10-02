@@ -15,6 +15,7 @@ execute as @a unless score @s mcc_bpready matches 0..1 run scoreboard players se
 execute as @a unless score @s mcc_bpbad matches 0..1 run scoreboard players set @s mcc_bpbad 0
 execute as @a unless score @s mcc_matphase matches 0..2 run scoreboard players set @s mcc_matphase 0
 execute as @a unless score @s mcc_matleft matches 0.. run scoreboard players set @s mcc_matleft 0
+execute as @a unless score @s mcc_materr matches 0..1 run scoreboard players set @s mcc_materr 0
 execute as @a unless score @s mcc_histmat matches 0..1 run scoreboard players set @s mcc_histmat 0
 execute as @a unless score @s mcc_umat matches 0..1 run scoreboard players set @s mcc_umat 0
 execute as @a unless score @s mcc_rmat matches 0..1 run scoreboard players set @s mcc_rmat 0
@@ -54,9 +55,6 @@ execute as @a[scores={rotate180=1..,mcc_matphase=0}] run function mcc:rotate_edi
 execute as @a[scores={rotate270=1..,mcc_matphase=0}] run function mcc:rotate_edit/r270
 execute as @a[scores={previewclear=1..}] run function mcc:blueprint/clear
 execute as @a[scores={build=1..}] run function mcc:materials/build_start
-execute as @a[scores={matbox=1..}] at @s run function mcc:select/start_matbox
-execute as @a[scores={matremove=1..}] at @s run function mcc:select/start_matremove
-execute as @a[scores={matlist=1..}] run function mcc:materials/list
 execute as @a[scores={mcc_bpscan=1..}] run function mcc:blueprint/scan_batch
 execute as @a[scores={mcc_matphase=1..2}] run function mcc:materials/process_batch
 
@@ -85,9 +83,6 @@ scoreboard players set @a[scores={rotate180=1..}] rotate180 0
 scoreboard players set @a[scores={rotate270=1..}] rotate270 0
 scoreboard players set @a[scores={previewclear=1..}] previewclear 0
 scoreboard players set @a[scores={build=1..}] build 0
-scoreboard players set @a[scores={matbox=1..}] matbox 0
-scoreboard players set @a[scores={matremove=1..}] matremove 0
-scoreboard players set @a[scores={matlist=1..}] matlist 0
 
 scoreboard players enable @a copypaste
 scoreboard players enable @a pos1
@@ -114,6 +109,3 @@ scoreboard players enable @a rotate180
 scoreboard players enable @a rotate270
 scoreboard players enable @a previewclear
 scoreboard players enable @a build
-scoreboard players enable @a matbox
-scoreboard players enable @a matremove
-scoreboard players enable @a matlist
