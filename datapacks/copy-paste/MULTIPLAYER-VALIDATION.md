@@ -6,7 +6,7 @@
 
 每位玩家第一次使用時取得唯一 `mcc_id`。
 
-三種隱藏 buffer 都以玩家 ID 分配獨立 X lane：
+五種隱藏 buffer 都以玩家 ID 分配獨立 X lane：
 
 - Clipboard：`X = #base + mcc_id × #slot`，Z lane = `#cbz`
 - Undo：相同玩家 X lane，Z lane = `#ubz`

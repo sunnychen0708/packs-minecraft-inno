@@ -329,6 +329,18 @@ def check_v050_semantics(pack: Path):
     assert 'mcc_cliptype matches 1 run return run function mcc:blueprint/create' in dispatch
     return matcher_states
 
+def check_version_labels(pack: Path):
+    meta=json.loads(read(pack/'pack.mcmeta'))
+    desc=meta['pack']['description']
+    m=re.search(r'v(\d+\.\d+\.\d+)',desc)
+    assert m, f'pack description has no semantic version: {desc}'
+    version=m.group(1)
+    load=read(pack/'data/mcc/function/load.mcfunction')
+    panel=read(pack/'data/mcc/function/panel.mcfunction')
+    assert f'v{version} 已載入' in load, f'load message not synced to v{version}'
+    assert f'Copy/Paste v{version}' in panel, f'panel title not synced to v{version}'
+    return version
+
 def check_tellraw_json(pack: Path):
     checked=0
     for p in pack.rglob('*.mcfunction'):
@@ -366,7 +378,8 @@ def main():
     check_move_model()
     mp=check_multiplayer_isolation(pack)
     states=check_v050_semantics(pack)
+    version=check_version_labels(pack)
     tj=check_tellraw_json(pack)
-    print(f'PASS copy-paste regression: {j} JSON, {f} functions, {o} objectives, {t} triggers, {tj} tellraw JSON, {mp}-player buffer isolation, {states} exact blueprint states, copy-v blueprint semantics, undo/redo, real rotate, clipboard isolation, rollback, move/flip properties')
+    print(f'PASS copy-paste regression v{version}: {j} JSON, {f} functions, {o} objectives, {t} triggers, {tj} tellraw JSON, {mp}-player buffer isolation, {states} exact blueprint states, copy-v blueprint semantics, undo/redo, real rotate, clipboard isolation, rollback, move/flip properties')
 
 if __name__=='__main__': main()
