@@ -117,6 +117,15 @@ def main() -> None:
     assert "pending_refunds[0]" in api_pending_tick
     assert "work.saved_result" in api_pending_tick
 
+    api_highlight = (PACK / "data/warehouse/function/api/highlight.mcfunction").read_text(encoding="utf-8")
+    highlight_box = (PACK / "data/warehouse/function/api/internal/highlight_box.mcfunction").read_text(encoding="utf-8")
+    show_classified = (PACK / "data/warehouse/function/rule/show_classified.mcfunction").read_text(encoding="utf-8")
+    assert "warehouse:chests c$(code)" in api_highlight
+    assert "particle minecraft:end_rod" in highlight_box
+    assert "force @s" in highlight_box
+    assert "Highlight 箱子" in show_classified
+    assert "function warehouse:highlight/from_rule" in show_classified
+
     print("PASS warehouse regression: reset/search are bounded; shared count/take/refund API is component-safe and refund-persistent")
 
 
