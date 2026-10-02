@@ -1,4 +1,3 @@
-$data modify storage mcc:debug refund_loop set value {id:$(id),slot:$(slot),stage:"entered"}
 execute unless data storage mcc:temp txwork[0].id run return 0
 data modify storage mcc:temp txitem set from storage mcc:temp txwork[0]
 $data modify storage mcc:temp txitem.pid set value $(id)
