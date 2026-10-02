@@ -268,7 +268,7 @@ def integration(java: Path, server: Path):
     try:
         assert ready.wait(90),'Server did not become ready'
         assert proc.stdin is not None
-        proc.stdin.write('forceload add 0 0 2 2\n'); proc.stdin.flush()
+        # /forceload takes block coordinates, not chunk indices. Cover every visible fixture chunk (x=0..2, z=0..1).\n        proc.stdin.write('forceload add 0 0 47 31\n'); proc.stdin.flush()
         time.sleep(2)
         proc.stdin.write('function mcc_server_test:run\n'); proc.stdin.flush()
         assert done.wait(90),'Runtime regression did not complete'
