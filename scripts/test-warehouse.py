@@ -65,6 +65,7 @@ def main() -> None:
 
     load = (PACK / "data/warehouse/function/load.mcfunction").read_text(encoding="utf-8")
     assert "execute unless data storage warehouse:meta v42 run function warehouse:migrate_v42" in load
+    assert "execute unless data storage warehouse:meta v43 run function warehouse:migrate_v43" in load
 
     api_refresh = (PACK / "data/warehouse/function/api/material_sources/refresh.mcfunction").read_text(encoding="utf-8")
     api_append = (PACK / "data/warehouse/function/api/material_sources/append.mcfunction").read_text(encoding="utf-8")
@@ -102,7 +103,6 @@ def main() -> None:
     assert "result.stale_sources" in api_count
     assert "function warehouse:api/count_item" in api_take
     assert "insufficient_stock" in api_take
-    assert "function warehouse:api/count_item" in api_take
     assert "source_unavailable" in api_take
     assert "data get storage warehouse:api work.stack.components" in api_take_stack
     assert "container.$(api_slot)" in api_take_stack
@@ -116,21 +116,22 @@ def main() -> None:
     assert "result.queued" in api_refund_finalize
     assert "pending_refunds[0]" in api_pending_tick
     assert "work.saved_result" in api_pending_tick
+
     main_dialog = (PACK / "data/warehouse/dialog/main.json").read_text(encoding="utf-8")
     assert "v4.2" in main_dialog
     assert "建築工具" in main_dialog
-    assert "function mcc:ui/open" in main_dialog
+    assert "trigger copypaste set 1" in main_dialog
 
     api_highlight = (PACK / "data/warehouse/function/api/highlight.mcfunction").read_text(encoding="utf-8")
     highlight_box = (PACK / "data/warehouse/function/api/internal/highlight_box.mcfunction").read_text(encoding="utf-8")
     show_classified = (PACK / "data/warehouse/function/rule/show_classified.mcfunction").read_text(encoding="utf-8")
-    assert "warehouse:chests c$(code)" in api_highlight
+    assert "warehouse:chests c$(code)" in (PACK / "data/warehouse/function/api/highlight_slot.mcfunction").read_text(encoding="utf-8")
     assert "particle minecraft:end_rod" in highlight_box
     assert "force @s" in highlight_box
     assert "Highlight 箱子" in show_classified
-    assert "function warehouse:highlight/from_rule" in show_classified
+    assert "trigger wh_highlight set 1" in show_classified
 
-    print("PASS warehouse regression: reset/search are bounded; shared count/take/refund API is component-safe and refund-persistent")
+    print("PASS warehouse regression: reset/search/API/Highlight are bounded and validated")
 
 
 if __name__ == "__main__":

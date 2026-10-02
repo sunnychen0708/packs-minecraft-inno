@@ -9,6 +9,7 @@ scoreboard players enable @a wh_unreg_do
 scoreboard players enable @a wh_unreg
 scoreboard players enable @a wh_search_pick
 scoreboard players enable @a wh_viewpage
+scoreboard players enable @a wh_highlight
 execute as @a[scores={wh_nav=1..}] run function warehouse:ui/nav
 execute as @a[scores={wh_register=100}] run function warehouse:ui/select_00
 execute as @a[scores={wh_register=10..19}] run function warehouse:ui/select_code
@@ -34,6 +35,8 @@ execute as @a[scores={wh_action=5}] run scoreboard players set @s wh_action 0
 execute as @a[scores={wh_view=1..}] run function warehouse:view/dispatch
 execute as @a[scores={wh_viewpage=1..7}] run function warehouse:view/page/dispatch
 execute as @a[scores={wh_search_pick=1..1544}] run function warehouse:rule/select_search
+execute as @a[scores={wh_highlight=1..}] run function warehouse:highlight/from_rule
+execute as @a[scores={wh_highlight=1..}] run scoreboard players set @s wh_highlight 0
 execute as @a[scores={wh_rule=1}] run function warehouse:rule/show_current
 execute as @a[scores={wh_rule=2}] run function warehouse:rule/remove_current
 execute as @a[scores={wh_rule=3}] run scoreboard players set @s wh_rule 0
