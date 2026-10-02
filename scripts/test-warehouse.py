@@ -123,9 +123,11 @@ def main() -> None:
     assert "trigger copypaste set 1" in main_dialog
 
     api_highlight = (PACK / "data/warehouse/function/api/highlight.mcfunction").read_text(encoding="utf-8")
+    highlight_slot = (PACK / "data/warehouse/function/api/highlight_slot.mcfunction").read_text(encoding="utf-8")
     highlight_box = (PACK / "data/warehouse/function/api/internal/highlight_box.mcfunction").read_text(encoding="utf-8")
     show_classified = (PACK / "data/warehouse/function/rule/show_classified.mcfunction").read_text(encoding="utf-8")
-    assert "warehouse:chests c$(code)" in (PACK / "data/warehouse/function/api/highlight_slot.mcfunction").read_text(encoding="utf-8")
+    assert "warehouse:chests c$(code)" in highlight_slot
+    assert highlight_slot.splitlines()[0] == "data remove storage warehouse:api work.highlight"
     assert "particle minecraft:end_rod" in highlight_box
     assert "force @s" in highlight_box
     assert "Highlight 箱子" in show_classified
