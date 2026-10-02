@@ -93,6 +93,7 @@ def main() -> None:
     assert "forceload query" in api_count_source
     assert "forceload add" in api_count_source
     assert "forceload remove" in api_count_source
+    assert "unless loaded" not in api_count_source
     assert 'id:"$(item_id)"' in api_count_stack
     assert "data get storage warehouse:api work.stack.components" in api_count_stack
     assert "result.available" in api_count
