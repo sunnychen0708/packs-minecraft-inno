@@ -496,10 +496,16 @@ def make_harness(harness: Path) -> tuple[int, list[str]]:
     lines.append("say WFTA_PHASE_VERIFY_COMPACT_DONE")
     (funcs / "verify_compact.mcfunction").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
-    # Viewer and search backends.
+    # Viewer and search backends. Seed a fresh known inventory here so this test
+    # does not depend on any prior transport/compact phase.
     lines, check = phase("view_search")
     lines += [
+        "data modify block 3 80 1 Items set value []",
+        "data modify block 3 80 3 Items set value []",
+        "item replace block 3 80 1 container.0 with minecraft:stone 30",
         f"execute as {actor} run function warehouse:view/open/31",
+        "data get block 3 80 1",
+        "data get storage warehouse:runtime viewer",
     ]
     check('if data storage warehouse:runtime viewer.totals[{id:"minecraft:stone"}]', "viewer_stone")
     lines += ["scoreboard players set #tmp wfta 0", 'execute store result score #tmp wfta run data get storage warehouse:runtime viewer.totals[{id:"minecraft:stone"}].count 1']
