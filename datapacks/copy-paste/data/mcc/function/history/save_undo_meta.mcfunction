@@ -18,8 +18,5 @@ $execute store result storage mcc:history u_p$(id)_s$(slot).any int 1 run scoreb
 $execute store result storage mcc:history u_p$(id)_s$(slot).anz int 1 run scoreboard players get @s mcc_uanz
 $execute store result storage mcc:history u_p$(id)_s$(slot).hasa int 1 run scoreboard players get @s mcc_uhasa
 $execute store result storage mcc:history u_p$(id)_s$(slot).mat int 1 run scoreboard players get @s mcc_histmat
-$execute if score @s mcc_histmat matches 1 run data modify storage mcc:debug material_save set value {id:$(id),slot:$(slot),stage:"saved"}
-execute if score @s mcc_histmat matches 1 store result storage mcc:debug material_save.histmat int 1 run scoreboard players get @s mcc_histmat
-$execute if score @s mcc_histmat matches 1 run data modify storage mcc:debug material_save.saved_mat set from storage mcc:history u_p$(id)_s$(slot).mat
 $execute if score @s mcc_histmat matches 1 run data modify storage mcc:history u_p$(id)_s$(slot).materials.items set from storage mcc:materials p$(id).items
 $execute if score @s mcc_histmat matches 1 run data modify storage mcc:history u_p$(id)_s$(slot).materials.bom set from storage mcc:materials p$(id).bom
