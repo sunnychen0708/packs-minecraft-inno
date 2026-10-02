@@ -31,5 +31,7 @@ scoreboard players set @s mcc_matjob 0
 scoreboard players set @s mcc_txslot 0
 scoreboard players set @s mcc_bpover 0
 scoreboard players set @s mcc_buildconfirm 0
+scoreboard players set @s mcc_bpover_scan 0
+scoreboard players set @s mcc_bpoindex 0
 scoreboard players set @s mcc_usel 0
 tellraw @s [{"text":"[Copy/Paste] ","color":"gold"},{"text":"已建立你的個人 Clipboard。輸入 ","color":"gray"},{"text":"/trigger copypaste","color":"yellow"},{"text":" 查看控制面板。","color":"gray"}]

@@ -13,6 +13,8 @@ scoreboard players set @s mcc_bpready 0
 scoreboard players set @s mcc_bpbad 0
 scoreboard players set @s mcc_bpover 0
 scoreboard players set @s mcc_buildconfirm 0
+scoreboard players set @s mcc_bpover_scan 0
+scoreboard players set @s mcc_bpoindex 0
 function mcc:materials/bom_reset
 execute if score @s mcc_rot matches 0 if score @s mcc_mir matches 0 run return run function mcc:blueprint/init_direct
 return run function mcc:blueprint/init_transformed
