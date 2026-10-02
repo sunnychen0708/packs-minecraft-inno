@@ -14,6 +14,6 @@ execute store result storage mcc:temp nudge.dx int 1 run scoreboard players get 
 execute store result storage mcc:temp nudge.dy int 1 run scoreboard players get @s mcc_dy
 execute store result storage mcc:temp nudge.dz int 1 run scoreboard players get @s mcc_dz
 function mcc:blueprint/nudge/entities with storage mcc:temp nudge
-function mcc:blueprint/recount_overlap
-tellraw @s [{"text":"[Copy/Paste] Blueprint 已微調；目前可能覆蓋 ","color":"gray"},{"score":{"name":"@s","objective":"mcc_bpover"},"color":"yellow"},{"text":" 個既有方塊。","color":"gray"}]
+function mcc:blueprint/recount_start
+tellraw @s [{"text":"[Copy/Paste] Blueprint 已微調；正在分批更新覆蓋檢查。","color":"gray"}]
 return 1
