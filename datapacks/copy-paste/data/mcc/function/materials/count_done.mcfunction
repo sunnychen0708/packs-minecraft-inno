@@ -12,6 +12,10 @@ execute if score @s mcc_matmiss matches 1 if score @s mcc_matjob matches 1 run f
 execute if score @s mcc_matmiss matches 1 run scoreboard players set @s mcc_matphase 0
 execute if score @s mcc_matmiss matches 1 run scoreboard players set @s mcc_matjob 0
 execute if score @s mcc_matmiss matches 1 run return fail
+execute if score @s mcc_matjob matches 2 run function mcc:materials/report_all_start
+execute if score @s mcc_matjob matches 2 run scoreboard players set @s mcc_matphase 0
+execute if score @s mcc_matjob matches 2 run scoreboard players set @s mcc_matjob 0
+execute if score @s mcc_matjob matches 2 run return 1
 function mcc:materials/remain_init_start
 scoreboard players set @s mcc_matphase 2
 function mcc:materials/queue_items

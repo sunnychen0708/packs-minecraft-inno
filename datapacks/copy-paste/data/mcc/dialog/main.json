@@ -1,0 +1,234 @@
+{
+  "type": "minecraft:multi_action",
+  "title": {
+    "text": "建築工具"
+  },
+  "external_title": {
+    "text": "Copy/Paste"
+  },
+  "body": [
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "Copy → Blueprint → 微調／旋轉／鏡像 → 材料與覆蓋檢查 → 施工。材料由 Warehouse 共用倉庫提供。"
+      },
+      "width": 430
+    }
+  ],
+  "pause": false,
+  "can_close_with_escape": true,
+  "after_action": "close",
+  "columns": 3,
+  "actions": [
+    {
+      "label": {
+        "text": "Pos1"
+      },
+      "width": 120,
+      "action": {
+        "type": "run_command",
+        "command": "trigger pos1"
+      }
+    },
+    {
+      "label": {
+        "text": "Pos2"
+      },
+      "width": 120,
+      "action": {
+        "type": "run_command",
+        "command": "trigger pos2"
+      }
+    },
+    {
+      "label": {
+        "text": "Anchor"
+      },
+      "width": 120,
+      "action": {
+        "type": "run_command",
+        "command": "trigger anchor"
+      }
+    },
+    {
+      "label": {
+        "text": "Copy"
+      },
+      "width": 120,
+      "action": {
+        "type": "run_command",
+        "command": "trigger c"
+      }
+    },
+    {
+      "label": {
+        "text": "Cut / X"
+      },
+      "width": 120,
+      "action": {
+        "type": "run_command",
+        "command": "trigger x"
+      }
+    },
+    {
+      "label": {
+        "text": "Blueprint / V"
+      },
+      "width": 120,
+      "action": {
+        "type": "run_command",
+        "command": "trigger v"
+      }
+    },
+    {
+      "label": {
+        "text": "左 1"
+      },
+      "width": 120,
+      "action": {
+        "type": "run_command",
+        "command": "trigger bpleft set 1"
+      }
+    },
+    {
+      "label": {
+        "text": "前 1"
+      },
+      "width": 120,
+      "action": {
+        "type": "run_command",
+        "command": "trigger bpforward set 1"
+      }
+    },
+    {
+      "label": {
+        "text": "右 1"
+      },
+      "width": 120,
+      "action": {
+        "type": "run_command",
+        "command": "trigger bpright set 1"
+      }
+    },
+    {
+      "label": {
+        "text": "上 1"
+      },
+      "width": 120,
+      "action": {
+        "type": "run_command",
+        "command": "trigger bpup set 1"
+      }
+    },
+    {
+      "label": {
+        "text": "後 1"
+      },
+      "width": 120,
+      "action": {
+        "type": "run_command",
+        "command": "trigger bpbackward set 1"
+      }
+    },
+    {
+      "label": {
+        "text": "下 1"
+      },
+      "width": 120,
+      "action": {
+        "type": "run_command",
+        "command": "trigger bpdown set 1"
+      }
+    },
+    {
+      "label": {
+        "text": "Rotate"
+      },
+      "width": 120,
+      "action": {
+        "type": "run_command",
+        "command": "trigger rotate"
+      }
+    },
+    {
+      "label": {
+        "text": "Mirror"
+      },
+      "width": 120,
+      "action": {
+        "type": "run_command",
+        "command": "trigger mirror"
+      }
+    },
+    {
+      "label": {
+        "text": "Mode"
+      },
+      "width": 120,
+      "action": {
+        "type": "run_command",
+        "command": "trigger mode"
+      }
+    },
+    {
+      "label": {
+        "text": "材料 / 覆蓋檢查"
+      },
+      "width": 180,
+      "action": {
+        "type": "run_command",
+        "command": "trigger materials"
+      }
+    },
+    {
+      "label": {
+        "text": "施工"
+      },
+      "width": 120,
+      "action": {
+        "type": "run_command",
+        "command": "trigger build"
+      }
+    },
+    {
+      "label": {
+        "text": "清除 Blueprint"
+      },
+      "width": 160,
+      "action": {
+        "type": "run_command",
+        "command": "trigger previewclear"
+      }
+    },
+    {
+      "label": {
+        "text": "Undo"
+      },
+      "width": 120,
+      "action": {
+        "type": "run_command",
+        "command": "trigger undo"
+      }
+    },
+    {
+      "label": {
+        "text": "Redo"
+      },
+      "width": 120,
+      "action": {
+        "type": "run_command",
+        "command": "trigger redo"
+      }
+    }
+  ],
+  "exit_action": {
+    "label": {
+      "text": "回 Warehouse"
+    },
+    "width": 180,
+    "action": {
+      "type": "show_dialog",
+      "dialog": "warehouse:main"
+    }
+  }
+}

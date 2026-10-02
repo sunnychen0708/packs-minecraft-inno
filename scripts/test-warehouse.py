@@ -116,6 +116,10 @@ def main() -> None:
     assert "result.queued" in api_refund_finalize
     assert "pending_refunds[0]" in api_pending_tick
     assert "work.saved_result" in api_pending_tick
+    main_dialog = (PACK / "data/warehouse/dialog/main.json").read_text(encoding="utf-8")
+    assert "v4.2" in main_dialog
+    assert "建築工具" in main_dialog
+    assert "function mcc:ui/open" in main_dialog
 
     api_highlight = (PACK / "data/warehouse/function/api/highlight.mcfunction").read_text(encoding="utf-8")
     highlight_box = (PACK / "data/warehouse/function/api/internal/highlight_box.mcfunction").read_text(encoding="utf-8")

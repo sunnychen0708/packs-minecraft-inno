@@ -13,7 +13,7 @@ RE_TRIGGER = re.compile(r'^scoreboard objectives add (\S+) trigger$', re.M)
 USER_TRIGGERS = {
     'copypaste','pos1','pos2','anchor','c','x','v','undo','redo','mode','rotate','mirror',
     'right','left','up','down','forward','backward','flipx','flipz',
-    'rotate90','rotate180','rotate270','previewclear','build'
+    'rotate90','rotate180','rotate270','previewclear','build','materials','bpleft','bpright','bpforward','bpbackward','bpup','bpdown'
 }
 
 def read(p: Path) -> str:
@@ -69,7 +69,7 @@ def check_trigger_lifecycle(pack: Path):
 
 def check_upgrade_and_mode(pack: Path):
     tick=read(pack/'data/mcc/function/tick.mcfunction')
-    for objective,valid in [('mcc_rot','0..3'),('mcc_mir','0..2'),('mcc_usel','0..1'),('mcc_cliptype','0..2'),('mcc_redo','0..1'),('mcc_ucnt','0..5'),('mcc_uhead','0..5'),('mcc_rcnt','0..5'),('mcc_rhead','0..5'),('mcc_bpscan','0..1'),('mcc_bpactive','0..1'),('mcc_bpready','0..1'),('mcc_bpbad','0..1'),('mcc_matphase','0..2'),('mcc_matleft','0..')]:
+    for objective,valid in [('mcc_rot','0..3'),('mcc_mir','0..2'),('mcc_usel','0..1'),('mcc_cliptype','0..2'),('mcc_redo','0..1'),('mcc_ucnt','0..5'),('mcc_uhead','0..5'),('mcc_rcnt','0..5'),('mcc_rhead','0..5'),('mcc_bpscan','0..1'),('mcc_bpactive','0..1'),('mcc_bpready','0..1'),('mcc_bpbad','0..1'),('mcc_matphase','0..2'),('mcc_matleft','0..'),('mcc_bpover','0..'),('mcc_buildconfirm','0..1')]:
         migration=f'execute as @a unless score @s {objective} matches {valid} run scoreboard players set @s {objective} 0'
         assert migration in tick, f'missing non-destructive upgrade for {objective}'
         assert tick.index(migration)<tick.index('scores={copypaste='), 'migrate before dispatch'
@@ -399,6 +399,12 @@ def check_v100_semantics(pack: Path):
     assert 'warehouse:api/refund_item' in refund_undo
     assert 'give @s' not in refund_taken and 'give @s' not in refund_undo
     assert 'function mcc:materials/place_buffer' in place
+    assert 'mcc_bpover' in read(pack/'data/mcc/function/blueprint/scan_one.mcfunction')
+    assert 'function mcc:materials/build_warn_overlap' in build
+    assert (pack/'data/mcc/function/materials/check_start.mcfunction').is_file()
+    assert (pack/'data/mcc/function/materials/report_all_start.mcfunction').is_file()
+    assert (pack/'data/mcc/function/blueprint/nudge/run.mcfunction').is_file()
+    assert (pack/'data/mcc/dialog/main.json').is_file()
     assert 'scoreboard players set @s mcc_histmat 1' in place
     assert (pack/'data/mcc/tags/block/material_unsupported.json').is_file()
     panel=read(pack/'data/mcc/function/panel.mcfunction')

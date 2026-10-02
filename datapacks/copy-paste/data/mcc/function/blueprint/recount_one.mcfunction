@@ -4,6 +4,4 @@ $execute if score @s mcc_mask matches 0 if score @s mcc_bpdst matches 3 in minec
 $execute if score @s mcc_mask matches 1 if score @s mcc_bpdst matches 1 positioned $(sx) $(sy) $(sz) unless block ~ ~ ~ #minecraft:air in minecraft:overworld positioned $(tx) $(ty) $(tz) unless block ~ ~ ~ #minecraft:air run scoreboard players add @s mcc_bpover 1
 $execute if score @s mcc_mask matches 1 if score @s mcc_bpdst matches 2 positioned $(sx) $(sy) $(sz) unless block ~ ~ ~ #minecraft:air in minecraft:the_nether positioned $(tx) $(ty) $(tz) unless block ~ ~ ~ #minecraft:air run scoreboard players add @s mcc_bpover 1
 $execute if score @s mcc_mask matches 1 if score @s mcc_bpdst matches 3 positioned $(sx) $(sy) $(sz) unless block ~ ~ ~ #minecraft:air in minecraft:the_end positioned $(tx) $(ty) $(tz) unless block ~ ~ ~ #minecraft:air run scoreboard players add @s mcc_bpover 1
-$execute positioned $(sx) $(sy) $(sz) unless block ~ ~ ~ #minecraft:air run function mcc:blueprint/generated/root
-$execute positioned $(sx) $(sy) $(sz) unless block ~ ~ ~ #minecraft:air run function mcc:materials/sanitize_block
-$execute positioned $(sx) $(sy) $(sz) unless block ~ ~ ~ #minecraft:air run function mcc:materials/bom_from_block
+return 1
