@@ -42,7 +42,7 @@ jobs:
             --output server.jar
           echo "33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c  server.jar" | sha1sum --check -
 
-      - name: Run comprehensive release audit retry 2
+      - name: Run comprehensive release audit retry 2 2
         shell: bash
         run: |
           set -euo pipefail
