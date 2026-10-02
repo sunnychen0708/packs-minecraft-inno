@@ -512,7 +512,7 @@ def make_harness(harness: Path) -> tuple[int, list[str]]:
         'data remove storage warehouse:rules overrides."minecraft:diamond"',
         f"execute as {actor} run function warehouse:search/item/0",
     ]
-    check('if data storage warehouse:runtime search {item_id:"minecraft:diamond"}', "search_item")
+    check('if data storage warehouse:runtime search{item_id:"minecraft:diamond"}', "search_item")
     check("if score #search_box wh_search matches 11", "search_default_box")
     lines += [
         'function warehouse:rule/write_override {item_id:"minecraft:diamond",dest:42}',
