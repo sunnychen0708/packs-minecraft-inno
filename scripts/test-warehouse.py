@@ -66,6 +66,16 @@ def main() -> None:
     load = (PACK / "data/warehouse/function/load.mcfunction").read_text(encoding="utf-8")
     assert "execute unless data storage warehouse:meta v42 run function warehouse:migrate_v42" in load
 
+    api_refresh = (PACK / "data/warehouse/function/api/material_sources/refresh.mcfunction").read_text(encoding="utf-8")
+    api_append = (PACK / "data/warehouse/function/api/material_sources/append.mcfunction").read_text(encoding="utf-8")
+    exported_codes = re.findall(r'append \\{code:"(\\d{2})"\\}', api_refresh)
+    assert exported_codes == CODES, "material source API must enumerate the canonical 61 Warehouse slots"
+    assert "material_source_limit:64" in api_refresh
+    assert "matches ..63" in api_refresh
+    assert "{registered:1b,valid:1b}" in api_refresh
+    assert "material_source_count" in api_refresh
+    assert "material_sources append from storage warehouse:chests c$(code)" in api_append
+
     print("PASS warehouse regression: reset is scoped; search-index rebuild is bounded to one shard per tick")
 
 
