@@ -403,6 +403,11 @@ def check_v100_semantics(pack: Path):
     assert 'warehouse:api/refund_item' in refund_undo
     assert 'mcc:temp mat.taken' in refund_taken
     assert 'mcc:temp txitem.taken' in refund_undo
+    refund_tx_entry=read(pack/'data/mcc/function/history/refund_undo_materials.mcfunction')
+    copy_tx_entry=read(pack/'data/mcc/function/history/copy_undo_materials_to_redo.mcfunction')
+    redo_tx_entry=read(pack/'data/mcc/function/materials/redo_start.mcfunction')
+    for tx_entry in (refund_tx_entry,copy_tx_entry,redo_tx_entry):
+        assert 'data modify storage mcc:temp tx set value {}' in tx_entry
     assert 'give @s' not in refund_taken and 'give @s' not in refund_undo
     assert 'function mcc:materials/place_buffer' in place
     assert 'mcc_bpover' in read(pack/'data/mcc/function/blueprint/scan_one.mcfunction')
