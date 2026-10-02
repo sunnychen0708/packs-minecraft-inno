@@ -2,6 +2,8 @@ execute unless score @s mcc_bpactive matches 1 run tellraw @s [{"text":"[Copy/Pa
 execute unless score @s mcc_bpactive matches 1 run return fail
 execute unless score @s mcc_bpready matches 1 run tellraw @s [{"text":"[Copy/Paste] Blueprint 還在建立中，暫時不能微調。","color":"yellow"}]
 execute unless score @s mcc_bpready matches 1 run return fail
+execute if score @s mcc_bpover_scan matches 1 run tellraw @s [{"text":"[Copy/Paste] 上一次 Blueprint 覆蓋檢查仍在進行，請稍候。","color":"yellow"}]
+execute if score @s mcc_bpover_scan matches 1 run return fail
 scoreboard players operation @s mcc_bptx0 += @s mcc_dx
 scoreboard players operation @s mcc_bpty0 += @s mcc_dy
 scoreboard players operation @s mcc_bptz0 += @s mcc_dz
