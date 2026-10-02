@@ -227,8 +227,8 @@
     },
     "width": 180,
     "action": {
-      "type": "show_dialog",
-      "dialog": "warehouse:main"
+      "type": "run_command",
+      "command": "trigger wh_nav set 1"
     }
   }
 }
