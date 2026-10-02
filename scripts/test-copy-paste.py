@@ -298,7 +298,7 @@ def check_v100_semantics(pack: Path):
     assert 'scoreboard players remove @s mcc_ucnt 1' in hundo
     assert 'function mcc:history/load_redo_meta' in hredo
     assert 'function mcc:history/save_undo_meta' in read(pack/'data/mcc/function/history/redo_apply.mcfunction')
-    assert 'scoreboard players remove @s mcc_rcnt 1' in hredo
+    assert 'scoreboard players remove @s mcc_rcnt 1' in read(pack/'data/mcc/function/history/redo_apply.mcfunction')
     for name,key in [('save_undo_meta.mcfunction','u_p$(id)_s$(slot)'),('load_undo_meta.mcfunction','u_p$(id)_s$(slot)'),('save_redo_meta.mcfunction','r_p$(id)_s$(slot)'),('load_redo_meta.mcfunction','r_p$(id)_s$(slot)')]:
         assert key in read(pack/'data/mcc/function/history'/name)
     save_u=read(pack/'data/mcc/function/history/save_undo_meta.mcfunction')
