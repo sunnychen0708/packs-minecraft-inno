@@ -132,6 +132,18 @@ def integration(java: Path, server: Path):
     run_as('mcc:blueprint/recount_batch')
     check(f'if score {actor} mcc_bpover matches 1 if score {actor} mcc_bpover_scan matches 0','phase3_overlap_recount')
     run_as('mcc:materials/build_start')
+    lines.extend([
+        f'execute if score {actor} mcc_clip matches 1 run say MCCDIAG_phase3_clip_1',
+        f'execute if score {actor} mcc_cliptype matches 1 run say MCCDIAG_phase3_cliptype_1',
+        f'execute if score {actor} mcc_bpactive matches 1 run say MCCDIAG_phase3_bpactive_1',
+        f'execute if score {actor} mcc_bpready matches 1 run say MCCDIAG_phase3_bpready_1',
+        f'execute if score {actor} mcc_bpbad matches 0 run say MCCDIAG_phase3_bpbad_0',
+        f'execute if score {actor} mcc_matphase matches 0 run say MCCDIAG_phase3_matphase_0',
+        f'execute if score {actor} mcc_bpover matches 1.. run say MCCDIAG_phase3_bpover_pos',
+        f'execute if score {actor} mcc_bpover_scan matches 0 run say MCCDIAG_phase3_scan_0',
+        f'execute if score {actor} mcc_buildconfirm matches 1 run say MCCDIAG_phase3_confirm_1',
+        'execute if block 12 80 3 stone run say MCCDIAG_phase3_block_stone',
+    ])
     check(f'if block 12 80 3 stone if score {actor} mcc_buildconfirm matches 1 if score {actor} mcc_matphase matches 0','phase3_overlap_first_build_warns')
     lines.append('setblock 12 80 3 air')
     run_as('mcc:blueprint/recount_start')
@@ -169,6 +181,13 @@ def integration(java: Path, server: Path):
     check(f'if block 12 80 3 emerald_block if score {actor} mcc_ucnt matches 1','build_undo_guard_refuses_modified_world')
     lines.append('setblock 12 80 3 gold_block')
     run_as('mcc:undo/run')
+    lines.extend([
+        f'execute if score {actor} mcc_umat matches 1 run say MCCDIAG_undo_umat_1',
+        'execute if data storage mcc:history u_p77_s1.materials.items[0].id run say MCCDIAG_undo_items_exist',
+        'execute if data storage mcc:history u_p77_s1.materials.bom."minecraft:iron_block"{taken:1} run say MCCDIAG_undo_taken_exists',
+        'execute if data storage mcc:debug refund_one run say MCCDIAG_refund_one_entered',
+        'execute if data storage warehouse:api result{operation:"refund_item"} run say MCCDIAG_refund_api_result',
+    ])
     check(f'if block 12 80 3 air if block 14 80 4 air if score {actor} mcc_rcnt matches 1','build_undo_world')
     check('if data storage warehouse:api result{operation:"refund_item",ok:1b,complete:1b}','build_undo_called_refund_api')
     check('unless data storage warehouse:api pending_refunds[0]','build_undo_refund_not_pending')
