@@ -137,7 +137,7 @@ def static_audit(pack_zip: Path) -> dict[str, int]:
         }
 
 
-def make_harness(harness: Path, phase: str = "full") -> tuple[int, list[str]]:
+def make_harness(harness: Path, mode: str = "full") -> tuple[int, list[str]]:
     funcs = harness / "data/warehouse_full_test/function"
     funcs.mkdir(parents=True)
     (harness / "pack.mcmeta").write_text(
@@ -193,7 +193,7 @@ def make_harness(harness: Path, phase: str = "full") -> tuple[int, list[str]]:
     lines.append("say WFTA_PHASE_FRESH_DONE")
     (funcs / "fresh.mcfunction").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
-    if phase == "basic":
+    if mode == "basic":
         # Core management functions.
         lines, check = phase("basic")
         lines += [
@@ -274,7 +274,7 @@ def make_harness(harness: Path, phase: str = "full") -> tuple[int, list[str]]:
     
         return len(assertions), assertions
 
-    if phase == "routing":
+    if mode == "routing":
         # Minimal physical setup for automatic sorting / overflow / safe fallback.
         lines = [
             "function warehouse:system/off",
@@ -510,7 +510,7 @@ def make_harness(harness: Path, phase: str = "full") -> tuple[int, list[str]]:
     lines.append("say WFTA_PHASE_VERIFY_V41_DONE")
     (funcs / "verify_v41.mcfunction").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
-    if phase == "compat":
+    if mode == "compat":
         return len(assertions), assertions
 
     # Core management functions.
