@@ -378,6 +378,7 @@ def main():
     check_move_model()
     mp=check_multiplayer_isolation(pack)
     states=check_v050_semantics(pack)
+    version=check_version_labels(pack)
     tj=check_tellraw_json(pack)
     print(f'PASS copy-paste regression v{version}: {j} JSON, {f} functions, {o} objectives, {t} triggers, {tj} tellraw JSON, {mp}-player buffer isolation, {states} exact blueprint states, copy-v blueprint semantics, undo/redo, real rotate, clipboard isolation, rollback, move/flip properties')
 
