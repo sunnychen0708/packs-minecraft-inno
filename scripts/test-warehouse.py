@@ -20,7 +20,7 @@ def main() -> None:
     assert "data remove storage warehouse:chests" not in text, "must not remove the storage root"
 
     pattern = re.compile(
-        r"^data modify storage warehouse:chests c(\\d{2})\\.(registered|valid) set value 0b$"
+        r"^data modify storage warehouse:chests c(\d{2})\.(registered|valid) set value 0b$"
     )
     seen: dict[str, set[str]] = {code: set() for code in CODES}
     unexpected: list[str] = []
