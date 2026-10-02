@@ -158,4 +158,4 @@ python3 scripts/validate-datapack.py copy-paste
 python3 scripts/test-copy-paste.py
 ```
 
-CI 另外會使用官方 Minecraft 26.3 server 執行 runtime smoke test；v1.0 tag 只有在 main 的驗證通過後才自動建立並交給 release workflow 發布 ZIP。
+CI 另外會使用官方 Minecraft 26.3 server 執行 runtime smoke test。正式版本仍統一由 `<pack-name>-v<version>` tag 觸發 `release-pack.yml` 驗證、打包與發布 ZIP。
