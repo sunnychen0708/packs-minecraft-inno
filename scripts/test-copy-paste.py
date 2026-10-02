@@ -302,6 +302,15 @@ def check_v050_semantics(pack: Path):
     assert 'function mcc:blueprint/init_transformed' in create
     assert 'function mcc:blueprint/copy_direct_buffer' in direct
     assert 'clone from minecraft:overworld' in read(bp/'copy_direct_buffer.mcfunction')
+    # Plain Blueprint placement must start exactly at the aimed adjacent cell.
+    for axis in 'xyz':
+        target = {'x':'mcc_dstx','y':'mcc_dsty','z':'mcc_dstz'}[axis]
+        preview = {'x':'mcc_bptx0','y':'mcc_bpty0','z':'mcc_bptz0'}[axis]
+        offset = {'x':'mcc_offx','y':'mcc_offy','z':'mcc_offz'}[axis]
+        assert f'{preview} = @s {target}' in direct
+        assert f'{preview} -= @s {offset}' not in direct
+    # Anchor math remains active only for rotated/mirrored Blueprint placement.
+    assert 'function mcc:paste/prepare_transform' in transformed
     assert 'function mcc:paste/save_template' in transformed
     assert 'execute in minecraft:overworld run function mcc:paste/do_place' in transformed
     assert 'summon minecraft:block_display' in summon

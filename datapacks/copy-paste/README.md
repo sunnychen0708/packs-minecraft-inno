@@ -42,6 +42,8 @@ Pos1 / Pos2 / Anchor 都以準星看向的方塊設定。未自訂 Anchor 時使
 
 `c` 保存當下選取內容；`v` 看向目標方塊旁邊的位置後建立 Blueprint。
 
+未套用 `rotate / mirror` 時，準星指到的「目標方塊旁邊那一格」就是 Blueprint 的起始格（選取範圍最小 X/Y/Z），不再套用 Anchor 位移。只有使用 `rotate / mirror` 時，才以 Copy 時保存的 Anchor 作為旋轉／鏡像定位基準。
+
 Blueprint：
 
 - 使用 `block_display`，不會放置真實方塊。
