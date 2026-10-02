@@ -85,6 +85,17 @@ Examples:
 
 A headless harness should use markers, armor stands, storage, scoreboards, and fixed blocks where possible so a human player is not required.
 
+Warehouse has a dedicated 26.3 harness:
+
+```bash
+python3 scripts/test-warehouse-runtime.py \
+  --java /path/to/java \
+  --server-jar /path/to/server.jar \
+  --accept-eula
+```
+
+It boots the official server, performs `/reload`, rejects parser/datapack errors, seeds all 61 registration records, runs `warehouse:admin/reset_registrations`, verifies only `registered`/`valid` were cleared, verifies custom box names and classification overrides survived, and re-registers a cleared slot through the normal Warehouse save path.
+
 ## 5. Client-only checks
 
 Manual player testing is the last resort, not the default validation strategy.

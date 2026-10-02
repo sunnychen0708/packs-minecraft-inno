@@ -50,6 +50,42 @@ jobs:
             python3 "$TEST_SCRIPT"
           fi
 
+      - name: Set up Java 25 for Warehouse runtime gate
+        if: steps.pack.outputs.kind == 'datapack' && steps.pack.outputs.pack == 'warehouse'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Download official Minecraft 26.3 server for Warehouse
+        if: steps.pack.outputs.kind == 'datapack' && steps.pack.outputs.pack == 'warehouse'
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 \
+            https://piston-data.mojang.com/v1/objects/33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c/server.jar \
+            --output server.jar
+          echo "33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c  server.jar" | sha1sum --check -
+
+      - name: Run Warehouse 26.3 runtime release gate
+        if: steps.pack.outputs.kind == 'datapack' && steps.pack.outputs.pack == 'warehouse'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/test-warehouse-runtime.py \
+            --java "$(command -v java)" \
+            --server-jar "$PWD/server.jar" \
+            --accept-eula
+
+      - name: Upload Warehouse runtime evidence
+        if: always() && steps.pack.outputs.kind == 'datapack' && steps.pack.outputs.pack == 'warehouse'
+        uses: actions/upload-artifact@v4
+        with:
+          name: warehouse-release-runtime-${{ github.run_id }}
+          path: dist/warehouse-runtime-*
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Build ZIP
         shell: bash
         run: |
