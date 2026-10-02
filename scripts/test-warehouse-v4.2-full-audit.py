@@ -507,9 +507,10 @@ def make_harness(harness: Path) -> tuple[int, list[str]]:
         "data get block 3 80 1",
         "data get storage warehouse:runtime viewer",
     ]
-    check('if data storage warehouse:runtime viewer.totals[{id:"minecraft:stone"}]', "viewer_stone")
-    lines += ["scoreboard players set #tmp wfta 0", 'execute store result score #tmp wfta run data get storage warehouse:runtime viewer.totals[{id:"minecraft:stone"}].count 1']
-    check("if score #tmp wfta matches 30", "viewer_count")
+    check('if data storage warehouse:runtime viewer.current_total{id:"minecraft:stone",count:30}', "viewer_current_total")
+    check('if data storage warehouse:runtime viewer.lines[0]{text:"石頭方塊 ×30"}', "viewer_line")
+    check('if data storage warehouse:runtime viewer.render{l01:"石頭方塊 ×30",count:1}', "viewer_render")
+    check(f"if score {actor} wh_viewlines matches 1", "viewer_line_count")
     lines += [
         f'execute as {actor} run function warehouse:search/run {{q:"鑽石"}}',
     ]
