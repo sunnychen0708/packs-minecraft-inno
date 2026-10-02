@@ -195,7 +195,28 @@ def make_harness(harness: Path) -> tuple[int, list[str]]:
 
     # Simulate an actual v3.4 world: all pre-v4 markers and persistent user state exist.
     lines = [
-        'data modify storage warehouse:meta set value {initialized:1b,v03:1b,v04:1b,v06:1b,v07:1b,v08:1b,v09:1b,v10:1b,v11:1b,v13:1b,v100:1b,v12:1b,v14:1b,v21:1b,v22:1b,v30:1b,v34:1b,legacy_sentinel:"V34_KEEP"}',
+        'data modify storage warehouse:meta initialized set value 1b',
+        'data modify storage warehouse:meta v03 set value 1b',
+        'data modify storage warehouse:meta v04 set value 1b',
+        'data modify storage warehouse:meta v06 set value 1b',
+        'data modify storage warehouse:meta v07 set value 1b',
+        'data modify storage warehouse:meta v08 set value 1b',
+        'data modify storage warehouse:meta v09 set value 1b',
+        'data modify storage warehouse:meta v10 set value 1b',
+        'data modify storage warehouse:meta v11 set value 1b',
+        'data modify storage warehouse:meta v13 set value 1b',
+        'data modify storage warehouse:meta v100 set value 1b',
+        'data modify storage warehouse:meta v12 set value 1b',
+        'data modify storage warehouse:meta v14 set value 1b',
+        'data modify storage warehouse:meta v21 set value 1b',
+        'data modify storage warehouse:meta v22 set value 1b',
+        'data modify storage warehouse:meta v30 set value 1b',
+        'data modify storage warehouse:meta v34 set value 1b',
+        'data remove storage warehouse:meta v40',
+        'data remove storage warehouse:meta v42',
+        'data remove storage warehouse:meta search_ready',
+        'data remove storage warehouse:meta search_rebuilding',
+        'data modify storage warehouse:meta legacy_sentinel set value "V34_KEEP"',
         'data modify storage warehouse:chests c11 set value {code:"11",display_code:"11",type:"main",region:1,pos:1,name:"CI_V34_INTERNAL",registered:1b,valid:1b,dimension:"minecraft:overworld",a_x:9,a_y:80,a_z:1,b_x:9,b_y:80,b_z:3,legacy_extra:341}',
         'data modify storage warehouse:boxnames c11 set value {text:"CI_V34_CUSTOM"}',
         'data modify storage warehouse:boxnames c31 set value {text:"CI_V34_STONE"}',
@@ -243,7 +264,28 @@ def make_harness(harness: Path) -> tuple[int, list[str]]:
 
     # Simulate v4.1 -> v4.2 upgrade as a second compatibility path.
     lines = [
-        'data modify storage warehouse:meta set value {initialized:1b,v03:1b,v04:1b,v06:1b,v07:1b,v08:1b,v09:1b,v10:1b,v11:1b,v13:1b,v100:1b,v12:1b,v14:1b,v21:1b,v22:1b,v30:1b,v34:1b,v40:1b,legacy_sentinel:"V41_KEEP"}',
+        'data modify storage warehouse:meta initialized set value 1b',
+        'data modify storage warehouse:meta v03 set value 1b',
+        'data modify storage warehouse:meta v04 set value 1b',
+        'data modify storage warehouse:meta v06 set value 1b',
+        'data modify storage warehouse:meta v07 set value 1b',
+        'data modify storage warehouse:meta v08 set value 1b',
+        'data modify storage warehouse:meta v09 set value 1b',
+        'data modify storage warehouse:meta v10 set value 1b',
+        'data modify storage warehouse:meta v11 set value 1b',
+        'data modify storage warehouse:meta v13 set value 1b',
+        'data modify storage warehouse:meta v100 set value 1b',
+        'data modify storage warehouse:meta v12 set value 1b',
+        'data modify storage warehouse:meta v14 set value 1b',
+        'data modify storage warehouse:meta v21 set value 1b',
+        'data modify storage warehouse:meta v22 set value 1b',
+        'data modify storage warehouse:meta v30 set value 1b',
+        'data modify storage warehouse:meta v34 set value 1b',
+        'data modify storage warehouse:meta v40 set value 1b',
+        'data remove storage warehouse:meta v42',
+        'data remove storage warehouse:meta search_ready',
+        'data remove storage warehouse:meta search_rebuilding',
+        'data modify storage warehouse:meta legacy_sentinel set value "V41_KEEP"',
         'data modify storage warehouse:chests c11.name set value "CI_V41_INTERNAL"',
         'data modify storage warehouse:chests c11.legacy_extra set value 411',
         'data modify storage warehouse:boxnames c11 set value {text:"CI_V41_CUSTOM"}',
@@ -598,6 +640,7 @@ def runtime_audit(pack_zip: Path, java: Path, server: Path) -> tuple[int, Path]:
         raise AssertionError(f"timeout waiting for {marker}")
 
     caught = None
+    failure: BaseException | None = None
     try:
         assert ready.wait(90), "server did not become ready"
         send("forceload add 0 0")
@@ -653,6 +696,8 @@ def runtime_audit(pack_zip: Path, java: Path, server: Path) -> tuple[int, Path]:
         wait_marker("WFTA_PHASE_RESET_DONE")
     except BaseException as exc:
         caught = exc
+    except BaseException as exc:
+        failure = exc
     finally:
         if proc.poll() is None:
             try:
