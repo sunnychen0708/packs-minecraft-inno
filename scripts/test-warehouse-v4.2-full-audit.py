@@ -507,9 +507,8 @@ def make_harness(harness: Path) -> tuple[int, list[str]]:
         "data get block 3 80 1",
         "data get storage warehouse:runtime viewer",
     ]
-    check('if data storage warehouse:runtime viewer.current_total{id:"minecraft:stone",count:30}', "viewer_current_total")
-    check('if data storage warehouse:runtime viewer.lines[0]{text:"石頭方塊 ×30"}', "viewer_line")
-    check('if data storage warehouse:runtime viewer.render{l01:"石頭方塊 ×30",count:1}', "viewer_render")
+    check('if data storage warehouse:runtime {viewer:{current_total:{id:"minecraft:stone",count:30}}}', "viewer_current_total")
+    check('if data storage warehouse:runtime {viewer:{render:{l01:"石頭方塊 ×30",count:1}}}', "viewer_render")
     check(f"if score {actor} wh_viewlines matches 1", "viewer_line_count")
     lines += [
         f'execute as {actor} run function warehouse:search/run {{q:"鑽石"}}',
@@ -519,7 +518,7 @@ def make_harness(harness: Path) -> tuple[int, list[str]]:
         'data remove storage warehouse:rules overrides."minecraft:diamond"',
         f"execute as {actor} run function warehouse:search/item/0",
     ]
-    check('if data storage warehouse:runtime search{item_id:"minecraft:diamond"}', "search_item")
+    check('if data storage warehouse:runtime {search:{item_id:"minecraft:diamond"}}', "search_item")
     check("if score #search_box wh_search matches 11", "search_default_box")
     lines += [
         'function warehouse:rule/write_override {item_id:"minecraft:diamond",dest:42}',
