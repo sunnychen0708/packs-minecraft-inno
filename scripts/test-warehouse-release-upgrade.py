@@ -98,8 +98,8 @@ def write_harness(pack_dir: Path, sentinel: str) -> list[str]:
         "scoreboard players set #cursor wh_sys 37",
         "scoreboard players set #compact_code wh_tmp 17",
         "scoreboard players set #compact_slot wh_tmp 23",
-        "scoreboard players set @e[type=minecraft:armor_stand,tag=wh_upgrade_actor,limit=1] wh_target 31",
-        "scoreboard players set @e[type=minecraft:armor_stand,tag=wh_upgrade_actor,limit=1] wh_rule_item 777",
+        "scoreboard players set UpgradePlayer wh_target 31",
+        "scoreboard players set UpgradePlayer wh_rule_item 777",
         "say WHUP_SEED_DONE",
     ]
     (funcs / "seed.mcfunction").write_text("\n".join(seed) + "\n", encoding="utf-8")
@@ -144,14 +144,8 @@ def write_harness(pack_dir: Path, sentinel: str) -> list[str]:
     check("if score #cursor wh_sys matches 37", "sort_cursor")
     check("if score #compact_code wh_tmp matches 17", "compact_code")
     check("if score #compact_slot wh_tmp matches 23", "compact_slot")
-    check(
-        "if score @e[type=minecraft:armor_stand,tag=wh_upgrade_actor,limit=1] wh_target matches 31",
-        "actor_target_score",
-    )
-    check(
-        "if score @e[type=minecraft:armor_stand,tag=wh_upgrade_actor,limit=1] wh_rule_item matches 777",
-        "actor_rule_score",
-    )
+    check("if score UpgradePlayer wh_target matches 31", "score_holder_target")
+    check("if score UpgradePlayer wh_rule_item matches 777", "score_holder_rule")
     check("if items block 3 80 1 container.0 minecraft:diamond", "physical_item")
     verify.extend(
         [
