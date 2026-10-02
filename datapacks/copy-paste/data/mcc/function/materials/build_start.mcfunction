@@ -12,6 +12,7 @@ execute if score @s mcc_matphase matches 1.. run tellraw @s [{"text":"[Copy/Past
 execute if score @s mcc_matphase matches 1.. run return fail
 function mcc:materials/ensure_player
 function mcc:materials/reset_have_start
+scoreboard players set @s mcc_matjob 0
 scoreboard players set @s mcc_matphase 1
 function mcc:materials/queue_boxes
 tellraw @s [{"text":"[Copy/Paste] 正在分批檢查所有已註冊材料來源…","color":"aqua"}]

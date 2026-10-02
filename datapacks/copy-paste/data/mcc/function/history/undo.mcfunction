@@ -43,6 +43,10 @@ execute if score @s mcc_udim matches 3 run function mcc:history/backup_end with 
 execute unless score @s mcc_ok matches 1 run tellraw @s [{"text":"[Copy/Paste] Undo 前建立 Redo 歷史失敗，沒有執行 Undo。","color":"red"}]
 execute unless score @s mcc_ok matches 1 run return fail
 
+execute if score @s mcc_umat matches 1 run function mcc:history/check_undo_material_guard
+execute if score @s mcc_umat matches 1 unless score @s mcc_ok matches 1 run tellraw @s [{"text":"[Copy/Paste] 這次 Build 的施工區已被修改；為避免材料複製，未執行帶退款的 Undo。","color":"red"}]
+execute if score @s mcc_umat matches 1 unless score @s mcc_ok matches 1 run return fail
+
 scoreboard players operation @s mcc_rdim = @s mcc_udim
 scoreboard players operation @s mcc_rx = @s mcc_ux
 scoreboard players operation @s mcc_ry = @s mcc_uy
@@ -52,9 +56,11 @@ scoreboard players operation @s mcc_ry2 = @s mcc_uy2
 scoreboard players operation @s mcc_rz2 = @s mcc_uz2
 scoreboard players set @s mcc_rsel 0
 execute if score @s mcc_usel matches 1 run function mcc:redo/snapshot_selection
+scoreboard players operation @s mcc_rmat = @s mcc_umat
 execute store result storage mcc:temp id int 1 run scoreboard players get @s mcc_id
 execute store result storage mcc:temp slot int 1 run scoreboard players get @s mcc_hnext
 function mcc:history/save_redo_meta with storage mcc:temp
+execute if score @s mcc_umat matches 1 run function mcc:history/copy_undo_materials_to_redo
 
 # Restore the newest Undo snapshot from its history slot.
 scoreboard players operation @s mcc_hslot = @s mcc_uhead
@@ -75,6 +81,7 @@ execute if score @s mcc_udim matches 3 run function mcc:history/restore_end with
 execute unless score @s mcc_ok matches 1 run tellraw @s [{"text":"[Copy/Paste] Undo 還原失敗；歷史資料仍保留。","color":"red"}]
 execute unless score @s mcc_ok matches 1 run return fail
 execute if score @s mcc_usel matches 1 run function mcc:undo/restore_selection
+execute if score @s mcc_umat matches 1 run function mcc:history/refund_undo_materials
 
 # Pop Undo and commit Redo.
 scoreboard players remove @s mcc_ucnt 1
