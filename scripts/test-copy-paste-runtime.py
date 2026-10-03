@@ -707,6 +707,37 @@ def integration(java: Path, server: Path):
     run_as('mcc:blueprint/clear_internal')
     lines.append(f'scoreboard players set {actor} mcc_rot 0')
 
+    # 6a. Unguarded legacy history must never execute world restores.
+    lines.extend([
+        'setblock 38 80 25 emerald_block',
+        f'scoreboard players set {actor} mcc_ucnt 0',
+        f'scoreboard players set {actor} mcc_rcnt 0',
+        f'scoreboard players set {actor} mcc_undo 1',
+        f'scoreboard players set {actor} mcc_redo 0',
+        f'scoreboard players set {actor} mcc_ux 38',
+        f'scoreboard players set {actor} mcc_uy 80',
+        f'scoreboard players set {actor} mcc_uz 25',
+        f'scoreboard players set {actor} mcc_ux2 38',
+        f'scoreboard players set {actor} mcc_uy2 80',
+        f'scoreboard players set {actor} mcc_uz2 25',
+        f'scoreboard players set {actor} mcc_udim 1',
+    ])
+    run_as('mcc:undo/run')
+    check(f'if block 38 80 25 emerald_block if score {actor} mcc_undo matches 0 if score {actor} mcc_redo matches 0','legacy_undo_is_discarded_without_restore')
+    lines.extend([
+        f'scoreboard players set {actor} mcc_redo 1',
+        f'scoreboard players set {actor} mcc_undo 0',
+        f'scoreboard players set {actor} mcc_rx 38',
+        f'scoreboard players set {actor} mcc_ry 80',
+        f'scoreboard players set {actor} mcc_rz 25',
+        f'scoreboard players set {actor} mcc_rx2 38',
+        f'scoreboard players set {actor} mcc_ry2 80',
+        f'scoreboard players set {actor} mcc_rz2 25',
+        f'scoreboard players set {actor} mcc_rdim 1',
+    ])
+    run_as('mcc:redo/run')
+    check(f'if block 38 80 25 emerald_block if score {actor} mcc_undo matches 0 if score {actor} mcc_redo matches 0','legacy_redo_is_discarded_without_restore')
+
     # 7. Five real edits can be undone and redone in order.
     lines.extend([
         f'scoreboard players set {actor} mcc_ucnt 0',
