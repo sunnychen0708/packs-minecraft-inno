@@ -1,0 +1,138 @@
+name: Release current audited packs
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/release-current-packs.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  release-current:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out audited main
+        uses: actions/checkout@v7
+
+      - name: Verify source versions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import re
+          from pathlib import Path
+          expected = {"warehouse": "4.4", "copy-paste": "1.1"}
+          for pack, version in expected.items():
+              meta = json.loads((Path("datapacks") / pack / "pack.mcmeta").read_text(encoding="utf-8"))
+              desc = str(meta["pack"]["description"])
+              match = re.search(r"v(\d+\.\d+(?:\.\d+)?)", desc)
+              if not match or match.group(1) != version:
+                  raise SystemExit(f"{pack}: expected v{version}, got {desc}")
+              print(f"{pack} source version OK: v{version}")
+          PY
+
+      - name: Static and pack-specific validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/validate-datapack.py warehouse
+          python3 scripts/test-warehouse.py
+          python3 scripts/validate-datapack.py copy-paste
+          python3 scripts/test-copy-paste.py
+          python3 scripts/test-datapack-compatibility.py
+
+      - name: Set up Minecraft 26.3 runtime
+        uses: ./.github/actions/setup-minecraft-runtime
+
+      - name: Run all-datapacks 26.3 compatibility release gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/test-datapack-compatibility.py \
+            --java "$(command -v java)" \
+            --server-jar "$PWD/server.jar" \
+            --accept-eula
+
+      - name: Run Warehouse 26.3 runtime release gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/test-warehouse-runtime.py \
+            --java "$(command -v java)" \
+            --server-jar "$PWD/server.jar" \
+            --accept-eula
+
+      - name: Boot and reload Copy/Paste on official 26.3
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/validate-datapack.py copy-paste \
+            --java "$(command -v java)" \
+            --server-jar "$PWD/server.jar" \
+            --accept-eula
+
+      - name: Run Copy/Paste behavioral release gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/test-copy-paste-runtime.py \
+            --java "$(command -v java)" \
+            --server-jar "$PWD/server.jar" \
+            --accept-eula
+
+      - name: Build release ZIPs
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x scripts/build-pack.sh
+          scripts/build-pack.sh warehouse v4.4
+          scripts/build-pack.sh copy-paste v1.1
+
+      - name: Publish Warehouse v4.4
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view warehouse-v4.4 >/dev/null 2>&1; then
+            echo "warehouse-v4.4 already exists"
+          else
+            gh release create warehouse-v4.4 \
+              dist/warehouse-v4.4.zip \
+              --target "$GITHUB_SHA" \
+              --title "warehouse v4.4" \
+              --generate-notes
+          fi
+
+      - name: Publish Copy/Paste v1.1
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view copy-paste-v1.1 >/dev/null 2>&1; then
+            echo "copy-paste-v1.1 already exists"
+          else
+            gh release create copy-paste-v1.1 \
+              dist/copy-paste-v1.1.zip \
+              --target "$GITHUB_SHA" \
+              --title "copy-paste v1.1" \
+              --generate-notes
+          fi
+
+      - name: Upload release-gate evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: audited-release-evidence-${{ github.run_id }}
+          path: |
+            dist/all-datapacks-runtime-*
+            dist/warehouse-runtime-*
+            dist/validation/copy-paste-*
+            dist/copy-paste-runtime-*
+          if-no-files-found: ignore
+          retention-days: 14
