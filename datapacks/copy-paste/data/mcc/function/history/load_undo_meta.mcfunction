@@ -1,3 +1,4 @@
+scoreboard players set @s mcc_usparse 0
 scoreboard players set @s mcc_uguard 0
 scoreboard players set @s mcc_ucut 0
 scoreboard players set @s mcc_umat 0
@@ -23,3 +24,10 @@ $execute if data storage mcc:history u_p$(id)_s$(slot){mat:1} run scoreboard pla
 
 $execute if data storage mcc:history u_p$(id)_s$(slot){guard:1} run scoreboard players set @s mcc_uguard 1
 $execute if data storage mcc:history u_p$(id)_s$(slot){cut:1} run scoreboard players set @s mcc_ucut 1
+$execute if data storage mcc:history u_p$(id)_s$(slot){sparse:1} run scoreboard players set @s mcc_usparse 1
+$execute if score @s mcc_usparse matches 1 store result score @s mcc_u2x run data get storage mcc:history u_p$(id)_s$(slot).xB 1
+$execute if score @s mcc_usparse matches 1 store result score @s mcc_u2y run data get storage mcc:history u_p$(id)_s$(slot).yB 1
+$execute if score @s mcc_usparse matches 1 store result score @s mcc_u2z run data get storage mcc:history u_p$(id)_s$(slot).zB 1
+$execute if score @s mcc_usparse matches 1 store result score @s mcc_u2x2 run data get storage mcc:history u_p$(id)_s$(slot).xB2 1
+$execute if score @s mcc_usparse matches 1 store result score @s mcc_u2y2 run data get storage mcc:history u_p$(id)_s$(slot).yB2 1
+$execute if score @s mcc_usparse matches 1 store result score @s mcc_u2z2 run data get storage mcc:history u_p$(id)_s$(slot).zB2 1
