@@ -224,6 +224,20 @@ scoreboard objectives add mcc_rguard dummy
 scoreboard objectives add mcc_histcut dummy
 scoreboard objectives add mcc_ucut dummy
 scoreboard objectives add mcc_rcut dummy
+scoreboard objectives add mcc_usparse dummy
+scoreboard objectives add mcc_u2x dummy
+scoreboard objectives add mcc_u2y dummy
+scoreboard objectives add mcc_u2z dummy
+scoreboard objectives add mcc_u2x2 dummy
+scoreboard objectives add mcc_u2y2 dummy
+scoreboard objectives add mcc_u2z2 dummy
+scoreboard objectives add mcc_rsparse dummy
+scoreboard objectives add mcc_r2x dummy
+scoreboard objectives add mcc_r2y dummy
+scoreboard objectives add mcc_r2z dummy
+scoreboard objectives add mcc_r2x2 dummy
+scoreboard objectives add mcc_r2y2 dummy
+scoreboard objectives add mcc_r2z2 dummy
 scoreboard objectives add mcc_emir dummy
 scoreboard objectives add mcc_matjob dummy
 scoreboard objectives add mcc_txslot dummy
@@ -246,6 +260,7 @@ scoreboard players set #mhistz mcc_id 20007200
 scoreboard players set #rguardz mcc_id 20009280
 scoreboard players set #cutredoz mcc_id 20011360
 scoreboard players set #hgap mcc_id 320
+scoreboard players set #sparseofs mcc_id 128
 scoreboard players set #one mcc_id 1
 scoreboard players set #zero mcc_id 0
 scoreboard players set #neg mcc_id -1
