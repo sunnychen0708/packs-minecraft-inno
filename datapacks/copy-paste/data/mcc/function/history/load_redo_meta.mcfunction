@@ -1,3 +1,4 @@
+scoreboard players set @s mcc_rsparse 0
 scoreboard players set @s mcc_rguard 0
 scoreboard players set @s mcc_rcut 0
 scoreboard players set @s mcc_rmat 0
@@ -23,3 +24,10 @@ $execute if data storage mcc:history r_p$(id)_s$(slot){mat:1} run scoreboard pla
 
 $execute if data storage mcc:history r_p$(id)_s$(slot){guard:1} run scoreboard players set @s mcc_rguard 1
 $execute if data storage mcc:history r_p$(id)_s$(slot){cut:1} run scoreboard players set @s mcc_rcut 1
+$execute if data storage mcc:history r_p$(id)_s$(slot){sparse:1} run scoreboard players set @s mcc_rsparse 1
+$execute if score @s mcc_rsparse matches 1 store result score @s mcc_r2x run data get storage mcc:history r_p$(id)_s$(slot).xB 1
+$execute if score @s mcc_rsparse matches 1 store result score @s mcc_r2y run data get storage mcc:history r_p$(id)_s$(slot).yB 1
+$execute if score @s mcc_rsparse matches 1 store result score @s mcc_r2z run data get storage mcc:history r_p$(id)_s$(slot).zB 1
+$execute if score @s mcc_rsparse matches 1 store result score @s mcc_r2x2 run data get storage mcc:history r_p$(id)_s$(slot).xB2 1
+$execute if score @s mcc_rsparse matches 1 store result score @s mcc_r2y2 run data get storage mcc:history r_p$(id)_s$(slot).yB2 1
+$execute if score @s mcc_rsparse matches 1 store result score @s mcc_r2z2 run data get storage mcc:history r_p$(id)_s$(slot).zB2 1
