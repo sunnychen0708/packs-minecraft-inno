@@ -28,21 +28,33 @@ jobs:
       - name: Validate every datapack
         shell: bash
         run: |
-          set -euo pipefail
-          for dir in datapacks/*; do
-            [[ -d "$dir" ]] || continue
-            pack="$(basename "$dir")"
-            echo "::group::Generic validation: $pack"
-            python3 scripts/validate-datapack.py "$pack"
-            echo "::endgroup::"
-
-            test_script="scripts/test-$pack.py"
-            if [[ -f "$test_script" ]]; then
-              echo "::group::Pack regression: $pack"
-              python3 "$test_script"
+          set -o pipefail
+          (
+            set -euo pipefail
+            for dir in datapacks/*; do
+              [[ -d "$dir" ]] || continue
+              pack="$(basename "$dir")"
+              echo "::group::Generic validation: $pack"
+              python3 scripts/validate-datapack.py "$pack"
               echo "::endgroup::"
-            fi
-          done
+
+              test_script="scripts/test-$pack.py"
+              if [[ -f "$test_script" ]]; then
+                echo "::group::Pack regression: $pack"
+                python3 "$test_script"
+                echo "::endgroup::"
+              fi
+            done
+          ) 2>&1 | tee validate-debug.log
+
+      - name: Upload validate debug log
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: validate-debug-${{ github.run_id }}
+          path: validate-debug.log
+          if-no-files-found: ignore
+          retention-days: 1
 
       - name: Build Copy/Paste opt-in live harnesses
         shell: bash
