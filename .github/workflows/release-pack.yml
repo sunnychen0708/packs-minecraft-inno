@@ -77,22 +77,9 @@ jobs:
             python3 "$TEST_SCRIPT"
           fi
 
-      - name: Set up Java 25 for runtime gate
+      - name: Set up Minecraft 26.3 runtime
         if: steps.pack.outputs.kind == 'datapack' && (steps.pack.outputs.pack == 'warehouse' || steps.pack.outputs.pack == 'copy-paste')
-        uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: "25"
-
-      - name: Download official Minecraft 26.3 server
-        if: steps.pack.outputs.kind == 'datapack' && (steps.pack.outputs.pack == 'warehouse' || steps.pack.outputs.pack == 'copy-paste')
-        shell: bash
-        run: |
-          set -euo pipefail
-          curl --fail --location --retry 3 \
-            https://piston-data.mojang.com/v1/objects/33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c/server.jar \
-            --output server.jar
-          echo "33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c  server.jar" | sha1sum --check -
+        uses: ./.github/actions/setup-minecraft-runtime
 
       - name: Run Warehouse 26.3 runtime release gate
         if: steps.pack.outputs.kind == 'datapack' && steps.pack.outputs.pack == 'warehouse'
