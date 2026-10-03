@@ -57,6 +57,7 @@ scoreboard players operation @s mcc_uz = @s mcc_rz
 scoreboard players operation @s mcc_ux2 = @s mcc_rx2
 scoreboard players operation @s mcc_uy2 = @s mcc_ry2
 scoreboard players operation @s mcc_uz2 = @s mcc_rz2
+scoreboard players set @s mcc_usparse 0
 scoreboard players set @s mcc_usel 0
 execute if score @s mcc_rsel matches 1 run function mcc:undo/snapshot_selection
 scoreboard players operation @s mcc_histmat = @s mcc_rmat
