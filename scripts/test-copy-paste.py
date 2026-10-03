@@ -150,6 +150,14 @@ def check_selection_math(pack: Path):
         assert f'mcc_s{axis} = @s mcc_sel{axis}' in copy
         assert f'mcc_off{axis} = @s mcc_soff{axis}' in copy
 
+    # A custom Anchor belongs to the current selection. Changing either endpoint
+    # starts a new selection and must fall back to Pos1 as the default Anchor.
+    for name,flag in [('hit_pos1.mcfunction','mcc_has1'),('hit_pos2.mcfunction','mcc_has2')]:
+        text=read(pack/'data/mcc/function/ray'/name)
+        assert f'scoreboard players set @s {flag} 1' in text
+        assert 'scoreboard players set @s mcc_hasa 0' in text
+        assert text.index(f'scoreboard players set @s {flag} 1') < text.index('scoreboard players set @s mcc_hasa 0')
+
 def check_flip_anchor_formula(pack: Path):
     x=read(pack/'data/mcc/function/flip/x.mcfunction')
     z=read(pack/'data/mcc/function/flip/z.mcfunction')
