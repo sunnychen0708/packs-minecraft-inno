@@ -8,153 +8,42 @@ on:
       - "docs/datapack-validation.md"
       - ".github/workflows/validate-datapacks.yml"
       - ".github/workflows/release-pack.yml"
-  push:
-    branches:
-      - main
-    paths:
-      - "datapacks/**"
-      - "scripts/**"
-      - "docs/datapack-validation.md"
-      - ".github/workflows/validate-datapacks.yml"
-      - ".github/workflows/release-pack.yml"
 
 jobs:
-  validate:
+  utilities:
+    name: Static/regression utilities
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v7
-
-      - name: Validate every datapack
-        shell: bash
+      - uses: actions/checkout@v7
+      - run: python3 scripts/validate-datapack.py utilities
+      - shell: bash
         run: |
-          set -o pipefail
-          (
-            set -euo pipefail
-            for dir in datapacks/*; do
-              [[ -d "$dir" ]] || continue
-              pack="$(basename "$dir")"
-              echo "::group::Generic validation: $pack"
-              python3 scripts/validate-datapack.py "$pack"
-              echo "::endgroup::"
+          if [[ -f scripts/test-utilities.py ]]; then python3 scripts/test-utilities.py; fi
 
-              test_script="scripts/test-$pack.py"
-              if [[ -f "$test_script" ]]; then
-                echo "::group::Pack regression: $pack"
-                python3 "$test_script"
-                echo "::endgroup::"
-              fi
-            done
-          ) 2>&1 | tee validate-debug.log
+  copy-paste:
+    name: Static/regression Copy-Paste
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: python3 scripts/validate-datapack.py copy-paste
+      - run: python3 scripts/test-copy-paste.py
 
-      - name: Upload validate debug log
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: validate-debug-${{ github.run_id }}
-          path: validate-debug.log
-          if-no-files-found: ignore
-          retention-days: 1
+  warehouse:
+    name: Static/regression Warehouse
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: python3 scripts/validate-datapack.py warehouse
+      - run: python3 scripts/test-warehouse.py
 
-      - name: Build Copy/Paste opt-in live harnesses
-        shell: bash
+  copy-paste-harness:
+    name: Build Copy-Paste harnesses
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - shell: bash
         run: |
           set -euo pipefail
           python3 -m py_compile scripts/build-copy-paste-live-test.py scripts/build-copy-paste-multiplayer-test.py
           python3 scripts/build-copy-paste-live-test.py --output /tmp/mcc-live-test
           python3 scripts/build-copy-paste-multiplayer-test.py
-
-  warehouse-runtime-smoke:
-    name: Warehouse vanilla 26.3 reset regression
-    needs: validate
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v7
-
-      - name: Set up Java 25
-        uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: "25"
-
-      - name: Download official Minecraft 26.3 server
-        shell: bash
-        run: |
-          set -euo pipefail
-          curl --fail --location --retry 3 \
-            https://piston-data.mojang.com/v1/objects/33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c/server.jar \
-            --output server.jar
-          echo "33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c  server.jar" | sha1sum --check -
-
-      - name: Run Warehouse registration-reset runtime regression
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 scripts/test-warehouse-runtime.py \
-            --java "$(command -v java)" \
-            --server-jar "$PWD/server.jar" \
-            --accept-eula
-
-      - name: Upload Warehouse runtime evidence
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: warehouse-26.3-runtime-${{ github.run_id }}
-          path: dist/warehouse-runtime-*
-          if-no-files-found: ignore
-          retention-days: 14
-
-
-  copy-paste-runtime-smoke:
-    name: Copy/Paste vanilla 26.3 smoke
-    needs: validate
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v7
-
-      - name: Set up Java 25
-        uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: "25"
-
-      - name: Download official Minecraft 26.3 server
-        shell: bash
-        run: |
-          set -euo pipefail
-          curl --fail --location --retry 3 \
-            https://piston-data.mojang.com/v1/objects/33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c/server.jar \
-            --output server.jar
-          echo "33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c  server.jar" | sha1sum --check -
-
-      - name: Boot official 26.3 server and reload Copy/Paste
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 scripts/validate-datapack.py copy-paste \
-            --java "$(command -v java)" \
-            --server-jar "$PWD/server.jar" \
-            --accept-eula
-
-      - name: Run Copy/Paste behavioral regression
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 scripts/test-copy-paste-runtime.py \
-            --java "$(command -v java)" \
-            --server-jar "$PWD/server.jar" \
-            --accept-eula
-
-      - name: Upload vanilla smoke evidence
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: copy-paste-26.3-smoke-${{ github.run_id }}
-          path: |
-            dist/validation/copy-paste-*
-            dist/copy-paste-runtime-*
-          if-no-files-found: ignore
-          retention-days: 14
-
