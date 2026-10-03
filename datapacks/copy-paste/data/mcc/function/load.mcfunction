@@ -218,6 +218,13 @@ scoreboard objectives add mcc_materr dummy
 scoreboard objectives add mcc_histmat dummy
 scoreboard objectives add mcc_umat dummy
 scoreboard objectives add mcc_rmat dummy
+scoreboard objectives add mcc_histguard dummy
+scoreboard objectives add mcc_uguard dummy
+scoreboard objectives add mcc_rguard dummy
+scoreboard objectives add mcc_histcut dummy
+scoreboard objectives add mcc_ucut dummy
+scoreboard objectives add mcc_rcut dummy
+scoreboard objectives add mcc_emir dummy
 scoreboard objectives add mcc_matjob dummy
 scoreboard objectives add mcc_txslot dummy
 scoreboard objectives add mcc_bpover dummy
@@ -236,6 +243,7 @@ scoreboard players set #bpofs mcc_id 64
 scoreboard players set #uhistz mcc_id 20003040
 scoreboard players set #rhistz mcc_id 20005120
 scoreboard players set #mhistz mcc_id 20007200
+scoreboard players set #rguardz mcc_id 20009280
 scoreboard players set #hgap mcc_id 320
 scoreboard players set #one mcc_id 1
 scoreboard players set #zero mcc_id 0
