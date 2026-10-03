@@ -1,4 +1,5 @@
 scoreboard objectives add copypaste trigger
+scoreboard objectives add cphelp trigger
 scoreboard objectives add pos1 trigger
 scoreboard objectives add pos2 trigger
 scoreboard objectives add anchor trigger
@@ -244,4 +245,4 @@ scoreboard players set #neg mcc_id -1
 execute in minecraft:overworld run forceload add 20008000 20008000
 execute in minecraft:overworld run setblock 20008008 64 20008008 air
 
-tellraw @a [{"text":"[Copy/Paste] ","color":"gold"},{"text":"v1.1 已載入。輸入 ","color":"gray"},{"text":"/trigger copypaste","color":"yellow"},{"text":" 開啟 Trigger 控制面板。","color":"gray"}]
+tellraw @a [{"text":"[Copy/Paste] ","color":"gold"},{"text":"v1.1 已載入。輸入 ","color":"gray"},{"text":"/trigger copypaste","color":"yellow"},{"text":" 開啟控制面板；","color":"gray"},{"text":"/trigger cphelp","color":"yellow"},{"text":" 開啟指令教學。","color":"gray"}]
