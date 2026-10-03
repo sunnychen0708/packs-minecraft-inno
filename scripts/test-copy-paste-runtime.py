@@ -232,6 +232,90 @@ def integration(java: Path, server: Path):
     run_as('mcc:undo/run')
     check('if block 10 80 10 gold_block if block 12 80 10 diamond_block','external_anchor_rotate_undo_twice')
 
+    # AUDIT A. Selection persistence + re-snapshot + reselection must be exact.
+    fixture(3,80,3)
+    run_as('mcc:copy/run')
+    lines.append('setblock 3 80 3 emerald_block')
+    run_as('mcc:copy/run')
+    target(50,80,3)
+    run_as('mcc:paste/dispatch')
+    scan()
+    check('positioned 50 80 3 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:emerald_block"},limit=1]','AUDIT_same_selection_copy_resnapshots_current_world')
+    run_as('mcc:blueprint/clear_internal')
+    fixture(8,80,3)
+    lines.append('setblock 8 80 3 lapis_block')
+    lines.extend([
+        f'execute as {actor} positioned 8 80 3 run function mcc:ray/hit_pos1',
+        f'execute as {actor} positioned 10 80 4 run function mcc:ray/hit_pos2',
+    ])
+    run_as('mcc:copy/run')
+    target(55,80,3)
+    run_as('mcc:paste/dispatch')
+    scan()
+    check('positioned 55 80 3 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:lapis_block"},limit=1]','AUDIT_reselection_copy_uses_new_region')
+    run_as('mcc:blueprint/clear_internal')
+
+    # AUDIT B. Current transformed Masked path explicitly falls back to Replace.
+    lines.extend([
+        'fill 40 80 0 41 80 1 air',
+        'setblock 40 80 0 gold_block',
+        f'scoreboard players set {actor} mcc_has1 1',
+        f'scoreboard players set {actor} mcc_has2 1',
+        f'scoreboard players set {actor} mcc_hasa 0',
+        f'scoreboard players set {actor} mcc_p1x 40',
+        f'scoreboard players set {actor} mcc_p1y 80',
+        f'scoreboard players set {actor} mcc_p1z 0',
+        f'scoreboard players set {actor} mcc_p1d 1',
+        f'scoreboard players set {actor} mcc_p2x 41',
+        f'scoreboard players set {actor} mcc_p2y 80',
+        f'scoreboard players set {actor} mcc_p2z 0',
+        f'scoreboard players set {actor} mcc_p2d 1',
+        f'scoreboard players set {actor} mcc_mask 1',
+        f'scoreboard players set {actor} mcc_rot 1',
+        f'scoreboard players set {actor} mcc_mir 0',
+    ])
+    run_as('mcc:copy/run')
+    lines.extend([
+        f'scoreboard players set {actor} mcc_cliptype 2',
+        'setblock 45 80 1 stone',
+    ])
+    target(45,80,0)
+    run_as('mcc:paste/dispatch')
+    check('if block 45 80 1 air','BUG_transformed_masked_falls_back_to_replace')
+    lines.extend([
+        f'scoreboard players set {actor} mcc_mask 0',
+        f'scoreboard players set {actor} mcc_rot 0',
+        f'scoreboard players set {actor} mcc_mir 0',
+    ])
+
+    # AUDIT C. Cut -> Undo must not leave an item-bearing Cut clipboard reusable.
+    # v1.2 currently does, which can restore the source container and then paste the same NBT again.
+    lines.extend([
+        'setblock 35 80 5 chest',
+        'data modify block 35 80 5 Items set value [{Slot:0b,id:"minecraft:diamond",count:5}]',
+        f'scoreboard players set {actor} mcc_has1 1',
+        f'scoreboard players set {actor} mcc_has2 1',
+        f'scoreboard players set {actor} mcc_hasa 0',
+        f'scoreboard players set {actor} mcc_p1x 35',
+        f'scoreboard players set {actor} mcc_p1y 80',
+        f'scoreboard players set {actor} mcc_p1z 5',
+        f'scoreboard players set {actor} mcc_p1d 1',
+        f'scoreboard players set {actor} mcc_p2x 35',
+        f'scoreboard players set {actor} mcc_p2y 80',
+        f'scoreboard players set {actor} mcc_p2z 5',
+        f'scoreboard players set {actor} mcc_p2d 1',
+        f'scoreboard players set {actor} mcc_ucnt 0',
+        f'scoreboard players set {actor} mcc_uhead 0',
+        f'scoreboard players set {actor} mcc_rcnt 0',
+        f'scoreboard players set {actor} mcc_rhead 0',
+    ])
+    run_as('mcc:cut/run')
+    run_as('mcc:undo/run')
+    check(f'if block 35 80 5 chest if data block 35 80 5 Items[{{id:"minecraft:diamond",count:5}}] if score {actor} mcc_clip matches 1 if score {actor} mcc_cliptype matches 2','BUG_cut_undo_restores_source_but_keeps_cut_clipboard')
+    target(37,80,5)
+    run_as('mcc:paste/dispatch')
+    check('if block 35 80 5 chest if data block 35 80 5 Items[{id:"minecraft:diamond",count:5}] if block 37 80 5 chest if data block 37 80 5 Items[{id:"minecraft:diamond",count:5}]','BUG_cut_undo_can_duplicate_container_contents')
+
     # 1. Copy -> Blueprint: source remains, destination remains air, exact-state displays exist.
     fixture()
     run_as('mcc:copy/run')
