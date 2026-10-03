@@ -1,4 +1,4 @@
-# Copy/Paste v1.2 多人隔離與驗證
+# Copy/Paste v1.2.1 多人隔離與驗證
 
 目標：多位玩家可在同一個伺服器使用 Copy/Paste、Blueprint、Move/Rotate/Flip、Undo/Redo，而不把彼此的 Clipboard、歷史紀錄或材料工作狀態混在一起。Warehouse 庫存則刻意是全服共用資產。
 
@@ -62,7 +62,7 @@ python3 scripts/test-datapack-compatibility.py
 
 此外，`test-datapack-compatibility.py` 會確認 Utilities、Warehouse、Copy/Paste 沒有 namespace/resource/objective 衝突，並在官方 Minecraft 26.3 server 上把三包一起載入驗證共存。
 
-## v1.2 雙人真人測試
+## v1.2.1 雙人真人測試
 
 產生 opt-in 測試 datapack：
 
@@ -92,6 +92,6 @@ python3 scripts/build-copy-paste-multiplayer-test.py
 
 測試會讓兩位玩家在同一批 tick 中各自完成 Pos1/Pos2、Copy、Move、Undo、Flip、Paste 與獨立 Undo，並檢查 `mcc_id`、Clipboard 與世界結果沒有互換。
 
-repo 目前沒有提交一份 **v1.2** 兩位真人 client 的成功 evidence，因此應描述為：**64-player 隔離架構已由 regression 證明，單 actor / 官方 server 行為已有自動 runtime 覆蓋，但 two-real-player client/server concurrency 尚未留下正式驗證證據。**
+repo 目前沒有提交一份 **v1.2.1** 兩位真人 client 的成功 evidence，因此應描述為：**64-player 隔離架構已由 regression 證明，單 actor / 官方 server 行為已有自動 runtime 覆蓋，但 two-real-player client/server concurrency 尚未留下正式驗證證據。**
 
-`scripts/build-copy-paste-multiplayer-test.py` 的產生器版本已同步到 v1.2；它仍屬 opt-in 真人測試，不會被 headless CI 假裝成 two-client evidence。
+`scripts/build-copy-paste-multiplayer-test.py` 的產生器版本已同步到 v1.2.1；它仍屬 opt-in 真人測試，不會被 headless CI 假裝成 two-client evidence。
