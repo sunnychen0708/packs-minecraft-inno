@@ -32,11 +32,20 @@ def fixture(dim='overworld'):
          f'execute in minecraft:{dim} run setblock -198 250 90 diamond_block',
          f'execute in minecraft:{dim} run setblock -200 250 91 emerald_block',
          f'execute in minecraft:{dim} run setblock -198 250 91 iron_block',
+         f'execute in minecraft:{dim} run setblock -200 250 105 copper_block',
+         f'execute in minecraft:{dim} run setblock -198 250 105 lapis_block',
+         f'execute in minecraft:{dim} run setblock -200 250 106 redstone_block',
+         f'execute in minecraft:{dim} run setblock -198 250 106 coal_block',
          f'execute in minecraft:{dim} run setblock -180 249 90 stone',
+         f'execute in minecraft:{dim} run setblock -170 249 105 stone',
+         f'execute in minecraft:{dim} run setblock -165 249 105 stone',
          'scoreboard players set @s mcc_hasa 0')
 def selection(dim='overworld'):
     aim(-200,90,250,dim); trigger('pos1')
     aim(-198,91,250,dim); trigger('pos2')
+def selection2(dim='overworld'):
+    aim(-200,105,250,dim); trigger('pos1')
+    aim(-198,106,250,dim); trigger('pos2')
 def target(x=-180,z=90,dim='overworld'): aim(x,z,249,dim)
 def reset_transform():
     step('scoreboard players set @s mcc_rot 0',
@@ -46,6 +55,18 @@ def reset_transform():
 reset_transform()
 fixture(); selection()
 check('raycast selection','if score @s mcc_p1x matches -200 if score @s mcc_p1y matches 250 if score @s mcc_p1z matches 90 if score @s mcc_p2x matches -198 if score @s mcc_p2z matches 91')
+
+# v1.2 selection contract: reselecting Pos1/Pos2 changes the next Copy, while
+# doing another Copy without new Pos keeps using the current selection.
+selection2(); trigger('c')
+target(-170,105); trigger('v')
+check('reselected copy uses new region','in minecraft:overworld positioned -170 250 105 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:copper_block"},limit=1]')
+trigger('previewclear')
+trigger('c')
+target(-165,105); trigger('v')
+check('selection persists without new pos','in minecraft:overworld positioned -165 250 105 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:copper_block"},limit=1]')
+trigger('previewclear')
+selection()
 
 # v1.2 Anchor lifecycle: external pivots are valid, Clear Anchor works through the
 # real trigger/tick path, and reselecting either endpoint drops a stale custom Anchor.
