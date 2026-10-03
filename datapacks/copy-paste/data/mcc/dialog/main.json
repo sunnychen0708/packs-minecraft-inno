@@ -52,6 +52,16 @@
     },
     {
       "label": {
+        "text": "清 Anchor"
+      },
+      "width": 120,
+      "action": {
+        "type": "run_command",
+        "command": "trigger anchor set 2"
+      }
+    },
+    {
+      "label": {
         "text": "Copy"
       },
       "width": 120,

@@ -448,6 +448,12 @@ def check_v100_semantics(pack: Path):
     assert '"dialog": "warehouse:main"' not in main_dialog
     assert '"command": "trigger wh_nav set 1"' in main_dialog
     assert '"command": "trigger cphelp"' in main_dialog
+    assert '"command": "trigger anchor set 2"' in main_dialog
+    for command in (
+        'trigger pos1','trigger pos2','trigger anchor','trigger c','trigger x','trigger v',
+        'trigger build','trigger materials','trigger previewclear','trigger undo','trigger redo',
+    ):
+        assert f'"command": "{command}"' in main_dialog, f'active Dialog missing core action: {command}'
     assert '/trigger pos1' in tutorial_dialog and '/trigger pos2' in tutorial_dialog
     assert '/trigger c' in tutorial_dialog and '/trigger x' in tutorial_dialog and '/trigger v' in tutorial_dialog
     assert '/trigger build' in tutorial_dialog and '/trigger undo' in tutorial_dialog and '/trigger redo' in tutorial_dialog
@@ -456,22 +462,43 @@ def check_v100_semantics(pack: Path):
     assert read(pack/'data/mcc/function/ui/tutorial.mcfunction').strip() == 'dialog show @s mcc:tutorial'
     assert 'scoreboard players set @s mcc_histmat 1' in place
     assert (pack/'data/mcc/tags/block/material_unsupported.json').is_file()
-    panel=read(pack/'data/mcc/function/panel.mcfunction')
-    assert '/trigger build' in panel
-    assert '/trigger matbox' not in panel and '/trigger matremove' not in panel and '/trigger matlist' not in panel
-    assert 'Warehouse 共用倉庫' in panel
+    # main.json is the active /trigger copypaste UI. Do not use the legacy
+    # panel.mcfunction as evidence that a player-visible control exists.
+    assert '"command": "trigger build"' in main_dialog
+    assert '"command": "trigger materials"' in main_dialog
+    assert 'Warehouse 共用倉庫' in main_dialog
     return matcher_states
 
-def check_version_labels(pack: Path):
+def check_version_labels(pack: Path, repo: Path|None=None):
     meta=json.loads(read(pack/'pack.mcmeta'))
     desc=meta['pack']['description']
     m=re.search(r'v(\d+\.\d+(?:\.\d+)?)',desc)
     assert m, f'pack description has no semantic version: {desc}'
     version=m.group(1)
     load=read(pack/'data/mcc/function/load.mcfunction')
-    panel=read(pack/'data/mcc/function/panel.mcfunction')
     assert f'v{version} 已載入' in load, f'load message not synced to v{version}'
-    assert f'Copy/Paste v{version}' in panel, f'panel title not synced to v{version}'
+    assert f'v{version}' in read(pack/'README.md').splitlines()[0], f'pack README not synced to v{version}'
+    assert f'v{version}' in read(pack/'LIVE-VALIDATION.md').splitlines()[0], f'LIVE-VALIDATION not synced to v{version}'
+    assert f'v{version}' in read(pack/'MULTIPLAYER-VALIDATION.md').splitlines()[0], f'MULTIPLAYER-VALIDATION not synced to v{version}'
+    source_repo=repo or Path(__file__).resolve().parents[1]
+    runtime=read(source_repo/'scripts/test-copy-paste-runtime.py')
+    live=read(source_repo/'scripts/build-copy-paste-live-test.py')
+    multi=read(source_repo/'scripts/build-copy-paste-multiplayer-test.py')
+    assert f'Copy/Paste v{version}' in runtime, f'headless runtime label not synced to v{version}'
+    assert f'v{version}' in live.splitlines()[0], f'real-player harness label not synced to v{version}'
+    assert f'v{version}' in multi.splitlines()[0], f'multiplayer harness label not synced to v{version}'
+    compile(live, str(source_repo/'scripts/build-copy-paste-live-test.py'), 'exec')
+    compile(multi, str(source_repo/'scripts/build-copy-paste-multiplayer-test.py'), 'exec')
+    for required in (
+        "reselected copy uses new region",
+        "selection persists without new pos",
+        "external anchor selected",
+        "clear anchor trigger",
+        "pos1 reselection clears stale anchor",
+        "default pos1 anchor exact",
+        "material build real",
+    ):
+        assert required in live, f'v{version} real-player harness missing: {required}'
     return version
 
 def check_tellraw_json(pack: Path):
@@ -511,7 +538,7 @@ def main():
     check_move_model()
     mp=check_multiplayer_isolation(pack)
     states=check_v100_semantics(pack)
-    version=check_version_labels(pack)
+    version=check_version_labels(pack,repo)
     tj=check_tellraw_json(pack)
     print(f'PASS copy-paste regression v{version}: {j} JSON, {f} functions, {o} objectives, {t} triggers, {tj} tellraw JSON, {mp}-player buffer isolation, {states} exact blueprint states, copy-v blueprint/material-build semantics, five-level undo/redo, real rotate, clipboard isolation, rollback, move/flip properties')
 

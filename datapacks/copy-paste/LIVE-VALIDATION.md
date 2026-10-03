@@ -1,47 +1,99 @@
-# Copy/Paste 驗證狀態（v1.1 / 2026-10-03）
+# Copy/Paste 驗證狀態（v1.2.1 source / 2026-10-04）
 
-目前原始碼與已發布版本皆為 **v1.1**，目標 Minecraft Java 26.3（Data Pack 121.0）。這份文件描述「現在主線能證明什麼」，並把 2026-09-30 的真人 client 測試保留成歷史證據，而不是把舊 v0.4.2 結果誤當成 v1.1 的完整驗證。
+目前原始碼為 **v1.2.1（尚未發布）**；最新已發布 ZIP 仍是 **v1.2**。目標 Minecraft Java 26.3（Data Pack 121.0）。
 
-## 目前自動驗證鏈
+這份文件刻意把「官方 server headless regression」和「真人玩家 Trigger / Dialog 驗證」分開。兩者不能互相冒充。
 
-| 層級 | 指令 / CI | 目前涵蓋 |
+## 目前驗證鏈
+
+| 層級 | 指令 / CI | 能證明什麼 |
 | --- | --- | --- |
-| Generic static | `python3 scripts/validate-datapack.py copy-paste` | `pack.mcmeta`、JSON、function/tag 引用、macro 呼叫、Trigger 盤點、ZIP 結構 |
-| Pack regression | `python3 scripts/test-copy-paste.py` | Trigger lifecycle、64-player buffer 隔離、五層 Undo/Redo、Blueprint exact-state matcher、材料施工語意、Rotate/Move/Flip/rollback 等 |
-| Vanilla smoke | `validate-datapack.py ... --server-jar ...` | 官方 26.3 server 啟動、`/reload`、parser / datapack load error 掃描 |
-| Behavioral runtime | `python3 scripts/test-copy-paste-runtime.py ...` | Copy/Paste + Warehouse 在隔離世界中的實際方塊、storage、scoreboard 與材料交易結果 |
-| Cross-pack runtime | `python3 scripts/test-datapack-compatibility.py ...` | Utilities + Warehouse + Copy/Paste 同時載入、代表性 objective/storage 與 Warehouse API 共存 |
+| Generic static | `python3 scripts/validate-datapack.py copy-paste` | JSON、function/tag 引用、macro、Trigger 盤點、ZIP 結構 |
+| Pack regression | `python3 scripts/test-copy-paste.py` | 座標公式、Trigger lifecycle、buffer 隔離、Undo/Redo、active Dialog 必要操作、版本同步 |
+| Vanilla smoke | `validate-datapack.py ... --server-jar ...` | 官方 26.3 server 能啟動、reload，沒有被掃到的 parser/load error |
+| Behavioral runtime | `python3 scripts/test-copy-paste-runtime.py ...` | 在官方 26.3 server 以非玩家 actor 驗真實方塊、display、storage、scoreboard、Warehouse 材料交易 |
+| Cross-pack runtime | `python3 scripts/test-datapack-compatibility.py ...` | Utilities + Warehouse + Copy/Paste 同時載入與共用 API 共存 |
+| Real-player harness | `python3 scripts/build-copy-paste-live-test.py` | 需要真人登入後，才會真正走 `/trigger` → tick dispatch → player raycast 的操作路徑 |
+| Two-player harness | `python3 scripts/build-copy-paste-multiplayer-test.py` | 需要兩位真人登入後，才能驗兩 client 同時操作 |
 
-目前 CI 的 `Validate datapacks` 已包含 Copy/Paste 專用官方 26.3 runtime 與三包合載 compatibility job；`copy-paste-v1.1` 發布流程也使用同一組 release gates。
+## Headless behavioral runtime 的實際範圍
 
-## v1.1 behavioral runtime 覆蓋
+`scripts/test-copy-paste-runtime.py` 是 v1.2.1 source 的官方-server regression，目前為 **113 個動態 assertions**，涵蓋：
 
-`scripts/test-copy-paste-runtime.py` 目前定義 56 項 runtime assertions，使用非玩家 armor stand actor 走正式內部 function 路徑。主要覆蓋：
+- Pos1 / Pos2 / Anchor / V 的 raycast function。
+- 沒有自訂 Anchor 時，Pos1 為預設 Anchor，即使 Pos1 不是選區最小角也要精確對位。
+- 自訂 Anchor 精確對位與 12 種 Rotate/Mirror 組合。
+- 選區重新設定會清掉舊自訂 Anchor。
+- 選區外 Anchor 的連續大半徑 Rotate 與 Undo。
+- Copy → Blueprint 不改真實世界。
+- Blueprint 六方向微調與覆蓋重算。
+- 材料唯讀報表、缺料 all-or-nothing、足料 Build。
+- Warehouse 扣料、Undo 退款、Redo 重新扣料、防複製 guard。
+- Cut + V、Move、Flip X/Z、Rotate 90/180/270。
+- 五層 Undo/Redo。
 
-- Copy → V 只產生 `block_display` Blueprint，不寫入真實目標方塊，來源也保持不變。
-- Blueprint 六方向微調：left / right / forward / backward / up / down；移動後同步更新目標座標與覆蓋重算。
-- 覆蓋保護：偵測目標既有非空氣方塊，第一次 Build 只警告，重算後會重置確認狀態。
-- `/trigger materials` 對材料只做唯讀統計，不會扣料。
-- 材料不足時 Build all-or-nothing：不施工、不扣已有材料、保留 Blueprint。
-- 材料足夠時透過 Warehouse 共用 API 扣料並施工，Undo history 保存實際材料交易。
-- Build 後世界被外部修改時，material Undo guard 會拒絕退款，避免複製資源。
-- 正常 Build Undo 會還原世界並把材料退回 Warehouse `c00`；Redo 會重新扣料後恢復建築。
-- Cut (`x`) 直接移除來源；Undo/Redo 可逆；成功 X+V 後 Cut Clipboard 會消耗，不能重複貼。
-- Move、直接 Rotate90 與一般真實世界貼上都有 Undo/Redo。
-- 五次連續真實編輯可依序 Undo 五次，再 Redo 五次。
+**限制：這個 runtime 使用 armor stand actor，並直接呼叫多數內部 `mcc:...` functions。**  
+因此它不能證明以下玩家路徑：
 
-這個 headless runtime **不等於真人 client 驗證**：它不驗證 Dialog 視覺、實際準星手感、鍵鼠操作，也不證明兩位真人玩家同時操作時的所有時序。多人隔離與雙人測試方式見 [MULTIPLAYER-VALIDATION.md](MULTIPLAYER-VALIDATION.md)。
+- 玩家輸入 `/trigger ...` 後是否由 `tick.mcfunction` 正確 dispatch。
+- Dialog 按鈕是否真的可點、命令是否正確、版面是否可用。
+- 真人準星、滑鼠、鍵盤的實際手感。
+- 兩位真人玩家同時操作的 client/server 時序。
 
-## 2026-09-30 真人 client 歷史驗證
+所以「headless runtime PASS」不能再被描述成「玩家實機全部驗過」。
 
-當時測的是 v0.4.1 → v0.4.2 修正，不是目前 v1.1。該次測試在 Minecraft Java 26.3 單人世界中，以真實登入玩家操作 Trigger，修正了兩個問題：
+## v1.2.1 真人 Trigger harness
 
-1. Mode 切到 Masked 後同一次 function 又被第二個分支切回 Replace。
-2. v0.2 玩家已有 `mcc_id`，導致新版 `mcc_rot` / `mcc_mir` / `mcc_usel` 狀態沒有補齊。
+`scripts/build-copy-paste-live-test.py` 已更新到 v1.2.1。它會產生 opt-in 測試 datapack，使用**真人玩家本人的 trigger objective**，每一步交給正常 Minecraft tick dispatch 處理。
 
-原始 v0.4.1 測試為 49 PASS / 2 FAIL；修正後主流程 80 PASS / 0 FAIL，再加缺欄位 migration probe 共 81 項通過。原始 MCCT 摘錄仍保存在 [`tests/evidence/copy-paste-live-20260930.txt`](../../tests/evidence/copy-paste-live-20260930.txt)。這份 evidence 應視為「真人操作路徑曾經驗過」的歷史紀錄，不應拿來替代 v1.1 新增 Blueprint 材料施工與 Phase 3 功能的現行 runtime gate。
+目前生成案例包含：
 
-## 重跑目前驗證
+- Pos1 / Pos2 真人 raycast。
+- 選區外自訂 Anchor。
+- `/trigger anchor set 2` 清 Anchor。
+- 重新設定 Pos1 後舊 Anchor 必須失效。
+- Pos1 非最小角時的預設 Anchor Blueprint 精確位置。
+- Copy / Blueprint。
+- Warehouse 材料支援的 Build。
+- Cut + V。
+- Move / Flip / Rotate 與 Undo/Redo。
+- 跨維度 Copy / Cut。
+
+執行方式：
+
+```console
+python3 scripts/build-copy-paste-live-test.py
+```
+
+把 `dist/mcc-live-test` 放進**已備份、可丟棄的真人測試世界**後，由實際登入玩家執行：
+
+```mcfunction
+/function mcc_test:start
+```
+
+目前 repo **尚未提交一份 v1.2.1 真人 harness 全 PASS 的 client evidence**。在那之前，只能說 v1.2.1 source 已通過官方 server headless regression，不能說真人 Trigger / Dialog 已完整驗證。
+
+## Dialog 檢查
+
+`/trigger copypaste` 的 active UI 是 `data/mcc/dialog/main.json`，不是舊的 `panel.mcfunction`。
+
+v1.2.1 active Dialog 必須至少包含：
+
+- Pos1 / Pos2 / Anchor / 清 Anchor。
+- Copy / Cut / Blueprint。
+- Build / Materials / Clear Blueprint。
+- Undo / Redo。
+- 指令教學。
+
+CI 現在直接檢查 active Dialog，不再拿沒有被 `/trigger copypaste` 呼叫的 legacy `panel.mcfunction` 當成玩家 UI 正確的證據。
+
+## 歷史真人 evidence
+
+`tests/evidence/copy-paste-live-20260930.txt` 是 2026-09-30 的真人 client evidence，當時修的是 v0.4.1 → v0.4.2 的 Mode 與舊玩家 migration 問題。
+
+那份 evidence 只能證明當時版本的真人路徑曾跑過，**不能替代 v1.2.1 的 Blueprint / Build / external Anchor / Dialog 驗證**。
+
+## 重跑自動驗證
 
 ```console
 python3 scripts/validate-datapack.py copy-paste
@@ -59,11 +111,4 @@ python3 scripts/test-datapack-compatibility.py \
   --accept-eula
 ```
 
-若要驗真人 Trigger / Dialog 路徑，可另外產生 opt-in client harness：
-
-```console
-python3 scripts/build-copy-paste-live-test.py
-python3 scripts/build-copy-paste-multiplayer-test.py
-```
-
-這兩個 harness 只應放進已備份、可丟棄的測試世界；多人 harness 需要兩位實際登入玩家才算真正的 two-client runtime validation。
+發布規則仍是：static、pack regression、三包 compatibility、Copy/Paste 專用官方 26.3 runtime 全部必須通過；真人 client-only 項目若沒有 evidence，就必須明確標成未驗，而不是用 headless PASS 代替。
