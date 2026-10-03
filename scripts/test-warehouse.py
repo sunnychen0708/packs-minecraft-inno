@@ -161,7 +161,30 @@ def main() -> None:
     assert "wh_rulebox matches 10..69" in highlight_from_rule
     assert "function warehouse:api/highlight" in highlight_from_rule
 
-    print(f"PASS warehouse regression v{version}: reset/search/API/Highlight are bounded and validated")
+    # Phase 4 Pick / block resolver.
+    api_resolve = (PACK / "data/warehouse/function/api/resolve_block.mcfunction").read_text(encoding="utf-8")
+    pick_start = (PACK / "data/warehouse/function/pick/start.mcfunction").read_text(encoding="utf-8")
+    pick_raycast = (PACK / "data/warehouse/function/pick/raycast.mcfunction").read_text(encoding="utf-8")
+    pick_hit = (PACK / "data/warehouse/function/pick/hit.mcfunction").read_text(encoding="utf-8")
+    pick_withdraw = (PACK / "data/warehouse/function/pick/withdraw.mcfunction").read_text(encoding="utf-8")
+    pick_take = (PACK / "data/warehouse/function/pick/take.mcfunction").read_text(encoding="utf-8")
+    pick_give = (PACK / "data/warehouse/function/pick/give.mcfunction").read_text(encoding="utf-8")
+    assert setup.count("scoreboard objectives add pick trigger") == 1
+    assert "warehouse:meta v44" in load and "warehouse:migrate_v44" in load
+    assert warehouse_tick.count("scoreboard players enable @a pick") == 1
+    assert "scores={pick=1..}" in warehouse_tick and "warehouse:pick/start" in warehouse_tick
+    assert "trigger pick" in main_dialog and "Pick 一組" in main_dialog
+    assert "loot replace entity" in api_resolve and "minecraft:silk_touch" in api_resolve
+    assert "probe_max_stack" in api_resolve and "result.max_stack" in api_resolve
+    assert "anchored eyes" in pick_start and "warehouse:pick/raycast" in pick_start
+    assert "minecraft:water" in pick_raycast and "minecraft:lava" in pick_raycast
+    assert "warehouse:api/resolve_block" in pick_hit
+    assert "warehouse:api/count_item" in pick_withdraw
+    assert "warehouse:api/take_item" in pick_take
+    assert "entity @s[type=minecraft:player]" in pick_take
+    assert "$give @s $(item_id) $(count)" in pick_give
+
+    print(f"PASS warehouse regression v{version}: reset/search/API/Highlight/Pick are bounded and validated")
 
 
 if __name__ == "__main__":
