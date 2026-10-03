@@ -490,6 +490,8 @@ def check_version_labels(pack: Path, repo: Path|None=None):
     compile(live, str(source_repo/'scripts/build-copy-paste-live-test.py'), 'exec')
     compile(multi, str(source_repo/'scripts/build-copy-paste-multiplayer-test.py'), 'exec')
     for required in (
+        "reselected copy uses new region",
+        "selection persists without new pos",
         "external anchor selected",
         "clear anchor trigger",
         "pos1 reselection clears stale anchor",
