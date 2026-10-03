@@ -10,7 +10,7 @@
     {
       "type": "minecraft:plain_message",
       "contents": {
-        "text": "輸入關鍵字查詢物品。支援繁中物品名稱、分類名稱、Minecraft ID；中文字可只輸入一個字。\n搜尋結果可直接點選，查看並修改該物品的分類。"
+        "text": "輸入關鍵字查詢物品。支援繁中物品名稱、分類名稱、Minecraft ID；中文字可只輸入一個字。\n搜尋結果可直接點選，查看／修改分類或從 Warehouse 取一組。"
       },
       "width": 430
     }
