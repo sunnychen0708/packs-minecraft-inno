@@ -169,13 +169,28 @@ def check_selection_math(pack: Path):
 def check_flip_anchor_formula(pack: Path):
     x=read(pack/'data/mcc/function/flip/x.mcfunction')
     z=read(pack/'data/mcc/function/flip/z.mcfunction')
-    assert 'mcc_tmp = @s mcc_minx' in x and 'mcc_tmp += @s mcc_maxx' in x and 'mcc_tmp -= @s mcc_anx' in x
-    assert 'mcc_tmp = @s mcc_minz' in z and 'mcc_tmp += @s mcc_maxz' in z and 'mcc_tmp -= @s mcc_anz' in z
+    xa=read(pack/'data/mcc/function/flip/x_anchor.mcfunction')
+    za=read(pack/'data/mcc/function/flip/z_anchor.mcfunction')
+    transform=read(pack/'data/mcc/function/rotate_edit/run.mcfunction')
+    place=read(pack/'data/mcc/function/rotate_edit/place_overworld.mcfunction')
+
+    # No custom Anchor keeps the existing in-place bounding-box Flip behavior.
+    # With a custom Anchor, route through the fixed-pivot transform engine instead
+    # of mirroring/moving the Anchor itself.
+    assert 'mcc_hasa matches 1 run return run function mcc:flip/x_anchor' in x
+    assert 'mcc_hasa matches 1 run return run function mcc:flip/z_anchor' in z
+    assert 'mcc_anx = @s mcc_tmp' not in x
+    assert 'mcc_anz = @s mcc_tmp' not in z
+    assert 'mcc_erot 0' in xa and 'mcc_emir 1' in xa and 'front_back' in xa
+    assert 'mcc_erot 0' in za and 'mcc_emir 2' in za and 'left_right' in za
+    assert 'prepare_r0_m1' in transform and 'prepare_r0_m2' in transform
+    assert '$(erot) $(emir)' in place
+
     rng=random.Random(401)
     for _ in range(2000):
-        lo=rng.randint(-1000,1000); hi=lo+rng.randint(0,47); a=rng.randint(lo-100,hi+100)
-        b=lo+hi-a
-        assert lo+hi-b==a
+        p=rng.randint(-2000,2000); a=rng.randint(-2000,2000)
+        mirrored=2*a-p
+        assert 2*a-mirrored==p
 
 def check_move_model():
     rng=random.Random(4041)
