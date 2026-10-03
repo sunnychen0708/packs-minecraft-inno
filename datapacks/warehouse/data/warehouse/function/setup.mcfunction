@@ -23,7 +23,6 @@ scoreboard objectives add wh_search_pick trigger
 scoreboard objectives add wh_highlight trigger
 scoreboard objectives add wh_rule_item dummy
 scoreboard objectives add wh_ruleidx dummy
-scoreboard objectives add wh_search_page trigger
 scoreboard objectives add wh_viewpage trigger
 scoreboard players set #cursor wh_sys 0
 scoreboard players set #enabled wh_sys 1

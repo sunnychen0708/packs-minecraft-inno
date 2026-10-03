@@ -5,6 +5,7 @@ scoreboard players enable @a wh_view
 scoreboard players enable @a wh_rule
 scoreboard players enable @a wh_rule_dest
 scoreboard players enable @a wh_rename_target
+scoreboard players enable @a wh_rename
 scoreboard players enable @a wh_unreg_do
 scoreboard players enable @a wh_unreg
 scoreboard players enable @a wh_search_pick

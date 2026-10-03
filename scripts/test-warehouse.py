@@ -72,6 +72,11 @@ def main() -> None:
     assert "warehouse:meta search_ready" in run
     assert "return fail" in run
 
+    setup = (PACK / "data/warehouse/function/setup.mcfunction").read_text(encoding="utf-8")
+    warehouse_tick = (PACK / "data/warehouse/function/tick.mcfunction").read_text(encoding="utf-8")
+    assert "scoreboard objectives add wh_search_page trigger" not in setup
+    assert "scoreboard players enable @a wh_rename" in warehouse_tick
+
     load = (PACK / "data/warehouse/function/load.mcfunction").read_text(encoding="utf-8")
     assert "execute unless data storage warehouse:meta v42 run function warehouse:migrate_v42" in load
     assert "execute unless data storage warehouse:meta v43 run function warehouse:migrate_v43" in load
@@ -146,7 +151,6 @@ def main() -> None:
     assert "force @s" in highlight_box
     assert "Highlight 箱子" in show_classified
     assert "trigger wh_highlight set 1" in show_classified
-    warehouse_tick = (PACK / "data/warehouse/function/tick.mcfunction").read_text(encoding="utf-8")
     select_search = (PACK / "data/warehouse/function/rule/select_search.mcfunction").read_text(encoding="utf-8")
     show_selected = (PACK / "data/warehouse/function/rule/show_selected.mcfunction").read_text(encoding="utf-8")
     highlight_from_rule = (PACK / "data/warehouse/function/highlight/from_rule.mcfunction").read_text(encoding="utf-8")
