@@ -56,7 +56,7 @@ Warehouse API 會從已註冊且有效的 Warehouse 容器建立最多 64 個材
 
 `anchor` 是選用的；**沒有手動設定 Anchor 時，Pos1 就是預設 Anchor**。執行 `v` 時，準星指向方塊旁邊的目標格代表「Anchor 要落在這一格」，因此預設情況就是讓 Pos1 對齊目標格；若有自訂 Anchor，則由自訂 Anchor 對齊。未旋轉／鏡像與已旋轉／鏡像都遵守同一套定位語意。
 
-重新設定 Pos1 或 Pos2 會清除舊的自訂 Anchor，並回到「Pos1 為預設 Anchor」；若要自訂 Anchor，請在目前選取範圍確定後再設定。
+**自訂 Anchor 可以位於選取範圍外。** 它是同維度的空間 pivot，不是選區內的特殊方塊；因此可以把 Anchor 放在遠離建築的位置，讓 Blueprint 或直接 Rotate 繞外部中心做大半徑旋轉。重新設定 Pos1 或 Pos2 會清除舊的自訂 Anchor，並回到「Pos1 為預設 Anchor」；若要自訂 Anchor，請在目前選取範圍確定後再設定。
 
 `v` 只建立或重定位 Blueprint，不會直接生成真實方塊。
 
@@ -123,6 +123,16 @@ Blueprint 建立完成後，不必重新用 `v` 定位就能直接微調。左�
 如果目前位置會覆蓋既有非空氣方塊，第一次 `/trigger build` 只顯示警告並要求再次確認，不會扣材料或修改世界；第二次施工才會進入正常材料檢查。只要 Blueprint 再次移動、旋轉、鏡像或覆蓋重算，確認狀態就會重置。
 
 `/trigger copypaste` 會開啟 Dialog 控制面板，包含 Pos1/Pos2/Anchor、Copy/Cut、Blueprint 六方向微調、Rotate/Mirror、材料／覆蓋檢查、施工與 Undo/Redo。若 Warehouse 同時安裝，也可以從 Warehouse 主頁直接進入建築工具。
+
+## 遊戲內指令教學
+
+輸入：
+
+```mcfunction
+/trigger cphelp
+```
+
+會開啟遊戲內「Copy/Paste 指令教學」Dialog；主控制面板也有「指令教學」按鈕。教學包含 Pos1/Pos2/Anchor、Copy/Blueprint/Build、Cut、Blueprint 微調、Rotate/Mirror、Move/Flip、Undo/Redo 等指令與目前的 Anchor/選區語意。
 
 ## 生存安全
 

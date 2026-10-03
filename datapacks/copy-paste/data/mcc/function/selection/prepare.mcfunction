@@ -44,19 +44,6 @@ execute if score @s mcc_vol > @s mcc_lim run return fail
 
 execute if score @s mcc_hasa matches 1 unless score @s mcc_and = @s mcc_p1d run tellraw @s [{"text":"[Copy/Paste] Anchor 必須和選取區域在同一維度。","color":"red"}]
 execute if score @s mcc_hasa matches 1 unless score @s mcc_and = @s mcc_p1d run return fail
-execute if score @s mcc_hasa matches 1 unless score @s mcc_anx >= @s mcc_minx run tellraw @s [{"text":"[Copy/Paste] Anchor 必須位於選取範圍內。","color":"red"}]
-execute if score @s mcc_hasa matches 1 unless score @s mcc_anx >= @s mcc_minx run return fail
-execute if score @s mcc_hasa matches 1 unless score @s mcc_anx <= @s mcc_maxx run tellraw @s [{"text":"[Copy/Paste] Anchor 必須位於選取範圍內。","color":"red"}]
-execute if score @s mcc_hasa matches 1 unless score @s mcc_anx <= @s mcc_maxx run return fail
-execute if score @s mcc_hasa matches 1 unless score @s mcc_any >= @s mcc_miny run tellraw @s [{"text":"[Copy/Paste] Anchor 必須位於選取範圍內。","color":"red"}]
-execute if score @s mcc_hasa matches 1 unless score @s mcc_any >= @s mcc_miny run return fail
-execute if score @s mcc_hasa matches 1 unless score @s mcc_any <= @s mcc_maxy run tellraw @s [{"text":"[Copy/Paste] Anchor 必須位於選取範圍內。","color":"red"}]
-execute if score @s mcc_hasa matches 1 unless score @s mcc_any <= @s mcc_maxy run return fail
-execute if score @s mcc_hasa matches 1 unless score @s mcc_anz >= @s mcc_minz run tellraw @s [{"text":"[Copy/Paste] Anchor 必須位於選取範圍內。","color":"red"}]
-execute if score @s mcc_hasa matches 1 unless score @s mcc_anz >= @s mcc_minz run return fail
-execute if score @s mcc_hasa matches 1 unless score @s mcc_anz <= @s mcc_maxz run tellraw @s [{"text":"[Copy/Paste] Anchor 必須位於選取範圍內。","color":"red"}]
-execute if score @s mcc_hasa matches 1 unless score @s mcc_anz <= @s mcc_maxz run return fail
-
 scoreboard players operation @s mcc_soffx = @s mcc_p1x
 scoreboard players operation @s mcc_soffy = @s mcc_p1y
 scoreboard players operation @s mcc_soffz = @s mcc_p1z

@@ -11,7 +11,7 @@ RE_FUNC = re.compile(r'\bfunction\s+(mcc:[a-z0-9_./-]+)')
 RE_OBJ = re.compile(r'^scoreboard objectives add (\S+) (\S+)', re.M)
 RE_TRIGGER = re.compile(r'^scoreboard objectives add (\S+) trigger$', re.M)
 USER_TRIGGERS = {
-    'copypaste','pos1','pos2','anchor','c','x','v','undo','redo','mode','rotate','mirror',
+    'copypaste','cphelp','pos1','pos2','anchor','c','x','v','undo','redo','mode','rotate','mirror',
     'right','left','up','down','forward','backward','flipx','flipz',
     'rotate90','rotate180','rotate270','previewclear','build','materials','bpleft','bpright','bpforward','bpbackward','bpup','bpdown'
 }
@@ -150,8 +150,16 @@ def check_selection_math(pack: Path):
         assert f'mcc_s{axis} = @s mcc_sel{axis}' in copy
         assert f'mcc_off{axis} = @s mcc_soff{axis}' in copy
 
-    # A custom Anchor belongs to the current selection. Changing either endpoint
-    # starts a new selection and must fall back to Pos1 as the default Anchor.
+    # A custom Anchor is an arbitrary same-dimension pivot and may be outside
+    # the current selection. Changing either endpoint starts a new selection
+    # and must fall back to Pos1 as the default Anchor.
+    assert 'Anchor 必須位於選取範圍內' not in prep
+    for forbidden in (
+        'mcc_anx >= @s mcc_minx', 'mcc_anx <= @s mcc_maxx',
+        'mcc_any >= @s mcc_miny', 'mcc_any <= @s mcc_maxy',
+        'mcc_anz >= @s mcc_minz', 'mcc_anz <= @s mcc_maxz',
+    ):
+        assert forbidden not in prep, f'external Anchor was restricted again: {forbidden}'
     for name,flag in [('hit_pos1.mcfunction','mcc_has1'),('hit_pos2.mcfunction','mcc_has2')]:
         text=read(pack/'data/mcc/function/ray'/name)
         assert f'scoreboard players set @s {flag} 1' in text
@@ -165,9 +173,9 @@ def check_flip_anchor_formula(pack: Path):
     assert 'mcc_tmp = @s mcc_minz' in z and 'mcc_tmp += @s mcc_maxz' in z and 'mcc_tmp -= @s mcc_anz' in z
     rng=random.Random(401)
     for _ in range(2000):
-        lo=rng.randint(-1000,1000); hi=lo+rng.randint(0,47); a=rng.randint(lo,hi)
+        lo=rng.randint(-1000,1000); hi=lo+rng.randint(0,47); a=rng.randint(lo-100,hi+100)
         b=lo+hi-a
-        assert lo<=b<=hi and lo+hi-b==a
+        assert lo+hi-b==a
 
 def check_move_model():
     rng=random.Random(4041)
@@ -434,9 +442,18 @@ def check_v100_semantics(pack: Path):
     assert 'function mcc:blueprint/recount_start' in read(pack/'data/mcc/function/blueprint/nudge/run.mcfunction')
     assert 'mcc_bpover_scan' in read(pack/'data/mcc/function/tick.mcfunction')
     assert (pack/'data/mcc/dialog/main.json').is_file()
+    assert (pack/'data/mcc/dialog/tutorial.json').is_file()
     main_dialog=read(pack/'data/mcc/dialog/main.json')
+    tutorial_dialog=read(pack/'data/mcc/dialog/tutorial.json')
     assert '"dialog": "warehouse:main"' not in main_dialog
     assert '"command": "trigger wh_nav set 1"' in main_dialog
+    assert '"command": "trigger cphelp"' in main_dialog
+    assert '/trigger pos1' in tutorial_dialog and '/trigger pos2' in tutorial_dialog
+    assert '/trigger c' in tutorial_dialog and '/trigger x' in tutorial_dialog and '/trigger v' in tutorial_dialog
+    assert '/trigger build' in tutorial_dialog and '/trigger undo' in tutorial_dialog and '/trigger redo' in tutorial_dialog
+    assert '自訂 Anchor 可在選區外' in tutorial_dialog
+    assert (pack/'data/mcc/function/ui/tutorial.mcfunction').is_file()
+    assert read(pack/'data/mcc/function/ui/tutorial.mcfunction').strip() == 'dialog show @s mcc:tutorial'
     assert 'scoreboard players set @s mcc_histmat 1' in place
     assert (pack/'data/mcc/tags/block/material_unsupported.json').is_file()
     panel=read(pack/'data/mcc/function/panel.mcfunction')

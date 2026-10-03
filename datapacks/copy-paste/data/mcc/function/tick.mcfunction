@@ -26,6 +26,7 @@ execute as @a unless score @s mcc_buildconfirm matches 0..1 run scoreboard playe
 execute as @a unless score @s mcc_bpover_scan matches 0..1 run scoreboard players set @s mcc_bpover_scan 0
 execute as @a unless score @s mcc_bpoindex matches 0.. run scoreboard players set @s mcc_bpoindex 0
 execute as @a[scores={copypaste=1..}] run function mcc:ui/open
+execute as @a[scores={cphelp=1..}] run function mcc:ui/tutorial
 
 execute as @a[scores={pos1=1..}] at @s run function mcc:select/start_pos1
 execute as @a[scores={pos2=1..}] at @s run function mcc:select/start_pos2
@@ -71,6 +72,7 @@ execute as @a[scores={mcc_bpover_scan=1}] run function mcc:blueprint/recount_bat
 execute as @a[scores={mcc_matphase=1..2}] run function mcc:materials/process_batch
 
 scoreboard players set @a[scores={copypaste=1..}] copypaste 0
+scoreboard players set @a[scores={cphelp=1..}] cphelp 0
 scoreboard players set @a[scores={pos1=1..}] pos1 0
 scoreboard players set @a[scores={pos2=1..}] pos2 0
 scoreboard players set @a[scores={anchor=1..}] anchor 0
@@ -104,6 +106,7 @@ scoreboard players set @a[scores={bpup=1..}] bpup 0
 scoreboard players set @a[scores={bpdown=1..}] bpdown 0
 
 scoreboard players enable @a copypaste
+scoreboard players enable @a cphelp
 scoreboard players enable @a pos1
 scoreboard players enable @a pos2
 scoreboard players enable @a anchor

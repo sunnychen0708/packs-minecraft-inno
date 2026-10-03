@@ -213,6 +213,25 @@ def integration(java: Path, server: Path):
     lines.append(f'scoreboard players set {actor} mcc_mir 0')
     lines.append(f'scoreboard players set {actor} mcc_hasa 0')
 
+    # 0c. A custom Anchor may be outside the selection and must remain a usable
+    # pivot after the first rotation moves the selection somewhere else.
+    fixture(10,80,10)
+    lines.extend([
+        f'scoreboard players set {actor} mcc_hasa 1',
+        f'scoreboard players set {actor} mcc_anx 20',
+        f'scoreboard players set {actor} mcc_any 80',
+        f'scoreboard players set {actor} mcc_anz 20',
+        f'scoreboard players set {actor} mcc_and 1',
+    ])
+    run_as('mcc:rotate_edit/r90')
+    check(f'if block 30 80 10 gold_block if block 30 80 12 diamond_block if block 29 80 10 oak_stairs[facing=south] if block 29 80 12 iron_block if score {actor} mcc_anx matches 20 if score {actor} mcc_anz matches 20 if score {actor} mcc_p1x matches 29 if score {actor} mcc_p2x matches 30 if score {actor} mcc_p1z matches 10 if score {actor} mcc_p2z matches 12','external_anchor_rotate90_first')
+    run_as('mcc:rotate_edit/r90')
+    check(f'if block 30 80 30 gold_block if block 28 80 30 diamond_block if block 30 80 29 oak_stairs[facing=west] if block 28 80 29 iron_block if score {actor} mcc_anx matches 20 if score {actor} mcc_anz matches 20 if score {actor} mcc_p1x matches 28 if score {actor} mcc_p2x matches 30 if score {actor} mcc_p1z matches 29 if score {actor} mcc_p2z matches 30','external_anchor_rotate90_second')
+    run_as('mcc:undo/run')
+    check('if block 30 80 10 gold_block if block 30 80 12 diamond_block','external_anchor_rotate_undo_once')
+    run_as('mcc:undo/run')
+    check('if block 10 80 10 gold_block if block 12 80 10 diamond_block','external_anchor_rotate_undo_twice')
+
     # 1. Copy -> Blueprint: source remains, destination remains air, exact-state displays exist.
     fixture()
     run_as('mcc:copy/run')
