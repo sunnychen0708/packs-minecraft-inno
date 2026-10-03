@@ -244,6 +244,7 @@ scoreboard players set #uhistz mcc_id 20003040
 scoreboard players set #rhistz mcc_id 20005120
 scoreboard players set #mhistz mcc_id 20007200
 scoreboard players set #rguardz mcc_id 20009280
+scoreboard players set #cutredoz mcc_id 20011360
 scoreboard players set #hgap mcc_id 320
 scoreboard players set #one mcc_id 1
 scoreboard players set #zero mcc_id 0
