@@ -75,6 +75,12 @@ scoreboard players set @s mcc_histmat 0
 scoreboard players set @s mcc_histguard 0
 scoreboard players set @s mcc_histcut 0
 
+# Redoing a Cut must restore its movable clipboard as well as the post-Cut world.
+# Prepare the hidden clipboard first; keep it disabled until the world restore succeeds.
+execute if score @s mcc_rcut matches 1 run function mcc:history/prepare_cut_clipboard_from_redo
+execute if score @s mcc_rcut matches 1 unless score @s mcc_ok matches 1 run tellraw @s [{"text":"[Copy/Paste] Cut Redo 的 Clipboard 還原失敗；世界尚未修改。","color":"red"}]
+execute if score @s mcc_rcut matches 1 unless score @s mcc_ok matches 1 run return fail
+
 # Restore the newest Redo snapshot from its history slot.
 execute if score @s mcc_matjob matches 1 run scoreboard players operation @s mcc_hslot = @s mcc_txslot
 execute unless score @s mcc_matjob matches 1 run scoreboard players operation @s mcc_hslot = @s mcc_rhead
@@ -95,6 +101,9 @@ execute if score @s mcc_rdim matches 3 run function mcc:history/restore_end with
 execute unless score @s mcc_ok matches 1 run tellraw @s [{"text":"[Copy/Paste] Redo 還原失敗；歷史資料仍保留。","color":"red"}]
 execute unless score @s mcc_ok matches 1 run return fail
 execute if score @s mcc_rsel matches 1 run function mcc:redo/restore_selection
+execute if score @s mcc_rcut matches 1 run scoreboard players set @s mcc_clip 1
+execute if score @s mcc_rcut matches 1 run scoreboard players set @s mcc_cliptype 2
+execute if score @s mcc_rcut matches 1 run tellraw @s [{"text":"[Copy/Paste] Cut Redo 完成；Cut Clipboard 已重新建立，可再次用 /trigger v 搬移。","color":"gray"}]
 
 # Pop Redo and commit Undo.
 scoreboard players remove @s mcc_rcnt 1
