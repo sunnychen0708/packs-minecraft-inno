@@ -502,6 +502,7 @@ def integration(java: Path, server: Path):
         assert proc.stdin is not None
         # /forceload takes block coordinates, not chunk indices. Cover every visible fixture chunk (x=0..2, z=0..1).
         proc.stdin.write('forceload add 0 0 47 31\n'); proc.stdin.flush()
+        proc.stdin.write('gamerule minecraft:max_command_sequence_length 250000\n'); proc.stdin.flush()
         time.sleep(2)
         proc.stdin.write('function mcc_server_test:run\n'); proc.stdin.flush()
         assert done.wait(90),'Runtime regression did not complete'
