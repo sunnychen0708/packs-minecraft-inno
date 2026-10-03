@@ -1,65 +1,73 @@
-# Copy/Paste 多人隔離與驗證
+# Copy/Paste v1.1 多人隔離與驗證
 
-目標：讓多位玩家可以在同一個伺服器、甚至同一個 tick 送出 Copy/Paste/Move/Flip/Undo，而不共用 Clipboard、Undo 或 Work Buffer。
+目標：多位玩家可在同一個伺服器使用 Copy/Paste、Blueprint、Move/Rotate/Flip、Undo/Redo，而不把彼此的 Clipboard、歷史紀錄或材料工作狀態混在一起。Warehouse 庫存則刻意是全服共用資產。
 
-## 架構
+## Per-player 狀態
 
-每位玩家第一次使用時取得唯一 `mcc_id`。
+每位玩家第一次使用時取得唯一 `mcc_id`。Pos1、Pos2、Anchor、Mode、Rotate、Mirror、Blueprint 目標、Undo/Redo 指標與材料流程狀態都以玩家自己的 scoreboard / storage key 保存。
 
-五種隱藏 buffer 都以玩家 ID 分配獨立 X lane：
+隱藏世界空間分成 **7 個基礎 Z lane 類型**：
 
-- Clipboard：`X = #base + mcc_id × #slot`，Z lane = `#cbz`
-- Undo scratch：相同玩家 X lane，Z lane = `#ubz`
-- Undo history：每位玩家 5 個 ring slots，從 `#uhistz` 起、間隔 `#hgap`
-- Work：相同玩家 X lane，Z lane = `#workz`
-- Redo scratch：相同玩家 X lane，Z lane = `#redoz`
-- Redo history：每位玩家 5 個 ring slots，從 `#rhistz` 起、間隔 `#hgap`
-- Blueprint 快照：相同玩家 X lane，Z lane = `#bpz`
+- Clipboard：`#cbz`
+- Undo scratch：`#ubz`
+- Work：`#workz`
+- Redo scratch：`#redoz`
+- Blueprint snapshot：`#bpz`
+- Undo history 基底：`#uhistz`，每位玩家 5 個 ring slots
+- Redo history 基底：`#rhistz`，每位玩家 5 個 ring slots
 
-目前 `#slot = 256`，一般選取每軸上限 128，因此不同玩家的 X 範圍不會碰到；三種 buffer 的 Z lane 也彼此分開。
+玩家 X lane 使用 `X = #base + mcc_id × #slot`。目前 `#slot = 256`，一般 Copy/Cut 每軸上限 128；history slot 以 `#hgap >= 256` 分隔。`scripts/test-copy-paste.py` 會對 64 個玩家的最大一般 buffer 範圍做碰撞檢查，也會確認 5+5 個 history slots 互不重疊且不撞 Blueprint lane。
 
-旋轉／鏡像所用的 Structure Template 名稱同樣包含玩家 ID：
+旋轉／鏡像使用的 Structure Template 名稱也含玩家 ID：
 
 - `mcc:clipboard_<id>`
 - `mcc:work_<id>`
 
-玩家的 Pos1、Pos2、Anchor、Mode、Rotate、Mirror 與 history pointer 都存在各自的 scoreboard score；每一層 Undo/Redo metadata 則以玩家 ID + slot 存在 `mcc:history` command storage，不會共用。
+材料 BOM 保存在玩家 ID 對應的 `mcc:materials` 路徑；Undo/Redo metadata 則用玩家 ID + history slot 存在 `mcc:history`。因此 Build 的材料紀錄不會只靠一份全域玩家資料。
 
-## 為什麼共用 mcc:temp 不會把兩個玩家資料混在一起
+## 共用 scratch 為什麼不互串
 
-`mcc:temp` 只是在 function macro 呼叫前暫存本次同步命令的參數。正式 datapack 的世界編輯 function 不使用 `schedule function mcc:...` 把操作延後到下一 tick，因此一個玩家的 function 會完整執行完，再輪到下一個玩家的命令。
+`mcc:temp` 與 Warehouse API 的 request/result 屬於短生命週期 scratch。正式世界編輯流程不使用 `schedule function mcc:...` 把共享 scratch 延後到下一 tick；單次 function 呼叫會同步完成後才輪到下一個命令。
 
-Raycast 的 `mcc_temp_hit` marker 也在同一個同步 function 中建立、讀取並刪除，不跨 tick 保存。
+CI 也會拒絕非 load/tick 世界操作 function 使用 `@a`，避免某位玩家的操作直接掃到所有玩家。Raycast 的 `mcc_temp_hit` marker 會在同一次同步操作內建立、讀取並刪除。
 
-CI 會拒絕：
-- datapack 內出現會延後 `mcc:` 操作的 schedule
-- tick/load 以外的世界操作 function 使用 `@a`
-- 64 個玩家的 Clipboard/Undo/Work rectangle 發生任何重疊
-- Clipboard/Work Structure Template 缺少 `$(id)`
+材料庫存是例外中的「刻意共用」：Warehouse 是全服共用財產。Copy/Paste 的 Build / Redo 會在真正扣料時重新透過 Warehouse API 做 count/take；若另一位玩家先取走材料，後一個操作會因庫存不足而停止，不會免費施工。
 
-## 同一區域衝突
+## Blueprint 可見性
 
-多人隔離保證的是「玩家 A 的 Clipboard/Undo/Work 不會變成玩家 B 的」。
+每位玩家有自己的 Blueprint snapshot 與目標座標，但 `block_display` 預覽本身是世界實體，因此其他附近玩家也看得到。這是設計行為，不代表 Blueprint 的來源 buffer 被共享。
 
-如果兩位玩家刻意同時修改同一批世界方塊，兩個合法操作仍可能互相覆蓋；最後世界狀態取決於伺服器實際執行順序。這和一般兩個玩家同時放／拆同一格方塊的衝突相同。
+## 同一世界區域的衝突
 
-目前不做區域鎖，因為主要用途是多人各自建造中小型建築；加入區域鎖會讓操作與 Undo 複雜很多。
+多人隔離保證的是「玩家 A 的內部資料不會變成玩家 B 的」，不是對世界方塊做 transaction lock。
 
-## 靜態 regression
+如果兩位玩家刻意同時修改同一批真實方塊，兩個合法操作仍可能依伺服器實際執行順序互相覆蓋。現在不做區域鎖；Undo/Redo 也只保證自己的歷史資料隔離，不能替另一位玩家鎖住建築區。
+
+## CI / 靜態驗證
 
 ```console
-python scripts/validate-datapack.py copy-paste
-python scripts/test-copy-paste.py --pack-root datapacks/copy-paste
+python3 scripts/validate-datapack.py copy-paste
+python3 scripts/test-copy-paste.py
+python3 scripts/test-datapack-compatibility.py
 ```
 
-`test-copy-paste.py` 會模擬 64 個玩家的最大 128×128 水平 buffer，逐一檢查三種 buffer rectangle 都不重疊。
+`test-copy-paste.py` 目前會檢查：
 
-## 雙人實機測試
+- 64-player hidden buffer address 不碰撞。
+- 5 層 Undo + 5 層 Redo history spacing 正確。
+- Clipboard / Work template 名稱含 `$(id)`。
+- 正式 `mcc:` 世界編輯沒有跨 tick `schedule function`。
+- load/tick 以外的操作 function 不使用 `@a`。
+- Blueprint / material history 與五層 Undo/Redo 的 per-player metadata 路徑存在。
+
+此外，`test-datapack-compatibility.py` 會確認 Utilities、Warehouse、Copy/Paste 沒有 namespace/resource/objective 衝突，並在官方 Minecraft 26.3 server 上把三包一起載入驗證共存。
+
+## 雙人真人測試
 
 產生 opt-in 測試 datapack：
 
 ```console
-python scripts/build-copy-paste-multiplayer-test.py
+python3 scripts/build-copy-paste-multiplayer-test.py
 ```
 
 把 `dist/mcc-multiplayer-test` 放進已備份的測試世界 datapacks，`/reload` 後：
@@ -82,17 +90,6 @@ python scripts/build-copy-paste-multiplayer-test.py
 /function mcc_mp_test:start
 ```
 
-測試會讓兩位玩家在同一批 tick 中各自完成 Pos1/Pos2、Copy、Move、Undo、Flip、Paste 與獨立 Undo，並檢查兩人的 `mcc_id`、Clipboard 內容和世界結果沒有互換。
+測試會讓兩位玩家在同一批 tick 中各自完成 Pos1/Pos2、Copy、Move、Undo、Flip、Paste 與獨立 Undo，並檢查 `mcc_id`、Clipboard 與世界結果沒有互換。
 
-測試只使用遠離正式建築的固定測試區，仍請只在備份過的測試世界執行。
-
-目前 v0.4.3 的 CI 驗證多人隔離架構；真正的雙人 client/server runtime 結果要在兩位真人登入後才算 multiplayer runtime validated。
-
-
-## v0.5.0 Blueprint
-
-Copy 的 `V` 不再寫入目標世界方塊，而是建立所有玩家可見的 `block_display` Blueprint。每位玩家的 Blueprint 建立前會先快照到自己的 Blueprint Buffer，所以兩位玩家同時 Copy/V 不會混用來源資料。
-
-Cut 改用 `/trigger x`；Cut 的 `V` 仍是真實世界移動，而且成功後 Cut Clipboard 立即消耗。
-
-Undo/Redo history 同樣是 per-player。每位玩家各有 5 個 Undo 與 5 個 Redo ring slots；CI 會檢查 history slot 間距與玩家 X lane 隔離。
+repo 目前沒有提交一份兩位真人 client 的成功 evidence，因此應描述為：**64-player 隔離架構已由 regression 證明，單 actor / 官方 server 行為已有自動 runtime 覆蓋，但 two-real-player client/server concurrency 尚未留下正式驗證證據。**

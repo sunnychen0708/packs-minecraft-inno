@@ -188,9 +188,23 @@ Build 的 Undo/Redo 會連材料交易一起處理：Undo 在施工區仍與 Bui
 
 ## 驗證
 
+本地靜態與 pack-specific regression：
+
 ```console
 python3 scripts/validate-datapack.py copy-paste
 python3 scripts/test-copy-paste.py
+python3 scripts/test-datapack-compatibility.py
 ```
 
-CI 另外會使用官方 Minecraft 26.3 server 執行 runtime smoke test。正式版本仍統一由 `<pack-name>-v<version>` tag 觸發 `release-pack.yml` 驗證、打包與發布 ZIP。
+官方 Minecraft 26.3 行為 regression：
+
+```console
+python3 scripts/test-copy-paste-runtime.py \
+  --java /path/to/java \
+  --server-jar /path/to/server.jar \
+  --accept-eula
+```
+
+目前 CI 會同時跑 Copy/Paste 專用 26.3 runtime，以及 Utilities + Warehouse + Copy/Paste 三包一起載入的 26.3 compatibility gate。`copy-paste-v1.1` release 也經過同一組 release gate。更完整的覆蓋範圍與仍需真人 client 驗證的項目見 [LIVE-VALIDATION.md](LIVE-VALIDATION.md)；多人隔離設計與雙人測試方式見 [MULTIPLAYER-VALIDATION.md](MULTIPLAYER-VALIDATION.md)。
+
+正式版本仍統一由 `<pack-name>-v<version>` tag 觸發 `release-pack.yml` 驗證、打包與發布 ZIP。
