@@ -29,6 +29,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          exec > >(tee validation-debug.log) 2>&1
           for dir in datapacks/*; do
             [[ -d "$dir" ]] || continue
             pack="$(basename "$dir")"
@@ -43,6 +44,15 @@ jobs:
               echo "::endgroup::"
             fi
           done
+
+      - name: Upload validation debug log
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: validation-debug-${{ github.run_id }}
+          path: validation-debug.log
+          if-no-files-found: ignore
+          retention-days: 1
 
       - name: Build Copy/Paste opt-in live harnesses
         shell: bash
