@@ -30,7 +30,8 @@ NAMESPACE_RE = re.compile(r"^[a-z0-9_.-]+$")
 PATH_RE = re.compile(r"^[a-z0-9_./-]+$")
 FUNCTION_TOKEN_RE = re.compile(r"\bfunction\s+([^\s{]+)")
 SCHEDULE_TOKEN_RE = re.compile(r"\bschedule\s+function\s+([^\s{]+)")
-OBJECTIVE_ADD_RE = re.compile(r"\bscoreboard\s+objectives\s+add\s+([A-Za-z0-9_.+\-]+)\b")\nTRIGGER_ADD_RE = re.compile(r"\bscoreboard\s+objectives\s+add\s+([A-Za-z0-9_.+\-]+)\s+trigger\b")
+OBJECTIVE_ADD_RE = re.compile(r"\bscoreboard\s+objectives\s+add\s+([A-Za-z0-9_.+\-]+)\b")
+TRIGGER_ADD_RE = re.compile(r"\bscoreboard\s+objectives\s+add\s+([A-Za-z0-9_.+\-]+)\s+trigger\b")
 MACRO_ARG_RE = re.compile(r"\$\(([A-Za-z0-9_.\-]+)\)")
 
 ERROR_PATTERNS = (
