@@ -133,7 +133,7 @@ Examples:
 utilities-v3.4
 warehouse-v4.4
 copy-paste-v1.1
-cat-door-sounds-v1.1
+cat-door-sounds-v1.0
 ```
 
 When a matching tag is pushed, `.github/workflows/release-pack.yml` locates the matching datapack or resource pack, builds its ZIP, and publishes a GitHub Release.
