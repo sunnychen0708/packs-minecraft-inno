@@ -8,6 +8,7 @@ on:
       - "docs/datapack-validation.md"
       - ".github/workflows/validate-datapacks.yml"
       - ".github/workflows/release-pack.yml"
+      - ".github/actions/setup-minecraft-runtime/**"
   push:
     branches:
       - main
@@ -17,6 +18,7 @@ on:
       - "docs/datapack-validation.md"
       - ".github/workflows/validate-datapacks.yml"
       - ".github/workflows/release-pack.yml"
+      - ".github/actions/setup-minecraft-runtime/**"
 
 jobs:
   validate:
@@ -29,7 +31,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          exec > >(tee validation-debug.log) 2>&1
           for dir in datapacks/*; do
             [[ -d "$dir" ]] || continue
             pack="$(basename "$dir")"
@@ -44,15 +45,6 @@ jobs:
               echo "::endgroup::"
             fi
           done
-
-      - name: Upload validation debug log
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: validation-debug-${{ github.run_id }}
-          path: validation-debug.log
-          if-no-files-found: ignore
-          retention-days: 1
 
       - name: Build Copy/Paste opt-in live harnesses
         shell: bash
@@ -70,20 +62,8 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
-      - name: Set up Java 25
-        uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: "25"
-
-      - name: Download official Minecraft 26.3 server
-        shell: bash
-        run: |
-          set -euo pipefail
-          curl --fail --location --retry 3 \
-            https://piston-data.mojang.com/v1/objects/33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c/server.jar \
-            --output server.jar
-          echo "33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c  server.jar" | sha1sum --check -
+      - name: Set up Minecraft 26.3 runtime
+        uses: ./.github/actions/setup-minecraft-runtime
 
       - name: Run Warehouse registration-reset runtime regression
         shell: bash
@@ -112,20 +92,8 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
-      - name: Set up Java 25
-        uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: "25"
-
-      - name: Download official Minecraft 26.3 server
-        shell: bash
-        run: |
-          set -euo pipefail
-          curl --fail --location --retry 3 \
-            https://piston-data.mojang.com/v1/objects/33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c/server.jar \
-            --output server.jar
-          echo "33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c  server.jar" | sha1sum --check -
+      - name: Set up Minecraft 26.3 runtime
+        uses: ./.github/actions/setup-minecraft-runtime
 
       - name: Boot official 26.3 server and reload Copy/Paste
         shell: bash
