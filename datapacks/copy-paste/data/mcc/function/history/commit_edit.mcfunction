@@ -1,3 +1,4 @@
+scoreboard players set @s mcc_usparse 0
 # A successful new world edit invalidates the Redo chain.
 scoreboard players set @s mcc_rcnt 0
 scoreboard players set @s mcc_rhead 0
