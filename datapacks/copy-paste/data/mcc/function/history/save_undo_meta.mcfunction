@@ -23,3 +23,10 @@ $execute if score @s mcc_histmat matches 1 run data modify storage mcc:history u
 
 $execute store result storage mcc:history u_p$(id)_s$(slot).guard int 1 run scoreboard players get @s mcc_histguard
 $execute store result storage mcc:history u_p$(id)_s$(slot).cut int 1 run scoreboard players get @s mcc_histcut
+$execute store result storage mcc:history u_p$(id)_s$(slot).sparse int 1 run scoreboard players get @s mcc_usparse
+$execute store result storage mcc:history u_p$(id)_s$(slot).xB int 1 run scoreboard players get @s mcc_u2x
+$execute store result storage mcc:history u_p$(id)_s$(slot).yB int 1 run scoreboard players get @s mcc_u2y
+$execute store result storage mcc:history u_p$(id)_s$(slot).zB int 1 run scoreboard players get @s mcc_u2z
+$execute store result storage mcc:history u_p$(id)_s$(slot).xB2 int 1 run scoreboard players get @s mcc_u2x2
+$execute store result storage mcc:history u_p$(id)_s$(slot).yB2 int 1 run scoreboard players get @s mcc_u2y2
+$execute store result storage mcc:history u_p$(id)_s$(slot).zB2 int 1 run scoreboard players get @s mcc_u2z2
