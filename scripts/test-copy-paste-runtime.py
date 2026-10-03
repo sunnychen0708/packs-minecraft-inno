@@ -261,6 +261,46 @@ def integration(java: Path, server: Path):
     run_as('mcc:blueprint/clear_internal')
     check('unless entity @e[type=minecraft:block_display,tag=mcc_blueprint]','blueprint_clear')
 
+    # 1c. Build must preserve custom-Anchor placement exactly, not only preview it correctly.
+    fixture(3,80,21)
+    lines.extend([
+        f'scoreboard players set {actor} mcc_hasa 1',
+        f'scoreboard players set {actor} mcc_anx 5',
+        f'scoreboard players set {actor} mcc_any 80',
+        f'scoreboard players set {actor} mcc_anz 22',
+        f'scoreboard players set {actor} mcc_and 1',
+        'data modify block 8 80 8 Items set value [{Slot:0b,id:"minecraft:gold_block",count:1},{Slot:1b,id:"minecraft:diamond_block",count:1},{Slot:2b,id:"minecraft:oak_stairs",count:1},{Slot:3b,id:"minecraft:iron_block",count:1}]',
+    ])
+    run_as('mcc:copy/run')
+    target(20,82,21)
+    run_as('mcc:paste/dispatch')
+    scan()
+    check('positioned 20 82 21 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:iron_block"},limit=1]','custom_anchor_build_preview_exact')
+    run_as('mcc:materials/build_start')
+    for _ in range(8): run_as('mcc:materials/process_batch')
+    check(f'if block 20 82 21 iron_block if block 18 82 20 gold_block if score {actor} mcc_bpactive matches 0','custom_anchor_build_world_exact')
+    run_as('mcc:undo/run')
+    check('if block 20 82 21 air if block 18 82 20 air','custom_anchor_build_undo')
+
+    # 1d. Cut + V uses the same Anchor contract and consumes the clipboard.
+    fixture(3,80,25)
+    lines.extend([
+        f'scoreboard players set {actor} mcc_hasa 1',
+        f'scoreboard players set {actor} mcc_anx 5',
+        f'scoreboard players set {actor} mcc_any 80',
+        f'scoreboard players set {actor} mcc_anz 26',
+        f'scoreboard players set {actor} mcc_and 1',
+    ])
+    run_as('mcc:cut/run')
+    target(20,80,25)
+    run_as('mcc:paste/dispatch')
+    check(f'if block 20 80 25 iron_block if block 18 80 24 gold_block if score {actor} mcc_clip matches 0 if score {actor} mcc_cliptype matches 0','custom_anchor_cut_v_exact')
+    run_as('mcc:undo/run')
+    check('if block 20 80 25 air if block 18 80 24 air','custom_anchor_cut_v_undo')
+
+    # Restore the original basic fixture for the existing Cut/Undo/Redo sequence.
+    fixture()
+
     # 2. X -> real cut, Undo/Redo, then X+V consumes clipboard.
     run_as('mcc:cut/run')
     check(f'if block 3 80 3 air if block 5 80 4 air if score {actor} mcc_cliptype matches 2','x_real_cut')
