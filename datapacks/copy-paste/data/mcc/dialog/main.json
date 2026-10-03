@@ -219,6 +219,16 @@
         "type": "run_command",
         "command": "trigger redo"
       }
+    },
+    {
+      "label": {
+        "text": "指令教學"
+      },
+      "width": 160,
+      "action": {
+        "type": "run_command",
+        "command": "trigger cphelp"
+      }
     }
   ],
   "exit_action": {
