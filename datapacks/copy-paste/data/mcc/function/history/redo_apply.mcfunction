@@ -4,6 +4,8 @@ execute unless score @s mcc_matjob matches 1 run scoreboard players operation @s
 execute store result storage mcc:temp id int 1 run scoreboard players get @s mcc_id
 execute store result storage mcc:temp slot int 1 run scoreboard players get @s mcc_hslot
 function mcc:history/load_redo_meta with storage mcc:temp
+execute unless score @s mcc_rguard matches 1 run tellraw @s [{"text":"[Copy/Paste] 這筆舊 Redo 沒有防複製安全快照；為安全起見已拒絕執行。","color":"red"}]
+execute unless score @s mcc_rguard matches 1 run return fail
 
 # Region dimensions.
 scoreboard players operation @s mcc_fsx = @s mcc_rx2
@@ -44,6 +46,10 @@ execute if score @s mcc_rdim matches 3 run function mcc:history/backup_end with 
 execute unless score @s mcc_ok matches 1 run tellraw @s [{"text":"[Copy/Paste] Redo 前建立 Undo 歷史失敗，沒有執行 Redo。","color":"red"}]
 execute unless score @s mcc_ok matches 1 run return fail
 
+function mcc:history/check_redo_guard
+execute unless score @s mcc_ok matches 1 run tellraw @s [{"text":"[Copy/Paste] Undo 後的世界已被修改；為避免資源複製，未執行 Redo。","color":"red"}]
+execute unless score @s mcc_ok matches 1 run return fail
+
 scoreboard players operation @s mcc_udim = @s mcc_rdim
 scoreboard players operation @s mcc_ux = @s mcc_rx
 scoreboard players operation @s mcc_uy = @s mcc_ry
@@ -54,14 +60,20 @@ scoreboard players operation @s mcc_uz2 = @s mcc_rz2
 scoreboard players set @s mcc_usel 0
 execute if score @s mcc_rsel matches 1 run function mcc:undo/snapshot_selection
 scoreboard players operation @s mcc_histmat = @s mcc_rmat
-execute if score @s mcc_rmat matches 1 run function mcc:history/copy_redo_snapshot_to_material_guard
-execute if score @s mcc_rmat matches 1 unless score @s mcc_ok matches 1 run tellraw @s [{"text":"[Copy/Paste] Redo 的材料防複製快照建立失敗；世界尚未修改。","color":"red"}]
-execute if score @s mcc_rmat matches 1 unless score @s mcc_ok matches 1 run scoreboard players set @s mcc_histmat 0
-execute if score @s mcc_rmat matches 1 unless score @s mcc_ok matches 1 run return fail
+scoreboard players set @s mcc_histguard 1
+scoreboard players operation @s mcc_histcut = @s mcc_rcut
+function mcc:history/copy_redo_snapshot_to_material_guard
+execute unless score @s mcc_ok matches 1 run tellraw @s [{"text":"[Copy/Paste] Redo 的防複製快照建立失敗；世界尚未修改。","color":"red"}]
+execute unless score @s mcc_ok matches 1 run scoreboard players set @s mcc_histmat 0
+execute unless score @s mcc_ok matches 1 run scoreboard players set @s mcc_histguard 0
+execute unless score @s mcc_ok matches 1 run scoreboard players set @s mcc_histcut 0
+execute unless score @s mcc_ok matches 1 run return fail
 execute store result storage mcc:temp id int 1 run scoreboard players get @s mcc_id
 execute store result storage mcc:temp slot int 1 run scoreboard players get @s mcc_hnext
 function mcc:history/save_undo_meta with storage mcc:temp
 scoreboard players set @s mcc_histmat 0
+scoreboard players set @s mcc_histguard 0
+scoreboard players set @s mcc_histcut 0
 
 # Restore the newest Redo snapshot from its history slot.
 execute if score @s mcc_matjob matches 1 run scoreboard players operation @s mcc_hslot = @s mcc_txslot
