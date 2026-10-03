@@ -57,10 +57,17 @@ scoreboard players operation @s mcc_rx2 = @s mcc_ux2
 scoreboard players operation @s mcc_ry2 = @s mcc_uy2
 scoreboard players operation @s mcc_rz2 = @s mcc_uz2
 scoreboard players set @s mcc_rsel 0
-execute if score @s mcc_usel matches 1 run function mcc:redo/snapshot_selection
+execute if score @s mcc_ucut matches 1 if score @s mcc_usel matches 1 run function mcc:history/copy_undo_selection_to_redo
+execute unless score @s mcc_ucut matches 1 if score @s mcc_usel matches 1 run function mcc:redo/snapshot_selection
 scoreboard players operation @s mcc_rmat = @s mcc_umat
 scoreboard players set @s mcc_rguard 1
 scoreboard players operation @s mcc_rcut = @s mcc_ucut
+
+# A Redo of Cut must recreate the original Cut clipboard, not only clear the source.
+# Archive that source from the immutable Undo history before restoring the world.
+execute if score @s mcc_ucut matches 1 run function mcc:history/archive_cut_redo
+execute if score @s mcc_ucut matches 1 unless score @s mcc_ok matches 1 run scoreboard players set @s mcc_rguard 0
+
 execute store result storage mcc:temp id int 1 run scoreboard players get @s mcc_id
 execute store result storage mcc:temp slot int 1 run scoreboard players get @s mcc_hnext
 function mcc:history/save_redo_meta with storage mcc:temp
@@ -86,11 +93,11 @@ execute unless score @s mcc_ok matches 1 run tellraw @s [{"text":"[Copy/Paste] U
 execute unless score @s mcc_ok matches 1 run return fail
 execute if score @s mcc_usel matches 1 run function mcc:undo/restore_selection
 
-# Snapshot the exact post-Undo world. Redo is exposed only if this succeeds.
+# Snapshot the exact post-Undo world. Redo is exposed only if both this guard
+# and (for Cut) the archived Cut clipboard succeeded.
 scoreboard players operation @s mcc_hslot = @s mcc_hnext
-function mcc:history/archive_redo_guard
-execute if score @s mcc_ok matches 1 run scoreboard players set @s mcc_rguard 1
-execute unless score @s mcc_ok matches 1 run scoreboard players set @s mcc_rguard 0
+execute if score @s mcc_rguard matches 1 run function mcc:history/archive_redo_guard
+execute if score @s mcc_rguard matches 1 unless score @s mcc_ok matches 1 run scoreboard players set @s mcc_rguard 0
 
 execute if score @s mcc_umat matches 1 run function mcc:history/refund_undo_materials
 
