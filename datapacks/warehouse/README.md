@@ -8,7 +8,7 @@ The actual pack source lives directly in this directory. Keep `pack.mcmeta` and 
 
 Current source version: `v4.4`
 
-Latest published release: `warehouse-v4.2.zip` (source v4.4 is newer)
+Latest published release: `warehouse-v4.4.zip`
 
 ## Version history
 
