@@ -109,6 +109,36 @@ def integration(java: Path, server: Path):
     def scan(n=4):
         for _ in range(n): run_as('mcc:blueprint/scan_batch')
 
+    # -1. Exercise the real raycast entry points used by Pos1 / Pos2 / Anchor / V.
+    lines.extend([
+        'setblock 0 81 4 stone',
+        'setblock -4 81 0 stone',
+        'setblock 4 81 0 stone',
+        'setblock 0 81 -4 stone',
+        f'data merge entity {actor} {{Rotation:[0f,0f]}}',
+    ])
+    run_as('mcc:select/start_pos1')
+    check(f'if score {actor} mcc_p1x matches 0 if score {actor} mcc_p1y matches 81 if score {actor} mcc_p1z matches 4 if score {actor} mcc_has1 matches 1','raycast_pos1_south')
+    lines.append(f'data merge entity {actor} {{Rotation:[90f,0f]}}')
+    run_as('mcc:select/start_pos2')
+    check(f'if score {actor} mcc_p2x matches -4 if score {actor} mcc_p2y matches 81 if score {actor} mcc_p2z matches 0 if score {actor} mcc_has2 matches 1','raycast_pos2_west')
+    lines.append(f'data merge entity {actor} {{Rotation:[-90f,0f]}}')
+    run_as('mcc:select/start_anchor')
+    check(f'if score {actor} mcc_anx matches 4 if score {actor} mcc_any matches 81 if score {actor} mcc_anz matches 0 if score {actor} mcc_hasa matches 1','raycast_anchor_east')
+    lines.extend([
+        f'scoreboard players set {actor} mcc_clip 0',
+        f'data merge entity {actor} {{Rotation:[180f,0f]}}',
+    ])
+    run_as('mcc:select/start_paste')
+    check(f'if score {actor} mcc_dstx matches 0 if score {actor} mcc_dsty matches 81 if score {actor} mcc_dstz matches -3','raycast_v_adjacent_cell_north')
+    lines.extend([
+        'setblock 0 81 4 air',
+        'setblock -4 81 0 air',
+        'setblock 4 81 0 air',
+        'setblock 0 81 -4 air',
+        f'data merge entity {actor} {{Rotation:[0f,0f]}}',
+    ])
+
     # 0. Default Anchor regression: when no custom Anchor is set, Pos1 is the Anchor.
     # Make Pos1 the max-X/max-Z corner so this fails if Blueprint incorrectly treats
     # the aimed cell as the bounding minimum instead of the Pos1 destination.
