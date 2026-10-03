@@ -25,7 +25,7 @@ scoreboard players operation @s mcc_cbz2 = #cbz mcc_id
 scoreboard players operation @s mcc_cbz2 += @s mcc_fsz
 scoreboard players remove @s mcc_cbz2 1
 execute store result storage mcc:temp cutcp.dx int 1 run scoreboard players get @s mcc_cbx
-data modify storage mcc:temp cutcp.dz set value 20000000
+execute store result storage mcc:temp cutcp.dz int 1 run scoreboard players get #cbz mcc_id
 
 scoreboard players set @s mcc_clip 0
 scoreboard players set @s mcc_cliptype 0
