@@ -30,7 +30,7 @@
 - Move、直接 Rotate90 與一般真實世界貼上都有 Undo/Redo。
 - 五次連續真實編輯可依序 Undo 五次，再 Redo 五次。
 
-這個 headless runtime **不等於真人 client 驗證**：它不驗證聊天控制面板點擊、實際準星手感、鍵鼠操作，也不證明兩位真人玩家同時操作時的所有時序。多人隔離與雙人測試方式見 [MULTIPLAYER-VALIDATION.md](MULTIPLAYER-VALIDATION.md)。
+這個 headless runtime **不等於真人 client 驗證**：它不驗證 Dialog 視覺、實際準星手感、鍵鼠操作，也不證明兩位真人玩家同時操作時的所有時序。多人隔離與雙人測試方式見 [MULTIPLAYER-VALIDATION.md](MULTIPLAYER-VALIDATION.md)。
 
 ## 2026-09-30 真人 client 歷史驗證
 
@@ -59,7 +59,7 @@ python3 scripts/test-datapack-compatibility.py \
   --accept-eula
 ```
 
-若要驗真人 Trigger / 準星選取路徑，可另外產生 opt-in client harness：
+若要驗真人 Trigger / Dialog 路徑，可另外產生 opt-in client harness：
 
 ```console
 python3 scripts/build-copy-paste-live-test.py

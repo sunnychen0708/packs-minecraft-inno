@@ -9,7 +9,7 @@
 - 完成 Warehouse 共用材料 API 整合，不再維護 Copy/Paste 私有材料箱。
 - Build 的 Undo/Redo 會同步退款／重新扣料，並保留防複製 guard 與持久退款 queue。
 - Blueprint 支援六方向微調、只讀材料報表、覆蓋重算與二次施工確認。
-- `/trigger copypaste` 使用聊天可點擊控制面板；Warehouse 主頁可直接開啟同一套 Trigger 操作流程。
+- 加入 Dialog 控制面板，並可與 Warehouse 主頁互相導覽。
 - Phase 3 路徑已納入官方 Minecraft 26.3 runtime regression。
 
 ## 核心流程
@@ -120,7 +120,7 @@ Blueprint 建立完成後，不必重新用 `v` 定位就能直接微調。左�
 
 如果目前位置會覆蓋既有非空氣方塊，第一次 `/trigger build` 只顯示警告並要求再次確認，不會扣材料或修改世界；第二次施工才會進入正常材料檢查。只要 Blueprint 再次移動、旋轉、鏡像或覆蓋重算，確認狀態就會重置。
 
-`/trigger copypaste` 會在聊天欄顯示可點擊控制面板，包含 Pos1/Pos2/Anchor、Copy/Cut、Blueprint 六方向微調、Rotate/Mirror、材料／覆蓋檢查、施工與 Undo/Redo。點 Pos1、Pos2 或 Anchor 後，系統會用玩家當下準星指向的方塊完成選取；不需要在 Dialog 裡選位置。若 Warehouse 同時安裝，也可以從 Warehouse 主頁直接進入這套 Trigger 操作流程。
+`/trigger copypaste` 會開啟 Dialog 控制面板，包含 Pos1/Pos2/Anchor、Copy/Cut、Blueprint 六方向微調、Rotate/Mirror、材料／覆蓋檢查、施工與 Undo/Redo。若 Warehouse 同時安裝，也可以從 Warehouse 主頁直接進入建築工具。
 
 ## 生存安全
 
