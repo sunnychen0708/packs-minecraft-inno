@@ -2,6 +2,7 @@
 """Static regression checks for the Warehouse datapack."""
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -14,6 +15,14 @@ CODES = SPECIAL + MAIN
 
 
 def main() -> None:
+    meta = json.loads((PACK / "pack.mcmeta").read_text(encoding="utf-8"))
+    description = str(meta["pack"]["description"])
+    version_match = re.search(r"v(\d+\.\d+(?:\.\d+)?)", description)
+    assert version_match, f"pack description has no semantic version: {description}"
+    version = version_match.group(1)
+    readme = (PACK / "README.md").read_text(encoding="utf-8")
+    assert readme.startswith(f"# Warehouse v{version}"), "README version must match pack.mcmeta"
+
     reset = PACK / "data/warehouse/function/admin/reset_registrations.mcfunction"
     text = reset.read_text(encoding="utf-8")
 
@@ -66,6 +75,8 @@ def main() -> None:
     load = (PACK / "data/warehouse/function/load.mcfunction").read_text(encoding="utf-8")
     assert "execute unless data storage warehouse:meta v42 run function warehouse:migrate_v42" in load
     assert "execute unless data storage warehouse:meta v43 run function warehouse:migrate_v43" in load
+    migration_versions = [int(v) for v in re.findall(r"warehouse:meta v(\d+)", load)]
+    assert int(version.replace(".", "")) >= max(migration_versions), "source version is behind its newest migration"
 
     api_refresh = (PACK / "data/warehouse/function/api/material_sources/refresh.mcfunction").read_text(encoding="utf-8")
     api_append = (PACK / "data/warehouse/function/api/material_sources/append.mcfunction").read_text(encoding="utf-8")
@@ -118,7 +129,7 @@ def main() -> None:
     assert "work.saved_result" in api_pending_tick
 
     main_dialog = (PACK / "data/warehouse/dialog/main.json").read_text(encoding="utf-8")
-    assert "v4.2" in main_dialog
+    assert f"v{version}" in main_dialog
     assert "建築工具" in main_dialog
     assert "trigger copypaste set 1" in main_dialog
 
@@ -145,7 +156,7 @@ def main() -> None:
     assert "wh_rulebox matches 10..69" in highlight_from_rule
     assert "function warehouse:api/highlight" in highlight_from_rule
 
-    print("PASS warehouse regression: reset/search/API/Highlight are bounded and validated")
+    print(f"PASS warehouse regression v{version}: reset/search/API/Highlight are bounded and validated")
 
 
 if __name__ == "__main__":

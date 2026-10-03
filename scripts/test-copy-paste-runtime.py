@@ -34,7 +34,7 @@ def integration(java: Path, server: Path):
     harness=packs/'regression'
     funcs=harness/'data/mcc_server_test/function'
     funcs.mkdir(parents=True)
-    (harness/'pack.mcmeta').write_text(json.dumps({'pack':{'min_format':121,'max_format':121,'description':'CopyPaste v1.0 server regression'}}),encoding='utf-8')
+    (harness/'pack.mcmeta').write_text(json.dumps({'pack':{'min_format':121,'max_format':121,'description':'CopyPaste server regression'}}),encoding='utf-8')
 
     actor='@e[type=minecraft:armor_stand,tag=mcc_server_actor,limit=1]'
     lines=[

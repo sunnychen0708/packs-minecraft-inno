@@ -38,6 +38,33 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "kind=$KIND" >> "$GITHUB_OUTPUT"
 
+      - name: Verify datapack source version matches tag
+        if: steps.pack.outputs.kind == 'datapack'
+        env:
+          PACK: ${{ steps.pack.outputs.pack }}
+          TAG_VERSION: ${{ steps.pack.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          meta = json.loads((Path("datapacks") / os.environ["PACK"] / "pack.mcmeta").read_text(encoding="utf-8"))
+          description = str(meta["pack"]["description"])
+          match = re.search(r"v(\d+\.\d+(?:\.\d+)?)", description)
+          if not match:
+              raise SystemExit(f"pack.mcmeta description has no semantic version: {description}")
+          source_version = f"v{match.group(1)}"
+          if source_version != os.environ["TAG_VERSION"]:
+              raise SystemExit(
+                  f"tag/source version mismatch: tag={os.environ['TAG_VERSION']} source={source_version}"
+              )
+          print(f"release version contract OK: {source_version}")
+          PY
+
       - name: Validate datapack
         if: steps.pack.outputs.kind == 'datapack'
         shell: bash
@@ -50,15 +77,15 @@ jobs:
             python3 "$TEST_SCRIPT"
           fi
 
-      - name: Set up Java 25 for Warehouse runtime gate
-        if: steps.pack.outputs.kind == 'datapack' && steps.pack.outputs.pack == 'warehouse'
+      - name: Set up Java 25 for runtime gate
+        if: steps.pack.outputs.kind == 'datapack' && (steps.pack.outputs.pack == 'warehouse' || steps.pack.outputs.pack == 'copy-paste')
         uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "25"
 
-      - name: Download official Minecraft 26.3 server for Warehouse
-        if: steps.pack.outputs.kind == 'datapack' && steps.pack.outputs.pack == 'warehouse'
+      - name: Download official Minecraft 26.3 server
+        if: steps.pack.outputs.kind == 'datapack' && (steps.pack.outputs.pack == 'warehouse' || steps.pack.outputs.pack == 'copy-paste')
         shell: bash
         run: |
           set -euo pipefail
@@ -83,6 +110,37 @@ jobs:
         with:
           name: warehouse-release-runtime-${{ github.run_id }}
           path: dist/warehouse-runtime-*
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Boot official 26.3 server and reload Copy/Paste
+        if: steps.pack.outputs.kind == 'datapack' && steps.pack.outputs.pack == 'copy-paste'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/validate-datapack.py copy-paste \
+            --java "$(command -v java)" \
+            --server-jar "$PWD/server.jar" \
+            --accept-eula
+
+      - name: Run Copy/Paste behavioral runtime release gate
+        if: steps.pack.outputs.kind == 'datapack' && steps.pack.outputs.pack == 'copy-paste'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/test-copy-paste-runtime.py \
+            --java "$(command -v java)" \
+            --server-jar "$PWD/server.jar" \
+            --accept-eula
+
+      - name: Upload Copy/Paste runtime evidence
+        if: always() && steps.pack.outputs.kind == 'datapack' && steps.pack.outputs.pack == 'copy-paste'
+        uses: actions/upload-artifact@v7
+        with:
+          name: copy-paste-release-runtime-${{ github.run_id }}
+          path: |
+            dist/validation/copy-paste-*
+            dist/copy-paste-runtime-*
           if-no-files-found: ignore
           retention-days: 14
 

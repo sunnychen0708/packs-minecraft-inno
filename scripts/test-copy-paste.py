@@ -34,7 +34,7 @@ def check_json(pack: Path):
         json.loads(read(p)); count+=1
     meta=json.loads(read(pack/'pack.mcmeta'))
     assert meta['pack']['min_format']==121 and meta['pack']['max_format']==121
-    assert 'v1.0' in meta['pack']['description']
+    assert re.search(r'v\d+\.\d+(?:\.\d+)?', str(meta['pack']['description']))
     return count
 
 def check_refs(pack: Path):
