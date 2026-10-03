@@ -11,6 +11,7 @@ scoreboard players enable @a wh_search_pick
 scoreboard players enable @a wh_viewpage
 scoreboard players enable @a wh_highlight
 scoreboard players enable @a pick
+scoreboard players enable @a pick
 execute as @a[scores={wh_nav=1..}] run function warehouse:ui/nav
 execute as @a[scores={wh_register=100}] run function warehouse:ui/select_00
 execute as @a[scores={wh_register=10..19}] run function warehouse:ui/select_code
