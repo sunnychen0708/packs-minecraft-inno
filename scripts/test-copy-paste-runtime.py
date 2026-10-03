@@ -109,6 +109,24 @@ def integration(java: Path, server: Path):
     def scan(n=4):
         for _ in range(n): run_as('mcc:blueprint/scan_batch')
 
+    # 0. Default Anchor regression: when no custom Anchor is set, Pos1 is the Anchor.
+    # Make Pos1 the max-X/max-Z corner so this fails if Blueprint incorrectly treats
+    # the aimed cell as the bounding minimum instead of the Pos1 destination.
+    fixture()
+    lines.extend([
+        f'scoreboard players set {actor} mcc_p1x 5',
+        f'scoreboard players set {actor} mcc_p1z 4',
+        f'scoreboard players set {actor} mcc_p2x 3',
+        f'scoreboard players set {actor} mcc_p2z 3',
+    ])
+    run_as('mcc:copy/run')
+    target(12,80,12)
+    run_as('mcc:paste/dispatch')
+    scan()
+    check(f'positioned 12 80 12 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={{block_state:"minecraft:iron_block"}},limit=1] if score {actor} mcc_bptx0 matches 10 if score {actor} mcc_bptz0 matches 11','default_anchor_pos1_blueprint_origin')
+    check('positioned 10 80 11 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]','default_anchor_pos1_blueprint_offset')
+    run_as('mcc:blueprint/clear_internal')
+
     # 1. Copy -> Blueprint: source remains, destination remains air, exact-state displays exist.
     fixture()
     run_as('mcc:copy/run')

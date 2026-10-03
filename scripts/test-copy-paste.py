@@ -346,14 +346,22 @@ def check_v100_semantics(pack: Path):
     assert 'function mcc:blueprint/init_transformed' in create
     assert 'function mcc:blueprint/copy_direct_buffer' in direct
     assert 'clone from minecraft:overworld' in read(bp/'copy_direct_buffer.mcfunction')
-    # Plain Blueprint placement must start exactly at the aimed adjacent cell.
+    # The aimed cell is always the Anchor destination. Without a custom Anchor,
+    # selection/prepare uses Pos1; direct Blueprint placement must apply the saved
+    # Pos1/Anchor offset exactly like real paste.
+    prep=read(pack/'data/mcc/function/selection/prepare.mcfunction')
     for axis in 'xyz':
+        pos1 = {'x':'mcc_p1x','y':'mcc_p1y','z':'mcc_p1z'}[axis]
+        anchor = {'x':'mcc_anx','y':'mcc_any','z':'mcc_anz'}[axis]
+        soff = f'mcc_soff{axis}'
         target = {'x':'mcc_dstx','y':'mcc_dsty','z':'mcc_dstz'}[axis]
         preview = {'x':'mcc_bptx0','y':'mcc_bpty0','z':'mcc_bptz0'}[axis]
         offset = {'x':'mcc_offx','y':'mcc_offy','z':'mcc_offz'}[axis]
+        assert f'{soff} = @s {pos1}' in prep
+        assert f'execute if score @s mcc_hasa matches 1 run scoreboard players operation @s {soff} = @s {anchor}' in prep
         assert f'{preview} = @s {target}' in direct
-        assert f'{preview} -= @s {offset}' not in direct
-    # Anchor math remains active only for rotated/mirrored Blueprint placement.
+        assert f'{preview} -= @s {offset}' in direct
+    # Transformed Blueprint placement uses the same saved Anchor offset through transform math.
     assert 'function mcc:paste/prepare_transform' in transformed
     assert 'function mcc:paste/save_template' in transformed
     assert 'execute in minecraft:overworld run function mcc:paste/do_place' in transformed
