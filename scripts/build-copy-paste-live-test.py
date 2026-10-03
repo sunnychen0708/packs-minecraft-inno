@@ -1,4 +1,4 @@
-"""Build an opt-in real-player v0.5 integration test datapack; never runs on load.
+"""Build an opt-in real-player v1.2 integration test datapack; never runs on load.
 
 Run /function mcc_test:start in a BACKED UP disposable creative world.
 Uses the real player's triggers and Minecraft tick dispatch, with delayed assertions.
@@ -13,7 +13,7 @@ parser.add_argument('--output',type=Path,default=Path(__file__).resolve().parent
 OUT=parser.parse_args().output.resolve()
 F=OUT/'data/mcc_test/function'
 F.mkdir(parents=True,exist_ok=True)
-(OUT/'pack.mcmeta').write_text(json.dumps({'pack':{'description':'Opt-in CopyPaste v0.5 live regression','min_format':121,'max_format':121}},ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+(OUT/'pack.mcmeta').write_text(json.dumps({'pack':{'description':'Opt-in CopyPaste v1.2 live regression','min_format':121,'max_format':121}},ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 
 steps=[]
 def step(*commands): steps.append(list(commands))
@@ -47,6 +47,35 @@ reset_transform()
 fixture(); selection()
 check('raycast selection','if score @s mcc_p1x matches -200 if score @s mcc_p1y matches 250 if score @s mcc_p1z matches 90 if score @s mcc_p2x matches -198 if score @s mcc_p2z matches 91')
 
+# v1.2 Anchor lifecycle: external pivots are valid, Clear Anchor works through the
+# real trigger/tick path, and reselecting either endpoint drops a stale custom Anchor.
+step('execute in minecraft:overworld run setblock -190 250 100 stone')
+aim(-190,100); trigger('anchor')
+check('external anchor selected','if score @s mcc_hasa matches 1 if score @s mcc_anx matches -190 if score @s mcc_any matches 250 if score @s mcc_anz matches 100')
+trigger('anchor set 2')
+check('clear anchor trigger','if score @s mcc_hasa matches 0')
+aim(-190,100); trigger('anchor')
+aim(-200,90); trigger('pos1')
+check('pos1 reselection clears stale anchor','if score @s mcc_hasa matches 0 if score @s mcc_p1x matches -200 if score @s mcc_p1z matches 90')
+aim(-190,100); trigger('anchor')
+trigger('rotate90')
+check('external anchor rotate real','in minecraft:overworld if block -180 250 90 gold_block if block -180 250 92 diamond_block if block -181 250 90 emerald_block if block -181 250 92 iron_block if score @s mcc_anx matches -190 if score @s mcc_anz matches 100')
+trigger('undo')
+check('external anchor rotate undo','in minecraft:overworld if block -200 250 90 gold_block if block -198 250 91 iron_block')
+trigger('anchor set 2')
+
+# Default Anchor must be Pos1 even when Pos1 is not the selected cuboid minimum.
+aim(-198,91); trigger('pos1')
+aim(-200,90); trigger('pos2')
+trigger('c')
+target(); trigger('v')
+check('default pos1 anchor exact','in minecraft:overworld positioned -180 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:iron_block"},limit=1]')
+check('default pos1 anchor offset','in minecraft:overworld positioned -182 250 89 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]')
+trigger('previewclear')
+
+# Restore the ordinary selection used by the rest of the live suite.
+fixture(); selection()
+
 # Copy creates only a shared visual Blueprint; target world stays untouched.
 trigger('c')
 check('copy type','if score @s mcc_clip matches 1 if score @s mcc_cliptype matches 1')
@@ -58,6 +87,22 @@ check('preview clear','in minecraft:overworld unless entity @e[type=minecraft:bl
 
 # Copy/Blueprint is not a real world edit and must not consume its Clipboard.
 check('copy clipboard persists','if score @s mcc_clip matches 1 if score @s mcc_cliptype matches 1')
+
+# v1.2 material-backed Build through the real player trigger path.
+# The harness expects the Warehouse datapack to be installed alongside Copy/Paste.
+target(); trigger('v')
+step(
+    'execute in minecraft:overworld run setblock -170 250 110 chest',
+    'execute in minecraft:overworld run setblock -169 250 110 chest',
+    'execute in minecraft:overworld run data modify block -170 250 110 Items set value [{Slot:0b,id:"minecraft:gold_block",count:1},{Slot:1b,id:"minecraft:diamond_block",count:1},{Slot:2b,id:"minecraft:emerald_block",count:1},{Slot:3b,id:"minecraft:iron_block",count:1}]',
+    'data modify storage warehouse:chests c11 set value {registered:1b,valid:1b,dimension:"minecraft:overworld",a_x:-170,a_y:250,a_z:110,b_x:-169,b_y:250,b_z:110}'
+)
+trigger('build')
+check('material build real','in minecraft:overworld if block -180 250 90 gold_block if block -178 250 90 diamond_block if block -180 250 91 emerald_block if block -178 250 91 iron_block if score @s mcc_bpactive matches 0')
+check('material build consumed warehouse stock','in minecraft:overworld unless data block -170 250 110 Items[0]')
+
+# Reset owned test area before the Cut sequence.
+fixture(); selection()
 
 # Cut is now X. It edits real blocks and supports Undo/Redo toggling.
 trigger('x')
@@ -173,4 +218,4 @@ for i,cmds in enumerate(steps):
     'function mcc_test:step_0\n',
     encoding='utf-8'
 )
-print(f'Built {len(steps)} v0.5 live steps at {OUT}')
+print(f'Built {len(steps)} v1.2 live steps at {OUT}')
