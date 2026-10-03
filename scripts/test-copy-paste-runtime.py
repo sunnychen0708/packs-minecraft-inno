@@ -316,6 +316,52 @@ def integration(java: Path, server: Path):
     run_as('mcc:paste/dispatch')
     check('if block 35 80 5 chest if data block 35 80 5 Items[{id:"minecraft:diamond",count:5}] if block 37 80 5 chest if data block 37 80 5 Items[{id:"minecraft:diamond",count:5}]','BUG_cut_undo_can_duplicate_container_contents')
 
+    # AUDIT D. Non-material world-edit Undo has no post-edit mutation guard.
+    lines.extend([
+        'setblock 30 80 5 chest',
+        'data modify block 30 80 5 Items set value [{Slot:0b,id:"minecraft:diamond",count:7}]',
+        f'scoreboard players set {actor} mcc_has1 1',
+        f'scoreboard players set {actor} mcc_has2 1',
+        f'scoreboard players set {actor} mcc_hasa 0',
+        f'scoreboard players set {actor} mcc_p1x 30',
+        f'scoreboard players set {actor} mcc_p1y 80',
+        f'scoreboard players set {actor} mcc_p1z 5',
+        f'scoreboard players set {actor} mcc_p1d 1',
+        f'scoreboard players set {actor} mcc_p2x 30',
+        f'scoreboard players set {actor} mcc_p2y 80',
+        f'scoreboard players set {actor} mcc_p2z 5',
+        f'scoreboard players set {actor} mcc_p2d 1',
+        f'scoreboard players set {actor} mcc_dx 1',
+        f'scoreboard players set {actor} mcc_dy 0',
+        f'scoreboard players set {actor} mcc_dz 0',
+        f'scoreboard players set {actor} mcc_ucnt 0',
+        f'scoreboard players set {actor} mcc_uhead 0',
+        f'scoreboard players set {actor} mcc_rcnt 0',
+        f'scoreboard players set {actor} mcc_rhead 0',
+    ])
+    run_as('mcc:move/run')
+    lines.append('data remove block 31 80 5 Items')
+    run_as('mcc:undo/run')
+    check('if block 30 80 5 chest if data block 30 80 5 Items[{id:"minecraft:diamond",count:7}]','BUG_move_undo_restores_container_after_contents_changed')
+
+    # Clean audit state so the pre-existing regression remains an independent control.
+    lines.extend([
+        'fill 30 78 0 57 90 8 air',
+        f'scoreboard players set {actor} mcc_clip 0',
+        f'scoreboard players set {actor} mcc_cliptype 0',
+        f'scoreboard players set {actor} mcc_mask 0',
+        f'scoreboard players set {actor} mcc_rot 0',
+        f'scoreboard players set {actor} mcc_mir 0',
+        f'scoreboard players set {actor} mcc_undo 0',
+        f'scoreboard players set {actor} mcc_redo 0',
+        f'scoreboard players set {actor} mcc_ucnt 0',
+        f'scoreboard players set {actor} mcc_uhead 0',
+        f'scoreboard players set {actor} mcc_rcnt 0',
+        f'scoreboard players set {actor} mcc_rhead 0',
+        f'scoreboard players set {actor} mcc_matphase 0',
+    ])
+    run_as('mcc:blueprint/clear_internal')
+
     # 1. Copy -> Blueprint: source remains, destination remains air, exact-state displays exist.
     fixture()
     run_as('mcc:copy/run')
