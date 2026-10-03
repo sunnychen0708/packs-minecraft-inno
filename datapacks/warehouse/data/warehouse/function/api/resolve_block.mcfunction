@@ -7,7 +7,7 @@ execute if block ~ ~ ~ #minecraft:air run return 0
 
 kill @e[type=minecraft:armor_stand,tag=wh_resolve_probe,distance=..2]
 summon minecraft:armor_stand ~ ~ ~ {Tags:["wh_resolve_probe"],Invisible:1b,NoGravity:1b,Invulnerable:1b}
-loot replace entity @e[type=minecraft:armor_stand,tag=wh_resolve_probe,distance=..2,limit=1,sort=nearest] weapon.mainhand mine ~ ~ ~ minecraft:netherite_pickaxe[minecraft:enchantments={levels:{"minecraft:silk_touch":1}}]
+loot replace entity @e[type=minecraft:armor_stand,tag=wh_resolve_probe,distance=..2,limit=1,sort=nearest] weapon.mainhand mine ~ ~ ~ minecraft:netherite_pickaxe[minecraft:enchantments={"minecraft:silk_touch":1}]
 data modify storage warehouse:api result.item_id set from entity @e[type=minecraft:armor_stand,tag=wh_resolve_probe,distance=..2,limit=1,sort=nearest] equipment.mainhand.id
 kill @e[type=minecraft:armor_stand,tag=wh_resolve_probe,distance=..2]
 execute unless data storage warehouse:api result.item_id run data modify storage warehouse:api result.error set value "no_survival_item"
