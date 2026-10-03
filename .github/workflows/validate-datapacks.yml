@@ -46,6 +46,10 @@ jobs:
             fi
           done
 
+          echo "::group::Cross-pack static compatibility"
+          python3 scripts/test-datapack-compatibility.py
+          echo "::endgroup::"
+
       - name: Build Copy/Paste opt-in live harnesses
         shell: bash
         run: |
@@ -124,3 +128,32 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+
+  all-datapacks-runtime-smoke:
+    name: All datapacks vanilla 26.3 compatibility
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Minecraft 26.3 runtime
+        uses: ./.github/actions/setup-minecraft-runtime
+
+      - name: Run all-datapacks compatibility regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/test-datapack-compatibility.py \
+            --java "$(command -v java)" \
+            --server-jar "$PWD/server.jar" \
+            --accept-eula
+
+      - name: Upload all-datapacks runtime evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: all-datapacks-26.3-compatibility-${{ github.run_id }}
+          path: dist/all-datapacks-runtime-*
+          if-no-files-found: ignore
+          retention-days: 14
