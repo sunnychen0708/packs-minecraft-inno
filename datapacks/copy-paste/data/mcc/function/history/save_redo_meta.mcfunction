@@ -21,3 +21,10 @@ $execute store result storage mcc:history r_p$(id)_s$(slot).mat int 1 run scoreb
 
 $execute store result storage mcc:history r_p$(id)_s$(slot).guard int 1 run scoreboard players get @s mcc_rguard
 $execute store result storage mcc:history r_p$(id)_s$(slot).cut int 1 run scoreboard players get @s mcc_rcut
+$execute store result storage mcc:history r_p$(id)_s$(slot).sparse int 1 run scoreboard players get @s mcc_rsparse
+$execute store result storage mcc:history r_p$(id)_s$(slot).xB int 1 run scoreboard players get @s mcc_r2x
+$execute store result storage mcc:history r_p$(id)_s$(slot).yB int 1 run scoreboard players get @s mcc_r2y
+$execute store result storage mcc:history r_p$(id)_s$(slot).zB int 1 run scoreboard players get @s mcc_r2z
+$execute store result storage mcc:history r_p$(id)_s$(slot).xB2 int 1 run scoreboard players get @s mcc_r2x2
+$execute store result storage mcc:history r_p$(id)_s$(slot).yB2 int 1 run scoreboard players get @s mcc_r2y2
+$execute store result storage mcc:history r_p$(id)_s$(slot).zB2 int 1 run scoreboard players get @s mcc_r2z2
