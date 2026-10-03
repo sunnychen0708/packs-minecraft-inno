@@ -1,6 +1,6 @@
-# Copy/Paste 驗證狀態（v1.2 / 2026-10-04）
+# Copy/Paste 驗證狀態（v1.2.1 source / 2026-10-04）
 
-目前原始碼與已發布版本皆為 **v1.2**，目標 Minecraft Java 26.3（Data Pack 121.0）。
+目前原始碼為 **v1.2.1（尚未發布）**；最新已發布 ZIP 仍是 **v1.2**。目標 Minecraft Java 26.3（Data Pack 121.0）。
 
 這份文件刻意把「官方 server headless regression」和「真人玩家 Trigger / Dialog 驗證」分開。兩者不能互相冒充。
 
@@ -18,7 +18,7 @@
 
 ## Headless behavioral runtime 的實際範圍
 
-`scripts/test-copy-paste-runtime.py` 是 v1.2 的官方-server regression，現在包含 100+ 個動態 assertions，涵蓋：
+`scripts/test-copy-paste-runtime.py` 是 v1.2.1 source 的官方-server regression，目前為 **113 個動態 assertions**，涵蓋：
 
 - Pos1 / Pos2 / Anchor / V 的 raycast function。
 - 沒有自訂 Anchor 時，Pos1 為預設 Anchor，即使 Pos1 不是選區最小角也要精確對位。
@@ -42,9 +42,9 @@
 
 所以「headless runtime PASS」不能再被描述成「玩家實機全部驗過」。
 
-## v1.2 真人 Trigger harness
+## v1.2.1 真人 Trigger harness
 
-`scripts/build-copy-paste-live-test.py` 已更新到 v1.2。它會產生 opt-in 測試 datapack，使用**真人玩家本人的 trigger objective**，每一步交給正常 Minecraft tick dispatch 處理。
+`scripts/build-copy-paste-live-test.py` 已更新到 v1.2.1。它會產生 opt-in 測試 datapack，使用**真人玩家本人的 trigger objective**，每一步交給正常 Minecraft tick dispatch 處理。
 
 目前生成案例包含：
 
@@ -71,13 +71,13 @@ python3 scripts/build-copy-paste-live-test.py
 /function mcc_test:start
 ```
 
-目前 repo **尚未提交一份 v1.2 真人 harness 全 PASS 的 client evidence**。在那之前，只能說 v1.2 已通過官方 server headless regression，不能說真人 Trigger / Dialog 已完整驗證。
+目前 repo **尚未提交一份 v1.2.1 真人 harness 全 PASS 的 client evidence**。在那之前，只能說 v1.2.1 source 已通過官方 server headless regression，不能說真人 Trigger / Dialog 已完整驗證。
 
 ## Dialog 檢查
 
 `/trigger copypaste` 的 active UI 是 `data/mcc/dialog/main.json`，不是舊的 `panel.mcfunction`。
 
-v1.2 active Dialog 必須至少包含：
+v1.2.1 active Dialog 必須至少包含：
 
 - Pos1 / Pos2 / Anchor / 清 Anchor。
 - Copy / Cut / Blueprint。
@@ -91,7 +91,7 @@ CI 現在直接檢查 active Dialog，不再拿沒有被 `/trigger copypaste` �
 
 `tests/evidence/copy-paste-live-20260930.txt` 是 2026-09-30 的真人 client evidence，當時修的是 v0.4.1 → v0.4.2 的 Mode 與舊玩家 migration 問題。
 
-那份 evidence 只能證明當時版本的真人路徑曾跑過，**不能替代 v1.2 的 Blueprint / Build / external Anchor / Dialog 驗證**。
+那份 evidence 只能證明當時版本的真人路徑曾跑過，**不能替代 v1.2.1 的 Blueprint / Build / external Anchor / Dialog 驗證**。
 
 ## 重跑自動驗證
 
