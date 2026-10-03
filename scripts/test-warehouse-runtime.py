@@ -244,6 +244,74 @@ def integration(java: Path, server: Path) -> None:
     check('unless data storage warehouse:api pending_refunds[0]', "api_refund_pending_drained")
     check('if data block 9 70 5 Items[{Slot:0b,id:"minecraft:stone",count:10}]', "api_refund_pending_materialized")
 
+    # Phase 4: resolve a looked-at block without changing it, then Pick up to one vanilla stack.
+    for code in CODES:
+        lines.extend(
+            [
+                f"data modify storage warehouse:chests c{code}.registered set value 0b",
+                f"data modify storage warehouse:chests c{code}.valid set value 0b",
+            ]
+        )
+    lines.extend(
+        [
+            "setblock 15 70 5 minecraft:stone",
+            "setblock 16 70 5 minecraft:bedrock",
+            "setblock 20 70 5 minecraft:chest",
+            "setblock 21 70 5 minecraft:chest",
+            'data modify block 20 70 5 Items set value [{Slot:0b,id:"minecraft:stone",count:20}]',
+            "data modify storage warehouse:chests c11.registered set value 1b",
+            "data modify storage warehouse:chests c11.valid set value 1b",
+            'data modify storage warehouse:chests c11.dimension set value "minecraft:overworld"',
+            "data modify storage warehouse:chests c11.a_x set value 20",
+            "data modify storage warehouse:chests c11.a_y set value 70",
+            "data modify storage warehouse:chests c11.a_z set value 5",
+            "data modify storage warehouse:chests c11.b_x set value 21",
+            "data modify storage warehouse:chests c11.b_y set value 70",
+            "data modify storage warehouse:chests c11.b_z set value 5",
+            f"execute as {actor} positioned 15 70 5 run function warehouse:api/resolve_block",
+        ]
+    )
+    check(
+        'if data storage warehouse:api result{operation:"resolve_block",ok:1b,complete:1b,item_id:"minecraft:stone",max_stack:64}',
+        "api_resolve_block_stone",
+    )
+    check("if block 15 70 5 minecraft:stone", "api_resolve_block_preserves_source")
+    check(
+        "unless entity @e[type=minecraft:armor_stand,tag=wh_resolve_probe]",
+        "api_resolve_probe_cleanup",
+    )
+
+    lines.append(f"execute as {actor} positioned 15 70 5 run function warehouse:pick/hit")
+    check(
+        'if data storage warehouse:pick result{ok:1b,item_id:"minecraft:stone",count:20}',
+        "pick_takes_available_below_stack",
+    )
+    check('unless data block 20 70 5 Items[{id:"minecraft:stone"}]', "pick_removed_twenty")
+
+    lines.extend(
+        [
+            'data modify block 20 70 5 Items set value [{Slot:0b,id:"minecraft:stone",count:64}]',
+            'data modify block 21 70 5 Items set value [{Slot:0b,id:"minecraft:stone",count:16}]',
+            f"execute as {actor} positioned 15 70 5 run function warehouse:pick/hit",
+        ]
+    )
+    check(
+        'if data storage warehouse:pick result{ok:1b,item_id:"minecraft:stone",count:64}',
+        "pick_caps_at_full_stack",
+    )
+    lines.append(f'execute as {actor} run function warehouse:api/count_item {{item_id:"minecraft:stone"}}')
+    check(
+        'if data storage warehouse:api result{ok:1b,complete:1b,available:16}',
+        "pick_leaves_stock_above_one_stack",
+    )
+
+    lines.append(f"execute as {actor} positioned 16 70 5 run function warehouse:api/resolve_block")
+    check(
+        'if data storage warehouse:api result{operation:"resolve_block",ok:0b,complete:1b,error:"no_survival_item"}',
+        "api_resolve_rejects_no_survival_item",
+    )
+    check("if block 16 70 5 minecraft:bedrock", "api_resolve_unsupported_preserves_source")
+
     lines.extend(
         [
             f"execute if score #pass whst matches {len(assertions)} if score #fail whst matches 0 run say WHST_REGRESSION_SUCCESS",
