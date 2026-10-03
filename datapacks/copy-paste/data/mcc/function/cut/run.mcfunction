@@ -43,7 +43,7 @@ scoreboard players operation @s mcc_uz = @s mcc_minz
 scoreboard players operation @s mcc_ux2 = @s mcc_maxx
 scoreboard players operation @s mcc_uy2 = @s mcc_maxy
 scoreboard players operation @s mcc_uz2 = @s mcc_maxz
-scoreboard players set @s mcc_usel 0
+function mcc:undo/snapshot_selection
 scoreboard players set @s mcc_undo 1
 scoreboard players set @s mcc_histcut 1
 function mcc:history/commit_edit
