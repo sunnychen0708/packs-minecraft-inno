@@ -30,5 +30,4 @@ execute store result storage mcc:temp dstz int 1 run scoreboard players get @s m
 execute if score @s mcc_udim matches 1 run function mcc:history/restore_overworld with storage mcc:temp
 execute if score @s mcc_udim matches 2 run function mcc:history/restore_nether with storage mcc:temp
 execute if score @s mcc_udim matches 3 run function mcc:history/restore_end with storage mcc:temp
-function mcc:history_sparse/forceload_u_remove
 return fail
