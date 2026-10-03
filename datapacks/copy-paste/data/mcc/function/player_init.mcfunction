@@ -33,6 +33,8 @@ scoreboard players set @s mcc_rguard 0
 scoreboard players set @s mcc_histcut 0
 scoreboard players set @s mcc_ucut 0
 scoreboard players set @s mcc_rcut 0
+scoreboard players set @s mcc_usparse 0
+scoreboard players set @s mcc_rsparse 0
 scoreboard players set @s mcc_emir 0
 scoreboard players set @s mcc_matjob 0
 scoreboard players set @s mcc_txslot 0
