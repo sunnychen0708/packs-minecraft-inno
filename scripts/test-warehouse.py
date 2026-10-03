@@ -75,8 +75,9 @@ def main() -> None:
     load = (PACK / "data/warehouse/function/load.mcfunction").read_text(encoding="utf-8")
     assert "execute unless data storage warehouse:meta v42 run function warehouse:migrate_v42" in load
     assert "execute unless data storage warehouse:meta v43 run function warehouse:migrate_v43" in load
-    migration_versions = [int(v) for v in re.findall(r"warehouse:meta v(\d+)", load)]
-    assert int(version.replace(".", "")) >= max(migration_versions), "source version is behind its newest migration"
+    current_marker = "v" + version.replace(".", "")
+    assert f"warehouse:meta {current_marker}" in load, "current source version has no migration marker"
+    assert f"warehouse:migrate_{current_marker}" in load, "current source version has no migration function"
 
     api_refresh = (PACK / "data/warehouse/function/api/material_sources/refresh.mcfunction").read_text(encoding="utf-8")
     api_append = (PACK / "data/warehouse/function/api/material_sources/append.mcfunction").read_text(encoding="utf-8")
