@@ -3,6 +3,7 @@ scoreboard players operation @s mcc_hslot = @s mcc_uhead
 execute store result storage mcc:temp id int 1 run scoreboard players get @s mcc_id
 execute store result storage mcc:temp slot int 1 run scoreboard players get @s mcc_hslot
 function mcc:history/load_undo_meta with storage mcc:temp
+execute if score @s mcc_usparse matches 1 run return run function mcc:history_sparse/undo_loaded
 execute unless score @s mcc_uguard matches 1 run tellraw @s [{"text":"[Copy/Paste] 這筆舊 Undo 沒有防複製安全快照；為安全起見已拒絕執行。","color":"red"}]
 execute unless score @s mcc_uguard matches 1 run return fail
 
@@ -56,6 +57,7 @@ scoreboard players operation @s mcc_rz = @s mcc_uz
 scoreboard players operation @s mcc_rx2 = @s mcc_ux2
 scoreboard players operation @s mcc_ry2 = @s mcc_uy2
 scoreboard players operation @s mcc_rz2 = @s mcc_uz2
+scoreboard players set @s mcc_rsparse 0
 scoreboard players set @s mcc_rsel 0
 execute if score @s mcc_ucut matches 1 if score @s mcc_usel matches 1 run function mcc:history/copy_undo_selection_to_redo
 execute unless score @s mcc_ucut matches 1 if score @s mcc_usel matches 1 run function mcc:redo/snapshot_selection
