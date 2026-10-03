@@ -78,8 +78,27 @@ jobs:
           fi
 
       - name: Set up Minecraft 26.3 runtime
-        if: steps.pack.outputs.kind == 'datapack' && (steps.pack.outputs.pack == 'warehouse' || steps.pack.outputs.pack == 'copy-paste')
+        if: steps.pack.outputs.kind == 'datapack'
         uses: ./.github/actions/setup-minecraft-runtime
+
+      - name: Run all-datapacks 26.3 compatibility release gate
+        if: steps.pack.outputs.kind == 'datapack'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/test-datapack-compatibility.py \
+            --java "$(command -v java)" \
+            --server-jar "$PWD/server.jar" \
+            --accept-eula
+
+      - name: Upload all-datapacks release compatibility evidence
+        if: always() && steps.pack.outputs.kind == 'datapack'
+        uses: actions/upload-artifact@v7
+        with:
+          name: all-datapacks-release-compatibility-${{ github.run_id }}
+          path: dist/all-datapacks-runtime-*
+          if-no-files-found: ignore
+          retention-days: 14
 
       - name: Run Warehouse 26.3 runtime release gate
         if: steps.pack.outputs.kind == 'datapack' && steps.pack.outputs.pack == 'warehouse'
