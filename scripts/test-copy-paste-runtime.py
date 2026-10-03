@@ -344,6 +344,70 @@ def integration(java: Path, server: Path):
     run_as('mcc:undo/run')
     check('if block 30 80 5 chest if data block 30 80 5 Items[{id:"minecraft:diamond",count:7}]','BUG_move_undo_restores_container_after_contents_changed')
 
+    # AUDIT E. Cut must also re-snapshot the current persisted/reselected region.
+    lines.extend([
+        'fill 20 80 20 27 80 21 air',
+        'setblock 20 80 20 redstone_block',
+        f'scoreboard players set {actor} mcc_has1 1',
+        f'scoreboard players set {actor} mcc_has2 1',
+        f'scoreboard players set {actor} mcc_hasa 0',
+        f'scoreboard players set {actor} mcc_p1x 20',
+        f'scoreboard players set {actor} mcc_p1y 80',
+        f'scoreboard players set {actor} mcc_p1z 20',
+        f'scoreboard players set {actor} mcc_p1d 1',
+        f'scoreboard players set {actor} mcc_p2x 20',
+        f'scoreboard players set {actor} mcc_p2y 80',
+        f'scoreboard players set {actor} mcc_p2z 20',
+        f'scoreboard players set {actor} mcc_p2d 1',
+        f'scoreboard players set {actor} mcc_ucnt 0',
+        f'scoreboard players set {actor} mcc_uhead 0',
+        f'scoreboard players set {actor} mcc_rcnt 0',
+        f'scoreboard players set {actor} mcc_rhead 0',
+    ])
+    run_as('mcc:cut/run')
+    check('if block 20 80 20 air','AUDIT_cut_A_clears_A')
+    run_as('mcc:undo/run')
+    check('if block 20 80 20 redstone_block','AUDIT_cut_A_undo_restores_A')
+    lines.extend([
+        'setblock 24 80 20 copper_block',
+        f'execute as {actor} positioned 24 80 20 run function mcc:ray/hit_pos1',
+        f'execute as {actor} positioned 24 80 20 run function mcc:ray/hit_pos2',
+    ])
+    run_as('mcc:cut/run')
+    check('if block 24 80 20 air if block 20 80 20 redstone_block','AUDIT_reselection_cut_uses_B_not_A')
+    target(26,80,20)
+    run_as('mcc:paste/dispatch')
+    check('if block 26 80 20 copper_block','AUDIT_reselection_cut_clipboard_contains_B')
+
+    # AUDIT F. Direct Flip currently mirrors the Anchor itself rather than using it
+    # as a fixed external pivot. Record the actual v1.2 behavior explicitly.
+    lines.extend([
+        'fill 5 80 25 35 80 26 air',
+        'setblock 10 80 25 gold_block',
+        'setblock 12 80 25 diamond_block',
+        f'scoreboard players set {actor} mcc_has1 1',
+        f'scoreboard players set {actor} mcc_has2 1',
+        f'scoreboard players set {actor} mcc_hasa 1',
+        f'scoreboard players set {actor} mcc_p1x 10',
+        f'scoreboard players set {actor} mcc_p1y 80',
+        f'scoreboard players set {actor} mcc_p1z 25',
+        f'scoreboard players set {actor} mcc_p1d 1',
+        f'scoreboard players set {actor} mcc_p2x 12',
+        f'scoreboard players set {actor} mcc_p2y 80',
+        f'scoreboard players set {actor} mcc_p2z 25',
+        f'scoreboard players set {actor} mcc_p2d 1',
+        f'scoreboard players set {actor} mcc_anx 20',
+        f'scoreboard players set {actor} mcc_any 80',
+        f'scoreboard players set {actor} mcc_anz 25',
+        f'scoreboard players set {actor} mcc_and 1',
+        f'scoreboard players set {actor} mcc_ucnt 0',
+        f'scoreboard players set {actor} mcc_uhead 0',
+        f'scoreboard players set {actor} mcc_rcnt 0',
+        f'scoreboard players set {actor} mcc_rhead 0',
+    ])
+    run_as('mcc:flip/x')
+    check(f'if block 10 80 25 diamond_block if block 12 80 25 gold_block if score {actor} mcc_anx matches 2','BUG_external_anchor_flip_moves_anchor_instead_of_structure')
+
     # Clean audit state so the pre-existing regression remains an independent control.
     lines.extend([
         'fill 30 78 0 57 90 8 air',
