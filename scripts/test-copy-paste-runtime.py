@@ -139,6 +139,31 @@ def integration(java: Path, server: Path):
         f'data merge entity {actor} {{Rotation:[0f,0f]}}',
     ])
 
+    # -1. Reselecting either endpoint must discard a custom Anchor from the old selection.
+    # This reproduces the player-visible failure where Copy/Cut kept rejecting a new
+    # selection because mcc_hasa still pointed at an Anchor from a previous region.
+    fixture()
+    lines.extend([
+        f'scoreboard players set {actor} mcc_hasa 1',
+        f'scoreboard players set {actor} mcc_anx 99',
+        f'scoreboard players set {actor} mcc_any 99',
+        f'scoreboard players set {actor} mcc_anz 99',
+        f'scoreboard players set {actor} mcc_and 1',
+        f'execute as {actor} positioned 3 80 3 run function mcc:ray/hit_pos1',
+    ])
+    check(f'if score {actor} mcc_has1 matches 1 if score {actor} mcc_p1x matches 3 if score {actor} mcc_p1y matches 80 if score {actor} mcc_p1z matches 3 if score {actor} mcc_hasa matches 0','pos1_resets_stale_anchor')
+    lines.extend([
+        f'scoreboard players set {actor} mcc_hasa 1',
+        f'scoreboard players set {actor} mcc_anx 99',
+        f'scoreboard players set {actor} mcc_any 99',
+        f'scoreboard players set {actor} mcc_anz 99',
+        f'scoreboard players set {actor} mcc_and 1',
+        f'execute as {actor} positioned 5 80 4 run function mcc:ray/hit_pos2',
+    ])
+    check(f'if score {actor} mcc_has2 matches 1 if score {actor} mcc_p2x matches 5 if score {actor} mcc_p2y matches 80 if score {actor} mcc_p2z matches 4 if score {actor} mcc_hasa matches 0','pos2_resets_stale_anchor')
+    run_as('mcc:copy/run')
+    check(f'if score {actor} mcc_clip matches 1 if score {actor} mcc_offx matches 0 if score {actor} mcc_offy matches 0 if score {actor} mcc_offz matches 0','reselection_copy_uses_pos1_default_anchor')
+
     # 0. Default Anchor regression: when no custom Anchor is set, Pos1 is the Anchor.
     # Make Pos1 the max-X/max-Z corner so this fails if Blueprint incorrectly treats
     # the aimed cell as the bounding minimum instead of the Pos1 destination.
