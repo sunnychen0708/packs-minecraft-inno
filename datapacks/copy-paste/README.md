@@ -54,6 +54,8 @@ Warehouse API 會從已註冊且有效的 Warehouse 容器建立最多 64 個材
 /trigger v
 ```
 
+`anchor` 是選用的；**沒有手動設定 Anchor 時，Pos1 就是預設 Anchor**。執行 `v` 時，準星指向方塊旁邊的目標格代表「Anchor 要落在這一格」，因此預設情況就是讓 Pos1 對齊目標格；若有自訂 Anchor，則由自訂 Anchor 對齊。未旋轉／鏡像與已旋轉／鏡像都遵守同一套定位語意。
+
 `v` 只建立或重定位 Blueprint，不會直接生成真實方塊。
 
 Blueprint 建立完成後可以先設定：
