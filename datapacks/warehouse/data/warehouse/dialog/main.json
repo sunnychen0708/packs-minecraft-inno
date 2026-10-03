@@ -10,7 +10,7 @@
     {
       "type": "minecraft:plain_message",
       "contents": {
-        "text": "v4.3 - 自動分類、箱子管理、分類設定、庫存查看、物品查詢、Highlight、共用材料 API。\\n查詢結果可直接 Highlight 分類箱；Copy/Paste 可共用 Warehouse 材料與退款流程。"
+        "text": "v4.4 - 自動分類、箱子管理、查詢、Highlight、Pick、共用材料 API。\\n看著方塊可用 Pick 從 Warehouse 直接拿最多一整組；Copy/Paste 也共用同一份材料與退款後端。"
       },
       "width": 390
     }
@@ -58,6 +58,16 @@
       "action": {
         "type": "show_dialog",
         "dialog": "warehouse:search"
+      }
+    },
+    {
+      "label": {
+        "text": "Pick 一組"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger pick"
       }
     },
     {
