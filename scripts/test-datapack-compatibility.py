@@ -250,6 +250,7 @@ def runtime_compatibility(java: Path, server: Path) -> None:
         "white-list=true\n"
         "view-distance=2\n"
         "simulation-distance=2\n"
+        "max-tick-time=-1\n"
         "level-type=minecraft:flat\n"
         'generator-settings={"layers":[{"block":"minecraft:bedrock","height":1}],"biome":"minecraft:plains"}\n',
         encoding="utf-8",
@@ -259,7 +260,7 @@ def runtime_compatibility(java: Path, server: Path) -> None:
     done = threading.Event()
     output: list[str] = []
     proc = subprocess.Popen(
-        [str(java), "-Xms256M", "-Xmx1024M", "-jar", str(server), "--nogui"],
+        [str(java), "-Xms512M", "-Xmx3072M", "-jar", str(server), "--nogui"],
         cwd=work,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
