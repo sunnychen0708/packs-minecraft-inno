@@ -516,6 +516,41 @@ def check_version_labels(pack: Path, repo: Path|None=None):
         assert required in live, f'v{version} real-player harness missing: {required}'
     return version
 
+def check_history_safety(pack: Path):
+    commit=read(pack/'data/mcc/function/history/commit_edit.mcfunction')
+    undo=read(pack/'data/mcc/function/history/undo.mcfunction')
+    redo=read(pack/'data/mcc/function/history/redo_apply.mcfunction')
+    undo_run=read(pack/'data/mcc/function/undo/run.mcfunction')
+    redo_run=read(pack/'data/mcc/function/redo/run.mcfunction')
+    cut=read(pack/'data/mcc/function/cut/run.mcfunction')
+    transformed=read(pack/'data/mcc/function/paste/transformed.mcfunction')
+    blueprint=read(pack/'data/mcc/function/blueprint/init_transformed.mcfunction')
+
+    # Every new world edit must archive an expected post-edit world before it
+    # becomes undoable; Cut history is explicitly marked so Undo can consume it.
+    assert 'function mcc:history/archive_material_guard' in commit
+    assert 'scoreboard players set @s mcc_histguard 1' in commit
+    assert 'scoreboard players set @s mcc_histcut 1' in cut
+    assert 'function mcc:history/check_undo_material_guard' in undo
+    assert 'mcc_ucut matches 1 if score @s mcc_cliptype matches 2 run scoreboard players set @s mcc_clip 0' in undo
+
+    # Redo also has a post-Undo expected-world guard.
+    assert 'function mcc:history/check_redo_guard' in redo
+    assert 'function mcc:history/archive_redo_guard' in undo
+
+    # Unguarded legacy history is rejected rather than replayed.
+    assert 'legacy_run' not in undo_run
+    assert 'legacy_run' not in redo_run
+    assert '舊版 Undo 沒有防複製安全快照' in undo_run
+    assert '舊版 Redo 沒有防複製安全快照' in redo_run
+
+    # Transformed Cut paste must honor Masked instead of silently falling back
+    # to Replace, and distant external Anchors must not move hidden buffers.
+    assert '已忽略 Masked' not in transformed
+    assert 'function mcc:paste/transformed_masked' in transformed
+    assert '#bpofs' not in blueprint
+    assert '#bpz' in blueprint and 'player_slot_x' in blueprint
+
 def check_tellraw_json(pack: Path):
     checked=0
     for p in pack.rglob('*.mcfunction'):
@@ -550,6 +585,7 @@ def main():
     check_rollback(pack)
     check_selection_math(pack)
     check_flip_anchor_formula(pack)
+    check_history_safety(pack)
     check_move_model()
     mp=check_multiplayer_isolation(pack)
     states=check_v100_semantics(pack)
