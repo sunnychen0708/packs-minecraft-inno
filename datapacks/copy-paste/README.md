@@ -1,10 +1,18 @@
-# Minecraft Copy/Paste Datapack v1.0
+# Minecraft Copy/Paste Datapack v1.1
 
 適用：Minecraft Java Edition 26.3（Data Pack 121.0）
 
 純 Vanilla datapack。操作使用 Trigger。材料施工依賴同 repo 的 Warehouse datapack，並直接使用 Warehouse 共用註冊資料與 API。
 
-## v1.0 核心流程
+## v1.1
+
+- 完成 Warehouse 共用材料 API 整合，不再維護 Copy/Paste 私有材料箱。
+- Build 的 Undo/Redo 會同步退款／重新扣料，並保留防複製 guard 與持久退款 queue。
+- Blueprint 支援六方向微調、只讀材料報表、覆蓋重算與二次施工確認。
+- 加入 Dialog 控制面板，並可與 Warehouse 主頁互相導覽。
+- Phase 3 路徑已納入官方 Minecraft 26.3 runtime regression。
+
+## 核心流程
 
 Copy 現在是「先 Blueprint、再用真實材料施工」：
 
@@ -114,7 +122,7 @@ Blueprint 建立完成後，不必重新用 `v` 定位就能直接微調。左�
 
 ## 生存安全
 
-v1.0 不會把 Copy 當成免費 Clone：
+Copy/Paste 不會把 Copy 當成免費 Clone：
 
 - 施工只消耗 Warehouse 共用材料來源中的一般、無自訂 components 的物品堆疊。
 - Block Entity 的物品內容在 Blueprint buffer 中會被移除；箱子、熔爐、木桶、潛影盒等不會複製內含物。
