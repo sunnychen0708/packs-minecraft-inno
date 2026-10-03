@@ -213,7 +213,42 @@ def integration(java: Path, server: Path):
     lines.append(f'scoreboard players set {actor} mcc_mir 0')
     lines.append(f'scoreboard players set {actor} mcc_hasa 0')
 
-    # 0c. A custom Anchor may be outside the selection and must remain a usable
+    # 0c. External Anchor must also work for Blueprint placement, not only
+    # direct real-block Rotate. Verify direct, rotated, and mirrored previews.
+    fixture(10,80,10)
+    lines.extend([
+        f'scoreboard players set {actor} mcc_hasa 1',
+        f'scoreboard players set {actor} mcc_anx 20',
+        f'scoreboard players set {actor} mcc_any 80',
+        f'scoreboard players set {actor} mcc_anz 20',
+        f'scoreboard players set {actor} mcc_and 1',
+    ])
+    run_as('mcc:copy/run')
+    target(40,80,40)
+    run_as('mcc:paste/dispatch')
+    scan()
+    check(f'positioned 30 80 30 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={{block_state:"minecraft:gold_block"}},limit=1] if score {actor} mcc_bptx0 matches 30 if score {actor} mcc_bptz0 matches 30','external_anchor_blueprint_direct')
+    run_as('mcc:blueprint/clear_internal')
+
+    lines.append(f'scoreboard players set {actor} mcc_rot 1')
+    target(40,80,40)
+    run_as('mcc:paste/dispatch')
+    scan()
+    check('positioned 50 80 30 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]','external_anchor_blueprint_rotate90_gold')
+    check('positioned 50 80 32 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:diamond_block"},limit=1]','external_anchor_blueprint_rotate90_diamond')
+    run_as('mcc:blueprint/clear_internal')
+
+    lines.append(f'scoreboard players set {actor} mcc_rot 0')
+    lines.append(f'scoreboard players set {actor} mcc_mir 1')
+    target(40,80,40)
+    run_as('mcc:paste/dispatch')
+    scan()
+    check('positioned 50 80 30 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]','external_anchor_blueprint_mirrorx_gold')
+    check('positioned 48 80 30 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:diamond_block"},limit=1]','external_anchor_blueprint_mirrorx_diamond')
+    run_as('mcc:blueprint/clear_internal')
+    lines.append(f'scoreboard players set {actor} mcc_mir 0')
+
+    # 0d. A custom Anchor may be outside the selection and must remain a usable
     # pivot after the first rotation moves the selection somewhere else.
     fixture(10,80,10)
     lines.extend([
