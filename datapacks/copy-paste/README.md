@@ -1,8 +1,16 @@
-# Minecraft Copy/Paste Datapack v1.2
+# Minecraft Copy/Paste Datapack v1.2.1
 
 適用：Minecraft Java Edition 26.3（Data Pack 121.0）
 
 純 Vanilla datapack。操作使用 Trigger。材料施工依賴同 repo 的 Warehouse datapack，並直接使用 Warehouse 共用註冊資料與 API。
+
+## v1.2.1（source，尚未發布）
+
+- 修正 active `/trigger copypaste` Dialog 缺少「清 Anchor」操作；現在可直接執行 `/trigger anchor set 2` 回到 Pos1 預設 Anchor。
+- 驗證改為直接檢查實際使用中的 Dialog，不再拿未被主流程呼叫的 legacy `panel.mcfunction` 當玩家 UI 證據。
+- v1.2 真人 Trigger harness 補上「可重新選新區域／未重選則持續使用目前選區」、外部 Anchor、清 Anchor、Pos1 非最小角的預設 Anchor、Warehouse Build。
+- 官方 26.3 headless regression 補上選區外 Anchor 的 Blueprint 直接／旋轉／鏡像精確座標，並在同一個 server world 載入生成的真人 harness 以檢查所有測試 function 可被 Vanilla 解析。
+- 明確區分 headless armor-stand regression 與真人 client 驗證；沒有真人 evidence 時不再宣稱「實機全部驗過」。
 
 ## v1.2
 

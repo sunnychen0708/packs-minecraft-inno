@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Isolated vanilla 26.3 behavioral regression for Copy/Paste v1.1.
+"""Isolated vanilla 26.3 behavioral regression for Copy/Paste v1.2.1.
 
 Uses a non-player armor stand test actor to exercise internal datapack functions.
 This complements (not replaces) the opt-in real-player trigger/client harnesses.
@@ -9,6 +9,7 @@ import argparse
 import json
 from pathlib import Path
 import subprocess
+import sys
 import threading
 import time
 import uuid
@@ -23,6 +24,15 @@ def integration(java: Path, server: Path):
     work.mkdir(parents=True)
     packs=work/'world/datapacks'
     packs.mkdir(parents=True)
+
+    # Build the current real-player harness into the same official-server world.
+    # It is not executed headlessly, but every generated mcfunction is parsed by
+    # vanilla 26.3 so stale/invalid Trigger harness commands fail CI.
+    subprocess.run([
+        sys.executable,
+        str(ROOT/'scripts/build-copy-paste-live-test.py'),
+        '--output', str(packs/'mcc-live-test'),
+    ], check=True)
 
     with zipfile.ZipFile(packs/'copy-paste.zip','w',zipfile.ZIP_DEFLATED) as z:
         for p in PACK.rglob('*'):
@@ -213,7 +223,42 @@ def integration(java: Path, server: Path):
     lines.append(f'scoreboard players set {actor} mcc_mir 0')
     lines.append(f'scoreboard players set {actor} mcc_hasa 0')
 
-    # 0c. A custom Anchor may be outside the selection and must remain a usable
+    # 0c. External Anchor must also work for Blueprint placement, not only
+    # direct real-block Rotate. Verify direct, rotated, and mirrored previews.
+    fixture(10,80,10)
+    lines.extend([
+        f'scoreboard players set {actor} mcc_hasa 1',
+        f'scoreboard players set {actor} mcc_anx 20',
+        f'scoreboard players set {actor} mcc_any 80',
+        f'scoreboard players set {actor} mcc_anz 20',
+        f'scoreboard players set {actor} mcc_and 1',
+    ])
+    run_as('mcc:copy/run')
+    target(40,80,40)
+    run_as('mcc:paste/dispatch')
+    scan()
+    check(f'positioned 30 80 30 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={{block_state:"minecraft:gold_block"}},limit=1] if score {actor} mcc_bptx0 matches 30 if score {actor} mcc_bptz0 matches 30','external_anchor_blueprint_direct')
+    run_as('mcc:blueprint/clear_internal')
+
+    lines.append(f'scoreboard players set {actor} mcc_rot 1')
+    target(40,80,40)
+    run_as('mcc:paste/dispatch')
+    scan()
+    check('positioned 50 80 30 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]','external_anchor_blueprint_rotate90_gold')
+    check('positioned 50 80 32 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:diamond_block"},limit=1]','external_anchor_blueprint_rotate90_diamond')
+    run_as('mcc:blueprint/clear_internal')
+
+    lines.append(f'scoreboard players set {actor} mcc_rot 0')
+    lines.append(f'scoreboard players set {actor} mcc_mir 1')
+    target(40,80,40)
+    run_as('mcc:paste/dispatch')
+    scan()
+    check('positioned 50 80 30 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]','external_anchor_blueprint_mirrorx_gold')
+    check('positioned 48 80 30 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:diamond_block"},limit=1]','external_anchor_blueprint_mirrorx_diamond')
+    run_as('mcc:blueprint/clear_internal')
+    lines.append(f'scoreboard players set {actor} mcc_mir 0')
+
+    # 0d. A custom Anchor may be outside the selection and must remain a usable
     # pivot after the first rotation moves the selection somewhere else.
     fixture(10,80,10)
     lines.extend([
