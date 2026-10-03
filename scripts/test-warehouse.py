@@ -176,8 +176,11 @@ def main() -> None:
     assert warehouse_tick.count("scoreboard players enable @a pick") == 1
     assert "scores={pick=1..}" in warehouse_tick and "warehouse:pick/start" in warehouse_tick
     assert "trigger pick" in main_dialog and "Pick 一組" in main_dialog
-    assert "loot replace entity" in api_resolve and "minecraft:silk_touch" in api_resolve
+    assert 'minecraft:enchantments={"minecraft:silk_touch":1}' in api_resolve
     assert "probe_max_stack" in api_resolve and "result.max_stack" in api_resolve
+    assert "data remove storage warehouse:pick\n" not in pick_start
+    assert "data remove storage warehouse:pick request" in pick_start
+    assert "data remove storage warehouse:pick result" in pick_start
     assert "anchored eyes" in pick_start and "warehouse:pick/raycast" in pick_start
     assert "minecraft:water" in pick_raycast and "minecraft:lava" in pick_raycast
     assert "warehouse:api/resolve_block" in pick_hit
