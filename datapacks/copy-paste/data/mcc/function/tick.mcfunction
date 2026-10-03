@@ -25,7 +25,7 @@ execute as @a unless score @s mcc_bpover matches 0.. run scoreboard players set 
 execute as @a unless score @s mcc_buildconfirm matches 0..1 run scoreboard players set @s mcc_buildconfirm 0
 execute as @a unless score @s mcc_bpover_scan matches 0..1 run scoreboard players set @s mcc_bpover_scan 0
 execute as @a unless score @s mcc_bpoindex matches 0.. run scoreboard players set @s mcc_bpoindex 0
-execute as @a[scores={copypaste=1..}] run function mcc:ui/open
+execute as @a[scores={copypaste=1..}] run function mcc:panel
 
 execute as @a[scores={pos1=1..}] at @s run function mcc:select/start_pos1
 execute as @a[scores={pos2=1..}] at @s run function mcc:select/start_pos2

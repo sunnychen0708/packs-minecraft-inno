@@ -425,10 +425,9 @@ def check_v100_semantics(pack: Path):
     assert (pack/'data/mcc/function/blueprint/nudge/run.mcfunction').is_file()
     assert 'function mcc:blueprint/recount_start' in read(pack/'data/mcc/function/blueprint/nudge/run.mcfunction')
     assert 'mcc_bpover_scan' in read(pack/'data/mcc/function/tick.mcfunction')
-    assert (pack/'data/mcc/dialog/main.json').is_file()
-    main_dialog=read(pack/'data/mcc/dialog/main.json')
-    assert '"dialog": "warehouse:main"' not in main_dialog
-    assert '"command": "trigger wh_nav set 1"' in main_dialog
+    assert not (pack/'data/mcc/dialog/main.json').exists()
+    assert not (pack/'data/mcc/function/ui/open.mcfunction').exists()
+    assert 'scores={copypaste=1..}] run function mcc:panel' in read(pack/'data/mcc/function/tick.mcfunction')
     assert 'scoreboard players set @s mcc_histmat 1' in place
     assert (pack/'data/mcc/tags/block/material_unsupported.json').is_file()
     panel=read(pack/'data/mcc/function/panel.mcfunction')
