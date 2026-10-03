@@ -127,6 +127,37 @@ def integration(java: Path, server: Path):
     check('positioned 10 80 11 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]','default_anchor_pos1_blueprint_offset')
     run_as('mcc:blueprint/clear_internal')
 
+    # 0a. Custom Anchor must land exactly on the V target, not merely near it.
+    fixture()
+    lines.extend([
+        f'scoreboard players set {actor} mcc_hasa 1',
+        f'scoreboard players set {actor} mcc_anx 5',
+        f'scoreboard players set {actor} mcc_any 80',
+        f'scoreboard players set {actor} mcc_anz 4',
+        f'scoreboard players set {actor} mcc_and 1',
+    ])
+    run_as('mcc:copy/run')
+    target(20,82,12)
+    run_as('mcc:paste/dispatch')
+    scan()
+    check(f'positioned 20 82 12 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={{block_state:"minecraft:iron_block"}},limit=1] if score {actor} mcc_bptx0 matches 18 if score {actor} mcc_bpty0 matches 82 if score {actor} mcc_bptz0 matches 11','custom_anchor_direct_exact_target')
+    check('positioned 18 82 11 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]','custom_anchor_direct_source_offset')
+    run_as('mcc:blueprint/clear_internal')
+
+    # 0b. The same custom Anchor invariant must hold for every Rotate/Mirror combination.
+    for rot in range(4):
+        for mir in range(3):
+            lines.append(f'scoreboard players set {actor} mcc_rot {rot}')
+            lines.append(f'scoreboard players set {actor} mcc_mir {mir}')
+            target(24,82,12)
+            run_as('mcc:paste/dispatch')
+            scan()
+            check(f'positioned 24 82 12 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={{block_state:"minecraft:iron_block"}},limit=1]','custom_anchor_r%d_m%d_exact_target' % (rot,mir))
+            run_as('mcc:blueprint/clear_internal')
+    lines.append(f'scoreboard players set {actor} mcc_rot 0')
+    lines.append(f'scoreboard players set {actor} mcc_mir 0')
+    lines.append(f'scoreboard players set {actor} mcc_hasa 0')
+
     # 1. Copy -> Blueprint: source remains, destination remains air, exact-state displays exist.
     fixture()
     run_as('mcc:copy/run')
@@ -268,6 +299,47 @@ def integration(java: Path, server: Path):
     check('if block 4 80 10 gold_block if block 3 80 10 air','move_redo')
     run_as('mcc:undo/run')
 
+    # 4a. Player-facing Move wrappers at yaw 0 must map to the expected world directions.
+    lines.extend([
+        'setblock 30 80 5 emerald_block',
+        f'scoreboard players set {actor} mcc_has1 1',
+        f'scoreboard players set {actor} mcc_has2 1',
+        f'scoreboard players set {actor} mcc_hasa 0',
+        f'scoreboard players set {actor} mcc_p1x 30',
+        f'scoreboard players set {actor} mcc_p1y 80',
+        f'scoreboard players set {actor} mcc_p1z 5',
+        f'scoreboard players set {actor} mcc_p1d 1',
+        f'scoreboard players set {actor} mcc_p2x 30',
+        f'scoreboard players set {actor} mcc_p2y 80',
+        f'scoreboard players set {actor} mcc_p2z 5',
+        f'scoreboard players set {actor} mcc_p2d 1',
+        f'data merge entity {actor} {{Rotation:[0f,0f]}}',
+    ])
+    for objective,function,condition,label in [
+        ('right','mcc:move/right','if block 29 80 5 emerald_block if block 30 80 5 air','move_right_yaw0'),
+        ('left','mcc:move/left','if block 31 80 5 emerald_block if block 30 80 5 air','move_left_yaw0'),
+        ('forward','mcc:move/forward','if block 30 80 6 emerald_block if block 30 80 5 air','move_forward_yaw0'),
+        ('backward','mcc:move/backward','if block 30 80 4 emerald_block if block 30 80 5 air','move_backward_yaw0'),
+        ('up','mcc:move/up','if block 30 81 5 emerald_block if block 30 80 5 air','move_up'),
+        ('down','mcc:move/down','if block 30 79 5 emerald_block if block 30 80 5 air','move_down'),
+    ]:
+        lines.append(f'scoreboard players set {actor} {objective} 1')
+        run_as(function)
+        check(condition,label)
+        run_as('mcc:undo/run')
+        check('if block 30 80 5 emerald_block',label+'_undo')
+
+    # 4b. Flip X/Z must actually mirror the selected blocks, not only report success.
+    fixture(3,80,10)
+    run_as('mcc:flip/x')
+    check('if block 5 80 10 gold_block if block 3 80 10 diamond_block if block 3 80 11 iron_block','flip_x_real_positions')
+    run_as('mcc:undo/run')
+    check('if block 3 80 10 gold_block if block 5 80 10 diamond_block if block 5 80 11 iron_block','flip_x_undo')
+    run_as('mcc:flip/z')
+    check('if block 3 80 11 gold_block if block 5 80 11 diamond_block if block 5 80 10 iron_block','flip_z_real_positions')
+    run_as('mcc:undo/run')
+    check('if block 3 80 10 gold_block if block 5 80 10 diamond_block if block 5 80 11 iron_block','flip_z_undo')
+
     # 5. Direct Rotate90 modifies real blocks around Pos1 and is Undo/Redo reversible.
     fixture(3,80,17)
     run_as('mcc:rotate_edit/r90')
@@ -276,6 +348,18 @@ def integration(java: Path, server: Path):
     check('if block 3 80 17 gold_block if block 5 80 17 diamond_block if block 3 80 18 oak_stairs[facing=east]','rotate90_undo')
     run_as('mcc:redo/run')
     check('if block 3 80 19 diamond_block if block 2 80 17 oak_stairs[facing=south]','rotate90_redo')
+
+    # 5a. Rotate180 and Rotate270 must also place the asymmetric fixture correctly.
+    run_as('mcc:undo/run')
+    fixture(3,80,17)
+    run_as('mcc:rotate_edit/r180')
+    check('if block 3 80 17 gold_block if block 1 80 17 diamond_block if block 1 80 16 iron_block','rotate180_real')
+    run_as('mcc:undo/run')
+    check('if block 3 80 17 gold_block if block 5 80 17 diamond_block if block 5 80 18 iron_block','rotate180_undo')
+    run_as('mcc:rotate_edit/r270')
+    check('if block 3 80 17 gold_block if block 3 80 15 diamond_block if block 4 80 15 iron_block','rotate270_real')
+    run_as('mcc:undo/run')
+    check('if block 3 80 17 gold_block if block 5 80 17 diamond_block if block 5 80 18 iron_block','rotate270_undo')
 
     # 6. Rotated Copy -> Blueprint still creates displays only.
     run_as('mcc:undo/run')
