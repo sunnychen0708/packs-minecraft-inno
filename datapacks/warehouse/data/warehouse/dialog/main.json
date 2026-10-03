@@ -10,7 +10,7 @@
     {
       "type": "minecraft:plain_message",
       "contents": {
-        "text": "v4.2 - 自動分類、背景堆疊、箱子管理、分類設定、庫存查看、物品查詢。\\n查詢可顯示目前分類箱是否已有該物品；移動分類會背景搬移舊主箱庫存。"
+        "text": "v4.3 - 自動分類、箱子管理、分類設定、庫存查看、物品查詢、Highlight、共用材料 API。\\n查詢結果可直接 Highlight 分類箱；Copy/Paste 可共用 Warehouse 材料與退款流程。"
       },
       "width": 390
     }

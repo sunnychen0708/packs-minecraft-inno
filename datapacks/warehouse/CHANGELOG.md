@@ -34,3 +34,4 @@
 | **v4.0** | 正式把 Minecraft 26.3 新增物品加入倉庫分類，沿用既有 54 箱分類邏輯分配新物品，並維持 v3.4 的舊世界資料相容性。 |
 | **v4.1** | Hotfix：修正 `warehouse:admin/reset_registrations` 使用不完整的 `data remove storage warehouse:chests`，導致伺服器啟動／reload 時該 function 無法載入的問題；改為只清除 61 個箱位的註冊狀態，保留分類與自訂箱名。 |
 | **v4.2** | 修正新世界／升級時搜尋索引初始化一次執行過多指令、觸發 65,536 command-chain 上限的問題。v1.4/v4.0 舊 migration 不再重建已淘汰索引；目前 26.3 索引改為 72 個 shard、每 tick 建立 1 份，完成後才開放搜尋；同時避免物品名稱表重複初始化。 |
+| **v4.3** | 新增供其他 datapack 共用的 64-source 材料 API：去重後的庫存查詢、all-or-nothing 扣料、入口箱退款與持久退款 queue；加入玩家可見的 Highlight API，並把物品查詢 → 分類結果 → Highlight 串成同一流程；Warehouse 主頁可進入 Copy/Paste 建築工具。同步加入 v4.3 migration、官方 26.3 runtime regression 與 API/Highlight 靜態驗證。 |

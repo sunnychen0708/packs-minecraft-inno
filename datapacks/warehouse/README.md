@@ -1,4 +1,4 @@
-# Warehouse v4.2
+# Warehouse v4.3
 
 Minecraft Java 26.3 automatic sorting warehouse data pack.
 
@@ -6,9 +6,9 @@ The actual pack source lives directly in this directory. Keep `pack.mcmeta` and 
 
 ## Release
 
-Repository tag: `warehouse-v4.2`
+Current source version: `v4.3`
 
-Release ZIP: `warehouse-v4.2.zip`
+Latest published release: `warehouse-v4.2.zip` (source v4.3 is newer)
 
 ## Version history
 
