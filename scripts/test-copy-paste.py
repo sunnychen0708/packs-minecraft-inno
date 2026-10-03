@@ -306,16 +306,17 @@ def check_v100_semantics(pack: Path):
     assert 'scoreboard players set @s mcc_cliptype 0' in cut_paste
     assert 'mcc_sx = @s mcc_selx' in snapshot
 
-    # v0.6: five-level per-player Undo/Redo ring history, with legacy one-step fallback.
+    # Five-level per-player Undo/Redo ring history. Legacy one-step snapshots are
+    # deliberately rejected because they have no post-edit anti-duplication guard.
     undo=read(pack/'data/mcc/function/undo/run.mcfunction')
     redo=read(pack/'data/mcc/function/redo/run.mcfunction')
     hundo=read(pack/'data/mcc/function/history/undo.mcfunction')
     hredo=read(pack/'data/mcc/function/history/redo.mcfunction')
     commit=read(pack/'data/mcc/function/history/commit_edit.mcfunction')
     assert 'mcc_ucnt matches 1..' in undo and 'function mcc:history/undo' in undo
-    assert 'mcc_undo matches 1 run return run function mcc:undo/legacy_run' in undo
+    assert 'legacy_run' not in undo and '舊版 Undo 沒有防複製安全快照' in undo
     assert 'mcc_rcnt matches 1..' in redo and 'function mcc:history/redo' in redo
-    assert 'mcc_redo matches 1 run return run function mcc:redo/legacy_run' in redo
+    assert 'legacy_run' not in redo and '舊版 Redo 沒有防複製安全快照' in redo
     assert 'scoreboard players set @s mcc_rcnt 0' in commit
     assert 'scoreboard players set @s mcc_rhead 0' in commit
     assert 'mcc_hslot matches 6..' in commit
