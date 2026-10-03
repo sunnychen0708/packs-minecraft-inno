@@ -487,6 +487,16 @@ def check_version_labels(pack: Path, repo: Path|None=None):
     assert f'Copy/Paste v{version}' in runtime, f'headless runtime label not synced to v{version}'
     assert f'v{version}' in live.splitlines()[0], f'real-player harness label not synced to v{version}'
     assert f'v{version}' in multi.splitlines()[0], f'multiplayer harness label not synced to v{version}'
+    compile(live, str(source_repo/'scripts/build-copy-paste-live-test.py'), 'exec')
+    compile(multi, str(source_repo/'scripts/build-copy-paste-multiplayer-test.py'), 'exec')
+    for required in (
+        "external anchor selected",
+        "clear anchor trigger",
+        "pos1 reselection clears stale anchor",
+        "default pos1 anchor exact",
+        "material build real",
+    ):
+        assert required in live, f'v{version} real-player harness missing: {required}'
     return version
 
 def check_tellraw_json(pack: Path):
