@@ -9,6 +9,7 @@ import argparse
 import json
 from pathlib import Path
 import subprocess
+import sys
 import threading
 import time
 import uuid
@@ -23,6 +24,15 @@ def integration(java: Path, server: Path):
     work.mkdir(parents=True)
     packs=work/'world/datapacks'
     packs.mkdir(parents=True)
+
+    # Build the current real-player harness into the same official-server world.
+    # It is not executed headlessly, but every generated mcfunction is parsed by
+    # vanilla 26.3 so stale/invalid Trigger harness commands fail CI.
+    subprocess.run([
+        sys.executable,
+        str(ROOT/'scripts/build-copy-paste-live-test.py'),
+        '--output', str(packs/'mcc-live-test'),
+    ], check=True)
 
     with zipfile.ZipFile(packs/'copy-paste.zip','w',zipfile.ZIP_DEFLATED) as z:
         for p in PACK.rglob('*'):
