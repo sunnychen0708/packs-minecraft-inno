@@ -134,6 +134,16 @@ def main() -> None:
     assert "force @s" in highlight_box
     assert "Highlight 箱子" in show_classified
     assert "trigger wh_highlight set 1" in show_classified
+    warehouse_tick = (PACK / "data/warehouse/function/tick.mcfunction").read_text(encoding="utf-8")
+    select_search = (PACK / "data/warehouse/function/rule/select_search.mcfunction").read_text(encoding="utf-8")
+    show_selected = (PACK / "data/warehouse/function/rule/show_selected.mcfunction").read_text(encoding="utf-8")
+    highlight_from_rule = (PACK / "data/warehouse/function/highlight/from_rule.mcfunction").read_text(encoding="utf-8")
+    assert "scores={wh_search_pick=1..1544}" in warehouse_tick and "warehouse:rule/select_search" in warehouse_tick
+    assert "function warehouse:rule/show_selected" in select_search
+    assert "function warehouse:rule/show_classified" in show_selected
+    assert "scores={wh_highlight=1..}" in warehouse_tick and "warehouse:highlight/from_rule" in warehouse_tick
+    assert "wh_rulebox matches 10..69" in highlight_from_rule
+    assert "function warehouse:api/highlight" in highlight_from_rule
 
     print("PASS warehouse regression: reset/search/API/Highlight are bounded and validated")
 

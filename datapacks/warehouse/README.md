@@ -69,4 +69,17 @@ Refund always targets Warehouse entry chest `c00`; Warehouse's normal sorter rem
 
 Refund is durable: if `c00` is full, temporarily unavailable, stale, or not currently registered, the physical remainder is appended to `storage warehouse:api pending_refunds` before the API returns. The result reports `inserted`, `queued`, `deferred`, and leaves `remaining:0` once Warehouse has accepted responsibility for a valid positive refund. `warehouse:tick` retries one pending entry per tick without overwriting the last public API result. This lets callers such as Copy/Paste finish an Undo safely even when the entry chest cannot accept every returned stack immediately.
 
-`resolve_block` and `highlight` will be added on top of this same API/storage contract in their dedicated implementation phases. They should not duplicate Warehouse registration data.
+### Highlight
+
+Warehouse 已提供玩家可見的 Highlight API：
+
+```mcfunction
+data modify storage warehouse:api request set value {code:11}
+function warehouse:api/highlight
+```
+
+API 直接讀取既有 `warehouse:chests` 註冊資料，不建立第二份箱子座標表。有效箱位會只對呼叫玩家顯示 `end_rod` 粒子 Highlight，並在聊天列印箱號、維度與 A/B 兩半座標；未註冊或失效箱位會拒絕 Highlight。
+
+遊戲內「物品查詢」也共用這條路徑：搜尋物品 → 點選結果 → 分類結果頁 →「Highlight 箱子」。因此搜尋與分類設定使用同一份 `wh_rulebox` / Warehouse 註冊資料，不需要額外同步。
+
+`resolve_block` 若之後加入，也應沿用這份共享 API/storage contract，不要複製 Warehouse 註冊資料。
