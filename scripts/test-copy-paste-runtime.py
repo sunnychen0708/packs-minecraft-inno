@@ -449,7 +449,8 @@ def integration(java: Path, server: Path):
     run_as('mcc:undo/run')
     check(f'if block 3 80 3 gold_block if block 5 80 4 iron_block if score {actor} mcc_redo matches 1 if score {actor} mcc_clip matches 0 if score {actor} mcc_cliptype matches 0','x_undo_clears_cut_clipboard')
     run_as('mcc:redo/run')
-    check(f'if block 3 80 3 air if block 5 80 4 air if score {actor} mcc_undo matches 1','x_redo')
+    check(f'if block 3 80 3 air if block 5 80 4 air if score {actor} mcc_undo matches 1 if score {actor} mcc_clip matches 1 if score {actor} mcc_cliptype matches 2','x_redo_rebuilds_cut_clipboard')
+    check('if block 20019712 0 20000000 gold_block if block 20019714 0 20000001 iron_block','x_redo_clipboard_exact')
     run_as('mcc:undo/run')
     run_as('mcc:cut/run')
     target(12,80,3)
@@ -486,6 +487,40 @@ def integration(java: Path, server: Path):
     target(37,80,5)
     run_as('mcc:paste/dispatch')
     check('if block 37 80 5 air','cut_undo_cannot_second_paste_container')
+
+    # Copying something else after Undo must not destroy the archived Cut Redo
+    # clipboard. Redo restores the original Cut clipboard, not the intervening Copy.
+    lines.extend([
+        'fill 32 80 9 39 80 10 air',
+        'setblock 33 80 9 redstone_block',
+        'setblock 38 80 9 lapis_block',
+        f'scoreboard players set {actor} mcc_p1x 33',
+        f'scoreboard players set {actor} mcc_p1y 80',
+        f'scoreboard players set {actor} mcc_p1z 9',
+        f'scoreboard players set {actor} mcc_p2x 33',
+        f'scoreboard players set {actor} mcc_p2y 80',
+        f'scoreboard players set {actor} mcc_p2z 9',
+        f'scoreboard players set {actor} mcc_p1d 1',
+        f'scoreboard players set {actor} mcc_p2d 1',
+        f'scoreboard players set {actor} mcc_hasa 0',
+        f'scoreboard players set {actor} mcc_ucnt 0',
+        f'scoreboard players set {actor} mcc_uhead 0',
+        f'scoreboard players set {actor} mcc_rcnt 0',
+        f'scoreboard players set {actor} mcc_rhead 0',
+    ])
+    run_as('mcc:cut/run')
+    run_as('mcc:undo/run')
+    lines.extend([
+        f'scoreboard players set {actor} mcc_p1x 38',
+        f'scoreboard players set {actor} mcc_p2x 38',
+    ])
+    run_as('mcc:copy/run')
+    check(f'if score {actor} mcc_cliptype matches 1','cut_redo_intervening_copy_exists')
+    run_as('mcc:redo/run')
+    check(f'if block 33 80 9 air if block 38 80 9 lapis_block if score {actor} mcc_clip matches 1 if score {actor} mcc_cliptype matches 2','cut_redo_replaces_intervening_copy_with_original_cut')
+    target(35,80,9)
+    run_as('mcc:paste/dispatch')
+    check('if block 35 80 9 redstone_block if block 38 80 9 lapis_block','cut_redo_original_clipboard_pastes_exact_source')
 
     # 2b. Rotated Cut + Masked must preserve target blocks where transformed source is air.
     lines.extend([
