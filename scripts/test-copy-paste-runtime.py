@@ -258,6 +258,29 @@ def integration(java: Path, server: Path):
     run_as('mcc:blueprint/clear_internal')
     lines.append(f'scoreboard players set {actor} mcc_mir 0')
 
+    # 0c2. A very distant external Anchor must never move the hidden transformed
+    # Blueprint outside this player's reserved buffer.
+    fixture(10,80,10)
+    lines.extend([
+        f'scoreboard players set {actor} mcc_hasa 1',
+        f'scoreboard players set {actor} mcc_anx 100000',
+        f'scoreboard players set {actor} mcc_any 80',
+        f'scoreboard players set {actor} mcc_anz 100000',
+        f'scoreboard players set {actor} mcc_and 1',
+        f'scoreboard players set {actor} mcc_rot 1',
+        f'scoreboard players set {actor} mcc_mir 0',
+    ])
+    run_as('mcc:copy/run')
+    target(40,80,40)
+    run_as('mcc:paste/dispatch')
+    check(f'if score {actor} mcc_bpsx0 matches 20019712 if score {actor} mcc_bpsx2 matches 20019713 if score {actor} mcc_bpsy0 matches 0 if score {actor} mcc_bpsz0 matches 20002000 if score {actor} mcc_bpsz2 matches 20002002','far_external_anchor_blueprint_hidden_buffer_isolated')
+    run_as('mcc:blueprint/clear_internal')
+    lines.extend([
+        f'scoreboard players set {actor} mcc_rot 0',
+        f'scoreboard players set {actor} mcc_mir 0',
+        f'scoreboard players set {actor} mcc_hasa 0',
+    ])
+
     # 0d. A custom Anchor may be outside the selection and must remain a usable
     # pivot after the first rotation moves the selection somewhere else.
     fixture(10,80,10)
@@ -424,7 +447,7 @@ def integration(java: Path, server: Path):
     run_as('mcc:cut/run')
     check(f'if block 3 80 3 air if block 5 80 4 air if score {actor} mcc_cliptype matches 2','x_real_cut')
     run_as('mcc:undo/run')
-    check(f'if block 3 80 3 gold_block if block 5 80 4 iron_block if score {actor} mcc_redo matches 1','x_undo')
+    check(f'if block 3 80 3 gold_block if block 5 80 4 iron_block if score {actor} mcc_redo matches 1 if score {actor} mcc_clip matches 0 if score {actor} mcc_cliptype matches 0','x_undo_clears_cut_clipboard')
     run_as('mcc:redo/run')
     check(f'if block 3 80 3 air if block 5 80 4 air if score {actor} mcc_undo matches 1','x_redo')
     run_as('mcc:undo/run')
@@ -435,6 +458,68 @@ def integration(java: Path, server: Path):
     target(20,80,3)
     run_as('mcc:paste/dispatch')
     check('if block 20 80 3 air if block 22 80 4 air','x_no_second_paste')
+
+    # 2a. Cut -> Undo must restore a container but invalidate the live Cut clipboard.
+    lines.extend([
+        'fill 34 80 4 38 80 6 air',
+        'setblock 35 80 5 chest',
+        'data modify block 35 80 5 Items set value [{Slot:0b,id:"minecraft:diamond",count:5}]',
+        f'scoreboard players set {actor} mcc_has1 1',
+        f'scoreboard players set {actor} mcc_has2 1',
+        f'scoreboard players set {actor} mcc_hasa 0',
+        f'scoreboard players set {actor} mcc_p1x 35',
+        f'scoreboard players set {actor} mcc_p1y 80',
+        f'scoreboard players set {actor} mcc_p1z 5',
+        f'scoreboard players set {actor} mcc_p1d 1',
+        f'scoreboard players set {actor} mcc_p2x 35',
+        f'scoreboard players set {actor} mcc_p2y 80',
+        f'scoreboard players set {actor} mcc_p2z 5',
+        f'scoreboard players set {actor} mcc_p2d 1',
+        f'scoreboard players set {actor} mcc_ucnt 0',
+        f'scoreboard players set {actor} mcc_uhead 0',
+        f'scoreboard players set {actor} mcc_rcnt 0',
+        f'scoreboard players set {actor} mcc_rhead 0',
+    ])
+    run_as('mcc:cut/run')
+    run_as('mcc:undo/run')
+    check(f'if block 35 80 5 chest if data block 35 80 5 Items[{{id:"minecraft:diamond",count:5}}] if score {actor} mcc_clip matches 0 if score {actor} mcc_cliptype matches 0','cut_undo_container_restored_clipboard_invalidated')
+    target(37,80,5)
+    run_as('mcc:paste/dispatch')
+    check('if block 37 80 5 air','cut_undo_cannot_second_paste_container')
+
+    # 2b. Rotated Cut + Masked must preserve target blocks where transformed source is air.
+    lines.extend([
+        'fill 40 80 0 46 80 2 air',
+        'setblock 40 80 0 gold_block',
+        f'scoreboard players set {actor} mcc_has1 1',
+        f'scoreboard players set {actor} mcc_has2 1',
+        f'scoreboard players set {actor} mcc_hasa 0',
+        f'scoreboard players set {actor} mcc_p1x 40',
+        f'scoreboard players set {actor} mcc_p1y 80',
+        f'scoreboard players set {actor} mcc_p1z 0',
+        f'scoreboard players set {actor} mcc_p1d 1',
+        f'scoreboard players set {actor} mcc_p2x 41',
+        f'scoreboard players set {actor} mcc_p2y 80',
+        f'scoreboard players set {actor} mcc_p2z 0',
+        f'scoreboard players set {actor} mcc_p2d 1',
+        f'scoreboard players set {actor} mcc_mask 1',
+        f'scoreboard players set {actor} mcc_rot 1',
+        f'scoreboard players set {actor} mcc_mir 0',
+        f'scoreboard players set {actor} mcc_ucnt 0',
+        f'scoreboard players set {actor} mcc_uhead 0',
+        f'scoreboard players set {actor} mcc_rcnt 0',
+        f'scoreboard players set {actor} mcc_rhead 0',
+    ])
+    run_as('mcc:cut/run')
+    lines.append('setblock 45 80 1 stone')
+    target(45,80,0)
+    run_as('mcc:paste/dispatch')
+    check('if block 45 80 0 gold_block if block 45 80 1 stone','transformed_cut_masked_preserves_target_under_source_air')
+    lines.extend([
+        f'scoreboard players set {actor} mcc_mask 0',
+        f'scoreboard players set {actor} mcc_rot 0',
+        f'scoreboard players set {actor} mcc_mir 0',
+    ])
 
     # 3. Undo <-> Redo toggles latest real paste.
     run_as('mcc:undo/run')
@@ -458,7 +543,68 @@ def integration(java: Path, server: Path):
     check('if block 4 80 10 gold_block if block 3 80 10 air','move_redo')
     run_as('mcc:undo/run')
 
-    # 4a. Player-facing Move wrappers at yaw 0 must map to the expected world directions.
+    # 4a. Generic Undo guard must include block-entity NBT, not only block states.
+    lines.extend([
+        'fill 29 80 4 32 80 6 air',
+        'setblock 30 80 5 chest',
+        'data modify block 30 80 5 Items set value [{Slot:0b,id:"minecraft:diamond",count:7}]',
+        f'scoreboard players set {actor} mcc_has1 1',
+        f'scoreboard players set {actor} mcc_has2 1',
+        f'scoreboard players set {actor} mcc_hasa 0',
+        f'scoreboard players set {actor} mcc_p1x 30',
+        f'scoreboard players set {actor} mcc_p1y 80',
+        f'scoreboard players set {actor} mcc_p1z 5',
+        f'scoreboard players set {actor} mcc_p1d 1',
+        f'scoreboard players set {actor} mcc_p2x 30',
+        f'scoreboard players set {actor} mcc_p2y 80',
+        f'scoreboard players set {actor} mcc_p2z 5',
+        f'scoreboard players set {actor} mcc_p2d 1',
+        f'scoreboard players set {actor} mcc_dx 1',
+        f'scoreboard players set {actor} mcc_dy 0',
+        f'scoreboard players set {actor} mcc_dz 0',
+        f'scoreboard players set {actor} mcc_ucnt 0',
+        f'scoreboard players set {actor} mcc_uhead 0',
+        f'scoreboard players set {actor} mcc_rcnt 0',
+        f'scoreboard players set {actor} mcc_rhead 0',
+    ])
+    run_as('mcc:move/run')
+    lines.append('data remove block 31 80 5 Items')
+    run_as('mcc:undo/run')
+    check(f'if block 30 80 5 air if block 31 80 5 chest unless data block 31 80 5 Items[0] if score {actor} mcc_ucnt matches 1 if score {actor} mcc_rcnt matches 0','move_undo_guard_detects_container_nbt_change')
+
+    # 4b. Redo also requires the exact post-Undo world to remain untouched.
+    lines.extend([
+        'fill 29 80 4 32 80 6 air',
+        'setblock 30 80 5 emerald_block',
+        f'scoreboard players set {actor} mcc_p1x 30',
+        f'scoreboard players set {actor} mcc_p1y 80',
+        f'scoreboard players set {actor} mcc_p1z 5',
+        f'scoreboard players set {actor} mcc_p2x 30',
+        f'scoreboard players set {actor} mcc_p2y 80',
+        f'scoreboard players set {actor} mcc_p2z 5',
+        f'scoreboard players set {actor} mcc_ucnt 0',
+        f'scoreboard players set {actor} mcc_uhead 0',
+        f'scoreboard players set {actor} mcc_rcnt 0',
+        f'scoreboard players set {actor} mcc_rhead 0',
+    ])
+    run_as('mcc:move/run')
+    run_as('mcc:undo/run')
+    lines.append('setblock 30 80 5 diamond_block')
+    run_as('mcc:redo/run')
+    check(f'if block 30 80 5 diamond_block if block 31 80 5 air if score {actor} mcc_rcnt matches 1 if score {actor} mcc_ucnt matches 0','move_redo_guard_refuses_modified_post_undo_world')
+
+    # Reset guard-test history before direction wrappers.
+    lines.extend([
+        f'scoreboard players set {actor} mcc_ucnt 0',
+        f'scoreboard players set {actor} mcc_uhead 0',
+        f'scoreboard players set {actor} mcc_rcnt 0',
+        f'scoreboard players set {actor} mcc_rhead 0',
+        f'scoreboard players set {actor} mcc_undo 0',
+        f'scoreboard players set {actor} mcc_redo 0',
+        'fill 29 80 4 32 80 6 air',
+    ])
+
+    # 4c. Player-facing Move wrappers at yaw 0 must map to the expected world directions.
     lines.extend([
         'setblock 30 80 5 emerald_block',
         f'scoreboard players set {actor} mcc_has1 1',
@@ -498,6 +644,35 @@ def integration(java: Path, server: Path):
     check('if block 3 80 11 gold_block if block 5 80 11 diamond_block if block 5 80 10 iron_block','flip_z_real_positions')
     run_as('mcc:undo/run')
     check('if block 3 80 10 gold_block if block 5 80 10 diamond_block if block 5 80 11 iron_block','flip_z_undo')
+
+    # 4d. With a custom external Anchor, Flip keeps the Anchor fixed and moves
+    # the selected structure around that pivot.
+    fixture(10,80,25)
+    lines.extend([
+        f'scoreboard players set {actor} mcc_hasa 1',
+        f'scoreboard players set {actor} mcc_anx 20',
+        f'scoreboard players set {actor} mcc_any 80',
+        f'scoreboard players set {actor} mcc_anz 25',
+        f'scoreboard players set {actor} mcc_and 1',
+    ])
+    run_as('mcc:flip/x')
+    check(f'if block 30 80 25 gold_block if block 28 80 25 diamond_block if block 28 80 26 iron_block if score {actor} mcc_anx matches 20 if score {actor} mcc_anz matches 25 if score {actor} mcc_p1x matches 28 if score {actor} mcc_p2x matches 30','external_anchor_flip_x_fixed_pivot')
+    run_as('mcc:undo/run')
+    check('if block 10 80 25 gold_block if block 12 80 25 diamond_block if block 12 80 26 iron_block','external_anchor_flip_x_undo')
+
+    fixture(10,80,25)
+    lines.extend([
+        f'scoreboard players set {actor} mcc_hasa 1',
+        f'scoreboard players set {actor} mcc_anx 10',
+        f'scoreboard players set {actor} mcc_any 80',
+        f'scoreboard players set {actor} mcc_anz 35',
+        f'scoreboard players set {actor} mcc_and 1',
+    ])
+    run_as('mcc:flip/z')
+    check(f'if block 10 80 45 gold_block if block 12 80 45 diamond_block if block 12 80 44 iron_block if score {actor} mcc_anx matches 10 if score {actor} mcc_anz matches 35 if score {actor} mcc_p1z matches 44 if score {actor} mcc_p2z matches 45','external_anchor_flip_z_fixed_pivot')
+    run_as('mcc:undo/run')
+    check('if block 10 80 25 gold_block if block 12 80 25 diamond_block if block 12 80 26 iron_block','external_anchor_flip_z_undo')
+    lines.append(f'scoreboard players set {actor} mcc_hasa 0')
 
     # 5. Direct Rotate90 modifies real blocks around Pos1 and is Undo/Redo reversible.
     fixture(3,80,17)
