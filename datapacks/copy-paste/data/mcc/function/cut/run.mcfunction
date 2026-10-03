@@ -45,6 +45,7 @@ scoreboard players operation @s mcc_uy2 = @s mcc_maxy
 scoreboard players operation @s mcc_uz2 = @s mcc_maxz
 scoreboard players set @s mcc_usel 0
 scoreboard players set @s mcc_undo 1
+scoreboard players set @s mcc_histcut 1
 function mcc:history/commit_edit
 scoreboard players set @s mcc_cliptype 2
 tellraw @s [{"text":"[Copy/Paste] Cut 完成。使用 /trigger v 會真正搬到目標位置，成功後 Cut Clipboard 會被消耗。","color":"green"}]
