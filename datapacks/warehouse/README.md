@@ -102,4 +102,4 @@ execute positioned 100 64 100 run function warehouse:api/resolve_block
 
 Pick 最遠約 6 格，會忽略空氣與水／岩漿等流體，解析準星方塊後使用共用 Warehouse `count_item` / `take_item` API 取料。一次最多拿該物品的原版最大堆疊數；若倉庫只有較少數量，會拿現有數量。只消耗 Warehouse API 認定的普通、無自訂 components 堆疊。
 
-真正的滑鼠中鍵事件無法由純 Vanilla datapack 可靠偵測，因此 Phase 4 的入口是 `/trigger pick` 與 Warehouse 主 Dialog 的「Pick 一組」按鈕。
+真正的滑鼠中鍵事件無法由純 Vanilla datapack 可靠偵測，因此 Phase 4 的入口是 `/trigger pick` 與 Warehouse 主 Dialog 的「Pick 一組」按鈕。物品查詢也共用同一條取料路徑：搜尋物品 → 點選結果 →「取一組」，不另外維護第二套庫存或扣料邏輯。
