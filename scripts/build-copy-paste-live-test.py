@@ -1,4 +1,4 @@
-"""Build an opt-in real-player v1.2 integration test datapack; never runs on load.
+"""Build an opt-in real-player v1.2.1 integration test datapack; never runs on load.
 
 Run /function mcc_test:start in a BACKED UP disposable creative world.
 Uses the real player's triggers and Minecraft tick dispatch, with delayed assertions.
@@ -13,7 +13,7 @@ parser.add_argument('--output',type=Path,default=Path(__file__).resolve().parent
 OUT=parser.parse_args().output.resolve()
 F=OUT/'data/mcc_test/function'
 F.mkdir(parents=True,exist_ok=True)
-(OUT/'pack.mcmeta').write_text(json.dumps({'pack':{'description':'Opt-in CopyPaste v1.2 live regression','min_format':121,'max_format':121}},ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+(OUT/'pack.mcmeta').write_text(json.dumps({'pack':{'description':'Opt-in CopyPaste v1.2.1 live regression','min_format':121,'max_format':121}},ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 
 steps=[]
 def step(*commands): steps.append(list(commands))
@@ -56,7 +56,7 @@ reset_transform()
 fixture(); selection()
 check('raycast selection','if score @s mcc_p1x matches -200 if score @s mcc_p1y matches 250 if score @s mcc_p1z matches 90 if score @s mcc_p2x matches -198 if score @s mcc_p2z matches 91')
 
-# v1.2 selection contract: reselecting Pos1/Pos2 changes the next Copy, while
+# v1.2.1 selection contract: reselecting Pos1/Pos2 changes the next Copy, while
 # doing another Copy without new Pos keeps using the current selection.
 selection2(); trigger('c')
 target(-170,105); trigger('v')
@@ -68,7 +68,7 @@ check('selection persists without new pos','in minecraft:overworld positioned -1
 trigger('previewclear')
 selection()
 
-# v1.2 Anchor lifecycle: external pivots are valid, Clear Anchor works through the
+# v1.2.1 Anchor lifecycle: external pivots are valid, Clear Anchor works through the
 # real trigger/tick path, and reselecting either endpoint drops a stale custom Anchor.
 step('execute in minecraft:overworld run setblock -190 250 100 stone')
 aim(-190,100); trigger('anchor')
@@ -109,7 +109,7 @@ check('preview clear','in minecraft:overworld unless entity @e[type=minecraft:bl
 # Copy/Blueprint is not a real world edit and must not consume its Clipboard.
 check('copy clipboard persists','if score @s mcc_clip matches 1 if score @s mcc_cliptype matches 1')
 
-# v1.2 material-backed Build through the real player trigger path.
+# v1.2.1 material-backed Build through the real player trigger path.
 # The harness expects the Warehouse datapack to be installed alongside Copy/Paste.
 target(); trigger('v')
 step(
@@ -239,4 +239,4 @@ for i,cmds in enumerate(steps):
     'function mcc_test:step_0\n',
     encoding='utf-8'
 )
-print(f'Built {len(steps)} v1.2 live steps at {OUT}')
+print(f'Built {len(steps)} v1.2.1 live steps at {OUT}')
