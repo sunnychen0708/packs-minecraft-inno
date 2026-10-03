@@ -1,11 +1,16 @@
-# Minecraft Copy/Paste Datapack v1.1
+# Minecraft Copy/Paste Datapack v1.2
 
 適用：Minecraft Java Edition 26.3（Data Pack 121.0）
 
 純 Vanilla datapack。操作使用 Trigger。材料施工依賴同 repo 的 Warehouse datapack，並直接使用 Warehouse 共用註冊資料與 API。
 
-## v1.1
+## v1.2
 
+- 修正 Pos1/Pos2 重新選取後 Copy/Cut 必須使用目前選區，且未重新選取時選區持續可用。
+- 修正預設 Anchor/Blueprint 精確定位，沒有自訂 Anchor 時固定以 Pos1 為 pivot。
+- 自訂 Anchor 可位於選區外，支援繞外部 pivot 的大半徑 Rotate，並加入連續旋轉 runtime regression。
+- 新增 `/trigger cphelp` 與遊戲內指令教學 Dialog。
+- 擴充 Rotate/Mirror、Move、Flip、Cut、Undo/Redo 的官方 Minecraft 26.3 behavioral regression。
 - 完成 Warehouse 共用材料 API 整合，不再維護 Copy/Paste 私有材料箱。
 - Build 的 Undo/Redo 會同步退款／重新扣料，並保留防複製 guard 與持久退款 queue。
 - Blueprint 支援六方向微調、只讀材料報表、覆蓋重算與二次施工確認。
@@ -219,6 +224,6 @@ python3 scripts/test-copy-paste-runtime.py \
   --accept-eula
 ```
 
-目前 CI 會同時跑 Copy/Paste 專用 26.3 runtime，以及 Utilities + Warehouse + Copy/Paste 三包一起載入的 26.3 compatibility gate。`copy-paste-v1.1` release 也經過同一組 release gate。更完整的覆蓋範圍與仍需真人 client 驗證的項目見 [LIVE-VALIDATION.md](LIVE-VALIDATION.md)；多人隔離設計與雙人測試方式見 [MULTIPLAYER-VALIDATION.md](MULTIPLAYER-VALIDATION.md)。
+目前 CI 會同時跑 Copy/Paste 專用 26.3 runtime，以及 Utilities + Warehouse + Copy/Paste 三包一起載入的 26.3 compatibility gate。`copy-paste-v1.2` release 會經過同一組 release gate。更完整的覆蓋範圍與仍需真人 client 驗證的項目見 [LIVE-VALIDATION.md](LIVE-VALIDATION.md)；多人隔離設計與雙人測試方式見 [MULTIPLAYER-VALIDATION.md](MULTIPLAYER-VALIDATION.md)。
 
 正式版本仍統一由 `<pack-name>-v<version>` tag 觸發 `release-pack.yml` 驗證、打包與發布 ZIP。
