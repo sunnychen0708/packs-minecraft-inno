@@ -169,6 +169,8 @@ def main() -> None:
     pick_withdraw = (PACK / "data/warehouse/function/pick/withdraw.mcfunction").read_text(encoding="utf-8")
     pick_take = (PACK / "data/warehouse/function/pick/take.mcfunction").read_text(encoding="utf-8")
     pick_give = (PACK / "data/warehouse/function/pick/give.mcfunction").read_text(encoding="utf-8")
+    pick_from_item = (PACK / "data/warehouse/function/pick/from_item.mcfunction").read_text(encoding="utf-8")
+    show_unclassified = (PACK / "data/warehouse/function/rule/show_unclassified.mcfunction").read_text(encoding="utf-8")
     assert setup.count("scoreboard objectives add pick trigger") == 1
     assert "warehouse:meta v44" in load and "warehouse:migrate_v44" in load
     assert warehouse_tick.count("scoreboard players enable @a pick") == 1
@@ -183,6 +185,9 @@ def main() -> None:
     assert "warehouse:api/take_item" in pick_take
     assert "entity @s[type=minecraft:player]" in pick_take
     assert "$give @s $(item_id) $(count)" in pick_give
+    assert "probe_max_stack" in pick_from_item and "warehouse:pick/withdraw" in pick_from_item
+    assert "warehouse:pick/from_item" in show_classified and "取一組" in show_classified
+    assert "warehouse:pick/from_item" in show_unclassified and "取一組" in show_unclassified
 
     print(f"PASS warehouse regression v{version}: reset/search/API/Highlight/Pick are bounded and validated")
 
