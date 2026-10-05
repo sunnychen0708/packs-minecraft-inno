@@ -24,9 +24,11 @@ execute if score @s mcc_hasa matches 1 run scoreboard players operation @s mcc_d
 execute if score @s mcc_hasa matches 1 run scoreboard players operation @s mcc_dsty = @s mcc_any
 execute if score @s mcc_hasa matches 1 run scoreboard players operation @s mcc_dstz = @s mcc_anz
 
-execute if score @s mcc_erot matches 1 run function mcc:paste/prepare_r1_m0
-execute if score @s mcc_erot matches 2 run function mcc:paste/prepare_r2_m0
-execute if score @s mcc_erot matches 3 run function mcc:paste/prepare_r3_m0
+execute if score @s mcc_erot matches 1 if score @s mcc_emir matches 0 run function mcc:paste/prepare_r1_m0
+execute if score @s mcc_erot matches 2 if score @s mcc_emir matches 0 run function mcc:paste/prepare_r2_m0
+execute if score @s mcc_erot matches 3 if score @s mcc_emir matches 0 run function mcc:paste/prepare_r3_m0
+execute if score @s mcc_erot matches 0 if score @s mcc_emir matches 1 run function mcc:paste/prepare_r0_m1
+execute if score @s mcc_erot matches 0 if score @s mcc_emir matches 2 run function mcc:paste/prepare_r0_m2
 
 scoreboard players operation @s mcc_dsty2 = @s mcc_psty
 scoreboard players operation @s mcc_dsty2 += @s mcc_sy
@@ -149,5 +151,5 @@ execute if score @s mcc_hasa matches 0 if score @s mcc_erot matches 2 run functi
 execute if score @s mcc_hasa matches 0 if score @s mcc_erot matches 3 run function mcc:rotate_edit/update_default_r270
 
 function mcc:history/commit_edit
-tellraw @s [{"text":"[Copy/Paste] 已直接旋轉真實選取區域，可用 /trigger undo，Undo 後可 /trigger redo。","color":"green"}]
+tellraw @s [{"text":"[Copy/Paste] 已直接變換真實選取區域，可用 /trigger undo，Undo 後可 /trigger redo。","color":"green"}]
 return 1

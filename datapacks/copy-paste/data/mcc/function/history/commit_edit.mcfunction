@@ -31,23 +31,35 @@ scoreboard players set @s mcc_ok 0
 function mcc:history/archive_undo with storage mcc:temp
 execute unless score @s mcc_ok matches 1 run scoreboard players set @s mcc_ucnt 0
 execute unless score @s mcc_ok matches 1 run scoreboard players set @s mcc_uhead 0
-execute unless score @s mcc_ok matches 1 run scoreboard players set @s mcc_undo 1
-execute unless score @s mcc_ok matches 1 run tellraw @s [{"text":"[Copy/Paste] 多層 Undo 歷史寫入失敗；這次仍保留單層 Undo。","color":"yellow"}]
+execute unless score @s mcc_ok matches 1 run scoreboard players set @s mcc_undo 0
 execute unless score @s mcc_ok matches 1 run scoreboard players set @s mcc_histmat 0
+execute unless score @s mcc_ok matches 1 run scoreboard players set @s mcc_histguard 0
+execute unless score @s mcc_ok matches 1 run scoreboard players set @s mcc_histcut 0
+execute unless score @s mcc_ok matches 1 run tellraw @s [{"text":"[Copy/Paste] Undo 歷史寫入失敗；為避免資源複製，本次操作不提供 Undo。","color":"red"}]
 execute unless score @s mcc_ok matches 1 run return fail
 
 scoreboard players operation @s mcc_uhead = @s mcc_hslot
 execute if score @s mcc_ucnt matches ..4 run scoreboard players add @s mcc_ucnt 1
 
-# Material-backed Build history also stores the exact expected post-Build world.
-execute if score @s mcc_histmat matches 1 run scoreboard players operation @s mcc_hslot = @s mcc_uhead
-execute if score @s mcc_histmat matches 1 run function mcc:history/archive_material_guard
-execute if score @s mcc_histmat matches 1 unless score @s mcc_ok matches 1 run tellraw @s [{"text":"[Copy/Paste] 材料 Undo 防複製快照建立失敗；本次仍可 Undo 世界，但不會自動退材料。","color":"yellow"}]
-execute if score @s mcc_histmat matches 1 unless score @s mcc_ok matches 1 run scoreboard players set @s mcc_histmat 0
+# Every world-edit history entry stores the exact expected post-edit world.
+# Undo is allowed only while the live world still matches this guard snapshot.
+scoreboard players set @s mcc_histguard 0
+scoreboard players operation @s mcc_hslot = @s mcc_uhead
+function mcc:history/archive_material_guard
+execute unless score @s mcc_ok matches 1 run scoreboard players set @s mcc_ucnt 0
+execute unless score @s mcc_ok matches 1 run scoreboard players set @s mcc_uhead 0
+execute unless score @s mcc_ok matches 1 run scoreboard players set @s mcc_undo 0
+execute unless score @s mcc_ok matches 1 run scoreboard players set @s mcc_histmat 0
+execute unless score @s mcc_ok matches 1 run scoreboard players set @s mcc_histcut 0
+execute unless score @s mcc_ok matches 1 run tellraw @s [{"text":"[Copy/Paste] Undo 防複製快照建立失敗；為安全起見已清除目前 Undo 歷史。","color":"red"}]
+execute unless score @s mcc_ok matches 1 run return fail
+scoreboard players set @s mcc_histguard 1
 
 execute store result storage mcc:temp id int 1 run scoreboard players get @s mcc_id
 execute store result storage mcc:temp slot int 1 run scoreboard players get @s mcc_uhead
 function mcc:history/save_undo_meta with storage mcc:temp
 scoreboard players set @s mcc_histmat 0
+scoreboard players set @s mcc_histguard 0
+scoreboard players set @s mcc_histcut 0
 scoreboard players set @s mcc_undo 1
 return 1

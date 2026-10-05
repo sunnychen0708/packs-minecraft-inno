@@ -21,15 +21,27 @@ execute store result storage mcc:temp sz int 1 run scoreboard players get @s mcc
 execute store result storage mcc:temp cbz2 int 1 run scoreboard players get @s mcc_cbz2
 function mcc:paste/save_template with storage mcc:temp
 
-# Re-run transform math around a safe hidden Overworld anchor.
+# Re-run the transform into this player's canonical hidden Blueprint buffer.
+# Do not let a far external Anchor move hidden data outside the player's slot.
 scoreboard players operation @s mcc_bpx = @s mcc_id
 scoreboard players operation @s mcc_bpx *= #slot mcc_id
 scoreboard players operation @s mcc_bpx += #base mcc_id
-scoreboard players operation @s mcc_dstx = @s mcc_bpx
-scoreboard players operation @s mcc_dstx += #bpofs mcc_id
-scoreboard players set @s mcc_dsty 64
-scoreboard players operation @s mcc_dstz = #bpz mcc_id
-scoreboard players operation @s mcc_dstz += #bpofs mcc_id
+
+# Solve once at origin, then translate the Anchor destination so transformed
+# bounding minimum lands exactly at (player_slot_x, 0, #bpz).
+scoreboard players set @s mcc_dstx 0
+scoreboard players set @s mcc_dsty 0
+scoreboard players set @s mcc_dstz 0
+function mcc:paste/prepare_transform
+scoreboard players operation @s mcc_tmp = @s mcc_bpx
+scoreboard players operation @s mcc_tmp -= @s mcc_bminx
+scoreboard players operation @s mcc_dstx += @s mcc_tmp
+scoreboard players operation @s mcc_tmp = #zero mcc_id
+scoreboard players operation @s mcc_tmp -= @s mcc_psty
+scoreboard players operation @s mcc_dsty += @s mcc_tmp
+scoreboard players operation @s mcc_tmp = #bpz mcc_id
+scoreboard players operation @s mcc_tmp -= @s mcc_bminz
+scoreboard players operation @s mcc_dstz += @s mcc_tmp
 function mcc:paste/prepare_transform
 
 scoreboard players operation @s mcc_bpsx0 = @s mcc_bminx

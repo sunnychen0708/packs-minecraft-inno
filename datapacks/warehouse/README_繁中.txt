@@ -1,7 +1,7 @@
-Minecraft Java 26.3 自動分類倉庫 v4.4
+Minecraft Java 26.3 自動分類倉庫 v4.4.1
 
 目前版本／發布
-- 原始碼版本：v4.4
+- 原始碼版本：v4.4.1（尚未發布）
 - 最新 Release：warehouse-v4.4
 - Data Pack 格式：121.0（Minecraft Java 26.3）
 
@@ -10,6 +10,11 @@ Minecraft Java 26.3 自動分類倉庫 v4.4
 2. 將 warehouse-v4.4.zip 放入世界 datapacks 資料夾。
 3. 執行 /reload。
 4. 既有 61 箱註冊、玩家分類覆寫、自訂箱名、scoreboard 與其他世界資料會沿用；v4.4 migration 不會重設這些資料。
+
+v4.4.1：清理
+- 移除已沒有入口的舊版「讀取箱子」流程（已由「查看倉庫」取代），玩家可見行為不變。
+- 新增 v4.4.1 版本 marker；不會修改既有世界資料。
+- 官方 26.3 runtime regression 補上自動分類、溢位、合併、玩家覆寫、自動堆疊、改分類搬移、搜尋、查看、Highlight 與刪除註冊。
 
 v4.4：Pick
 - 新增 /trigger pick 與 Warehouse 主 Dialog 的「Pick 一組」。
@@ -64,7 +69,7 @@ v4.0：Minecraft 26.3 內容
 - 不重設 warehouse:boxnames：玩家自訂箱名保留。
 - 不重設 warehouse:rules overrides：玩家新增／移動／移除的分類覆寫保留。
 - 不更名既有 scoreboard objectives；既有玩家與系統分數可繼續使用。
-- v4.0～v4.4 migrations 都以可再生成資料或版本 marker 為主；目前 v4.4 marker 不會清空既有世界資料。
+- v4.0～v4.4.1 migrations 都以可再生成資料或版本 marker 為主；目前 v4.4.1 marker 不會清空既有世界資料。
 - 搜尋索引屬可重建資料；v4.2 起使用 72-shard 建立流程。
 
 目前限制

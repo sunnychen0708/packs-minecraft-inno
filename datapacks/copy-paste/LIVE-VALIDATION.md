@@ -1,6 +1,6 @@
-# Copy/Paste 驗證狀態（v1.2.1 source / 2026-10-04）
+# Copy/Paste 驗證狀態（v1.3 source / 2026-10-05）
 
-目前原始碼為 **v1.2.1（尚未發布）**；最新已發布 ZIP 仍是 **v1.2**。目標 Minecraft Java 26.3（Data Pack 121.0）。
+目前原始碼為 **v1.3（尚未發布）**；最新已發布 ZIP 仍是 **v1.2**。目標 Minecraft Java 26.3（Data Pack 121.0）。
 
 這份文件刻意把「官方 server headless regression」和「真人玩家 Trigger / Dialog 驗證」分開。兩者不能互相冒充。
 
@@ -18,7 +18,7 @@
 
 ## Headless behavioral runtime 的實際範圍
 
-`scripts/test-copy-paste-runtime.py` 是 v1.2.1 source 的官方-server regression，目前為 **113 個動態 assertions**，涵蓋：
+`scripts/test-copy-paste-runtime.py` 是 v1.3 source 的官方-server regression，目前為 **133 個動態 assertions**，涵蓋：
 
 - Pos1 / Pos2 / Anchor / V 的 raycast function。
 - 沒有自訂 Anchor 時，Pos1 為預設 Anchor，即使 Pos1 不是選區最小角也要精確對位。
@@ -31,6 +31,12 @@
 - Warehouse 扣料、Undo 退款、Redo 重新扣料、防複製 guard。
 - Cut + V、Move、Flip X/Z、Rotate 90/180/270。
 - 五層 Undo/Redo。
+- 每種世界編輯的 Undo/Redo 防複製快照：操作後區域（含容器內容物）被改過時拒絕 Undo/Redo。
+- Cut → Undo 作廢 Cut Clipboard、Cut → Undo → Redo 重建原本的 Cut Clipboard（中間做過別的 Copy 也一樣）。
+- Rotate 後的 Masked Cut 貼上保留目標既有方塊。
+- 自訂（外部）Anchor 的 Flip X/Z：Anchor 固定、結構繞 Anchor 平面鏡像。
+- 來源加目的地 Z 跨度超過 200 格的長距離 Move 與 Undo（內部暫存區不互相覆蓋）。
+- 材料工作進行中被擋下的指令會觸發提示。
 
 **限制：這個 runtime 使用 armor stand actor，並直接呼叫多數內部 `mcc:...` functions。**  
 因此它不能證明以下玩家路徑：
@@ -42,9 +48,9 @@
 
 所以「headless runtime PASS」不能再被描述成「玩家實機全部驗過」。
 
-## v1.2.1 真人 Trigger harness
+## v1.3 真人 Trigger harness
 
-`scripts/build-copy-paste-live-test.py` 已更新到 v1.2.1。它會產生 opt-in 測試 datapack，使用**真人玩家本人的 trigger objective**，每一步交給正常 Minecraft tick dispatch 處理。
+`scripts/build-copy-paste-live-test.py` 已更新到 v1.3。它會產生 opt-in 測試 datapack，使用**真人玩家本人的 trigger objective**，每一步交給正常 Minecraft tick dispatch 處理。
 
 目前生成案例包含：
 
@@ -55,9 +61,12 @@
 - Pos1 非最小角時的預設 Anchor Blueprint 精確位置。
 - Copy / Blueprint。
 - Warehouse 材料支援的 Build。
+- Cut → Undo 作廢 Cut Clipboard、Redo 重建 Cut Clipboard。
 - Cut + V。
 - Move / Flip / Rotate 與 Undo/Redo。
 - 跨維度 Copy / Cut。
+
+Harness 開始時會 forceload 主世界與地獄的測試區（x=-210..-160、z=80..120），並在每次佈置後先檢查「fixture ready / target ready」。佈置失敗會被回報為佈置失敗，不會被誤判成功能失敗；結束時會解除 forceload。
 
 執行方式：
 
@@ -71,13 +80,13 @@ python3 scripts/build-copy-paste-live-test.py
 /function mcc_test:start
 ```
 
-目前 repo **尚未提交一份 v1.2.1 真人 harness 全 PASS 的 client evidence**。在那之前，只能說 v1.2.1 source 已通過官方 server headless regression，不能說真人 Trigger / Dialog 已完整驗證。
+目前 repo **尚未提交一份 v1.3 真人 harness 全 PASS 的 client evidence**。在那之前，只能說 v1.3 source 已通過官方 server headless regression，不能說真人 Trigger / Dialog 已完整驗證。
 
 ## Dialog 檢查
 
 `/trigger copypaste` 的 active UI 是 `data/mcc/dialog/main.json`，不是舊的 `panel.mcfunction`。
 
-v1.2.1 active Dialog 必須至少包含：
+v1.3 active Dialog 必須至少包含：
 
 - Pos1 / Pos2 / Anchor / 清 Anchor。
 - Copy / Cut / Blueprint。
@@ -91,7 +100,7 @@ CI 現在直接檢查 active Dialog，不再拿沒有被 `/trigger copypaste` �
 
 `tests/evidence/copy-paste-live-20260930.txt` 是 2026-09-30 的真人 client evidence，當時修的是 v0.4.1 → v0.4.2 的 Mode 與舊玩家 migration 問題。
 
-那份 evidence 只能證明當時版本的真人路徑曾跑過，**不能替代 v1.2.1 的 Blueprint / Build / external Anchor / Dialog 驗證**。
+那份 evidence 只能證明當時版本的真人路徑曾跑過，**不能替代 v1.3 的 Blueprint / Build / external Anchor / Dialog 驗證**。
 
 ## 重跑自動驗證
 

@@ -1,4 +1,5 @@
-scoreboard players operation @s mcc_hslot = @s mcc_txslot
+execute if score @s mcc_matjob matches 1 run scoreboard players operation @s mcc_hslot = @s mcc_txslot
+execute unless score @s mcc_matjob matches 1 run scoreboard players operation @s mcc_hslot = @s mcc_rhead
 function mcc:history/setup_redo_z
 function mcc:redo/setup_buffer
 execute store result storage mcc:temp cp.sx int 1 run scoreboard players get @s mcc_rbx

@@ -106,11 +106,11 @@ def check_clipboard_isolation(pack: Path):
         assert 'mcc:work_$(id)' in text
         assert 'mcc:clipboard_$(id)' not in text
     work=read(pack/'data/mcc/function/work/save_template.mcfunction')
-    assert 'mcc:work_$(id)' in work and '20000400' in work
+    assert 'mcc:work_$(id)' in work and '20000500' in work
     load=read(pack/'data/mcc/function/load.mcfunction')
     assert '#cbz mcc_id 20000000' in load
     assert '#ubz mcc_id 20000200' in load
-    assert '#workz mcc_id 20000400' in load
+    assert '#workz mcc_id 20000500' in load
 
 def check_ordering(pack: Path):
     move=read(pack/'data/mcc/function/move/run.mcfunction')
@@ -169,13 +169,28 @@ def check_selection_math(pack: Path):
 def check_flip_anchor_formula(pack: Path):
     x=read(pack/'data/mcc/function/flip/x.mcfunction')
     z=read(pack/'data/mcc/function/flip/z.mcfunction')
-    assert 'mcc_tmp = @s mcc_minx' in x and 'mcc_tmp += @s mcc_maxx' in x and 'mcc_tmp -= @s mcc_anx' in x
-    assert 'mcc_tmp = @s mcc_minz' in z and 'mcc_tmp += @s mcc_maxz' in z and 'mcc_tmp -= @s mcc_anz' in z
+    xa=read(pack/'data/mcc/function/flip/x_anchor.mcfunction')
+    za=read(pack/'data/mcc/function/flip/z_anchor.mcfunction')
+    transform=read(pack/'data/mcc/function/rotate_edit/run.mcfunction')
+    place=read(pack/'data/mcc/function/rotate_edit/place_overworld.mcfunction')
+
+    # No custom Anchor keeps the existing in-place bounding-box Flip behavior.
+    # With a custom Anchor, route through the fixed-pivot transform engine instead
+    # of mirroring/moving the Anchor itself.
+    assert 'mcc_hasa matches 1 run return run function mcc:flip/x_anchor' in x
+    assert 'mcc_hasa matches 1 run return run function mcc:flip/z_anchor' in z
+    assert 'mcc_anx = @s mcc_tmp' not in x
+    assert 'mcc_anz = @s mcc_tmp' not in z
+    assert 'mcc_erot 0' in xa and 'mcc_emir 1' in xa and 'front_back' in xa
+    assert 'mcc_erot 0' in za and 'mcc_emir 2' in za and 'left_right' in za
+    assert 'prepare_r0_m1' in transform and 'prepare_r0_m2' in transform
+    assert '$(erot) $(emir)' in place
+
     rng=random.Random(401)
     for _ in range(2000):
-        lo=rng.randint(-1000,1000); hi=lo+rng.randint(0,47); a=rng.randint(lo-100,hi+100)
-        b=lo+hi-a
-        assert lo+hi-b==a
+        p=rng.randint(-2000,2000); a=rng.randint(-2000,2000)
+        mirrored=2*a-p
+        assert 2*a-mirrored==p
 
 def check_move_model():
     rng=random.Random(4041)
@@ -223,12 +238,19 @@ def check_multiplayer_isolation(pack: Path):
     for z0,z1 in hist_ranges:
         assert not (z0 <= bpz+127 and bpz <= z1), f'history overlaps blueprint lane: {(z0,z1)}'
 
+    # Copy/Cut/Work/Blueprint buffers hold one selection (<=128 per axis), but the
+    # Undo/Redo scratch lanes hold Move/Rotate source+destination unions (<=256).
+    lane_depth={'clipboard':128,'undo':256,'work':128,'redo':256,'blueprint':128}
+    work_literals=set()
+    for p in (pack/'data/mcc/function/work').glob('*.mcfunction'):
+        work_literals.update(int(z) for z in re.findall(r'\b(2000\d{4})\b',read(p)))
+    assert work_literals == {workz}, f'work/* hard-coded Z {sorted(work_literals)} != #workz {workz}'
     rects=[]
     for player_id in range(1,65):
         x0=base+player_id*slot
-        x1=x0+127
         for kind,z0 in [('clipboard',cbz),('undo',ubz),('work',workz),('redo',redoz),('blueprint',bpz)]:
-            rects.append((player_id,kind,x0,x1,z0,z0+127))
+            depth=lane_depth[kind]
+            rects.append((player_id,kind,x0,x0+depth-1,z0,z0+depth-1))
     for i,a in enumerate(rects):
         for b in rects[i+1:]:
             overlap_x=not (a[3] < b[2] or b[3] < a[2])
@@ -291,16 +313,17 @@ def check_v100_semantics(pack: Path):
     assert 'scoreboard players set @s mcc_cliptype 0' in cut_paste
     assert 'mcc_sx = @s mcc_selx' in snapshot
 
-    # v0.6: five-level per-player Undo/Redo ring history, with legacy one-step fallback.
+    # Five-level per-player Undo/Redo ring history. Legacy one-step snapshots are
+    # deliberately rejected because they have no post-edit anti-duplication guard.
     undo=read(pack/'data/mcc/function/undo/run.mcfunction')
     redo=read(pack/'data/mcc/function/redo/run.mcfunction')
     hundo=read(pack/'data/mcc/function/history/undo.mcfunction')
     hredo=read(pack/'data/mcc/function/history/redo.mcfunction')
     commit=read(pack/'data/mcc/function/history/commit_edit.mcfunction')
     assert 'mcc_ucnt matches 1..' in undo and 'function mcc:history/undo' in undo
-    assert 'mcc_undo matches 1 run return run function mcc:undo/legacy_run' in undo
+    assert 'legacy_run' not in undo and '舊版 Undo 沒有防複製安全快照' in undo
     assert 'mcc_rcnt matches 1..' in redo and 'function mcc:history/redo' in redo
-    assert 'mcc_redo matches 1 run return run function mcc:redo/legacy_run' in redo
+    assert 'legacy_run' not in redo and '舊版 Redo 沒有防複製安全快照' in redo
     assert 'scoreboard players set @s mcc_rcnt 0' in commit
     assert 'scoreboard players set @s mcc_rhead 0' in commit
     assert 'mcc_hslot matches 6..' in commit
@@ -441,19 +464,18 @@ def check_v100_semantics(pack: Path):
     assert (pack/'data/mcc/function/blueprint/nudge/run.mcfunction').is_file()
     assert 'function mcc:blueprint/recount_start' in read(pack/'data/mcc/function/blueprint/nudge/run.mcfunction')
     assert 'mcc_bpover_scan' in read(pack/'data/mcc/function/tick.mcfunction')
-    assert (pack/'data/mcc/dialog/main.json').is_file()
     assert (pack/'data/mcc/dialog/tutorial.json').is_file()
-    main_dialog=read(pack/'data/mcc/dialog/main.json')
+    # /trigger copypaste builds status strings, then shows ui/show (macro Dialog).
+    main_dialog=read(pack/'data/mcc/function/ui/show.mcfunction')+read(pack/'data/mcc/dialog/nudge.json')+read(pack/'data/mcc/dialog/edit.json')
     tutorial_dialog=read(pack/'data/mcc/dialog/tutorial.json')
-    assert '"dialog": "warehouse:main"' not in main_dialog
-    assert '"command": "trigger wh_nav set 1"' in main_dialog
-    assert '"command": "trigger cphelp"' in main_dialog
-    assert '"command": "trigger anchor set 2"' in main_dialog
+    assert 'function mcc:ui/show with storage mcc:ui' in read(pack/'data/mcc/function/ui/open.mcfunction')
     for command in (
-        'trigger pos1','trigger pos2','trigger anchor','trigger c','trigger x','trigger v',
-        'trigger build','trigger materials','trigger previewclear','trigger undo','trigger redo',
+        'trigger pos1','trigger pos2','trigger anchor','trigger anchor set 2','trigger c','trigger x','trigger v',
+        'trigger rotate','trigger mirror','trigger mode','trigger build','trigger materials','trigger previewclear',
+        'trigger undo','trigger redo','trigger cphelp','trigger wh_nav set 1','trigger copypaste',
+        'trigger bpleft set 1','trigger bpdown set 5','trigger left set 1','trigger flipx','trigger rotate90',
     ):
-        assert f'"command": "{command}"' in main_dialog, f'active Dialog missing core action: {command}'
+        assert f'"command":"{command}"' in main_dialog.replace('": "','":"'), f'active Dialog missing core action: {command}'
     assert '/trigger pos1' in tutorial_dialog and '/trigger pos2' in tutorial_dialog
     assert '/trigger c' in tutorial_dialog and '/trigger x' in tutorial_dialog and '/trigger v' in tutorial_dialog
     assert '/trigger build' in tutorial_dialog and '/trigger undo' in tutorial_dialog and '/trigger redo' in tutorial_dialog
@@ -462,12 +484,38 @@ def check_v100_semantics(pack: Path):
     assert read(pack/'data/mcc/function/ui/tutorial.mcfunction').strip() == 'dialog show @s mcc:tutorial'
     assert 'scoreboard players set @s mcc_histmat 1' in place
     assert (pack/'data/mcc/tags/block/material_unsupported.json').is_file()
-    # main.json is the active /trigger copypaste UI. Do not use the legacy
-    # panel.mcfunction as evidence that a player-visible control exists.
-    assert '"command": "trigger build"' in main_dialog
-    assert '"command": "trigger materials"' in main_dialog
-    assert 'Warehouse 共用倉庫' in main_dialog
     return matcher_states
+
+def check_no_update_writes(pack: Path):
+    """Clearing a source and writing hidden lanes must not trigger block updates:
+    with updates, torches/lanterns/doors pop off as free items (duplication)."""
+    fn=pack/'data/mcc/function'
+    for name in ('clear_overworld','clear_nether','clear_end'):
+        text=read(fn/'cut'/f'{name}.mcfunction')
+        assert ' air strict' in text, f'cut/{name} must clear with fill ... strict'
+    bad=[]
+    for p in fn.rglob('*.mcfunction'):
+        for line in read(p).splitlines():
+            m=re.search(r'clone from \S+ (?:\S+ ){6}to minecraft:overworld \S+ (\S+) \S+ (.*)$',line)
+            if m and m.group(1)=='0' and not m.group(2).startswith('strict '):
+                bad.append(str(p.relative_to(pack)))
+    assert not bad, f'hidden-lane clone without strict: {bad[:5]}'
+
+def check_busy_notice(pack: Path):
+    """Triggers held back while a material job runs must tell the player why."""
+    tick=read(pack/'data/mcc/function/tick.mcfunction')
+    notice=read(pack/'data/mcc/function/materials/busy_notice.mcfunction')
+    gated=re.findall(r'scores=\{([a-z0-9]+)=1\.\.,mcc_matphase=0\}',tick)
+    assert gated, 'no matphase-gated triggers found in tick'
+    missing=[t for t in gated if f'if score @s {t} matches 1..' not in notice]
+    assert not missing, f'busy_notice does not cover gated triggers: {missing}'
+    call='execute as @a[scores={mcc_matphase=1..}] run function mcc:materials/busy_notice'
+    assert call in tick, 'tick does not call materials/busy_notice'
+    first_gate=min(tick.index(f'scores={{{t}=1..,mcc_matphase=0}}') for t in gated)
+    assert tick.index(call) < first_gate, 'busy_notice must run before the gated dispatch'
+    for t in gated:
+        assert tick.index(call) < tick.index(f'scoreboard players set @a[scores={{{t}=1..}}] {t} 0'), f'busy_notice must run before {t} is reset'
+    assert 'tellraw @s' in notice
 
 def check_version_labels(pack: Path, repo: Path|None=None):
     meta=json.loads(read(pack/'pack.mcmeta'))
@@ -500,6 +548,41 @@ def check_version_labels(pack: Path, repo: Path|None=None):
     ):
         assert required in live, f'v{version} real-player harness missing: {required}'
     return version
+
+def check_history_safety(pack: Path):
+    commit=read(pack/'data/mcc/function/history/commit_edit.mcfunction')
+    undo=read(pack/'data/mcc/function/history/undo.mcfunction')
+    redo=read(pack/'data/mcc/function/history/redo_apply.mcfunction')
+    undo_run=read(pack/'data/mcc/function/undo/run.mcfunction')
+    redo_run=read(pack/'data/mcc/function/redo/run.mcfunction')
+    cut=read(pack/'data/mcc/function/cut/run.mcfunction')
+    transformed=read(pack/'data/mcc/function/paste/transformed.mcfunction')
+    blueprint=read(pack/'data/mcc/function/blueprint/init_transformed.mcfunction')
+
+    # Every new world edit must archive an expected post-edit world before it
+    # becomes undoable; Cut history is explicitly marked so Undo can consume it.
+    assert 'function mcc:history/archive_material_guard' in commit
+    assert 'scoreboard players set @s mcc_histguard 1' in commit
+    assert 'scoreboard players set @s mcc_histcut 1' in cut
+    assert 'function mcc:history/check_undo_material_guard' in undo
+    assert 'mcc_ucut matches 1 if score @s mcc_cliptype matches 2 run scoreboard players set @s mcc_clip 0' in undo
+
+    # Redo also has a post-Undo expected-world guard.
+    assert 'function mcc:history/check_redo_guard' in redo
+    assert 'function mcc:history/archive_redo_guard' in undo
+
+    # Unguarded legacy history is rejected rather than replayed.
+    assert 'legacy_run' not in undo_run
+    assert 'legacy_run' not in redo_run
+    assert '舊版 Undo 沒有防複製安全快照' in undo_run
+    assert '舊版 Redo 沒有防複製安全快照' in redo_run
+
+    # Transformed Cut paste must honor Masked instead of silently falling back
+    # to Replace, and distant external Anchors must not move hidden buffers.
+    assert '已忽略 Masked' not in transformed
+    assert 'function mcc:paste/transformed_masked' in transformed
+    assert '#bpofs' not in blueprint
+    assert '#bpz' in blueprint and 'player_slot_x' in blueprint
 
 def check_tellraw_json(pack: Path):
     checked=0
@@ -535,6 +618,9 @@ def main():
     check_rollback(pack)
     check_selection_math(pack)
     check_flip_anchor_formula(pack)
+    check_history_safety(pack)
+    check_busy_notice(pack)
+    check_no_update_writes(pack)
     check_move_model()
     mp=check_multiplayer_isolation(pack)
     states=check_v100_semantics(pack)
