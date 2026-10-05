@@ -464,19 +464,18 @@ def check_v100_semantics(pack: Path):
     assert (pack/'data/mcc/function/blueprint/nudge/run.mcfunction').is_file()
     assert 'function mcc:blueprint/recount_start' in read(pack/'data/mcc/function/blueprint/nudge/run.mcfunction')
     assert 'mcc_bpover_scan' in read(pack/'data/mcc/function/tick.mcfunction')
-    assert (pack/'data/mcc/dialog/main.json').is_file()
     assert (pack/'data/mcc/dialog/tutorial.json').is_file()
-    main_dialog=read(pack/'data/mcc/dialog/main.json')
+    # /trigger copypaste builds status strings, then shows ui/show (macro Dialog).
+    main_dialog=read(pack/'data/mcc/function/ui/show.mcfunction')+read(pack/'data/mcc/dialog/nudge.json')+read(pack/'data/mcc/dialog/edit.json')
     tutorial_dialog=read(pack/'data/mcc/dialog/tutorial.json')
-    assert '"dialog": "warehouse:main"' not in main_dialog
-    assert '"command": "trigger wh_nav set 1"' in main_dialog
-    assert '"command": "trigger cphelp"' in main_dialog
-    assert '"command": "trigger anchor set 2"' in main_dialog
+    assert 'function mcc:ui/show with storage mcc:ui' in read(pack/'data/mcc/function/ui/open.mcfunction')
     for command in (
-        'trigger pos1','trigger pos2','trigger anchor','trigger c','trigger x','trigger v',
-        'trigger build','trigger materials','trigger previewclear','trigger undo','trigger redo',
+        'trigger pos1','trigger pos2','trigger anchor','trigger anchor set 2','trigger c','trigger x','trigger v',
+        'trigger rotate','trigger mirror','trigger mode','trigger build','trigger materials','trigger previewclear',
+        'trigger undo','trigger redo','trigger cphelp','trigger wh_nav set 1','trigger copypaste',
+        'trigger bpleft set 1','trigger bpdown set 5','trigger left set 1','trigger flipx','trigger rotate90',
     ):
-        assert f'"command": "{command}"' in main_dialog, f'active Dialog missing core action: {command}'
+        assert f'"command":"{command}"' in main_dialog.replace('": "','":"'), f'active Dialog missing core action: {command}'
     assert '/trigger pos1' in tutorial_dialog and '/trigger pos2' in tutorial_dialog
     assert '/trigger c' in tutorial_dialog and '/trigger x' in tutorial_dialog and '/trigger v' in tutorial_dialog
     assert '/trigger build' in tutorial_dialog and '/trigger undo' in tutorial_dialog and '/trigger redo' in tutorial_dialog
@@ -485,11 +484,6 @@ def check_v100_semantics(pack: Path):
     assert read(pack/'data/mcc/function/ui/tutorial.mcfunction').strip() == 'dialog show @s mcc:tutorial'
     assert 'scoreboard players set @s mcc_histmat 1' in place
     assert (pack/'data/mcc/tags/block/material_unsupported.json').is_file()
-    # main.json is the active /trigger copypaste UI. Do not use the legacy
-    # panel.mcfunction as evidence that a player-visible control exists.
-    assert '"command": "trigger build"' in main_dialog
-    assert '"command": "trigger materials"' in main_dialog
-    assert 'Warehouse 共用倉庫' in main_dialog
     return matcher_states
 
 def check_busy_notice(pack: Path):
