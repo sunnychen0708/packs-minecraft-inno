@@ -580,6 +580,38 @@ def integration(java: Path, server: Path):
     check('if block 4 80 10 gold_block if block 3 80 10 air','move_redo')
     run_as('mcc:undo/run')
 
+    # AUDIT (evidence only, not a fix): a Move whose source+destination span is
+    # more than 200 blocks on Z makes the Undo scratch lane (#ubz, up to 256 deep)
+    # overlap the Work lane (#workz = #ubz + 200). The Undo backup is taken after
+    # the Work snapshot, so the first moved Z rows are overwritten before paste.
+    lines.extend([
+        'fill 70 80 0 70 80 230 air',
+        'setblock 70 80 0 gold_block',
+        'setblock 70 80 127 iron_block',
+        f'scoreboard players set {actor} mcc_has1 1',
+        f'scoreboard players set {actor} mcc_has2 1',
+        f'scoreboard players set {actor} mcc_hasa 0',
+        f'scoreboard players set {actor} mcc_p1x 70',
+        f'scoreboard players set {actor} mcc_p1y 80',
+        f'scoreboard players set {actor} mcc_p1z 0',
+        f'scoreboard players set {actor} mcc_p1d 1',
+        f'scoreboard players set {actor} mcc_p2x 70',
+        f'scoreboard players set {actor} mcc_p2y 80',
+        f'scoreboard players set {actor} mcc_p2z 127',
+        f'scoreboard players set {actor} mcc_p2d 1',
+        f'scoreboard players set {actor} mcc_dx 0',
+        f'scoreboard players set {actor} mcc_dy 0',
+        f'scoreboard players set {actor} mcc_dz 100',
+        f'scoreboard players set {actor} mcc_ucnt 0',
+        f'scoreboard players set {actor} mcc_uhead 0',
+        f'scoreboard players set {actor} mcc_rcnt 0',
+        f'scoreboard players set {actor} mcc_rhead 0',
+    ])
+    run_as('mcc:move/run')
+    check('if block 70 80 227 iron_block if block 70 80 0 air','AUDIT_long_z_move_ran')
+    check('if block 70 80 100 air','BUG_long_z_move_loses_first_rows')
+    lines.append('fill 70 80 0 70 80 230 air')
+
     # 4a. Generic Undo guard must include block-entity NBT, not only block states.
     lines.extend([
         'fill 29 80 4 32 80 6 air',
