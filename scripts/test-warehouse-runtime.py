@@ -312,6 +312,179 @@ def integration(java: Path, server: Path) -> None:
     )
     check("if block 16 70 5 minecraft:bedrock", "api_resolve_unsupported_preserves_source")
 
+    # Core sorting: entry c00 -> main box -> region overflow -> stays in entry.
+    # Layout: c00 A/B (40/41), c10 overflow (43/44), c11 main (46/47), c12 main (49/50).
+    for code in CODES:
+        lines.extend(
+            [
+                f"data modify storage warehouse:chests c{code}.registered set value 0b",
+                f"data modify storage warehouse:chests c{code}.valid set value 0b",
+            ]
+        )
+    sort_boxes = {"00": (40, 41), "10": (43, 44), "11": (46, 47), "12": (49, 50)}
+    for code, (ax, bx) in sort_boxes.items():
+        lines.extend(
+            [
+                f"setblock {ax} 70 40 minecraft:chest",
+                f"setblock {bx} 70 40 minecraft:chest",
+                f"data modify storage warehouse:chests c{code}.registered set value 1b",
+                f"data modify storage warehouse:chests c{code}.valid set value 1b",
+                f'data modify storage warehouse:chests c{code}.dimension set value "minecraft:overworld"',
+                f"data modify storage warehouse:chests c{code}.a_x set value {ax}",
+                f"data modify storage warehouse:chests c{code}.a_y set value 70",
+                f"data modify storage warehouse:chests c{code}.a_z set value 40",
+                f"data modify storage warehouse:chests c{code}.b_x set value {bx}",
+                f"data modify storage warehouse:chests c{code}.b_y set value 70",
+                f"data modify storage warehouse:chests c{code}.b_z set value 40",
+            ]
+        )
+    lines.extend(
+        [
+            'data remove storage warehouse:rules overrides."minecraft:diamond"',
+            'data remove storage warehouse:rules overrides."minecraft:redstone"',
+            'data remove storage warehouse:rules overrides."minecraft:ender_pearl"',
+        ]
+    )
+
+    def clear_box(code: str) -> None:
+        ax, bx = sort_boxes[code]
+        lines.extend([f"data remove block {ax} 70 40 Items", f"data remove block {bx} 70 40 Items"])
+
+    def fill_box(code: str) -> None:
+        ax, bx = sort_boxes[code]
+        for slot in range(27):
+            lines.append(f"item replace block {ax} 70 40 container.{slot} with minecraft:cobblestone 64")
+            lines.append(f"item replace block {bx} 70 40 container.{slot} with minecraft:cobblestone 64")
+
+    def entry(item: str) -> None:
+        lines.extend([f"data modify block 40 70 40 Items set value [{{Slot:0b,{item}}}]", "function warehouse:sort/scan/00"])
+
+    entry('id:"minecraft:diamond",count:10')
+    check('if data block 46 70 40 Items[{id:"minecraft:diamond",count:10}] unless data block 40 70 40 Items[0]', "sort_entry_to_default_main_box")
+    entry('id:"minecraft:diamond",count:60')
+    check(
+        'if data block 46 70 40 Items[{id:"minecraft:diamond",count:64}] if data block 46 70 40 Items[{id:"minecraft:diamond",count:6}] unless data block 40 70 40 Items[0]',
+        "sort_merges_existing_stack_first",
+    )
+    fill_box("11")
+    entry('id:"minecraft:diamond",count:5')
+    check('if data block 43 70 40 Items[{id:"minecraft:diamond",count:5}] unless data block 40 70 40 Items[0]', "sort_full_main_uses_region_overflow")
+    fill_box("10")
+    entry('id:"minecraft:diamond",count:5')
+    check('if data block 40 70 40 Items[{Slot:0b,id:"minecraft:diamond",count:5}]', "sort_full_main_and_overflow_stays_in_entry")
+    clear_box("10")
+    clear_box("11")
+    clear_box("00")
+
+    lines.append('data modify storage warehouse:rules overrides."minecraft:redstone" set value 11')
+    entry('id:"minecraft:redstone",count:3')
+    check('if data block 46 70 40 Items[{id:"minecraft:redstone",count:3}] unless data block 49 70 40 Items[0]', "sort_player_override_beats_default")
+    lines.append('data modify storage warehouse:rules overrides."minecraft:redstone" set value 0')
+    entry('id:"minecraft:redstone",count:3')
+    check('if data block 40 70 40 Items[{Slot:0b,id:"minecraft:redstone",count:3}]', "sort_removed_rule_stays_in_entry")
+    lines.extend(
+        [
+            'data remove storage warehouse:rules overrides."minecraft:redstone"',
+            "data modify storage warehouse:chests c12.registered set value 0b",
+        ]
+    )
+    entry('id:"minecraft:redstone",count:3')
+    check('if data block 40 70 40 Items[{Slot:0b,id:"minecraft:redstone",count:3}]', "sort_unregistered_destination_stays_in_entry")
+    lines.append("data modify storage warehouse:chests c12.registered set value 1b")
+    clear_box("00")
+    clear_box("11")
+    clear_box("12")
+
+    lines.append('data modify block 46 70 40 Items set value [{Slot:0b,id:"minecraft:diamond",count:10}]')
+    entry('id:"minecraft:diamond",count:1,components:{"minecraft:custom_name":"CI named"}')
+    check(
+        'if data block 46 70 40 Items[{id:"minecraft:diamond",count:10}] if data block 46 70 40 Items[{id:"minecraft:diamond",count:1,components:{"minecraft:custom_name":"CI named"}}]',
+        "sort_component_stack_not_merged_into_plain",
+    )
+    clear_box("11")
+
+    lines.extend(
+        [
+            'data modify storage warehouse:rules overrides."minecraft:ender_pearl" set value 11',
+            'data modify block 46 70 40 Items set value [{Slot:0b,id:"minecraft:ender_pearl",count:10}]',
+        ]
+    )
+    entry('id:"minecraft:ender_pearl",count:10')
+    check(
+        'if data block 46 70 40 Items[{id:"minecraft:ender_pearl",count:16}] if data block 46 70 40 Items[{id:"minecraft:ender_pearl",count:4}]',
+        "sort_respects_16_max_stack",
+    )
+    lines.append('data remove storage warehouse:rules overrides."minecraft:ender_pearl"')
+    clear_box("11")
+
+    # Background compaction merges partial stacks inside one registered box.
+    lines.extend(
+        [
+            'data modify block 46 70 40 Items set value [{Slot:0b,id:"minecraft:diamond",count:10},{Slot:5b,id:"minecraft:diamond",count:10}]',
+            'data modify block 47 70 40 Items set value [{Slot:3b,id:"minecraft:diamond",count:7}]',
+            "scoreboard players set #compact_code wh_tmp 2",
+            "scoreboard players set #compact_slot wh_tmp 0",
+        ]
+    )
+    lines.extend(["function warehouse:compact/step"] * 54)
+    check(
+        'if data block 46 70 40 Items[{id:"minecraft:diamond",count:27}] unless data block 46 70 40 Items[{id:"minecraft:diamond",count:10}] unless data block 47 70 40 Items[{id:"minecraft:diamond"}]',
+        "compact_merges_partial_stacks_without_loss",
+    )
+
+    # Changing a classification enqueues and performs a background stock migration.
+    lines.extend(
+        [
+            f"scoreboard players set {actor} wh_rule_item 1",
+            f"scoreboard players set {actor} wh_rule_dest 12",
+            f"execute as {actor} run function warehouse:rule/apply_selected",
+        ]
+    )
+    check('if data storage warehouse:rules {overrides:{"minecraft:diamond":12}}', "rule_change_writes_override")
+    check('if data storage warehouse:migration queue[{item_id:"minecraft:diamond",from:11,to:12}]', "rule_change_enqueues_migration")
+    lines.extend(["function warehouse:migration/tick"] * 30)
+    check(
+        'if data block 49 70 40 Items[{id:"minecraft:diamond",count:27}] unless data block 46 70 40 Items[{id:"minecraft:diamond"}] unless data storage warehouse:migration active',
+        "migration_moves_old_box_stock_to_new_box",
+    )
+    entry('id:"minecraft:diamond",count:2')
+    check('if data block 49 70 40 Items[{id:"minecraft:diamond",count:29}]', "sort_uses_changed_rule")
+
+    # Search reflects the player rule and live stock.
+    lines.append(f'execute as {actor} run function warehouse:search/run {{q:"minecraft:diamond"}}')
+    check(
+        'if data storage warehouse:runtime search{item_id:"minecraft:diamond",current_code:"12",stock:"有庫存",p01:1}',
+        "search_reports_changed_rule_and_stock",
+    )
+    check("if score #search_lines wh_search matches 1", "search_single_result_line")
+
+    # View, Highlight and Unregister on the same registered box.
+    lines.extend([f"scoreboard players set {actor} wh_view 12", f"execute as {actor} run function warehouse:view/dispatch"])
+    check(f"if score {actor} wh_viewlines matches 1 if data storage warehouse:runtime viewer.lines[0].text", "view_aggregates_box_contents")
+    lines.extend(
+        [
+            "data modify storage warehouse:api request set value {code:12}",
+            f"execute as {actor} store result score #hl whst run function warehouse:api/highlight",
+        ]
+    )
+    check("if score #hl whst matches 1", "highlight_registered_box")
+    lines.extend(
+        [
+            "scoreboard players set #hl whst -1",
+            "data modify storage warehouse:api request set value {code:13}",
+            f"execute as {actor} store result score #hl whst run function warehouse:api/highlight",
+        ]
+    )
+    check("if score #hl whst matches 0", "highlight_rejects_unregistered_box")
+    lines.extend([f"scoreboard players set {actor} wh_target 12", f"execute as {actor} run function warehouse:unregister/do"])
+    check(
+        "if data storage warehouse:chests c12{registered:0b,valid:0b,a_x:49,b_x:50}",
+        "unregister_clears_registration_keeps_coordinates",
+    )
+    entry('id:"minecraft:diamond",count:2')
+    check('if data block 40 70 40 Items[{Slot:0b,id:"minecraft:diamond",count:2}]', "sort_after_unregister_stays_in_entry")
+    lines.append('data remove storage warehouse:rules overrides."minecraft:diamond"')
+
     lines.extend(
         [
             f"execute if score #pass whst matches {len(assertions)} if score #fail whst matches 0 run say WHST_REGRESSION_SUCCESS",
