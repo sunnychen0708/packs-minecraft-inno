@@ -287,7 +287,7 @@ def runtime_compatibility(java: Path, server: Path) -> None:
         proc.stdin.write("reload\n")
         proc.stdin.flush()
         # Warehouse builds 72 search-index shards over ticks.
-        time.sleep(8)
+        time.sleep(15)  # Warehouse search index builds 72 shards over ticks
         proc.stdin.write("function compat_test:run\n")
         proc.stdin.flush()
         assert done.wait(60), "Combined datapack compatibility regression did not complete"

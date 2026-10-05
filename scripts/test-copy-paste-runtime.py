@@ -876,6 +876,19 @@ def integration(java: Path, server: Path):
     def hmat():
         for _ in range(120): lines.append(f'execute as {actor} at @s if score @s mcc_matphase matches 1..2 run function mcc:materials/process_batch')
     no_items='unless entity @e[type=minecraft:item]'
+    def hdrops(tag):
+        # Report every dropped item (its name appears in the say prefix), then clear them
+        # so each step is judged on its own drops.
+        lines.append(f'execute as @e[type=minecraft:item] at @s run say MCCST_DIAG_DROP_{tag}')
+    def hclear_drops(): lines.append('kill @e[type=minecraft:item]')
+    def hdiff(tag, origin, rot90=False):
+        for x,y,z,block in house.BLOCKS:
+            dx,dz=(-z,x) if rot90 else (x,z)
+            lines.append(f'execute unless block {origin[0]+dx} {origin[1]+y} {origin[2]+dz} {block.split("[")[0]} run say MCCST_DIAG_DIFF_{tag} rel {x} {y} {z} expected {block.split("[")[0]}')
+    def hbpdiag(tag):
+        for obj in ('mcc_bpactive','mcc_bpready','mcc_bpbad','mcc_bpscan','mcc_bpover_scan','mcc_matphase','mcc_clip','mcc_cliptype'):
+            for v in (0,1,2):
+                lines.append(f'execute if score {actor} {obj} matches {v} run say MCCST_DIAG_{tag} {obj}={v}')
     sources_empty=f'unless data block {C00A} Items[0] unless data block {C00B} Items[0] unless data block {C11A} Items[0] unless data block {C11B} Items[0]'
     lines.extend([
         'kill @e[type=minecraft:item]',
@@ -903,6 +916,8 @@ def integration(java: Path, server: Path):
     target(*HT)
     run_as('mcc:paste/dispatch')
     hjobs()
+    hbpdiag('BP')
+    hdrops('BLUEPRINT'); hclear_drops()
     check(f'if score {actor} mcc_bpactive matches 1 if score {actor} mcc_bpready matches 1 if score {actor} mcc_bpbad matches 0 if blocks {hbox(HT)} {hat(HA)} all','house_blueprint_ready_no_real_blocks')
     run_as('mcc:materials/build_start')
     hmat()
@@ -911,9 +926,11 @@ def integration(java: Path, server: Path):
     lines.append(f'data modify block {C11A} Items[{{id:"minecraft:oak_planks"}}].count set value {house.BOM["minecraft:oak_planks"]}')
     run_as('mcc:materials/build_start')
     hmat()
+    hbpdiag('AFTERBUILD'); hdiff('BUILD',HT); hdrops('BUILD')
     check(f'if blocks {hbox(HS)} {hat(HT)} all','house_build_exact_3d_copy')
     check(sources_empty,'house_build_consumes_exact_bom')
     check(f'{no_items} if score {actor} mcc_bpactive matches 0','house_build_no_item_drops')
+    hclear_drops()
     run_as('mcc:undo/run')
     check(f'if blocks {hbox(HT)} {hat(HA)} all {no_items}','house_build_undo_world')
     for item,count in house.BOM.items():
@@ -945,39 +962,60 @@ def integration(java: Path, server: Path):
     hsel()
     run_as('mcc:cut/run')
     check(f'if blocks {hbox(HS)} {hat(HA)} all','house_cut_clears_source')
+    hdrops('CUT')
     check(no_items,'house_cut_no_item_drops')
+    hclear_drops()
     target(*HT)
     run_as('mcc:paste/dispatch')
+    hdiff('CUTPASTE',HT); hdrops('CUTPASTE')
     check(f'if blocks {hbox(HR)} {hat(HT)} all {no_items}','house_cut_paste_exact')
+    hclear_drops()
     run_as('mcc:undo/run')
     run_as('mcc:undo/run')
+    hdiff('CUTUNDO',HS); hdrops('CUTUNDO')
     check(f'if blocks {hbox(HR)} {hat(HS)} all if blocks {hbox(HT)} {hat(HA)} all {no_items}','house_cut_undo_restores_source')
+    hclear_drops()
 
     # Move by +7 on X.
     hsel()
     lines.extend([f'scoreboard players set {actor} mcc_dx 7', f'scoreboard players set {actor} mcc_dy 0', f'scoreboard players set {actor} mcc_dz 0'])
     run_as('mcc:move/run')
     check(f'if blocks {hbox(HR)} {HS[0]+7} {HS[1]} {HS[2]} all if blocks {HS[0]} {HS[1]} {HS[2]} {HS[0]+6} {HS[1]+3} {HS[2]+4} {HA[0]} {HA[1]} {HA[2]} all','house_move_exact')
+    hdrops('MOVE')
     check(no_items,'house_move_no_item_drops')
+    hclear_drops()
     run_as('mcc:undo/run')
+    hdiff('MOVEUNDO',HS); hdrops('MOVEUNDO')
     check(f'if blocks {hbox(HR)} {hat(HS)} all {no_items}','house_move_undo_exact')
+    hclear_drops()
 
     # Flip X mirrors on the X axis: torch and chest swap sides and face the other way, door hinge flips.
     hsel()
     run_as('mcc:flip/x')
     check(f'if block {HS[0]+3} {HS[1]+2} {HS[2]+1} minecraft:wall_torch[facing=west] if block {HS[0]+1} {HS[1]+1} {HS[2]+3} minecraft:chest[facing=east] if block {HS[0]+2} {HS[1]+1} {HS[2]} minecraft:oak_door[facing=north,hinge=right,half=lower]','house_flipx_mirrors_states')
+    hdrops('FLIP')
     check(no_items,'house_flipx_no_item_drops')
+    hclear_drops()
     run_as('mcc:undo/run')
+    hdiff('FLIPUNDO',HS); hdrops('FLIPUNDO')
     check(f'if blocks {hbox(HR)} {hat(HS)} all {no_items}','house_flipx_undo_exact')
+    hclear_drops()
 
     # Direct Rotate 90 around Pos1, four times, returns to the original house.
     hsel()
     run_as('mcc:rotate_edit/r90')
     check(f'if block {HS[0]-1} {HS[1]+2} {HS[2]+1} minecraft:wall_torch[facing=south] if block {HS[0]} {HS[1]+1} {HS[2]+2} minecraft:oak_door[facing=east,half=lower]','house_rotate90_states')
+    hdrops('ROT90')
     check(no_items,'house_rotate90_no_item_drops')
-    run_as('mcc:rotate_edit/r90')
-    run_as('mcc:rotate_edit/r90')
-    run_as('mcc:rotate_edit/r90')
+    hclear_drops()
+    for k in (2,3,4):
+        run_as('mcc:rotate_edit/r90')
+        lines.append(f'execute as @e[type=minecraft:item] at @s if entity @s[x=90,y=70,z=-10,dx=60,dy=20,dz=60] run say MCCST_DIAG_DROP_ROT{k}_IN_WORLD')
+        lines.append(f'execute as @e[type=minecraft:item] at @s unless entity @s[x=90,y=70,z=-10,dx=60,dy=20,dz=60] run say MCCST_DIAG_DROP_ROT{k}_ELSEWHERE')
+        hclear_drops()
+    for x,y,z,block in house.BLOCKS:
+        lines.append(f'execute unless block {HS[0]+x} {HS[1]+y} {HS[2]+z} {block} run say MCCST_DIAG_STATE_ROT90X4 rel {x} {y} {z} expected {block}')
+    hdiff('ROT90X4',HS); hdrops('ROT90X4')
     check(f'if blocks {hbox(HR)} {hat(HS)} all {no_items}','house_rotate90_x4_returns_original')
     lines.append(f'fill 92 79 0 143 86 47 air')
 
@@ -1053,6 +1091,8 @@ def integration(java: Path, server: Path):
     parse_errors=[line.strip() for line in output if any(x in line.lower() for x in ('failed to load function','failed to parse','whilst instantiating','invalid macro','missing argument','unknown function'))]
     limit_hits=[line.strip() for line in output if 'limit' in line.lower() and 'command' in line.lower()]
     assert completed, f'Runtime regression did not complete; failed/missing so far: {failures[:40]}; limit messages: {limit_hits[:5]}'
+    diag=[line.strip().split(']: ',1)[-1] for line in output if 'MCCST_DIAG_' in line]
+    if diag: print('DIAGNOSTICS:\n'+'\n'.join(diag[:400]),flush=True)
     assert not failures, f'Runtime assertion failures: {failures}'
     assert not parse_errors, f'Runtime parser/macro errors: {parse_errors[:20]}'
     assert 'MCCST_REGRESSION_SUCCESS' in report
