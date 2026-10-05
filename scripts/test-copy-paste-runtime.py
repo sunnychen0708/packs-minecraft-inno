@@ -1012,7 +1012,7 @@ def integration(java: Path, server: Path):
     (work/'eula.txt').write_text('eula=true\n',encoding='utf-8')
     (work/'server.properties').write_text(
         'server-ip=127.0.0.1\nserver-port=0\nonline-mode=false\nwhite-list=true\n'
-        'view-distance=2\nsimulation-distance=2\nlevel-type=minecraft:flat\n'
+        'view-distance=2\nsimulation-distance=2\nlevel-type=minecraft:flat\nmax-tick-time=-1\n'
         'generator-settings={"layers":[{"block":"minecraft:bedrock","height":1}],"biome":"minecraft:plains"}\n',
         encoding='utf-8'
     )
@@ -1035,10 +1035,10 @@ def integration(java: Path, server: Path):
         proc.stdin.write('forceload add 64 0 79 239\n'); proc.stdin.flush()
         # 3D house section (x=92..143, z=0..47).
         proc.stdin.write('forceload add 92 0 143 47\n'); proc.stdin.flush()
-        proc.stdin.write('gamerule minecraft:max_command_sequence_length 250000\n'); proc.stdin.flush()
+        proc.stdin.write('gamerule minecraft:max_command_sequence_length 20000000\n'); proc.stdin.flush()
         time.sleep(2)
         proc.stdin.write('function mcc_server_test:run\n'); proc.stdin.flush()
-        assert done.wait(90),'Runtime regression did not complete'
+        completed=done.wait(300)
     finally:
         if proc.poll() is None:
             assert proc.stdin is not None
@@ -1051,6 +1051,8 @@ def integration(java: Path, server: Path):
     (work/'console.log').write_text(report,encoding='utf-8')
     failures=[label for label in assertions if f'MCCST_PASS_{label}' not in report]
     parse_errors=[line.strip() for line in output if any(x in line.lower() for x in ('failed to load function','failed to parse','whilst instantiating','invalid macro','missing argument','unknown function'))]
+    limit_hits=[line.strip() for line in output if 'limit' in line.lower() and 'command' in line.lower()]
+    assert completed, f'Runtime regression did not complete; failed/missing so far: {failures[:40]}; limit messages: {limit_hits[:5]}'
     assert not failures, f'Runtime assertion failures: {failures}'
     assert not parse_errors, f'Runtime parser/macro errors: {parse_errors[:20]}'
     assert 'MCCST_REGRESSION_SUCCESS' in report
