@@ -313,7 +313,8 @@ def integration(java: Path, server: Path) -> None:
     check("if block 16 70 5 minecraft:bedrock", "api_resolve_unsupported_preserves_source")
 
     # Core sorting: entry c00 -> main box -> region overflow -> stays in entry.
-    # Layout: c00 A/B (40/41), c10 overflow (43/44), c11 main (46/47), c12 main (49/50).
+    # Layout (inside the force-loaded chunk 0,0 at y=75): c00 A/B (1/2), c10 overflow (4/5),
+    # c11 main (7/8), c12 main (10/11). Sorting deliberately skips unloaded boxes.
     for code in CODES:
         lines.extend(
             [
@@ -321,21 +322,21 @@ def integration(java: Path, server: Path) -> None:
                 f"data modify storage warehouse:chests c{code}.valid set value 0b",
             ]
         )
-    sort_boxes = {"00": (40, 41), "10": (43, 44), "11": (46, 47), "12": (49, 50)}
+    sort_boxes = {"00": (1, 2), "10": (4, 5), "11": (7, 8), "12": (10, 11)}
     for code, (ax, bx) in sort_boxes.items():
         lines.extend(
             [
-                f"setblock {ax} 70 40 minecraft:chest",
-                f"setblock {bx} 70 40 minecraft:chest",
+                f"setblock {ax} 75 10 minecraft:chest",
+                f"setblock {bx} 75 10 minecraft:chest",
                 f"data modify storage warehouse:chests c{code}.registered set value 1b",
                 f"data modify storage warehouse:chests c{code}.valid set value 1b",
                 f'data modify storage warehouse:chests c{code}.dimension set value "minecraft:overworld"',
                 f"data modify storage warehouse:chests c{code}.a_x set value {ax}",
-                f"data modify storage warehouse:chests c{code}.a_y set value 70",
-                f"data modify storage warehouse:chests c{code}.a_z set value 40",
+                f"data modify storage warehouse:chests c{code}.a_y set value 75",
+                f"data modify storage warehouse:chests c{code}.a_z set value 10",
                 f"data modify storage warehouse:chests c{code}.b_x set value {bx}",
-                f"data modify storage warehouse:chests c{code}.b_y set value 70",
-                f"data modify storage warehouse:chests c{code}.b_z set value 40",
+                f"data modify storage warehouse:chests c{code}.b_y set value 75",
+                f"data modify storage warehouse:chests c{code}.b_z set value 10",
             ]
         )
     lines.extend(
@@ -348,40 +349,40 @@ def integration(java: Path, server: Path) -> None:
 
     def clear_box(code: str) -> None:
         ax, bx = sort_boxes[code]
-        lines.extend([f"data remove block {ax} 70 40 Items", f"data remove block {bx} 70 40 Items"])
+        lines.extend([f"data remove block {ax} 75 10 Items", f"data remove block {bx} 75 10 Items"])
 
     def fill_box(code: str) -> None:
         ax, bx = sort_boxes[code]
         for slot in range(27):
-            lines.append(f"item replace block {ax} 70 40 container.{slot} with minecraft:cobblestone 64")
-            lines.append(f"item replace block {bx} 70 40 container.{slot} with minecraft:cobblestone 64")
+            lines.append(f"item replace block {ax} 75 10 container.{slot} with minecraft:cobblestone 64")
+            lines.append(f"item replace block {bx} 75 10 container.{slot} with minecraft:cobblestone 64")
 
     def entry(item: str) -> None:
-        lines.extend([f"data modify block 40 70 40 Items set value [{{Slot:0b,{item}}}]", "function warehouse:sort/scan/00"])
+        lines.extend([f"data modify block 1 75 10 Items set value [{{Slot:0b,{item}}}]", "function warehouse:sort/scan/00"])
 
     entry('id:"minecraft:diamond",count:10')
-    check('if data block 46 70 40 Items[{id:"minecraft:diamond",count:10}] unless data block 40 70 40 Items[0]', "sort_entry_to_default_main_box")
+    check('if data block 7 75 10 Items[{id:"minecraft:diamond",count:10}] unless data block 1 75 10 Items[0]', "sort_entry_to_default_main_box")
     entry('id:"minecraft:diamond",count:60')
     check(
-        'if data block 46 70 40 Items[{id:"minecraft:diamond",count:64}] if data block 46 70 40 Items[{id:"minecraft:diamond",count:6}] unless data block 40 70 40 Items[0]',
+        'if data block 7 75 10 Items[{id:"minecraft:diamond",count:64}] if data block 7 75 10 Items[{id:"minecraft:diamond",count:6}] unless data block 1 75 10 Items[0]',
         "sort_merges_existing_stack_first",
     )
     fill_box("11")
     entry('id:"minecraft:diamond",count:5')
-    check('if data block 43 70 40 Items[{id:"minecraft:diamond",count:5}] unless data block 40 70 40 Items[0]', "sort_full_main_uses_region_overflow")
+    check('if data block 4 75 10 Items[{id:"minecraft:diamond",count:5}] unless data block 1 75 10 Items[0]', "sort_full_main_uses_region_overflow")
     fill_box("10")
     entry('id:"minecraft:diamond",count:5')
-    check('if data block 40 70 40 Items[{Slot:0b,id:"minecraft:diamond",count:5}]', "sort_full_main_and_overflow_stays_in_entry")
+    check('if data block 1 75 10 Items[{Slot:0b,id:"minecraft:diamond",count:5}]', "sort_full_main_and_overflow_stays_in_entry")
     clear_box("10")
     clear_box("11")
     clear_box("00")
 
     lines.append('data modify storage warehouse:rules overrides."minecraft:redstone" set value 11')
     entry('id:"minecraft:redstone",count:3')
-    check('if data block 46 70 40 Items[{id:"minecraft:redstone",count:3}] unless data block 49 70 40 Items[0]', "sort_player_override_beats_default")
+    check('if data block 7 75 10 Items[{id:"minecraft:redstone",count:3}] unless data block 10 75 10 Items[0]', "sort_player_override_beats_default")
     lines.append('data modify storage warehouse:rules overrides."minecraft:redstone" set value 0')
     entry('id:"minecraft:redstone",count:3')
-    check('if data block 40 70 40 Items[{Slot:0b,id:"minecraft:redstone",count:3}]', "sort_removed_rule_stays_in_entry")
+    check('if data block 1 75 10 Items[{Slot:0b,id:"minecraft:redstone",count:3}]', "sort_removed_rule_stays_in_entry")
     lines.extend(
         [
             'data remove storage warehouse:rules overrides."minecraft:redstone"',
@@ -389,16 +390,16 @@ def integration(java: Path, server: Path) -> None:
         ]
     )
     entry('id:"minecraft:redstone",count:3')
-    check('if data block 40 70 40 Items[{Slot:0b,id:"minecraft:redstone",count:3}]', "sort_unregistered_destination_stays_in_entry")
+    check('if data block 1 75 10 Items[{Slot:0b,id:"minecraft:redstone",count:3}]', "sort_unregistered_destination_stays_in_entry")
     lines.append("data modify storage warehouse:chests c12.registered set value 1b")
     clear_box("00")
     clear_box("11")
     clear_box("12")
 
-    lines.append('data modify block 46 70 40 Items set value [{Slot:0b,id:"minecraft:diamond",count:10}]')
+    lines.append('data modify block 7 75 10 Items set value [{Slot:0b,id:"minecraft:diamond",count:10}]')
     entry('id:"minecraft:diamond",count:1,components:{"minecraft:custom_name":"CI named"}')
     check(
-        'if data block 46 70 40 Items[{id:"minecraft:diamond",count:10}] if data block 46 70 40 Items[{id:"minecraft:diamond",count:1,components:{"minecraft:custom_name":"CI named"}}]',
+        'if data block 7 75 10 Items[{id:"minecraft:diamond",count:10}] if data block 7 75 10 Items[{id:"minecraft:diamond",count:1,components:{"minecraft:custom_name":"CI named"}}]',
         "sort_component_stack_not_merged_into_plain",
     )
     clear_box("11")
@@ -406,12 +407,12 @@ def integration(java: Path, server: Path) -> None:
     lines.extend(
         [
             'data modify storage warehouse:rules overrides."minecraft:ender_pearl" set value 11',
-            'data modify block 46 70 40 Items set value [{Slot:0b,id:"minecraft:ender_pearl",count:10}]',
+            'data modify block 7 75 10 Items set value [{Slot:0b,id:"minecraft:ender_pearl",count:10}]',
         ]
     )
     entry('id:"minecraft:ender_pearl",count:10')
     check(
-        'if data block 46 70 40 Items[{id:"minecraft:ender_pearl",count:16}] if data block 46 70 40 Items[{id:"minecraft:ender_pearl",count:4}]',
+        'if data block 7 75 10 Items[{id:"minecraft:ender_pearl",count:16}] if data block 7 75 10 Items[{id:"minecraft:ender_pearl",count:4}]',
         "sort_respects_16_max_stack",
     )
     lines.append('data remove storage warehouse:rules overrides."minecraft:ender_pearl"')
@@ -420,15 +421,15 @@ def integration(java: Path, server: Path) -> None:
     # Background compaction merges partial stacks inside one registered box.
     lines.extend(
         [
-            'data modify block 46 70 40 Items set value [{Slot:0b,id:"minecraft:diamond",count:10},{Slot:5b,id:"minecraft:diamond",count:10}]',
-            'data modify block 47 70 40 Items set value [{Slot:3b,id:"minecraft:diamond",count:7}]',
+            'data modify block 7 75 10 Items set value [{Slot:0b,id:"minecraft:diamond",count:10},{Slot:5b,id:"minecraft:diamond",count:10}]',
+            'data modify block 8 75 10 Items set value [{Slot:3b,id:"minecraft:diamond",count:7}]',
             "scoreboard players set #compact_code wh_tmp 2",
             "scoreboard players set #compact_slot wh_tmp 0",
         ]
     )
     lines.extend(["function warehouse:compact/step"] * 54)
     check(
-        'if data block 46 70 40 Items[{id:"minecraft:diamond",count:27}] unless data block 46 70 40 Items[{id:"minecraft:diamond",count:10}] unless data block 47 70 40 Items[{id:"minecraft:diamond"}]',
+        'if data block 7 75 10 Items[{id:"minecraft:diamond",count:27}] unless data block 7 75 10 Items[{id:"minecraft:diamond",count:10}] unless data block 8 75 10 Items[{id:"minecraft:diamond"}]',
         "compact_merges_partial_stacks_without_loss",
     )
 
@@ -444,11 +445,11 @@ def integration(java: Path, server: Path) -> None:
     check('if data storage warehouse:migration queue[{item_id:"minecraft:diamond",from:11,to:12}]', "rule_change_enqueues_migration")
     lines.extend(["function warehouse:migration/tick"] * 30)
     check(
-        'if data block 49 70 40 Items[{id:"minecraft:diamond",count:27}] unless data block 46 70 40 Items[{id:"minecraft:diamond"}] unless data storage warehouse:migration active',
+        'if data block 10 75 10 Items[{id:"minecraft:diamond",count:27}] unless data block 7 75 10 Items[{id:"minecraft:diamond"}] unless data storage warehouse:migration active',
         "migration_moves_old_box_stock_to_new_box",
     )
     entry('id:"minecraft:diamond",count:2')
-    check('if data block 49 70 40 Items[{id:"minecraft:diamond",count:29}]', "sort_uses_changed_rule")
+    check('if data block 10 75 10 Items[{id:"minecraft:diamond",count:29}]', "sort_uses_changed_rule")
 
     # Search reflects the player rule and live stock.
     lines.append(f'execute as {actor} run function warehouse:search/run {{q:"minecraft:diamond"}}')
@@ -478,11 +479,11 @@ def integration(java: Path, server: Path) -> None:
     check("if score #hl whst matches 0", "highlight_rejects_unregistered_box")
     lines.extend([f"scoreboard players set {actor} wh_target 12", f"execute as {actor} run function warehouse:unregister/do"])
     check(
-        "if data storage warehouse:chests c12{registered:0b,valid:0b,a_x:49,b_x:50}",
+        "if data storage warehouse:chests c12{registered:0b,valid:0b,a_x:10,b_x:11}",
         "unregister_clears_registration_keeps_coordinates",
     )
     entry('id:"minecraft:diamond",count:2')
-    check('if data block 40 70 40 Items[{Slot:0b,id:"minecraft:diamond",count:2}]', "sort_after_unregister_stays_in_entry")
+    check('if data block 1 75 10 Items[{Slot:0b,id:"minecraft:diamond",count:2}]', "sort_after_unregister_stays_in_entry")
     lines.append('data remove storage warehouse:rules overrides."minecraft:diamond"')
 
     lines.extend(
