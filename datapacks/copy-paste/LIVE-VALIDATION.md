@@ -66,6 +66,8 @@
 - Move / Flip / Rotate 與 Undo/Redo。
 - 跨維度 Copy / Cut。
 
+Harness 開始時會 forceload 主世界與地獄的測試區（x=-210..-160、z=80..120），並在每次佈置後先檢查「fixture ready / target ready」。佈置失敗會被回報為佈置失敗，不會被誤判成功能失敗；結束時會解除 forceload。
+
 執行方式：
 
 ```console

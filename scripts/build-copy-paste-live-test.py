@@ -52,8 +52,17 @@ def reset_transform():
          'scoreboard players set @s mcc_mir 0',
          'scoreboard players set @s mcc_mask 0')
 
+# The fixtures write blocks before the player is necessarily nearby (and the
+# Nether section prepares its target before teleporting there). Force-load the
+# owned areas first and let them load, otherwise setblock/fill silently fail and
+# a raycast can hit unrelated terrain such as the Nether roof.
+step('execute in minecraft:overworld run forceload add -210 80 -160 120',
+     'execute in minecraft:the_nether run forceload add -210 80 -160 120',
+     'execute in minecraft:overworld run tp @s -179.5 254 90.5 0 90')
+for _ in range(6): step()
 reset_transform()
 fixture(); selection()
+check('overworld fixture ready','in minecraft:overworld if block -200 250 90 gold_block if block -180 249 90 stone')
 check('raycast selection','if score @s mcc_p1x matches -200 if score @s mcc_p1y matches 250 if score @s mcc_p1z matches 90 if score @s mcc_p2x matches -198 if score @s mcc_p2z matches 91')
 
 # v1.3 selection contract: reselecting Pos1/Pos2 changes the next Copy, while
@@ -211,7 +220,9 @@ trigger('rotate set 10')
 fixture('overworld'); selection('overworld'); trigger('c')
 step('execute in minecraft:the_nether run fill -185 249 85 -170 255 100 air',
      'execute in minecraft:the_nether run setblock -180 249 90 stone')
+check('nether target ready','in minecraft:the_nether if block -180 249 90 stone if block -180 250 90 air')
 target(-180,90,'the_nether'); trigger('v')
+check('nether raycast hits target','if score @s mcc_dstd matches 2 if score @s mcc_dstx matches -180 if score @s mcc_dsty matches 250 if score @s mcc_dstz matches 90')
 check('nether blueprint no real blocks','in minecraft:the_nether if block -180 250 90 air if block -178 250 91 air')
 check('nether blueprint display','in minecraft:the_nether positioned -180 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..5,limit=1]')
 trigger('previewclear')
@@ -219,6 +230,7 @@ trigger('previewclear')
 # Cross-dimension Cut paste still moves real blocks and consumes the clipboard.
 step('execute in minecraft:overworld run tp @s -199.5 254 88.5 0 70')
 selection('overworld'); trigger('x')
+check('nether target still ready','in minecraft:the_nether if block -180 249 90 stone if block -180 250 90 air')
 target(-180,90,'the_nether'); trigger('v')
 check('cross-dimension x paste','in minecraft:the_nether if block -180 250 90 gold_block if block -178 250 91 iron_block if score @s mcc_clip matches 0')
 trigger('undo')
@@ -226,6 +238,8 @@ check('cross-dimension paste undo','in minecraft:the_nether if block -180 250 90
 trigger('redo')
 check('cross-dimension paste redo','in minecraft:the_nether if block -180 250 90 gold_block if block -178 250 91 iron_block')
 
+step('execute in minecraft:overworld run forceload remove -210 80 -160 120',
+     'execute in minecraft:the_nether run forceload remove -210 80 -160 120')
 step('tellraw @s [{"text":"MCCT DONE pass="},{"score":{"name":"#pass","objective":"mcct"}},{"text":" fail="},{"score":{"name":"#fail","objective":"mcct"}}]')
 for i,cmds in enumerate(steps):
     if i+1<len(steps):
