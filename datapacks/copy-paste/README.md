@@ -13,6 +13,7 @@
 - 修正有自訂 Anchor 時 Flip X/Z 會移動 Anchor 本身：現在 Anchor 固定不動，結構以 Anchor 所在平面為鏡像軸翻轉。
 - 修正長距離 Move／外部 Anchor Rotate：來源加目的地的 Z 跨度超過 200 格時，搬過去的前幾排會被內部暫存區覆蓋而遺失。
 - 舊版沒有防複製快照的 Undo/Redo 歷史會被拒絕執行，並提示從下一次編輯開始建立新的安全歷史。
+- 材料檢查／施工／材料型 Redo 進行中時按下的 Copy、Cut、V、Undo/Redo、Move/Flip/Rotate 與 Blueprint 微調，現在會提示「這個指令沒有執行」，不再無聲忽略。
 
 ## v1.2.1
 

@@ -18,7 +18,7 @@
 
 ## Headless behavioral runtime 的實際範圍
 
-`scripts/test-copy-paste-runtime.py` 是 v1.3 source 的官方-server regression，目前為 **131 個動態 assertions**，涵蓋：
+`scripts/test-copy-paste-runtime.py` 是 v1.3 source 的官方-server regression，目前為 **133 個動態 assertions**，涵蓋：
 
 - Pos1 / Pos2 / Anchor / V 的 raycast function。
 - 沒有自訂 Anchor 時，Pos1 為預設 Anchor，即使 Pos1 不是選區最小角也要精確對位。
@@ -36,6 +36,7 @@
 - Rotate 後的 Masked Cut 貼上保留目標既有方塊。
 - 自訂（外部）Anchor 的 Flip X/Z：Anchor 固定、結構繞 Anchor 平面鏡像。
 - 來源加目的地 Z 跨度超過 200 格的長距離 Move 與 Undo（內部暫存區不互相覆蓋）。
+- 材料工作進行中被擋下的指令會觸發提示。
 
 **限制：這個 runtime 使用 armor stand actor，並直接呼叫多數內部 `mcc:...` functions。**  
 因此它不能證明以下玩家路徑：

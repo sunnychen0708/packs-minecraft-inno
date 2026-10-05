@@ -492,6 +492,22 @@ def check_v100_semantics(pack: Path):
     assert 'Warehouse 共用倉庫' in main_dialog
     return matcher_states
 
+def check_busy_notice(pack: Path):
+    """Triggers held back while a material job runs must tell the player why."""
+    tick=read(pack/'data/mcc/function/tick.mcfunction')
+    notice=read(pack/'data/mcc/function/materials/busy_notice.mcfunction')
+    gated=re.findall(r'scores=\{([a-z0-9]+)=1\.\.,mcc_matphase=0\}',tick)
+    assert gated, 'no matphase-gated triggers found in tick'
+    missing=[t for t in gated if f'if score @s {t} matches 1..' not in notice]
+    assert not missing, f'busy_notice does not cover gated triggers: {missing}'
+    call='execute as @a[scores={mcc_matphase=1..}] run function mcc:materials/busy_notice'
+    assert call in tick, 'tick does not call materials/busy_notice'
+    first_gate=min(tick.index(f'scores={{{t}=1..,mcc_matphase=0}}') for t in gated)
+    assert tick.index(call) < first_gate, 'busy_notice must run before the gated dispatch'
+    for t in gated:
+        assert tick.index(call) < tick.index(f'scoreboard players set @a[scores={{{t}=1..}}] {t} 0'), f'busy_notice must run before {t} is reset'
+    assert 'tellraw @s' in notice
+
 def check_version_labels(pack: Path, repo: Path|None=None):
     meta=json.loads(read(pack/'pack.mcmeta'))
     desc=meta['pack']['description']
@@ -594,6 +610,7 @@ def main():
     check_selection_math(pack)
     check_flip_anchor_formula(pack)
     check_history_safety(pack)
+    check_busy_notice(pack)
     check_move_model()
     mp=check_multiplayer_isolation(pack)
     states=check_v100_semantics(pack)

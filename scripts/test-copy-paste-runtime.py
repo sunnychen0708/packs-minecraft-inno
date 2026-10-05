@@ -838,6 +838,20 @@ def integration(java: Path, server: Path):
     for _ in range(5): run_as('mcc:redo/run')
     check(f'if block 35 80 25 emerald_block if score {actor} mcc_ucnt matches 5 if score {actor} mcc_rcnt matches 0','history_five_redo')
 
+    # A gated trigger pressed while a material job runs is reported, not silently dropped.
+    lines.extend([
+        f'scoreboard players set {actor} mcc_tmp 0',
+        f'scoreboard players set {actor} undo 1',
+    ])
+    run_as('mcc:materials/busy_notice')
+    check(f'if score {actor} mcc_tmp matches 1','busy_notice_detects_gated_trigger')
+    lines.extend([
+        f'scoreboard players set {actor} undo 0',
+        f'scoreboard players set {actor} mcc_tmp 1',
+    ])
+    run_as('mcc:materials/busy_notice')
+    check(f'if score {actor} mcc_tmp matches 0','busy_notice_quiet_without_trigger')
+
     lines.extend([
         f'execute if score #pass mccst matches {len(assertions)} if score #fail mccst matches 0 run say MCCST_REGRESSION_SUCCESS',
         'say MCCST_REGRESSION_DONE',
