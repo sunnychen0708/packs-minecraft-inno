@@ -486,6 +486,21 @@ def check_v100_semantics(pack: Path):
     assert (pack/'data/mcc/tags/block/material_unsupported.json').is_file()
     return matcher_states
 
+def check_no_update_writes(pack: Path):
+    """Clearing a source and writing hidden lanes must not trigger block updates:
+    with updates, torches/lanterns/doors pop off as free items (duplication)."""
+    fn=pack/'data/mcc/function'
+    for name in ('clear_overworld','clear_nether','clear_end'):
+        text=read(fn/'cut'/f'{name}.mcfunction')
+        assert ' air strict' in text, f'cut/{name} must clear with fill ... strict'
+    bad=[]
+    for p in fn.rglob('*.mcfunction'):
+        for line in read(p).splitlines():
+            m=re.search(r'clone from \S+ (?:\S+ ){6}to minecraft:overworld \S+ (\S+) \S+ (.*)$',line)
+            if m and m.group(1)=='0' and not m.group(2).startswith('strict '):
+                bad.append(str(p.relative_to(pack)))
+    assert not bad, f'hidden-lane clone without strict: {bad[:5]}'
+
 def check_busy_notice(pack: Path):
     """Triggers held back while a material job runs must tell the player why."""
     tick=read(pack/'data/mcc/function/tick.mcfunction')
@@ -605,6 +620,7 @@ def main():
     check_flip_anchor_formula(pack)
     check_history_safety(pack)
     check_busy_notice(pack)
+    check_no_update_writes(pack)
     check_move_model()
     mp=check_multiplayer_isolation(pack)
     states=check_v100_semantics(pack)
