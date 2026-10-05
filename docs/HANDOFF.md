@@ -1,10 +1,17 @@
-# 交接：Copy/Paste v1.3 + Warehouse v4.4.1（2026-10-05）
+# 交接：Copy/Paste v1.3 + Warehouse v4.4.1（2026-10-06 更新）
 
 > 給下一位接手的人（或 Claude）。請一律用**繁體中文**與使用者溝通。
 
+## 0. 2026-10-06 更新摘要（先讀這段）
+
+- **真人 client 驗證已完成**（使用者的 Windows 電腦、官方 26.3 client、可丟棄的 `MCC-Test` 超平坦創造世界）。做法見 §8：用作業系統層級的鍵盤／滑鼠輸入真的操作遊戲，**結果一律讀世界存檔逐格判定，不看 log 的 PASS**。
+- 結果：Warehouse 61 箱真實註冊、自訂分類、Copy/Blueprint/Build 扣料、Undo 退料、Redo 再扣、旋轉 90/180/270 施工、X/Z 鏡像施工、Cut→V（含箱子內容物）、Move、Flip X/Z、直接 Rotate、Pick **全部通過，沒有發現 Copy/Paste 或 Warehouse 的 bug**。詳表見 §3。
+- **舊真人 harness（`build-copy-paste-live-test.py`）的 Warehouse 段落不可信**：它用兩個 `setblock chest` 擺成兩個**單箱**，再直接寫 `warehouse:chests` storage 假裝註冊，沒有走玩家流程。使用者明確指出「箱子根本放錯」。它在真人世界跑出 `pass=92 fail=10`，10 個 FAIL 都是「剛分類完的 warehouse stock」計數。要嘛修 harness，要嘛直接以 §8 的工具為準。
+- 尚未做：材料不足時拒絕施工的真人驗證（`scripts/real-client/stage4_shortage.py` 已寫好，未執行）；新 Dialog 的使用者主觀評價。
+
 ## 1. 目前在哪裡
 
-- 分支：`claude/lucid-brown-1zoaky` → PR [#25](https://github.com/sunnychen0708/packs-minecraft-inno/pull/25)（draft，base `main`）
+- 分支：`claude/lucid-brown-1zoaky` → PR [#25](https://github.com/sunnychen0708/packs-minecraft-inno/pull/25)（base `main`）
 - 舊 PR #23、#21 已留言關閉；#25 取代它們。
 - 版本（**都還沒打 release tag**）：
   - Copy/Paste source **v1.3**（最新已發布 ZIP 仍是 v1.2）
@@ -36,21 +43,34 @@
 | 官方 26.3 server：Copy/Paste runtime | **182 項全過**（含 3D 小屋：精確扣料、少一塊不施工、Undo 退料、Redo 再扣、旋轉 90°、Cut/Move/Flip/Rotate 逐格一致且無掉落物） |
 | 官方 26.3 server：Warehouse runtime | 120 項全過 |
 | 三包相容 runtime | 全過 |
-| **真人 client harness** | **最新版尚未有人跑過**。上一次真人跑（舊 harness）是 44/47，3 個失敗是 harness 本身問題（地獄 chunk 未載入），已修。 |
+| 本機 Windows 重跑（2026-10-06，HEAD `a1ae428`，Java 25.0.1） | 靜態全過；server：Copy/Paste 182、Warehouse 120、相容 10，全過 |
+| 舊真人 harness（`mcc_test:start`） | `pass=92 fail=10`；但 Warehouse 段是假的（單箱 + 直接寫 storage），**不採信** |
+| **真人 client，真實操作 + 讀存檔判定（§8）** | **全部通過**，見下表 |
 
-3D 測試建築定義在 `scripts/mcc_house.py`（headless runtime 和真人 harness 共用）。
+真人 client 驗證明細（每一項都由 `scripts/real-client/` 讀 `.mca` region／entities／`command_storage.dat`／playerdata 判定）：
+
+| 項目 | 結果 |
+| --- | --- |
+| 61 個真正大箱子（right+left 相連、朝南），用 `wh_register` Dialog → 滑鼠點「開始註冊」→ 真的對箱子按「使用」 | 61/61 註冊到正確的 A/B 兩半；沒有任何半箱被打掉 |
+| 手持橡木板 `wh_rule set 1` → `wh_rule_dest set 11` | `rules.overrides` = `{oak_planks: 11}` |
+| 2 倍小屋 BOM 放入入口箱 → 真實 tick 分類 | 入口箱清空；10 種材料數量全對；52 橡木板全部在 11 號箱 |
+| Copy → V（Blueprint） | 目標 0 個真實方塊、86 個 `block_display`、來源不變 |
+| Build | 196 格（含所有 blockstate）逐格一致；複製出的箱子是空的、來源箱子內容不變；Warehouse 剛好少一份 BOM；0 掉落物 |
+| Build → Undo → Redo | Undo：目標回空氣、退料回入口箱並重新分類、庫存回 2 倍；Redo：再次逐格一致、再扣一份 |
+| Blueprint 旋轉 90/180/270 → Build | 與原版 rotate 規則（門、樓梯、玻璃片連接、原木軸、牆上火把、箱子方向）逐格一致；0 掉落；Undo 後全額退料 |
+| Blueprint 鏡像 X / Z → Build | 與原版 mirror 規則（含門 hinge 翻轉）逐格一致；0 掉落；全額退料 |
+| Cut → V | 來源全空、0 掉落；目標逐格一致且箱子內容物跟著搬；Cut Clipboard 用一次就消耗；Undo×2 精確還原、內容物只回來一份 |
+| Move right 3 / up 2、Flip X / Z、直接 Rotate 90/180/270 | 全部逐格一致、箱子內容物保留、0 掉落；每次 Undo 精確還原 |
+| Pick（看著石磚） | 玩家拿到 40 個（倉庫只有 40），Warehouse 對應減少 |
+
+3D 測試建築定義在 `scripts/mcc_house.py`（headless runtime、舊 harness、真人工具共用）。
 
 ## 4. 下一步（照優先順序）
 
-1. 等 PR #25 最新 commit 的 CI 綠（本機已全過）。
-2. 請使用者跑**真人 harness**（下面指令），把 `MCCT PASS/FAIL/DONE` 結果拿回來。新版 harness 包含：
-   - 跨維度修正
-   - 真人玩家選取 3D 小屋 → Copy → V → 施工
-   - Warehouse **全部 61 箱位註冊 + 一條自訂分類**（不假設預設分類；使用者明確要求）
-   - 真實 tick 自動分類、Undo 退料再分類、Redo、Pick
-   - 會備份並還原測試世界原本的註冊和分類
+1. 真人跑 `scripts/real-client/stage4_shortage.py`（材料不足拒絕施工 → 補料後成功）。注意先處理 §7 的 MCC-Test 殘留狀態。
+2. 修舊真人 harness 的 Warehouse 段（改成真的大箱子；註冊盡量走玩家流程），或直接淘汰它、以 `scripts/real-client/` 為準。
 3. 請使用者實際看新 Dialog，依回饋調整。
-4. 使用者同意後才合併、打 tag。
+4. 打 release tag（`copy-paste-v1.3`、`warehouse-v4.4.1`）前**一定要先問使用者**。
 
 ## 5. 怎麼跑測試
 
@@ -94,3 +114,22 @@ python3 scripts/build-copy-paste-live-test.py   # → dist/mcc-live-test
 - Warehouse 介面沒有重做（使用者這次只要求驗證）。
 - 雙人同時操作的真人測試（`build-copy-paste-multiplayer-test.py`）沒跑過。
 - 貼上到真實世界的 `clone` 仍會觸發方塊更新（為了讓邊界的柵欄、紅石等正常連接）；目前測試沒有發現掉落問題。
+- **MCC-Test 世界目前有殘留**：真人驗證最後一段不小心把 stage 3 重跑了一半，留下一棟「Blueprint 旋轉 270° 施工」的建築（約在 x 1075..1081、z 1054..1060）沒有 Undo，Warehouse 也多了一份 2 倍 BOM。乾淨備份在 `%APPDATA%\.minecraft\backups\MCC-Test-before-a1ae428-20261006`（放入最新 datapack 之前）。下次驗證前建議先還原或另開新世界。
+- 舊真人 harness 的 10 個「剛分類完 warehouse stock」FAIL 沒有在 §8 重現（§8 等 20 秒讓分類完成後讀存檔，數量完全正確）；推測是 harness 在分類尚未完成時就呼叫 `count_item`，加上它的假箱子設定，未深究。
+
+## 8. 真人 client 驗證工具（`scripts/real-client/`，Windows）
+
+目的：不靠 datapack 自己印的 PASS，而是**真的像玩家一樣操作**，再**讀世界存檔**判定。
+
+- `mcdrive.py`：用 Win32 `SendInput` 對 Minecraft 視窗送鍵盤／滑鼠。指令用「按 T → Unicode 打字 → Enter」輸入（避開中文輸入法）；`screenshot()` 截圖；`in_game()` 用快捷欄清晰度判斷是否有 Dialog／選單開著；`close_screens()` 只在有畫面開著時才按 Esc。
+- `mcworld.py`：唯讀 Anvil 讀取器（region、entities、block entity、command storage）。26.3 的 palette 會省略預設屬性，所以用 `defaults.json`（由 server.jar `--reports` 的 `blocks.json` 產生）補齊，才能逐格比對完整 blockstate。
+- `xform.py`：依原版規則計算 rotate／mirror 後的 blockstate，作為預期值。
+- `realplay.py`：場地配置與共用動作。存檔方式是「按 Esc 暫停」，讓 integrated server 存所有 chunk（單人遊戲不能用 `/save-all`）。
+- `stage1_chests.py` → `stage2_register.py` → `stage3_house.py [rule stock house build rotbuild mirbuild cut direct pick]` → `stage4_shortage.py`。結果寫入 `dist/real-client/realplay-results.json`、`realplay.log` 和截圖。
+
+**使用者電腦的坑（一定要看）：**
+- 使用者的 `options.txt` 把 **攻擊設為滑鼠右鍵、使用設為滑鼠左鍵**。「打開／註冊箱子」要送**左鍵**；送右鍵會在創造模式直接把箱子打掉。不要改使用者的按鍵設定。
+- 點 Dialog 按鈕會在 mouse-down 時關閉畫面，滑鼠狀態會被帶回遊戲。所以點按鈕前要先讓準星看天空（`tp … 180 -90`）。
+- 聊天欄最多 256 字，長的 `data modify … Items set value [...]` 會被截斷，要拆成每格一條 `item replace`。
+- 送輸入前一定要確認 Minecraft 是前景視窗。曾經有腳本在使用者切走視窗時，把指令打進了使用者的其他視窗。工具在無法取得焦點時會丟出例外；不要在使用者正在用電腦時跑。
+- 匯入 `stage3_house` 會執行全部段落；只想用 helper 時要先把 `sys.argv` 設成 `['x', 'none']`（`stage4_shortage.py` 已這樣做）。
