@@ -35,6 +35,7 @@ execute as @a[scores={pos1=1..}] at @s run function mcc:select/start_pos1
 execute as @a[scores={pos2=1..}] at @s run function mcc:select/start_pos2
 execute as @a[scores={anchor=1}] at @s run function mcc:select/start_anchor
 execute as @a[scores={anchor=2..}] run function mcc:anchor_clear
+execute as @a[scores={mcc_matphase=1..}] run function mcc:materials/busy_notice
 execute as @a[scores={c=1..,mcc_matphase=0}] run function mcc:copy/run
 execute as @a[scores={x=1..,mcc_matphase=0}] run function mcc:cut/run
 execute as @a[scores={v=1..,mcc_matphase=0}] at @s run function mcc:select/start_paste
