@@ -8,3 +8,8 @@ scoreboard players operation @s mcc_anx = @s mcc_ranx
 scoreboard players operation @s mcc_any = @s mcc_rany
 scoreboard players operation @s mcc_anz = @s mcc_ranz
 scoreboard players operation @s mcc_hasa = @s mcc_rhasa
+scoreboard players operation @s mcc_p1d = @s mcc_rdim
+scoreboard players operation @s mcc_p2d = @s mcc_rdim
+execute if score @s mcc_hasa matches 1 run scoreboard players operation @s mcc_and = @s mcc_rdim
+scoreboard players set @s mcc_has1 1
+scoreboard players set @s mcc_has2 1

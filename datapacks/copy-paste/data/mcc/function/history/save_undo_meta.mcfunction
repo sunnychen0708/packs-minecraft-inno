@@ -20,3 +20,6 @@ $execute store result storage mcc:history u_p$(id)_s$(slot).hasa int 1 run score
 $execute store result storage mcc:history u_p$(id)_s$(slot).mat int 1 run scoreboard players get @s mcc_histmat
 $execute if score @s mcc_histmat matches 1 run data modify storage mcc:history u_p$(id)_s$(slot).materials.items set from storage mcc:materials p$(id).items
 $execute if score @s mcc_histmat matches 1 run data modify storage mcc:history u_p$(id)_s$(slot).materials.bom set from storage mcc:materials p$(id).bom
+
+$execute store result storage mcc:history u_p$(id)_s$(slot).guard int 1 run scoreboard players get @s mcc_histguard
+$execute store result storage mcc:history u_p$(id)_s$(slot).cut int 1 run scoreboard players get @s mcc_histcut
