@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Isolated vanilla 26.3 behavioral regression for Copy/Paste v1.2.1.
+"""Isolated vanilla 26.3 behavioral regression for Copy/Paste v1.3.
 
 Uses a non-player armor stand test actor to exercise internal datapack functions.
 This complements (not replaces) the opt-in real-player trigger/client harnesses.
@@ -580,10 +580,9 @@ def integration(java: Path, server: Path):
     check('if block 4 80 10 gold_block if block 3 80 10 air','move_redo')
     run_as('mcc:undo/run')
 
-    # AUDIT (evidence only, not a fix): a Move whose source+destination span is
-    # more than 200 blocks on Z makes the Undo scratch lane (#ubz, up to 256 deep)
-    # overlap the Work lane (#workz = #ubz + 200). The Undo backup is taken after
-    # the Work snapshot, so the first moved Z rows are overwritten before paste.
+    # 4b. A Move whose source+destination Z span exceeds 200 blocks fills the Undo
+    # scratch lane (#ubz) up to 256 deep. It must not overlap the Work lane, or the
+    # first moved Z rows are overwritten before the Work snapshot is pasted.
     lines.extend([
         'fill 70 80 0 70 80 230 air',
         'setblock 70 80 0 gold_block',
@@ -608,8 +607,9 @@ def integration(java: Path, server: Path):
         f'scoreboard players set {actor} mcc_rhead 0',
     ])
     run_as('mcc:move/run')
-    check('if block 70 80 227 iron_block if block 70 80 0 air','AUDIT_long_z_move_ran')
-    check('if block 70 80 100 air','BUG_long_z_move_loses_first_rows')
+    check('if block 70 80 100 gold_block if block 70 80 227 iron_block if block 70 80 0 air if block 70 80 127 air','long_z_move_keeps_every_row')
+    run_as('mcc:undo/run')
+    check('if block 70 80 0 gold_block if block 70 80 127 iron_block if block 70 80 100 air if block 70 80 227 air','long_z_move_undo')
     lines.append('fill 70 80 0 70 80 230 air')
 
     # 4a. Generic Undo guard must include block-entity NBT, not only block states.

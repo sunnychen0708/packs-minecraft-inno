@@ -236,7 +236,7 @@ scoreboard players set #slot mcc_id 256
 scoreboard players set #base mcc_id 20000000
 scoreboard players set #cbz mcc_id 20000000
 scoreboard players set #ubz mcc_id 20000200
-scoreboard players set #workz mcc_id 20000400
+scoreboard players set #workz mcc_id 20000500
 scoreboard players set #redoz mcc_id 20001000
 scoreboard players set #bpz mcc_id 20002000
 scoreboard players set #bpofs mcc_id 64
@@ -254,4 +254,4 @@ scoreboard players set #neg mcc_id -1
 execute in minecraft:overworld run forceload add 20008000 20008000
 execute in minecraft:overworld run setblock 20008008 64 20008008 air
 
-tellraw @a [{"text":"[Copy/Paste] ","color":"gold"},{"text":"v1.2.1 已載入。輸入 ","color":"gray"},{"text":"/trigger copypaste","color":"yellow"},{"text":" 開啟控制面板；","color":"gray"},{"text":"/trigger cphelp","color":"yellow"},{"text":" 開啟指令教學。","color":"gray"}]
+tellraw @a [{"text":"[Copy/Paste] ","color":"gold"},{"text":"v1.3 已載入。輸入 ","color":"gray"},{"text":"/trigger copypaste","color":"yellow"},{"text":" 開啟控制面板；","color":"gray"},{"text":"/trigger cphelp","color":"yellow"},{"text":" 開啟指令教學。","color":"gray"}]
