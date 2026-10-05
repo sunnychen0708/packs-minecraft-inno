@@ -46,6 +46,14 @@ def integration(java: Path, server: Path):
     harness=packs/'regression'
     funcs=harness/'data/mcc_server_test/function'
     funcs.mkdir(parents=True)
+    # The main UI is a macro Dialog; render it with sample values as a static dialog
+    # so the official server's registry load rejects any schema error.
+    import re as _re
+    show=(PACK/'data/mcc/function/ui/show.mcfunction').read_text(encoding='utf-8').strip()
+    assert show.startswith('$dialog show @s ')
+    rendered=_re.sub(r'\$\(([a-z0-9_]+)\)',lambda m:f'sample {m.group(1)}',show[len('$dialog show @s '):])
+    (harness/'data/mcc_server_test/dialog').mkdir(parents=True)
+    (harness/'data/mcc_server_test/dialog/ui_preview.json').write_text(rendered,encoding='utf-8')
     (harness/'pack.mcmeta').write_text(json.dumps({'pack':{'min_format':121,'max_format':121,'description':'CopyPaste server regression'}}),encoding='utf-8')
 
     actor='@e[type=minecraft:armor_stand,tag=mcc_server_actor,limit=1]'
@@ -972,6 +980,11 @@ def integration(java: Path, server: Path):
     run_as('mcc:rotate_edit/r90')
     check(f'if blocks {hbox(HR)} {hat(HS)} all {no_items}','house_rotate90_x4_returns_original')
     lines.append(f'fill 92 79 0 143 86 47 air')
+
+    # Main UI status strings are built from the player's real state.
+    hsel()
+    run_as('mcc:ui/open')
+    check('if data storage mcc:ui {s1:"Pos1 100 80 4",s2:"Pos2 104 83 8",rot:"旋轉 0°"} if data storage mcc:ui hist','ui_status_strings')
 
     # A gated trigger pressed while a material job runs is reported, not silently dropped.
     lines.extend([
