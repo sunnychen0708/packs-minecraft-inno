@@ -106,11 +106,11 @@ def check_clipboard_isolation(pack: Path):
         assert 'mcc:work_$(id)' in text
         assert 'mcc:clipboard_$(id)' not in text
     work=read(pack/'data/mcc/function/work/save_template.mcfunction')
-    assert 'mcc:work_$(id)' in work and '20000400' in work
+    assert 'mcc:work_$(id)' in work and '20000500' in work
     load=read(pack/'data/mcc/function/load.mcfunction')
     assert '#cbz mcc_id 20000000' in load
     assert '#ubz mcc_id 20000200' in load
-    assert '#workz mcc_id 20000400' in load
+    assert '#workz mcc_id 20000500' in load
 
 def check_ordering(pack: Path):
     move=read(pack/'data/mcc/function/move/run.mcfunction')
@@ -238,12 +238,19 @@ def check_multiplayer_isolation(pack: Path):
     for z0,z1 in hist_ranges:
         assert not (z0 <= bpz+127 and bpz <= z1), f'history overlaps blueprint lane: {(z0,z1)}'
 
+    # Copy/Cut/Work/Blueprint buffers hold one selection (<=128 per axis), but the
+    # Undo/Redo scratch lanes hold Move/Rotate source+destination unions (<=256).
+    lane_depth={'clipboard':128,'undo':256,'work':128,'redo':256,'blueprint':128}
+    work_literals=set()
+    for p in (pack/'data/mcc/function/work').glob('*.mcfunction'):
+        work_literals.update(int(z) for z in re.findall(r'\b(2000\d{4})\b',read(p)))
+    assert work_literals == {workz}, f'work/* hard-coded Z {sorted(work_literals)} != #workz {workz}'
     rects=[]
     for player_id in range(1,65):
         x0=base+player_id*slot
-        x1=x0+127
         for kind,z0 in [('clipboard',cbz),('undo',ubz),('work',workz),('redo',redoz),('blueprint',bpz)]:
-            rects.append((player_id,kind,x0,x1,z0,z0+127))
+            depth=lane_depth[kind]
+            rects.append((player_id,kind,x0,x0+depth-1,z0,z0+depth-1))
     for i,a in enumerate(rects):
         for b in rects[i+1:]:
             overlap_x=not (a[3] < b[2] or b[3] < a[2])
