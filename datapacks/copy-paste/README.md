@@ -16,6 +16,8 @@
 - **修正 Cut／Move／Flip／直接 Rotate 會複製物品**：清空來源與內部暫存不再觸發方塊更新，吊燈籠、門、牆上火把不會再掉成多出來的物品。
 - 舊版沒有防複製快照的 Undo/Redo 歷史會被拒絕執行，並提示從下一次編輯開始建立新的安全歷史。
 - 材料檢查／施工／材料型 Redo 進行中時按下的 Copy、Cut、V、Undo/Redo、Move/Flip/Rotate 與 Blueprint 微調，現在會提示「這個指令沒有執行」，不再無聲忽略。
+- **Blueprint 預覽不再歪半格**：預覽方塊原本用整數座標召喚，Minecraft 會自動把 X/Z 置中加 0.5，整個預覽往斜角偏半格；現在精確對齊方塊格。
+- `/trigger cphelp` 指令教學改成聊天室訊息（跟 Utilities 一樣），點指令會自動填入聊天欄，滑鼠移上去看說明；不再開 Dialog。
 
 ## v1.2.1
 
@@ -158,7 +160,7 @@ Blueprint 建立完成後，不必重新用 `v` 定位就能直接微調。左�
 /trigger cphelp
 ```
 
-會開啟遊戲內「Copy/Paste 指令教學」Dialog；主控制面板也有「指令教學」按鈕。教學包含 Pos1/Pos2/Anchor、Copy/Blueprint/Build、Cut、Blueprint 微調、Rotate/Mirror、Move/Flip、Undo/Redo 等指令與目前的 Anchor/選區語意。
+會在聊天室列出指令教學（點指令自動填入聊天欄，滑鼠移上去看說明）；主控制面板也有「指令教學」按鈕。教學包含 Pos1/Pos2/Anchor、Copy/Blueprint/Build、Cut、Blueprint 微調、Rotate/Mirror、Move/Flip、Undo/Redo 等指令與目前的 Anchor/選區語意。
 
 ## 生存安全
 
