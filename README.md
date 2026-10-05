@@ -11,13 +11,13 @@
 | Pack | Type | Source | Latest release | Minecraft | Description |
 | --- | --- | ---: | ---: | --- | --- |
 | [`utilities`](datapacks/utilities) | Data pack | v3.4 | [`v3.4`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/utilities-v3.4) | Java 26.3 | Teleportation, waypoints, coordinate display, and general survival utility systems. |
-| [`warehouse`](datapacks/warehouse) | Data pack | **v4.4** | [`v4.4`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/warehouse-v4.4) | Java 26.3 | Automatic sorting, shared inventory API, durable refunds, search/Highlight, and survival Pick. |
+| [`warehouse`](datapacks/warehouse) | Data pack | **v4.4.1** | [`v4.4`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/warehouse-v4.4) | Java 26.3 | Automatic sorting, shared inventory API, durable refunds, search/Highlight, and survival Pick. |
 | [`copy-paste`](datapacks/copy-paste) | Data pack | **v1.3** | [`v1.2`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/copy-paste-v1.2) | Java 26.3 | Survival building editor: Blueprint preview/micro-adjust, material-backed construction, Cut/Move/Rotate/Flip, and material-aware Undo/Redo. |
 | [`cat-door-sounds`](resourcepacks/cat-door-sounds) | Resource pack | v1.0 | [`v1.0`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/cat-door-sounds-v1.0) | Java 26.2 | Custom cat meow replacement and an extra wooden-door opening sound layer. |
 
 Each pack is stored as unpacked source. Release ZIPs are generated artifacts rather than development source.
 
-Copy/Paste source is **v1.3** while its latest published release is **v1.2**; Warehouse source/release is **v4.4**. Copy/Paste v1.3 closes v1.2 duplication paths (every world-edit Undo/Redo is guarded by a post-edit snapshot, and Cut → Undo invalidates the live Cut clipboard while Redo rebuilds it), fixes rotated Masked paste, external-Anchor Flip and long-distance Move buffers. Copy/Paste v1.2 includes the external-Anchor pivot fix, persistent/reselectable selection semantics, command tutorial, and expanded 26.3 behavioral regression. Copy uses Blueprint-first, material-backed construction backed by the shared Warehouse registration data and inventory API; Undo/Redo stays five-level per player and material-aware. See its [multiplayer validation notes](datapacks/copy-paste/MULTIPLAYER-VALIDATION.md).
+Copy/Paste source is **v1.3** while its latest published release is **v1.2**; Warehouse source is **v4.4.1** (dead-code cleanup, no behaviour change) while its latest published release is **v4.4**. Copy/Paste v1.3 closes v1.2 duplication paths (every world-edit Undo/Redo is guarded by a post-edit snapshot, and Cut → Undo invalidates the live Cut clipboard while Redo rebuilds it), fixes rotated Masked paste, external-Anchor Flip and long-distance Move buffers. Copy/Paste v1.2 includes the external-Anchor pivot fix, persistent/reselectable selection semantics, command tutorial, and expanded 26.3 behavioral regression. Copy uses Blueprint-first, material-backed construction backed by the shared Warehouse registration data and inventory API; Undo/Redo stays five-level per player and material-aware. See its [multiplayer validation notes](datapacks/copy-paste/MULTIPLAYER-VALIDATION.md).
 
 ## Installation
 
@@ -89,7 +89,7 @@ Generated ZIP files go to `dist/`, which is ignored by Git.
 
 ```bash
 ./scripts/build-pack.sh utilities v3.4
-./scripts/build-pack.sh warehouse v4.4
+./scripts/build-pack.sh warehouse v4.4.1
 ./scripts/build-pack.sh copy-paste v1.3
 ./scripts/build-pack.sh cat-door-sounds v1.0
 ```
