@@ -460,6 +460,14 @@ def integration(java: Path, server: Path):
     run_as('mcc:paste/dispatch')
     check('if block 20 80 3 air if block 22 80 4 air','x_no_second_paste')
 
+    # 3. Undo <-> Redo toggles the latest real paste (the X+V above). Keep this
+    # directly after it: later sections reset the actor history counters.
+    run_as('mcc:undo/run')
+    check(f'if block 12 80 3 air if score {actor} mcc_redo matches 1','paste_undo')
+    run_as('mcc:redo/run')
+    check(f'if block 12 80 3 gold_block if score {actor} mcc_undo matches 1','paste_redo')
+    run_as('mcc:undo/run')
+
     # 2a. Cut -> Undo must restore a container but invalidate the live Cut clipboard.
     lines.extend([
         'fill 34 80 4 38 80 6 air',
@@ -556,12 +564,6 @@ def integration(java: Path, server: Path):
         f'scoreboard players set {actor} mcc_mir 0',
     ])
 
-    # 3. Undo <-> Redo toggles latest real paste.
-    run_as('mcc:undo/run')
-    check(f'if block 12 80 3 air if score {actor} mcc_redo matches 1','paste_undo')
-    run_as('mcc:redo/run')
-    check(f'if block 12 80 3 gold_block if score {actor} mcc_undo matches 1','paste_redo')
-    run_as('mcc:undo/run')
 
     # 4. Move remains real and is Undo/Redo reversible.
     fixture(3,80,10)
