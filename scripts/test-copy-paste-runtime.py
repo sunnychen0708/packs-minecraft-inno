@@ -18,6 +18,8 @@ import zipfile
 ROOT=Path(__file__).resolve().parents[1]
 PACK=ROOT/'datapacks/copy-paste'
 WAREHOUSE=ROOT/'datapacks/warehouse'
+sys.path.insert(0,str(ROOT/'scripts'))
+import mcc_house as house
 
 def integration(java: Path, server: Path):
     work=ROOT/'dist'/('copy-paste-runtime-'+uuid.uuid4().hex[:8])
@@ -838,6 +840,139 @@ def integration(java: Path, server: Path):
     for _ in range(5): run_as('mcc:redo/run')
     check(f'if block 35 80 25 emerald_block if score {actor} mcc_ucnt matches 5 if score {actor} mcc_rcnt matches 0','history_five_redo')
 
+    # 5. Realistic 3D house: Copy -> Blueprint -> Build with exact Warehouse materials,
+    # Undo refunds / Redo re-consumes, rotated Build, and Cut / Move / Flip / Rotate
+    # on a multi-layer structure with doors, slabs, stairs, logs, panes, torches,
+    # lanterns and a chest. No item entities may drop at any point.
+    HS=(100,80,4); HR=(100,80,20); HT=(112,80,4); HT2=(130,80,4); HA=(100,80,36)
+    def hbox(o): return f'{o[0]} {o[1]} {o[2]} {o[0]+4} {o[1]+3} {o[2]+4}'
+    def hat(o): return f'{o[0]} {o[1]} {o[2]}'
+    C00A,C00B,C11A,C11B='100 80 44','101 80 44','103 80 44','104 80 44'
+    def hsel():
+        lines.extend([
+            f'scoreboard players set {actor} mcc_has1 1',
+            f'scoreboard players set {actor} mcc_has2 1',
+            f'scoreboard players set {actor} mcc_hasa 0',
+            f'scoreboard players set {actor} mcc_p1x {HS[0]}',
+            f'scoreboard players set {actor} mcc_p1y {HS[1]}',
+            f'scoreboard players set {actor} mcc_p1z {HS[2]}',
+            f'scoreboard players set {actor} mcc_p1d 1',
+            f'scoreboard players set {actor} mcc_p2x {HS[0]+4}',
+            f'scoreboard players set {actor} mcc_p2y {HS[1]+3}',
+            f'scoreboard players set {actor} mcc_p2z {HS[2]+4}',
+            f'scoreboard players set {actor} mcc_p2d 1',
+        ])
+    def hjobs():
+        for _ in range(40): lines.append(f'execute as {actor} at @s if score @s mcc_bpscan matches 1.. run function mcc:blueprint/scan_batch')
+        for _ in range(20): lines.append(f'execute as {actor} at @s if score @s mcc_bpover_scan matches 1 run function mcc:blueprint/recount_batch')
+    def hmat():
+        for _ in range(120): lines.append(f'execute as {actor} at @s if score @s mcc_matphase matches 1..2 run function mcc:materials/process_batch')
+    no_items='unless entity @e[type=minecraft:item]'
+    sources_empty=f'unless data block {C00A} Items[0] unless data block {C00B} Items[0] unless data block {C11A} Items[0] unless data block {C11B} Items[0]'
+    lines.extend([
+        'kill @e[type=minecraft:item]',
+        f'fill 92 79 0 143 86 47 air',
+        f'fill 92 78 0 143 78 47 stone',
+    ])
+    lines.extend(house.place_commands(*HS))
+    lines.append(f'clone {hbox(HS)} {hat(HR)}')
+    check(f'if blocks {hbox(HS)} {hat(HR)} all if block {HS[0]+2} {HS[1]+2} {HS[2]} minecraft:oak_door[half=upper] if block {HS[0]+2} {HS[1]+2} {HS[2]+2} minecraft:lantern[hanging=true] if block {HS[0]+1} {HS[1]+2} {HS[2]+1} minecraft:wall_torch','house_fixture_ready')
+    check(no_items,'house_fixture_no_item_drops')
+    lines.extend([
+        f'setblock {C00A} chest', f'setblock {C00B} chest', f'setblock {C11A} chest', f'setblock {C11B} chest',
+        'data modify storage warehouse:chests c00 set value {registered:1b,valid:1b,dimension:"minecraft:overworld",a_x:100,a_y:80,a_z:44,b_x:101,b_y:80,b_z:44}',
+        'data modify storage warehouse:chests c11 set value {registered:1b,valid:1b,dimension:"minecraft:overworld",a_x:103,a_y:80,a_z:44,b_x:104,b_y:80,b_z:44}',
+        f'data modify block {C11A} Items set value [{",".join(house.stock_items())}]',
+        f'data modify block {C11A} Items[{{id:"minecraft:oak_planks"}}].count set value {house.BOM["minecraft:oak_planks"]-1}',
+        f'scoreboard players set {actor} mcc_rot 0', f'scoreboard players set {actor} mcc_mir 0', f'scoreboard players set {actor} mcc_mask 0',
+        f'scoreboard players set {actor} mcc_ucnt 0', f'scoreboard players set {actor} mcc_uhead 0',
+        f'scoreboard players set {actor} mcc_rcnt 0', f'scoreboard players set {actor} mcc_rhead 0',
+        f'scoreboard players set {actor} mcc_buildconfirm 0',
+    ])
+    run_as('mcc:blueprint/clear_internal')
+    hsel()
+    run_as('mcc:copy/run')
+    target(*HT)
+    run_as('mcc:paste/dispatch')
+    hjobs()
+    check(f'if score {actor} mcc_bpactive matches 1 if score {actor} mcc_bpready matches 1 if score {actor} mcc_bpbad matches 0 if blocks {hbox(HT)} {hat(HA)} all','house_blueprint_ready_no_real_blocks')
+    run_as('mcc:materials/build_start')
+    hmat()
+    check(f'if blocks {hbox(HT)} {hat(HA)} all if score {actor} mcc_bpactive matches 1','house_build_short_one_plank_builds_nothing')
+    check(f'if data block {C11A} Items[{{id:"minecraft:oak_planks",count:{house.BOM["minecraft:oak_planks"]-1}}}] if data block {C11A} Items[{{id:"minecraft:oak_door",count:1}}] if data block {C11A} Items[{{id:"minecraft:stone_bricks",count:20}}]','house_build_short_one_plank_consumes_nothing')
+    lines.append(f'data modify block {C11A} Items[{{id:"minecraft:oak_planks"}}].count set value {house.BOM["minecraft:oak_planks"]}')
+    run_as('mcc:materials/build_start')
+    hmat()
+    check(f'if blocks {hbox(HS)} {hat(HT)} all','house_build_exact_3d_copy')
+    check(sources_empty,'house_build_consumes_exact_bom')
+    check(f'{no_items} if score {actor} mcc_bpactive matches 0','house_build_no_item_drops')
+    run_as('mcc:undo/run')
+    check(f'if blocks {hbox(HT)} {hat(HA)} all {no_items}','house_build_undo_world')
+    for item,count in house.BOM.items():
+        lines.append(f'execute as {actor} run function warehouse:api/count_item {{item_id:"{item}"}}')
+        check(f'if data storage warehouse:api result{{ok:1b,complete:1b,available:{count}}}',f'house_undo_refunds_{item.split(":")[1]}')
+    run_as('mcc:redo/run')
+    hmat()
+    check(f'if blocks {hbox(HS)} {hat(HT)} all {no_items}','house_redo_rebuilds_exact')
+    check(sources_empty,'house_redo_reconsumes_exact_bom')
+    run_as('mcc:undo/run')
+    check(f'if blocks {hbox(HT)} {hat(HA)} all {no_items}','house_second_undo_world')
+
+    # Rotated (clockwise 90) Blueprint/Build of the same clipboard, materials from the refunded stock.
+    lines.append(f'scoreboard players set {actor} mcc_rot 1')
+    target(*HT2)
+    run_as('mcc:paste/dispatch')
+    hjobs()
+    run_as('mcc:materials/build_start')
+    hmat()
+    for i,((dx,dy,dz),state) in enumerate(house.ROT90_EXPECT):
+        check(f'if block {HT2[0]+dx} {HT2[1]+dy} {HT2[2]+dz} {state}',f'house_rot90_state_{i}')
+    check(f'{sources_empty} {no_items}','house_rot90_consumes_exact_bom')
+    run_as('mcc:undo/run')
+    check(f'if blocks {HT2[0]-4} {HT2[1]} {HT2[2]} {HT2[0]} {HT2[1]+3} {HT2[2]+4} {hat(HA)} all {no_items}','house_rot90_undo_world')
+    lines.append(f'scoreboard players set {actor} mcc_rot 0')
+    run_as('mcc:blueprint/clear_internal')
+
+    # Cut + V moves the real 3D house; Undo twice restores the source without drops.
+    hsel()
+    run_as('mcc:cut/run')
+    check(f'if blocks {hbox(HS)} {hat(HA)} all','house_cut_clears_source')
+    check(no_items,'house_cut_no_item_drops')
+    target(*HT)
+    run_as('mcc:paste/dispatch')
+    check(f'if blocks {hbox(HR)} {hat(HT)} all {no_items}','house_cut_paste_exact')
+    run_as('mcc:undo/run')
+    run_as('mcc:undo/run')
+    check(f'if blocks {hbox(HR)} {hat(HS)} all if blocks {hbox(HT)} {hat(HA)} all {no_items}','house_cut_undo_restores_source')
+
+    # Move by +7 on X.
+    hsel()
+    lines.extend([f'scoreboard players set {actor} mcc_dx 7', f'scoreboard players set {actor} mcc_dy 0', f'scoreboard players set {actor} mcc_dz 0'])
+    run_as('mcc:move/run')
+    check(f'if blocks {hbox(HR)} {HS[0]+7} {HS[1]} {HS[2]} all if blocks {HS[0]} {HS[1]} {HS[2]} {HS[0]+6} {HS[1]+3} {HS[2]+4} {HA[0]} {HA[1]} {HA[2]} all','house_move_exact')
+    check(no_items,'house_move_no_item_drops')
+    run_as('mcc:undo/run')
+    check(f'if blocks {hbox(HR)} {hat(HS)} all {no_items}','house_move_undo_exact')
+
+    # Flip X mirrors on the X axis: torch and chest swap sides and face the other way, door hinge flips.
+    hsel()
+    run_as('mcc:flip/x')
+    check(f'if block {HS[0]+3} {HS[1]+2} {HS[2]+1} minecraft:wall_torch[facing=west] if block {HS[0]+1} {HS[1]+1} {HS[2]+3} minecraft:chest[facing=east] if block {HS[0]+2} {HS[1]+1} {HS[2]} minecraft:oak_door[facing=north,hinge=right,half=lower]','house_flipx_mirrors_states')
+    check(no_items,'house_flipx_no_item_drops')
+    run_as('mcc:undo/run')
+    check(f'if blocks {hbox(HR)} {hat(HS)} all {no_items}','house_flipx_undo_exact')
+
+    # Direct Rotate 90 around Pos1, four times, returns to the original house.
+    hsel()
+    run_as('mcc:rotate_edit/r90')
+    check(f'if block {HS[0]-1} {HS[1]+2} {HS[2]+1} minecraft:wall_torch[facing=south] if block {HS[0]} {HS[1]+1} {HS[2]+2} minecraft:oak_door[facing=east,half=lower]','house_rotate90_states')
+    check(no_items,'house_rotate90_no_item_drops')
+    run_as('mcc:rotate_edit/r90')
+    run_as('mcc:rotate_edit/r90')
+    run_as('mcc:rotate_edit/r90')
+    check(f'if blocks {hbox(HR)} {hat(HS)} all {no_items}','house_rotate90_x4_returns_original')
+    lines.append(f'fill 92 79 0 143 86 47 air')
+
     # A gated trigger pressed while a material job runs is reported, not silently dropped.
     lines.extend([
         f'scoreboard players set {actor} mcc_tmp 0',
@@ -885,6 +1020,8 @@ def integration(java: Path, server: Path):
         proc.stdin.write('forceload add 0 0 47 31\n'); proc.stdin.flush()
         # Long-Z Move audit column (x=70, z=0..230).
         proc.stdin.write('forceload add 64 0 79 239\n'); proc.stdin.flush()
+        # 3D house section (x=92..143, z=0..47).
+        proc.stdin.write('forceload add 92 0 143 47\n'); proc.stdin.flush()
         proc.stdin.write('gamerule minecraft:max_command_sequence_length 250000\n'); proc.stdin.flush()
         time.sleep(2)
         proc.stdin.write('function mcc_server_test:run\n'); proc.stdin.flush()
