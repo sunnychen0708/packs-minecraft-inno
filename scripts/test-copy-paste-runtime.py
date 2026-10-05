@@ -845,10 +845,13 @@ def integration(java: Path, server: Path):
     ])
     run_as('mcc:materials/busy_notice')
     check(f'if score {actor} mcc_tmp matches 1','busy_notice_detects_gated_trigger')
-    lines.extend([
-        f'scoreboard players set {actor} undo 0',
-        f'scoreboard players set {actor} mcc_tmp 1',
-    ])
+    # Earlier sections call nudge functions directly with bp* scores set, and no
+    # tick resets them for the armor-stand actor, so clear every gated trigger.
+    lines.extend(f'scoreboard players set {actor} {t} 0' for t in (
+        'c','x','v','undo','redo','right','left','up','down','forward','backward',
+        'flipx','flipz','rotate90','rotate180','rotate270',
+        'bpleft','bpright','bpforward','bpbackward','bpup','bpdown'))
+    lines.append(f'scoreboard players set {actor} mcc_tmp 1')
     run_as('mcc:materials/busy_notice')
     check(f'if score {actor} mcc_tmp matches 0','busy_notice_quiet_without_trigger')
 
