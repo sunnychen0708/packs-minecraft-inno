@@ -7,6 +7,9 @@ The test owns x=-210..-160, y=248..260, z=80..120 in each vanilla dimension.
 import argparse
 import json
 from pathlib import Path
+import sys
+sys.path.insert(0,str(Path(__file__).resolve().parent))
+import mcc_house as house
 
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--output',type=Path,default=Path(__file__).resolve().parents[1]/'dist/mcc-live-test')
@@ -237,6 +240,75 @@ trigger('undo')
 check('cross-dimension paste undo','in minecraft:the_nether if block -180 250 90 air if block -178 250 91 air')
 trigger('redo')
 check('cross-dimension paste redo','in minecraft:the_nether if block -180 250 90 gold_block if block -178 250 91 iron_block')
+
+# ---- Real Warehouse + 3D house through the player's triggers and real ticks ----
+# Warehouse boxes (A/B single chests) on z=117/118, house at x=-205..-201 z=100..104.
+OW='in minecraft:overworld'
+BOXES={'00':-208,'13':-205,'27':-202,'36':-199,'37':-196,'39':-193,'49':-190,'51':-187}
+ITEM_BOX={'minecraft:oak_planks':'36','minecraft:oak_log':'36','minecraft:oak_slab':'37','minecraft:oak_stairs':'37',
+          'minecraft:oak_door':'37','minecraft:stone_bricks':'39','minecraft:glass_pane':'51','minecraft:chest':'49',
+          'minecraft:torch':'13','minecraft:lantern':'27'}
+assert set(ITEM_BOX)==set(house.BOM)
+step('kill @e[type=minecraft:item]',
+     'execute in minecraft:overworld run fill -210 249 80 -160 255 120 air',
+     'execute in minecraft:overworld run fill -210 248 80 -160 248 120 stone',
+     'scoreboard players set #enabled wh_sys 1')
+reg=[]
+for code,x in BOXES.items():
+    reg += [f'execute in minecraft:overworld run setblock {x} 249 117 chest',
+            f'execute in minecraft:overworld run setblock {x} 249 118 chest',
+            f'data modify storage warehouse:chests c{code} set value {{registered:1b,valid:1b,dimension:"minecraft:overworld",a_x:{x},a_y:249,a_z:117,b_x:{x},b_y:249,b_z:118}}']
+step(*reg)
+step(f'execute in minecraft:overworld run data modify block {BOXES["00"]} 249 117 Items set value [{",".join(house.stock_items())}]')
+for _ in range(10): step()  # let the real Warehouse tick sort the entry chest
+check('warehouse sorts house materials out of entry',f'{OW} unless data block {BOXES["00"]} 249 117 Items[0] unless data block {BOXES["00"]} 249 118 Items[0]')
+for item,code in ITEM_BOX.items():
+    x=BOXES[code]
+    check(f'warehouse sorted {item.split(":")[1]} into {code}',f'{OW} if data block {x} 249 117 Items[{{id:"{item}",count:{house.BOM[item]}}}]')
+
+# House plus two temporary corner markers visible from above (selection -206..-200, 250..253, 99..105).
+step(*house.place_commands(-205,250,100,'overworld'),
+     'execute in minecraft:overworld run setblock -206 250 99 minecraft:white_wool',
+     'execute in minecraft:overworld run setblock -200 253 105 minecraft:white_wool',
+     'execute in minecraft:overworld run clone -206 250 99 -200 253 105 -206 250 85',
+     'execute in minecraft:overworld run setblock -185 249 99 stone',
+     'scoreboard players set @s mcc_rot 0','scoreboard players set @s mcc_mir 0','scoreboard players set @s mcc_mask 0')
+check('3d house fixture ready',f'{OW} if block -203 252 100 minecraft:oak_door[half=upper] if block -203 252 102 minecraft:lantern[hanging=true] if block -204 252 101 minecraft:wall_torch')
+aim(-206,99,250); trigger('pos1')
+aim(-200,105,253); trigger('pos2')
+check('3d selection by raycast','if score @s mcc_p1x matches -206 if score @s mcc_p1y matches 250 if score @s mcc_p1z matches 99 if score @s mcc_p2x matches -200 if score @s mcc_p2y matches 253 if score @s mcc_p2z matches 105')
+step('execute in minecraft:overworld run setblock -206 250 99 air',
+     'execute in minecraft:overworld run setblock -200 253 105 air',
+     'execute in minecraft:overworld run setblock -206 250 85 air',
+     'execute in minecraft:overworld run setblock -200 253 91 air')
+trigger('c')
+target(-185,99); trigger('v')
+for _ in range(4): step()
+check('3d blueprint ready, no real blocks',f'{OW} if score @s mcc_bpactive matches 1 if score @s mcc_bpready matches 1 if score @s mcc_bpbad matches 0 if block -184 250 100 air if block -182 253 100 air')
+trigger('build')
+for _ in range(6): step()
+check('3d build exact copy',f'{OW} if blocks -206 250 99 -200 253 105 -185 250 99 all')
+check('3d build consumed every warehouse box',f'{OW} '+' '.join(f'unless data block {x} 249 117 Items[0] unless data block {x} 249 118 Items[0]' for x in BOXES.values()))
+check('3d build no item drops','unless entity @e[type=minecraft:item]')
+trigger('undo')
+check('3d build undo world',f'{OW} if block -184 250 100 air if block -183 251 99 air if block -182 253 100 air')
+for _ in range(10): step()
+for item,code in ITEM_BOX.items():
+    x=BOXES[code]
+    check(f'undo refund resorted {item.split(":")[1]}',f'{OW} if data block {x} 249 117 Items[{{id:"{item}",count:{house.BOM[item]}}}]')
+trigger('redo')
+for _ in range(6): step()
+check('3d redo exact copy',f'{OW} if blocks -206 250 99 -200 253 105 -185 250 99 all')
+check('3d redo consumed every warehouse box',f'{OW} '+' '.join(f'unless data block {x} 249 117 Items[0] unless data block {x} 249 118 Items[0]' for x in BOXES.values()))
+trigger('undo')
+for _ in range(10): step()
+
+# Pick: look at a stone brick block and take one stack from the Warehouse.
+step('clear @s minecraft:stone_bricks','execute in minecraft:overworld run setblock -195 249 110 minecraft:stone_bricks')
+aim(-195,110,249)
+trigger('pick')
+check('pick gives warehouse stone bricks','if items entity @s container.* minecraft:stone_bricks unless data block -193 249 117 Items[{id:"minecraft:stone_bricks"}] unless data block -193 249 118 Items[{id:"minecraft:stone_bricks"}]')
+step('clear @s minecraft:stone_bricks')
 
 step('execute in minecraft:overworld run forceload remove -210 80 -160 120',
      'execute in minecraft:the_nether run forceload remove -210 80 -160 120')
