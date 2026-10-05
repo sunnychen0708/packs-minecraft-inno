@@ -135,6 +135,14 @@ if want('build'):
     record('blueprint: V creates no real blocks', not real, f'real={real[:4]}')
     disp = [e for e in w.entities_in(T1[0] - 1, Y0 - 1, T1[2] - 1, T1[0] + 8, Y0 + 5, T1[2] + 8) if e.get('id') == 'minecraft:block_display']
     record('blueprint: block_display preview exists at target', len(disp) > 0, f'{len(disp)} displays')
+    # A block_display renders from its origin corner: it must sit exactly on the block corner of
+    # the cell it previews (an integer-coordinate summon is centred +0.5 X/Z and looks skewed).
+    def _cell(e):
+        p = e.get('Pos', [0.5, 0, 0.5])
+        return tuple(int(v) for v in p) if all(float(v).is_integer() for v in p) else None
+    misplaced = [e.get('Pos') for e in disp if _cell(e) not in exp
+                 or str(e.get('block_state', {}).get('Name', '')) != exp[_cell(e)].split('[')[0]]
+    record('blueprint: every display sits exactly on its target block', disp and not misplaced, f'misplaced={misplaced[:4]}')
     compare(w, SRC, 'blueprint: source untouched')
     trig('build', 1.0); time.sleep(6)
     d.screenshot(str(OUT / 'build.png'))

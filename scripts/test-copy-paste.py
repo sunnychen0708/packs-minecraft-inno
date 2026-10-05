@@ -405,6 +405,10 @@ def check_v100_semantics(pack: Path):
     assert 'function mcc:paste/save_template' in transformed
     assert 'execute in minecraft:overworld run function mcc:paste/do_place' in transformed
     assert 'summon minecraft:block_display' in summon
+    # Integer summon/positioned coordinates are centred (+0.5 X/Z); a block_display
+    # renders from its origin corner, so it must be summoned on the exact block corner.
+    assert 'summon minecraft:block_display $(tx).0 $(ty).0 $(tz).0' in summon
+    assert 'positioned $(tx) $(ty) $(tz)' not in summon
     assert 'block_state set from storage mcc:temp state' in summon
 
     # Generated exact-state dispatcher: every non-air 26.3 block appears in exactly one group.
@@ -464,10 +468,11 @@ def check_v100_semantics(pack: Path):
     assert (pack/'data/mcc/function/blueprint/nudge/run.mcfunction').is_file()
     assert 'function mcc:blueprint/recount_start' in read(pack/'data/mcc/function/blueprint/nudge/run.mcfunction')
     assert 'mcc_bpover_scan' in read(pack/'data/mcc/function/tick.mcfunction')
-    assert (pack/'data/mcc/dialog/tutorial.json').is_file()
+    # The command tutorial is chat-only (clickable tellraw, Utilities style), not a Dialog.
+    assert not (pack/'data/mcc/dialog/tutorial.json').exists()
     # /trigger copypaste builds status strings, then shows ui/show (macro Dialog).
     main_dialog=read(pack/'data/mcc/function/ui/show.mcfunction')+read(pack/'data/mcc/dialog/nudge.json')+read(pack/'data/mcc/dialog/edit.json')
-    tutorial_dialog=read(pack/'data/mcc/dialog/tutorial.json')
+    tutorial_dialog=read(pack/'data/mcc/function/ui/tutorial.mcfunction')
     assert 'function mcc:ui/show with storage mcc:ui' in read(pack/'data/mcc/function/ui/open.mcfunction')
     for command in (
         'trigger pos1','trigger pos2','trigger anchor','trigger anchor set 2','trigger c','trigger x','trigger v',
@@ -481,7 +486,9 @@ def check_v100_semantics(pack: Path):
     assert '/trigger build' in tutorial_dialog and '/trigger undo' in tutorial_dialog and '/trigger redo' in tutorial_dialog
     assert '自訂 Anchor 可在選區外' in tutorial_dialog
     assert (pack/'data/mcc/function/ui/tutorial.mcfunction').is_file()
-    assert read(pack/'data/mcc/function/ui/tutorial.mcfunction').strip() == 'dialog show @s mcc:tutorial'
+    assert 'dialog' not in tutorial_dialog
+    assert all(line.startswith('tellraw @s ') for line in tutorial_dialog.splitlines() if line.strip())
+    assert '"action":"suggest_command","command":"/trigger build"' in tutorial_dialog
     assert 'scoreboard players set @s mcc_histmat 1' in place
     assert (pack/'data/mcc/tags/block/material_unsupported.json').is_file()
     return matcher_states
