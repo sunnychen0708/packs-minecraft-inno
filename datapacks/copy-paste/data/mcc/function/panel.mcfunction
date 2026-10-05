@@ -1,4 +1,4 @@
-tellraw @s [{"text":"===== Copy/Paste v1.2.1 =====","color":"gold"}]
+tellraw @s [{"text":"===== Copy/Paste v1.3 =====","color":"gold"}]
 execute if score @s mcc_mask matches 0 run tellraw @s [{"text":"貼上模式：Replace","color":"gray"}]
 execute if score @s mcc_mask matches 1 run tellraw @s [{"text":"貼上模式：Masked","color":"gray"}]
 execute if score @s mcc_rot matches 0 run tellraw @s [{"text":"旋轉：0°","color":"gray"}]

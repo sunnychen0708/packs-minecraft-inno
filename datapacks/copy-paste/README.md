@@ -1,10 +1,20 @@
-# Minecraft Copy/Paste Datapack v1.2.1
+# Minecraft Copy/Paste Datapack v1.3
 
 適用：Minecraft Java Edition 26.3（Data Pack 121.0）
 
 純 Vanilla datapack。操作使用 Trigger。材料施工依賴同 repo 的 Warehouse datapack，並直接使用 Warehouse 共用註冊資料與 API。
 
-## v1.2.1（source，尚未發布）
+## v1.3（source，尚未發布）
+
+- **防複製修正**：所有真實世界編輯（Cut、Move、Flip、Rotate、貼上、Build）的 Undo/Redo 都會先比對「操作完成後的世界快照」；只要該區域之後被改過（包含箱子內容物），就拒絕 Undo/Redo，避免把已拿走的物品還原回來。
+- **Cut → Undo 會作廢目前的 Cut Clipboard**：來源被還原後，不能再用 `/trigger v` 把同一批方塊或箱子內容物貼第二次。
+- **Cut → Undo → Redo 會重新建立原本的 Cut Clipboard**：即使 Undo 後做過別的 Copy，Redo 也會恢復當初 Cut 的內容，可再用 `/trigger v` 搬移。
+- 修正 Rotate／Mirror 後的 Masked 貼上會退回 Replace：來源是空氣的格子不再覆蓋目標既有方塊。
+- 修正有自訂 Anchor 時 Flip X/Z 會移動 Anchor 本身：現在 Anchor 固定不動，結構以 Anchor 所在平面為鏡像軸翻轉。
+- 修正長距離 Move／外部 Anchor Rotate：來源加目的地的 Z 跨度超過 200 格時，搬過去的前幾排會被內部暫存區覆蓋而遺失。
+- 舊版沒有防複製快照的 Undo/Redo 歷史會被拒絕執行，並提示從下一次編輯開始建立新的安全歷史。
+
+## v1.2.1
 
 - 修正 active `/trigger copypaste` Dialog 缺少「清 Anchor」操作；現在可直接執行 `/trigger anchor set 2` 回到 Pos1 預設 Anchor。
 - 驗證改為直接檢查實際使用中的 Dialog，不再拿未被主流程呼叫的 legacy `panel.mcfunction` 當玩家 UI 證據。
@@ -195,6 +205,10 @@ Cut 是搬移，不需要材料箱。來源先被真正移除，下一次 `v` �
 
 每位玩家保留最近 5 次真實世界修改。Build 成功也會進入世界 Undo/Redo 歷史。
 
+每筆 Undo/Redo 都附帶一份「操作完成時的世界快照」。執行 Undo/Redo 前會先比對目前世界；若該區域之後被修改過（包含箱子、木桶等容器的內容物），就不執行，以免把已經被拿走的物品還原回來。
+
+Cut 的 Undo 會還原來源，同時作廢目前的 Cut Clipboard；Redo 會再次清除來源並重新建立原本的 Cut Clipboard，之後可以照常 `/trigger v`。
+
 Build 的 Undo/Redo 會連材料交易一起處理：Undo 在施工區仍與 Build 完成狀態一致時，還原世界並把該次實際消耗的材料統一退回 Warehouse `c00` 入口箱；若入口箱當下塞不下，Warehouse 會把剩餘退款持久化排隊並逐 tick 重試。Redo 會重新掃描 Warehouse 共用材料來源，材料全部足夠才再次扣料並恢復建築。若 Build 後施工區曾被修改且目前狀態不再吻合，材料型 Undo 會拒絕執行，以避免退款造成資源複製。
 
 ## 多人
@@ -208,7 +222,8 @@ Build 的 Undo/Redo 會連材料交易一起處理：Undo 在施工區仍與 Bui
 
 - Raycast：128 格。
 - 一般 Copy / Cut：每軸最多 128 格，總體積受 `minecraft:max_block_modifications` 限制。
-- Rotate / Mirror Structure Template：每軸 ≤ 48。
+- Rotate / Mirror Structure Template：每軸 ≤ 48；有自訂 Anchor 的 Flip X/Z 也走這條路徑，同樣每軸 ≤ 48。
+- Move / 直接 Rotate 的 Undo 範圍（來源加目的地）每軸 ≤ 256。
 - Warehouse 共用材料來源上限為 64；Copy/Paste 不再有自己的材料箱上限或註冊資料。
 - Blueprint exact-state matcher覆蓋 Java 26.3 的 1,283 種非空氣 block IDs、35,720 個 block states。
 - 實體不包含在 Copy/Cut/Blueprint 中。
@@ -232,6 +247,6 @@ python3 scripts/test-copy-paste-runtime.py \
   --accept-eula
 ```
 
-目前 CI 會同時跑 Copy/Paste 專用 26.3 runtime，以及 Utilities + Warehouse + Copy/Paste 三包一起載入的 26.3 compatibility gate。`copy-paste-v1.2` release 已經經過同一組 release gate。更完整的覆蓋範圍與仍需真人 client 驗證的項目見 [LIVE-VALIDATION.md](LIVE-VALIDATION.md)；多人隔離設計與雙人測試方式見 [MULTIPLAYER-VALIDATION.md](MULTIPLAYER-VALIDATION.md)。
+目前 CI 會同時跑 Copy/Paste 專用 26.3 runtime，以及 Utilities + Warehouse + Copy/Paste 三包一起載入的 26.3 compatibility gate。`copy-paste-v1.2` release 已經經過同一組 release gate；v1.3 source 尚未打 release tag。更完整的覆蓋範圍與仍需真人 client 驗證的項目見 [LIVE-VALIDATION.md](LIVE-VALIDATION.md)；多人隔離設計與雙人測試方式見 [MULTIPLAYER-VALIDATION.md](MULTIPLAYER-VALIDATION.md)。
 
 正式版本仍統一由 `<pack-name>-v<version>` tag 觸發 `release-pack.yml` 驗證、打包與發布 ZIP。
