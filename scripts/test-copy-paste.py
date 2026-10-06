@@ -295,6 +295,7 @@ def check_v100_semantics(pack: Path):
     assert 'scoreboard objectives add rotate180 trigger' in load
     for legacy in ('rotate','mirror','rotate90','rotate270','flipx','flipz'):
         assert f'scoreboard objectives add {legacy} trigger' not in load, f'legacy trigger {legacy} must stay removed'
+        assert f'scoreboard objectives remove {legacy}\n' in load, f'upgraded worlds must drop legacy trigger {legacy}'
     assert 'scoreboard objectives add previewclear trigger' in load
     assert 'scoreboard objectives add build trigger' in load
     assert 'scores={x=1..}' in tick and 'function mcc:cut/run' in tick

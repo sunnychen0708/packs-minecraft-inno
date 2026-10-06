@@ -6,9 +6,9 @@
 
 | Pack | 版本 | Release |
 | --- | --- | --- |
-| Utilities | v3.6 | `utilities-v3.6` |
+| Utilities | v3.7 | `utilities-v3.7` |
 | Warehouse | v4.5 | `warehouse-v4.5` |
-| Copy/Paste | v1.5 | `copy-paste-v1.5` |
+| Copy/Paste | v1.6 | `copy-paste-v1.6` |
 | cat-door-sounds | v1.0 | `cat-door-sounds-v1.0` |
 
 - 所有原始碼版本都已發布，遠端只剩 `main` 分支，沒有進行中的 PR。
@@ -29,9 +29,9 @@
 
 ## 3. 重要設計
 
-### Copy/Paste v1.5
+### Copy/Paste v1.6
 - **介面**：玩家按 G →「建築工具」（`/trigger copypaste` 也可，但訊息一律叫玩家按 G）。全部是 function 產生的 inline Dialog，`/reload` 就會更新：主畫面 `ui/show`（9 顆）、`set 2` 調整預覽 `ui/adjust`、`set 3` 更多 `ui/more`、`set 4` 直接改原本建築 `ui/edit`。聊天教學 `/trigger cphelp` 是 1～5 步驟式。
-- **轉向／翻面以玩家面向為準**：只動預覽 `bpturnright`／`bpturnleft`／`bpflip`／`bpflipfb`／`bpreset`（翻面換算在 `state/bp_flip_axis`：F·R(k)·M = R(−k)·(F·M)）；直接改建築 `turnright`／`turnleft`／`flip`／`flipfb`。舊的 `rotate`、`mirror`、`rotate90`、`rotate270`、`flipx`、`flipz` 已在 v1.4 移除（`rotate180` 保留給「原地轉 180°」）。
+- **轉向／翻面以玩家面向為準**：只動預覽 `bpturnright`／`bpturnleft`／`bpflip`／`bpflipfb`／`bpreset`（翻面換算在 `state/bp_flip_axis`：F·R(k)·M = R(−k)·(F·M)）；直接改建築 `turnright`／`turnleft`／`flip`／`flipfb`。舊的 `rotate`、`mirror`、`rotate90`、`rotate270`、`flipx`、`flipz` 已在 v1.4 移除，v1.6 起 `load` 會把升級世界殘留的這些 objective 刪掉（`rotate180` 保留給「原地轉 180°」）。
 - **扣料**：先扣玩家背包 0～35 格與副手（有 components 的物品不用），再扣 Warehouse。Undo／扣料失敗退料時，背包扣的退回背包（依最大堆疊算空間，塞不下退 Warehouse），Warehouse 扣的退 Warehouse 入口箱再自動分類。記錄在 `bom/items` 的 `.inv` 與 `.taken`。
 - **物品名稱**：`scripts/gen-item-names.py` 從 26.3 server `--reports` 產生 `function/names/load.mcfunction`（翻譯鍵與最大堆疊表）。**換 Minecraft 版本要重跑。**
 - 材料檢查（job 2）只報告，不扣料（`materials/check_done`；v1.1～v1.2 曾經會直接施工）。
@@ -95,5 +95,6 @@ Copy/Paste runtime 失敗時會印出 `MCCST_DIAG_DROP_<步驟>`（掉了什麼�
 - 兩位真人 client 同時操作沒測過（`scripts/build-copy-paste-multiplayer-test.py`）。
 - CI 不跑 `scripts/real-client/`，兩個 trigger harness 也只檢查能產生；CI 綠燈不代表 G、Dialog 點擊、真人 trigger／raycast 沒問題。改了玩家看得到的行為要自己重跑相關 stage。
 - Blueprint 覆蓋檢查取消（v1.5）只有 headless runtime 測試，沒有專門的真人 client stage。
+- Utilities v3.7 礦脈工具等級檢查、Copy/Paste v1.6 舊 trigger objective 清除，目前只有 headless runtime 測試；真人 client 尚未跑過（`stage13_vein_xp.py` 只用鑽石鎬）。
 - 舊 Trigger harness（`build-copy-paste-live-test.py`）的 Warehouse 段是假的（單箱＋直接寫 storage），正式驗證以 `scripts/real-client/` 為準。
 - 貼上到真實世界的 `clone` 仍會觸發方塊更新（為了讓邊界的柵欄、紅石正常連接）；目前沒發現掉落問題。

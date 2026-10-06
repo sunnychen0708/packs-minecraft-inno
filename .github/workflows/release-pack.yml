@@ -8,6 +8,11 @@ on:
 permissions:
   contents: write
 
+# A tag pushed twice starts two runs; run them one after the other so only one creates the release.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -119,6 +124,25 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+      - name: Run Utilities 26.3 runtime release gate
+        if: steps.pack.outputs.kind == 'datapack' && steps.pack.outputs.pack == 'utilities'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/test-utilities.py \
+            --java "$(command -v java)" \
+            --server-jar "$PWD/server.jar" \
+            --accept-eula
+
+      - name: Upload Utilities runtime evidence
+        if: always() && steps.pack.outputs.kind == 'datapack' && steps.pack.outputs.pack == 'utilities'
+        uses: actions/upload-artifact@v7
+        with:
+          name: utilities-release-runtime-${{ github.run_id }}
+          path: dist/utilities-test-*
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Boot official 26.3 server and reload Copy/Paste
         if: steps.pack.outputs.kind == 'datapack' && steps.pack.outputs.pack == 'copy-paste'
         shell: bash
@@ -159,10 +183,17 @@ jobs:
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.pack.outputs.tag }}
+          ZIP: dist/${{ steps.pack.outputs.pack }}-${{ steps.pack.outputs.version }}.zip
+          TITLE: ${{ steps.pack.outputs.pack }} ${{ steps.pack.outputs.version }}
         shell: bash
         run: |
-          gh release create "${{ steps.pack.outputs.tag }}" \
-            "dist/${{ steps.pack.outputs.pack }}-${{ steps.pack.outputs.version }}.zip" \
-            --verify-tag \
-            --title "${{ steps.pack.outputs.pack }} ${{ steps.pack.outputs.version }}" \
-            --generate-notes
+          set -euo pipefail
+          # Idempotent: a re-run or a second run for the same tag refreshes the asset of the
+          # existing release (built from the same tag after the same gates) instead of failing.
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists; uploading the asset to it."
+            gh release upload "$TAG" "$ZIP" --clobber
+          else
+            gh release create "$TAG" "$ZIP" --verify-tag --title "$TITLE" --generate-notes
+          fi

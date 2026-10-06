@@ -1,4 +1,4 @@
-"""Build an opt-in two-player v1.5 Copy/Paste concurrency test datapack.
+"""Build an opt-in two-player v1.6 Copy/Paste concurrency test datapack.
 
 Player A: /function mcc_mp_test:join_a
 Player B: /function mcc_mp_test:join_b
@@ -14,7 +14,7 @@ OUT=ROOT/'dist/mcc-multiplayer-test'
 F=OUT/'data/mcc_mp_test/function'
 F.mkdir(parents=True,exist_ok=True)
 (OUT/'pack.mcmeta').write_text(json.dumps({
-    'pack':{'description':'Opt-in CopyPaste v1.5 two-player concurrency regression','min_format':121,'max_format':121}
+    'pack':{'description':'Opt-in CopyPaste v1.6 two-player concurrency regression','min_format':121,'max_format':121}
 },ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 
 steps=[]
@@ -195,4 +195,4 @@ for i,commands in enumerate(steps):
     'function mcc_mp_test:step_0\n',
     encoding='utf-8'
 )
-print(f'Built {len(steps)} v1.5 two-player steps at {OUT}')
+print(f'Built {len(steps)} v1.6 two-player steps at {OUT}')

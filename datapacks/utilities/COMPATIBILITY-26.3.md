@@ -1,4 +1,4 @@
-# Utilities v3.6 — Minecraft Java 26.3 相容性審核
+# Utilities v3.7 — Minecraft Java 26.3 相容性審核
 
 依據 [Minecraft 官方 26.3 更新說明](https://www.minecraft.net/en-us/article/minecraft-java-edition-26-3)，並以 Mojang 官方 26.3 server JAR 驗證。
 
@@ -13,6 +13,7 @@
 | Predicate／Loot Function 格式 | `is_sneaking`、`consume_one` 已使用 `type`；未使用已移除的 reference、block_state_property 或舊條件陣列格式。 |
 | 耐久處理 | 依使用者要求，v3.4 撤回 v3.3 的耐久修正。砍樹、全部 11 種礦脈 break 函數及 `damage_one` modifier 完整還原 v3.2 原始碼（`set_damage: 1, add: true`）；移除 v3.3 新增的 tool helper。此行為會將工具修復至全滿，依要求保留。 |
 | 礦脈經驗（v3.6） | 連鎖挖掉的礦原本用 `loot spawn … mine` 掉落、`setblock air` 移除，兩者都不產生經驗。v3.6 在 7 種有經驗的礦的 `break` 函數加入 `vein/xp`，用 `random value` 抽原版範圍並以巨集 `summon experience_orb {Value:…}` 生成；主手有絲綢之觸時跳過。已在官方 26.3 server 驗證經驗球數量、數值範圍、0 不生成、絲綢之觸與鐵礦不生成。 |
+| 礦脈工具等級（v3.7） | 官方 26.3 的 `loot … mine` **不檢查工具等級**：v3.6 以前在官方 server 用木鎬執行鑽石礦的 `break`，兩顆鑽石礦都被挖掉、掉落物與經驗都有；遠古遺骸用鐵鎬也一樣。新增 `vein/tool_ok`：依主手鎬的材質對照原版 `#minecraft:incorrect_for_<材質>_tool`（26.3 含 `incorrect_for_copper_tool`），在計數、掉落、經驗、移除方塊之前檢查；不認得的工具一律不連鎖。真人玩家用等級不夠的鎬挖第一顆不會觸發連鎖（26.3 `ServerPlayerGameMode.destroyBlock` 只有 `hasCorrectToolForDrops` 為真才呼叫加 `minecraft.mined` 統計的 `Block.playerDestroy`），所以舊版實際可走到的路徑是挖完第一顆後在同一刻換成低階鎬。 |
 | 自動補種 | 五種既有作物及扣種子 modifier 可繼續使用；新灌木與蘑菇不屬於既有自動補種功能。 |
 | 據點、傳送、座標、Dialog | 保持所有原 storage／objective ID 與 8 個個人、8 個共用據點；只更新版本 metadata。既有函數與 macro 均以 26.3 解析。 |
 | 其他 26.3 技術變動 | 本包未定義世界生成、藥水配方、探索地圖、告示牌或陶罐資料，不需相應遷移；新床、坐墊及樓梯／半磚未改變本包使用的功能。 |
@@ -21,7 +22,8 @@
 
 - `python scripts/test-utilities.py`：JSON、格式、全部 12 種原木／菌柄的統計事件與重置、函數引用完整性。
 - 官方 server JAR SHA-1：`33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c`，Java 25。
-- 隔離測試世界完成 37 項 runtime assertions：三色 Poplar 連鎖、掉落與耐久、舊樹種／菌柄、無葉保護、非斧頭、64 根上限、瀕壞工具持續連鎖、各材質斧頭恢復原版耐久行為、元件與耐久附魔保留、不毀工具舊行為、礦脈、扣種子、Poplar 事件只觸發一次、重載後個人／共用據點保留、礦脈經驗（鑽石數值範圍、煤礦 0 不生成、絲綢之觸與鐵礦不生成）。
+- 隔離測試世界完成 56 項 runtime assertions：三色 Poplar 連鎖、掉落與耐久、舊樹種／菌柄、無葉保護、非斧頭、64 根上限、瀕壞工具持續連鎖、各材質斧頭恢復原版耐久行為、元件與耐久附魔保留、不毀工具舊行為、礦脈、扣種子、Poplar 事件只觸發一次、重載後個人／共用據點保留、礦脈經驗（鑽石數值範圍、煤礦 0 不生成、絲綢之觸與鐵礦不生成）、礦脈工具等級（12 種低一階的鎬：鑽石礦用石／銅／金／木鎬、深板岩鑽石礦用銅鎬、遠古遺骸用鐵／石鎬、綠寶石、金、紅石、鐵、青金石、銅礦，礦全部留在原地、無掉落、無經驗、不扣耐久；7 種剛好夠的等級仍整條連鎖）。
+- runtime 開始前輪詢 `execute if loaded` 等測試 chunk 載入完成，不靠固定等待時間。GitHub Actions 的 `utilities-runtime-smoke` job 與 Utilities release gate 都會跑這套 runtime。
 - 所有 function macros 另以測試參數實例化；未發現載入或 macro 解析錯誤。
 - 以上是原版伺服器 console／盔甲座測試，非真人玩家端操作；未自動驗證滑鼠砍樹、Dialog 視覺與點擊流程。
 - 礦脈經驗另在真人 client 驗證（2026-10-07，`scripts/real-client/stage13_vein_xp.py`，讀玩家存檔的經驗值）：生存模式按住蹲下、只用滑鼠挖第一顆，4 顆鑽石礦整條挖掉並得到 22 點經驗（範圍 12～28，只挖一顆最多 7 點）；絲綢之觸挖鑽石礦、普通鎬挖鐵礦都整條挖掉且 0 經驗。同一輪 `stage12_all_packs` 三包一起安裝（Utilities v3.6、Warehouse v4.5、Copy/Paste v1.5）7 項全過。事件測試取用正式 tick 指令，替換玩家 selector 與觸發函數為測試替身。

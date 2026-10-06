@@ -1,6 +1,6 @@
-# Utilities v3.6
+# Utilities v3.7
 
-> Release: **utilities-v3.6** · Download: **utilities-v3.6.zip** · Previous package name: **整合_v3.2**.
+> Release: **utilities-v3.7** · Download: **utilities-v3.7.zip** · Previous package name: **整合_v3.2**.
 
 遊戲內名稱「屁眼派對」：Minecraft Java 26.3 資料包，整合生存便利三合一、回家與自訂據點、座標顯示。
 
@@ -53,16 +53,19 @@ The actual pack source lives directly in this directory. Keep `pack.mcmeta` and 
 | **3.4** | 依使用者要求撤回 v3.3 的砍樹／挖礦耐久修正，完整恢復 v3.2 的工具耐久處理；保留 Poplar 挖掘事件與 26.3 相容性修正。v3.2、v3.3 release 保持不變。 |
 | **3.5** | 拿掉載入時與玩家第一次加入時的聊天訊息（「[屁眼派對] 已載入」「[傳送系統] 已啟用」「自動補種、連鎖砍樹、礦脈挖掘已預設開啟」）；功能說明仍可用 `/trigger help` 查看。 |
 | **3.6** | 礦脈挖掘連鎖挖到的礦會照原版掉經驗：煤 0～2、青金石 2～5、紅石 1～5、鑽石 3～7、綠寶石 3～7、石英 2～5、地獄金礦 0～1；鐵、銅、金礦與遠古遺骸原版不掉經驗，維持不給。用絲綢之觸挖不給經驗，和原版相同。工具耐久處理不變。 |
+| **3.7** | 礦脈挖掘檢查鎬的等級：連鎖中的每一顆礦都先確認主手的鎬能採這種礦（依原版 `incorrect_for_*_tool` 方塊標籤，例如鑽石／綠寶石／金／紅石礦要鐵鎬以上、遠古遺骸要鑽石鎬以上），等級不夠就整條停止，不掉落、不給經驗、不扣耐久，礦留在原地。原版用等級不夠的鎬挖第一顆本來就不會觸發連鎖；v3.6 以前的漏洞是挖完第一顆後在同一刻換成低階鎬，連鎖仍會用低階鎬挖出鑽石等掉落物與經驗（`loot … mine` 本身不檢查等級）。 |
 
 ## 安裝與更新
 
-下載 [utilities-v3.6.zip](https://github.com/sunnychen0708/packs-minecraft-inno/releases/download/utilities-v3.6/utilities-v3.6.zip)，移除世界 `datapacks/` 中的舊 Utilities ZIP（utilities-v3.5.zip、utilities-v3.4.zip、utilities-v3.3.zip、utilities-v3.2.zip、整合_v3.2.zip 或 vanilla-utilities-v3.2.zip），ZIP 不用解壓直接放入，再執行 `/reload`。不要同時載入兩份。
+下載 [utilities-v3.7.zip](https://github.com/sunnychen0708/packs-minecraft-inno/releases/download/utilities-v3.7/utilities-v3.7.zip)，移除世界 `datapacks/` 中的舊 Utilities ZIP（utilities-v3.6.zip、utilities-v3.5.zip、utilities-v3.4.zip、utilities-v3.3.zip、utilities-v3.2.zip、整合_v3.2.zip 或 vanilla-utilities-v3.2.zip），ZIP 不用解壓直接放入，再執行 `/reload`。不要同時載入兩份。
 
 蹲下並持斧頭挖掉 Poplar 原木即可觸發；紅／橙／黃葉皆支援。單次最多連鎖 64 根，仍需附近有樹葉；無葉倒木及建築木材不會因這次更新取消保護。
 
 工具耐久處理已恢復為 v3.2 行為；v3.3 新增的逐塊扣耐久與耗盡停止邏輯已撤回。
 
 礦脈挖掘時，你親手挖的第一顆照原版給經驗；連鎖挖掉的每一顆會在原位置掉一顆經驗球，數值照原版該礦的隨機範圍。抽到 0 時不掉經驗球。
+
+礦脈挖掘只連鎖主手鎬等級採得到的礦（鑽石／綠寶石／金／紅石礦要鐵鎬以上，鐵／銅／青金石礦要石鎬或銅鎬以上，遠古遺骸要鑽石鎬以上）；等級不夠時整條礦脈不動。
 
 ## 舊資料相容
 
@@ -84,4 +87,4 @@ Use `utilities-v<version>` for release tags and `utilities-v<version>.zip` for d
 
 [Utilities v3.2](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/utilities-v3.2) replaces the former `vanilla-utilities-v3.2` release name. This naming-only re-release preserves v3.2 gameplay and saved data; the original Git tag remains as a historical alias. Replace the old ZIP rather than loading both copies.
 
-Example: `utilities-v3.6`
+Example: `utilities-v3.7`
