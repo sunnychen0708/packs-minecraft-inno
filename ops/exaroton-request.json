@@ -1,6 +1,6 @@
 {
-  "request_id": 7,
-  "operation": "command",
-  "command": "whitelist list",
+  "request_id": 8,
+  "operation": "whitelist-status",
+  "command": "",
   "pack": ""
 }
