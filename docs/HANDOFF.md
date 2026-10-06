@@ -23,7 +23,9 @@
 - 真人工具的坑：按 T 開聊天時 T 可能被打進輸入框（曾送出「t/reload」變一般聊天、沒 reload 就開跑）。`mcdrive.chat` 現在先清空輸入框，指令變成一般聊天或「未知」就丟例外；`trig()` 必須看到「已觸發 [名稱]」；`reload_packs()` 要等到「Copy/Paste v… 已載入」。
 - **選單精簡（使用者嫌 G 進去按鈕太多）**：主畫面只剩 9 顆（Pos1、Pos2、Copy／Cut、V 放置、施工／Undo、調整預覽…、更多…）。子頁：`copypaste set 2` 調整預覽（轉向、翻面、清除、移動 1 格、材料檢查、施工）、`set 3` 更多（Anchor、清除 Anchor、貼上模式、直接改原本建築…、Redo、教學）、`set 4` 直接改原本建築。全部改成 function 產生的 inline Dialog（`ui/show|adjust|more|more_show|edit`），**`/reload` 就會更新**；`dialog/edit.json`、`nudge.json` 已刪。
 - 貼上模式按鈕顯示**目前**模式（「貼上：完全取代」／「貼上：保留原方塊」，提示說明並寫「點一下改成…」），按下送 `mode set 2`：切換後馬上重開「更多」頁顯示新狀態。真人 client（`stage7_menu.py`）：四頁都打開、`mcc_mask` 0→1→0 從存檔確認、標籤跟著變。視窗窄時 3 欄 × 150 寬會超出畫面，一律用 120。
-- 使用者待辦（他說不急）：缺料清單顯示中文名稱。
+- 主畫面按鈕改名：「V 放置」→ **Paste**、「施工」→ **Build**（調整預覽頁的施工也是 Build）。
+- **材料名稱改用翻譯鍵**：`scripts/gen-item-names.py` 從 26.3 server `--reports` 的 `components/item/*.json`（`minecraft:item_name`）產生 `function/names/load.mcfunction`（1658 個 id → key，載入到 `storage mcc:names key`）。缺料清單與材料檢查用 `{"translate":"$(key)","fallback":"$(id)"}`，滑鼠移上去顯示 id。玩家看到自己語言的名稱（zh_tw：橡木門、石磚、鑽石方塊…）。真人 client（`stage8_names.py`）從聊天日誌確認。**換 Minecraft 版本要重跑產生器。**
+- **嚴重 bug（v1.1 起，已發布的 v1.1／v1.2 都有）**：材料足夠時按「材料檢查」會直接扣料並施工。`materials/count_done` 先把 `mcc_matjob` 歸零，才判斷 job 2 要提早結束，所以永遠不會結束，一路跑進扣料。缺料時則會多印「材料不足，未施工」。已修（`materials/check_done`）；runtime 新增「材料齊全時檢查不扣料不施工」兩項（舊碼確認 FAIL）；真人 client `stage9_checkonly.py`：材料齊全時檢查，目標仍是空氣、每個箱子不變。
 - MCC-Test 目前狀態：乾淨。61 箱已註冊、Warehouse 剛好 2 倍 BOM、小屋與箱內物品在原位、旋轉／鏡像已重設、沒有殘留建築。備份：`backups\MCC-Test-before-e1eea6e-20261006`。
 - 注意：世界難度不是和平，晚上會生怪；把時間調成白天時殭屍曬死會掉腐肉，`no_drops` 會誤報（rotten_flesh），不是 Copy/Paste 問題。
 

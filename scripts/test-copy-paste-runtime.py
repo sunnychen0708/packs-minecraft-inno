@@ -382,6 +382,11 @@ def integration(java: Path, server: Path):
     check(f'if block 12 80 3 air if block 14 80 4 air if score {actor} mcc_matphase matches 0 if score {actor} mcc_bpactive matches 1','build_missing_all_or_nothing')
     check('if data block 8 80 8 Items[{id:"minecraft:gold_block",count:1}] if data block 8 80 8 Items[{id:"minecraft:diamond_block",count:1}]','build_missing_no_consume')
     lines.append('data modify block 8 80 8 Items append value {Slot:3b,id:"minecraft:iron_block",count:1}')
+    # With complete stock a material check must still only report: no take, no build.
+    run_as('mcc:materials/check_start')
+    for _ in range(8): run_as('mcc:materials/process_batch')
+    check(f'if block 12 80 3 air if block 14 80 4 air if score {actor} mcc_matphase matches 0 if score {actor} mcc_matjob matches 0 if score {actor} mcc_bpactive matches 1','material_check_full_stock_does_not_build')
+    check('if data block 8 80 8 Items[{id:"minecraft:gold_block",count:1}] if data block 8 80 8 Items[{id:"minecraft:iron_block",count:1}]','material_check_full_stock_no_consume')
     run_as('mcc:materials/build_start')
     for _ in range(8): run_as('mcc:materials/process_batch')
     check(f'if block 12 80 3 gold_block if block 14 80 3 diamond_block if block 12 80 4 oak_stairs[facing=east] if block 14 80 4 iron_block if score {actor} mcc_bpactive matches 0','build_material_success')
@@ -1024,6 +1029,7 @@ def integration(java: Path, server: Path):
     hsel()
     run_as('mcc:ui/more')
     check('if data storage mcc:ui mode if data storage mcc:ui modetip','ui_paste_mode_label')
+    check('if data storage mcc:names key{"minecraft:oak_door":"block.minecraft.oak_door","minecraft:redstone":"item.minecraft.redstone"}','item_name_table_loaded')
 
     # A gated trigger pressed while a material job runs is reported, not silently dropped.
     lines.extend([
