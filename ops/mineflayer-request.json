@@ -1,6 +1,5 @@
 {
-  "request_id": 9,
-  "operation": "probe-one",
-  "player": "Felicitypeng",
-  "duration_ms": 30000
+  "request_id": 10,
+  "operation": "test-4-bots",
+  "duration_ms": 300000
 }
