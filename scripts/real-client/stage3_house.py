@@ -68,6 +68,10 @@ def select_house():
     cmd(f'setblock {MARK1[0]} {MARK1[1]} {MARK1[2]} air')
     cmd(f'setblock {MARK2[0]} {MARK2[1]} {MARK2[2]} air')
 
+def reset_xform():
+    """Rotation/mirror are per-player Blueprint settings that outlive a Copy; start from identity."""
+    trig('rotate set 10'); trig('mirror set 10')
+
 def wait_sorted(sec=15):
     time.sleep(sec)
 
@@ -125,6 +129,7 @@ if want('build'):
     log('=== Copy -> V Blueprint -> Build from Warehouse, Undo (refund), Redo (charge)')
     w, SRC = snapshot()
     T1 = (1019, Y0, 1039)
+    reset_xform()
     select_house()
     trig('c')
     aim_target(T1[0], T1[2]); trig('v', 3.0)
@@ -140,9 +145,14 @@ if want('build'):
     def _cell(e):
         p = e.get('Pos', [0.5, 0, 0.5])
         return tuple(int(v) for v in p) if all(float(v).is_integer() for v in p) else None
-    misplaced = [e.get('Pos') for e in disp if _cell(e) not in exp
-                 or str(e.get('block_state', {}).get('Name', '')) != exp[_cell(e)].split('[')[0]]
-    record('blueprint: every display sits exactly on its target block', disp and not misplaced, f'misplaced={misplaced[:4]}')
+    # 26.3 saves block_state as a string without default properties; mcworld.fmt fills them in.
+    misplaced = [(e.get('Pos'), mcworld.fmt(e.get('block_state'))) for e in disp
+                 if _cell(e) not in exp or mcworld.fmt(e.get('block_state')) != exp[_cell(e)]]
+    nonair = {p for p, s in exp.items() if s != 'minecraft:air'}
+    covered = {_cell(e) for e in disp}
+    record('blueprint: every display sits exactly on its target block with the exact state',
+           disp and not misplaced and covered == nonair and len(disp) == len(nonair),
+           f'{len(disp)} displays for {len(nonair)} blocks; misplaced={misplaced[:4]} missing={sorted(nonair - covered)[:4]}')
     compare(w, SRC, 'blueprint: source untouched')
     trig('build', 1.0); time.sleep(6)
     d.screenshot(str(OUT / 'build.png'))
@@ -264,7 +274,7 @@ if want('pick'):
     cmd('clear @s')
     cmd(f'setblock 1030 {Y0} 1030 minecraft:stone_bricks')
     look_at_from(1030.5, Y0, 1033.5, 1030.5, Y0 + 0.5, 1030.5)
-    w0 = None
+    time.sleep(1.0)  # let the client settle on the new view before the server raycasts it
     trig('pick', 2.0)
     save_world(); w = world()
     tot, _ = warehouse_stock(w)
