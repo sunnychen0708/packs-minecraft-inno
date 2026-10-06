@@ -471,16 +471,18 @@ def check_v100_semantics(pack: Path):
     assert 'mcc_bpover_scan' in read(pack/'data/mcc/function/tick.mcfunction')
     # The command tutorial is chat-only (clickable tellraw, Utilities style), not a Dialog.
     assert not (pack/'data/mcc/dialog/tutorial.json').exists()
-    # /trigger copypaste builds the toggle labels, then shows ui/show (macro Dialog) with no status body.
+    # /trigger copypaste shows a small main Dialog with no status body; sub-pages are function-built.
     assert '"body"' not in read(pack/'data/mcc/function/ui/show.mcfunction')
-    main_dialog=read(pack/'data/mcc/function/ui/show.mcfunction')+read(pack/'data/mcc/dialog/nudge.json')+read(pack/'data/mcc/dialog/edit.json')
+    main_dialog=''.join(read(pack/f'data/mcc/function/ui/{n}.mcfunction') for n in ('show','adjust','more_show','edit'))
+    assert main_dialog.count('"label"', 0, len(read(pack/'data/mcc/function/ui/show.mcfunction'))) <= 10, 'main Dialog must stay small'
     tutorial_dialog=read(pack/'data/mcc/function/ui/tutorial.mcfunction')
-    assert 'function mcc:ui/show with storage mcc:ui' in read(pack/'data/mcc/function/ui/open.mcfunction')
+    assert 'function mcc:ui/show' in read(pack/'data/mcc/function/ui/open.mcfunction')
+    assert 'function mcc:ui/more_show with storage mcc:ui' in read(pack/'data/mcc/function/ui/more.mcfunction')
     for command in (
         'trigger pos1','trigger pos2','trigger anchor','trigger anchor set 2','trigger c','trigger x','trigger v',
-        'trigger bpturnright','trigger bpturnleft','trigger bpflip','trigger bpflipfb','trigger bpreset','trigger mode','trigger build','trigger materials','trigger previewclear',
-        'trigger undo','trigger redo','trigger cphelp','trigger wh_nav set 1','trigger copypaste',
-        'trigger bpleft set 1','trigger bpdown set 5','trigger left set 1','trigger turnright','trigger turnleft','trigger flip','trigger flipfb',
+        'trigger bpturnright','trigger bpturnleft','trigger bpflip','trigger bpflipfb','trigger bpreset','trigger mode set 2','trigger build','trigger materials','trigger previewclear',
+        'trigger undo','trigger redo','trigger cphelp','trigger wh_nav set 1','trigger copypaste set 1','trigger copypaste set 2','trigger copypaste set 3','trigger copypaste set 4',
+        'trigger bpleft set 1','trigger bpdown set 1','trigger left set 1','trigger turnright','trigger turnleft','trigger flip','trigger flipfb',
     ):
         assert f'"command":"{command}"' in main_dialog.replace('": "','":"'), f'active Dialog missing core action: {command}'
     assert '/trigger pos1' in tutorial_dialog and '/trigger pos2' in tutorial_dialog
