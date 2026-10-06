@@ -537,6 +537,11 @@ def run(path):
         print(json.dumps(result, ensure_ascii=False, indent=2))
     elif op == "migrate-offline-bot-identities":
         migrate_bot_identities(client)
+    elif op == "bot-log-status":
+        lines = client.log().splitlines()
+        keys = [n.lower() for n in BOT_PLAYERS] + ["disconnect", "lost connection", "kicked", "uuid"]
+        selected = [line for line in lines[-800:] if any(k in line.lower() for k in keys)]
+        print("\n".join(selected[-200:]))
     elif op == "inno-identity-status":
         print(json.dumps(inno_identity_status(os.environ.get("EXAROTON_API_TOKEN", "")), ensure_ascii=False, indent=2))
     else: raise Error(f"unsupported operation: {op}")
