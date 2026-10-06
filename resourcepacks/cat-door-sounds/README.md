@@ -10,6 +10,10 @@ Minecraft Java 26.2 resource pack.
 - Keeps the vanilla wooden-door opening sound and adds the custom door-opening sound on top.
 - Door closing and other sounds are unchanged.
 
+## Install
+
+Put the ZIP directly in `.minecraft/resourcepacks/` and enable it in the Resource Packs menu. Disable the pack to return to vanilla sounds.
+
 ## Source layout
 
 - `pack.mcmeta` — resource-pack compatibility metadata.
