@@ -102,6 +102,11 @@ class APIClient:
         sid = urllib.parse.quote(str(server["id"]), safe="")
         self.req("PUT", f"/servers/{sid}/files/data/{remote_path(path)}/", raw=content)
 
+    def file_info(self, path):
+        server = self.target()
+        sid = urllib.parse.quote(str(server["id"]), safe="")
+        return self.req("GET", f"/servers/{sid}/files/info/{remote_path(path)}/")
+
     def get_config(self, path):
         server = self.target()
         sid = urllib.parse.quote(str(server["id"]), safe="")
@@ -202,6 +207,28 @@ def run(path):
     elif op == "whitelist-status":
         entries = json.loads(client.read_file("whitelist.json").decode("utf-8"))
         print(json.dumps([{"name":e.get("name"),"uuid":e.get("uuid")} for e in entries], ensure_ascii=False, indent=2))
+    elif op == "identity-status":
+        wl = json.loads(client.read_file("whitelist.json").decode("utf-8"))
+        names = {str(e.get("name") or "").lower() for e in wl}
+        try:
+            cache = json.loads(client.read_file("usercache.json").decode("utf-8"))
+        except Error:
+            cache = []
+        try:
+            ops = json.loads(client.read_file("ops.json").decode("utf-8"))
+        except Error:
+            ops = []
+        world = level_name(client.read_file("server.properties"))
+        info = client.file_info(f"{world}/playerdata")
+        children = info.get("children") or [] if isinstance(info, dict) else []
+        pdata = [c.get("name") for c in children if isinstance(c, dict) and c.get("name")]
+        result = {
+            "whitelist": wl,
+            "usercache_matches": [e for e in cache if str(e.get("name") or "").lower() in names],
+            "ops_matches": [e for e in ops if str(e.get("name") or "").lower() in names],
+            "playerdata_files": pdata,
+        }
+        print(json.dumps(result, ensure_ascii=False, indent=2))
     else: raise Error(f"unsupported operation: {op}")
 
 if __name__ == "__main__":
