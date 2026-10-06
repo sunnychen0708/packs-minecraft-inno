@@ -72,11 +72,12 @@ Copy/Paste runtime 失敗時會印出 `MCCST_DIAG_DROP_<步驟>`（掉了什麼�
 - `mcdrive.py`：Win32 `SendInput` 送鍵盤／滑鼠。打指令會先清空聊天框；指令變成一般聊天或被拒絕就丟例外。Minecraft 不在前景時拒絕送輸入。
 - `realplay.py`：`trig()` 必須看到遊戲回的「已觸發 [名稱]」；`reload_packs()` 要看到遊戲的「重新載入中！」並用 `/datapack list enabled` 確認每個 pack 都在；`join_world()` 等「加入了遊戲」，並自動按掉實驗性設定警告頁；存檔用「按 Esc 暫停」（單人不能 `/save-all`）。
 - `mcworld.py` 讀存檔；`defaults.json` 補上 26.3 palette 省略的預設屬性。`xform.py` 算 rotate／mirror 後的預期 blockstate。
+- `stage13_vein_xp`：Utilities 礦脈連鎖給經驗（生存模式、按住蹲下＋只挖第一顆，讀玩家存檔的經驗值）。
 - `stage1`～`stage12`：場地、註冊、Copy/Paste 主流程、缺料、多箱、轉向翻面、選單、名稱、只檢查、背包扣料、Warehouse 返回按鈕、三包一起。`realplay.leave_world()`／`join_world()` 會退出／重進世界（含實驗性設定警告頁）。各腳本測什麼見 `datapacks/copy-paste/LIVE-VALIDATION.md`。
 - 要重進世界（讓 Dialog JSON 生效）：Esc →「儲存並回到標題畫面」→「單人遊戲」→ 選 MCC-Test →「進入所選的世界」。視窗 870×519 時座標約為 (433,379)、(433,267)、(283,147)、(276,427)，先截圖確認。
 
 **使用者電腦的坑：**
-- `options.txt` 把**攻擊設為滑鼠右鍵、使用設為左鍵**。開箱子／註冊要送**左鍵**；送右鍵會在創造模式直接打掉箱子。不要改使用者的設定。
+- `options.txt` 把**攻擊設為滑鼠右鍵、使用設為左鍵、蹲下是左 Ctrl（按住）**；任何按鍵都要從 `options.txt` 讀，不要猜。開箱子／註冊要送**左鍵**；送右鍵會在創造模式直接打掉箱子。不要改使用者的設定。
 - 點 Dialog 按鈕前讓準星看天空（`tp @s ~ ~ ~ 0 -90`），否則滑鼠按下會被帶回遊戲。
 - 有 Dialog 開著時聊天欄打不開，要先關畫面或直接用滑鼠點按鈕。
 - 聊天欄最多 256 字；長的 `data modify ... Items` 要拆成多條 `item replace`。

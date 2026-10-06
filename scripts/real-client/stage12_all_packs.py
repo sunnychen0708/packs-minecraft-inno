@@ -44,8 +44,7 @@ else:
     pos = join_world()
 chat = [l.split('[CHAT] ', 1)[1] for l in d.log_since(pos).splitlines() if '[System] [CHAT] ' in l]
 errors = [l for l in d.log_since(pos).splitlines() if re.search(r'Failed to load|Couldn\'t load|Failed to parse|Unknown function|Errors in currently selected', l)]
-record('all packs: Utilities load message', any('[屁眼派對]' in l and '已載入' in l for l in chat), ' | '.join(l for l in chat if '已載入' in l))
-record('all packs: Copy/Paste load message tells players to press G', any('[Copy/Paste]' in l and '按 G' in l for l in chat), '')
+record('all packs: no load or first-join chat messages', not any(k in l for l in chat for k in ('已載入', '已啟用', '預設開啟', '已建立你的個人')), ' | '.join(chat[:5]))
 record('all packs: no datapack load errors', not errors, ' | '.join(errors[:3]))
 d.screenshot(str(OUT / 'allpacks_joined.png'))
 
