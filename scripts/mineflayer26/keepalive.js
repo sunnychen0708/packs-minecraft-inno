@@ -53,14 +53,26 @@ function createBot (username) {
   return bot
 }
 
-async function main () {
-  names.forEach(createBot)
+async function waitForSpawn (name) {
   const deadline = Date.now() + spawnTimeoutMs
-
   while (Date.now() < deadline) {
-    if (names.every(name => states.get(name).spawned && !states.get(name).ended)) break
-    if (names.some(name => states.get(name).ended)) break
+    const state = states.get(name)
+    if (state && state.spawned && !state.ended) return
+    if (state && state.ended) break
     await delay(100)
+  }
+  const state = states.get(name)
+  throw new Error(`bot failed during serialized login: ${name} ${JSON.stringify(state)}`)
+}
+
+async function main () {
+  // Minecraft 26.3 + the current Mineflayer patch has a race when several
+  // clients perform initial position sync at once. Fully finish one login
+  // before creating the next client, then leave a short quiet period.
+  for (const name of names) {
+    createBot(name)
+    await waitForSpawn(name)
+    if (names.length > 1) await delay(1500)
   }
 
   const failures = names.filter(name => {
