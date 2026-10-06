@@ -793,7 +793,9 @@ def run(path):
         print(json.dumps(inno_world_layout_status(os.environ.get("EXAROTON_API_TOKEN", "")), ensure_ascii=False, indent=2))
     elif op in {"inno-uuid-migrate-dry-run", "inno-uuid-migrate-apply"}:
         import subprocess
+        import site
         subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", "nbtlib==1.12.1"])
+        site.addsitedir(site.getusersitepackages())
         import exaroton_inno_uuid_migrate as migration
         original_remote_path = migration.remote_path
         migration.remote_path = lambda p: original_remote_path(str(p).lstrip("/"))
