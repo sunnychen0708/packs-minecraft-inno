@@ -199,6 +199,9 @@ def run(path):
         server = client.target()
         code = int(server.get("status", -1))
         print(json.dumps({"online-mode": online, "server_status": STATUS.get(code, "UNKNOWN")}, ensure_ascii=False))
+    elif op == "whitelist-status":
+        entries = json.loads(client.read_file("whitelist.json").decode("utf-8"))
+        print(json.dumps([{"name":e.get("name"),"uuid":e.get("uuid")} for e in entries], ensure_ascii=False, indent=2))
     else: raise Error(f"unsupported operation: {op}")
 
 if __name__ == "__main__":
