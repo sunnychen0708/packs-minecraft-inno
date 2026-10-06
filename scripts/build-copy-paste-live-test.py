@@ -72,11 +72,11 @@ check('raycast selection','if score @s mcc_p1x matches -200 if score @s mcc_p1y 
 # doing another Copy without new Pos keeps using the current selection.
 selection2(); trigger('c')
 target(-170,105); trigger('v')
-check('reselected copy uses new region','in minecraft:overworld positioned -170 250 105 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:copper_block"},limit=1]')
+check('reselected copy uses new region','in minecraft:overworld positioned -170.0 250.0 105.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:copper_block"},limit=1]')
 trigger('previewclear')
 trigger('c')
 target(-165,105); trigger('v')
-check('selection persists without new pos','in minecraft:overworld positioned -165 250 105 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:copper_block"},limit=1]')
+check('selection persists without new pos','in minecraft:overworld positioned -165.0 250.0 105.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:copper_block"},limit=1]')
 trigger('previewclear')
 selection()
 
@@ -102,8 +102,8 @@ aim(-198,91); trigger('pos1')
 aim(-200,90); trigger('pos2')
 trigger('c')
 target(); trigger('v')
-check('default pos1 anchor exact','in minecraft:overworld positioned -180 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:iron_block"},limit=1]')
-check('default pos1 anchor offset','in minecraft:overworld positioned -182 250 89 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]')
+check('default pos1 anchor exact','in minecraft:overworld positioned -180.0 250.0 90.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:iron_block"},limit=1]')
+check('default pos1 anchor offset','in minecraft:overworld positioned -182.0 250.0 89.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]')
 trigger('previewclear')
 
 # Restore the ordinary selection used by the rest of the live suite.

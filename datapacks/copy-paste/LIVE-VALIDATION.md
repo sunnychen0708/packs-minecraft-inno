@@ -1,6 +1,20 @@
-# Copy/Paste 驗證狀態（v1.3 source / 2026-10-05）
+# Copy/Paste 驗證狀態（v1.3 / 2026-10-06）
 
-目前原始碼為 **v1.3（尚未發布）**；最新已發布 ZIP 仍是 **v1.2**。目標 Minecraft Java 26.3（Data Pack 121.0）。
+目前版本 **v1.3**。目標 Minecraft Java 26.3（Data Pack 121.0）。
+
+## v1.3 真人 client 驗證（2026-10-06，已完成）
+
+在使用者 Windows 電腦的官方 26.3 client、可丟棄的 `MCC-Test` 世界，用作業系統層級的鍵盤／滑鼠真的操作遊戲，**結果一律讀世界存檔逐格判定**（工具在 `scripts/real-client/`，說明見 `docs/HANDOFF.md`）。最後一輪在 v1.3 最終程式碼上重跑，151 項檢查中 149 項通過；兩項失敗是殭屍日出燃燒掉落的腐肉（與建築無關，檢查已改為只計建築相關物品）。涵蓋：
+
+- Blueprint 預覽 86/86 精確落在方塊格與完整 blockstate；施工、Undo 退料、Redo 再扣。
+- 旋轉 90/180/270、鏡像 X/Z 施工；以玩家面向（北、東、西）組合的 `bpturnright`／`bpturnleft`／`bpflip`／`bpflipfb`／`bpreset`。
+- Cut→V（含箱子內容物）、Move、直接 `turnright`／`turnleft`／`flip`／`flipfb`／rotate180，Undo 精確還原、0 掉落。
+- 61 個真實大箱子的 Warehouse；同一材料分散在 2～6 個箱子時跨箱扣料，Undo 退料經入口箱分類回各自的分類箱。
+- 背包與副手優先扣料、改名物品不使用、Undo 退回背包、背包滿時其餘退 Warehouse 且 0 掉落；Redo 同樣先扣背包。
+- 材料不足拒絕施工、補料後成功；材料足夠時「材料檢查」不扣料不施工。
+- 缺料清單／材料檢查顯示 zh_tw 物品名稱；四個 Dialog 頁面與貼上模式切換。
+
+尚未做：兩位真人 client 同時操作。
 
 這份文件刻意把「官方 server headless regression」和「真人玩家 Trigger / Dialog 驗證」分開。兩者不能互相冒充。
 
@@ -18,7 +32,7 @@
 
 ## Headless behavioral runtime 的實際範圍
 
-`scripts/test-copy-paste-runtime.py` 是 v1.3 source 的官方-server regression，目前為 **133 個動態 assertions**，涵蓋：
+`scripts/test-copy-paste-runtime.py` 是 v1.3 source 的官方-server regression，目前為 **187 個動態 assertions**，涵蓋：
 
 - Pos1 / Pos2 / Anchor / V 的 raycast function。
 - 沒有自訂 Anchor 時，Pos1 為預設 Anchor，即使 Pos1 不是選區最小角也要精確對位。

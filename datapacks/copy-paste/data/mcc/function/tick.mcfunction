@@ -28,7 +28,11 @@ execute as @a unless score @s mcc_bpover matches 0.. run scoreboard players set 
 execute as @a unless score @s mcc_buildconfirm matches 0..1 run scoreboard players set @s mcc_buildconfirm 0
 execute as @a unless score @s mcc_bpover_scan matches 0..1 run scoreboard players set @s mcc_bpover_scan 0
 execute as @a unless score @s mcc_bpoindex matches 0.. run scoreboard players set @s mcc_bpoindex 0
-execute as @a[scores={copypaste=1..}] run function mcc:ui/open
+execute as @a[scores={copypaste=1}] run function mcc:ui/open
+execute as @a[scores={copypaste=2}] run function mcc:ui/adjust
+execute as @a[scores={copypaste=3}] run function mcc:ui/more
+execute as @a[scores={copypaste=4}] run function mcc:ui/edit
+execute as @a[scores={copypaste=5..}] run function mcc:ui/open
 execute as @a[scores={cphelp=1..}] run function mcc:ui/tutorial
 
 execute as @a[scores={pos1=1..}] at @s run function mcc:select/start_pos1
@@ -42,6 +46,8 @@ execute as @a[scores={v=1..,mcc_matphase=0}] at @s run function mcc:select/start
 execute as @a[scores={undo=1..,mcc_matphase=0}] run function mcc:undo/run
 execute as @a[scores={redo=1..,mcc_matphase=0}] run function mcc:redo/run
 execute as @a[scores={mode=1..}] run function mcc:mode_toggle
+# The "More" page button sends mode 2: reopen it so the new mode is visible at once.
+execute as @a[scores={mode=2}] run function mcc:ui/more
 execute as @a[scores={rotate=1}] run function mcc:state/rot_cycle
 execute as @a[scores={rotate=10}] run function mcc:state/rot_0
 execute as @a[scores={rotate=20}] run function mcc:state/rot_90
@@ -71,6 +77,15 @@ execute as @a[scores={bpforward=1..,mcc_matphase=0}] at @s run function mcc:blue
 execute as @a[scores={bpbackward=1..,mcc_matphase=0}] at @s run function mcc:blueprint/nudge/backward
 execute as @a[scores={bpup=1..,mcc_matphase=0}] run function mcc:blueprint/nudge/up
 execute as @a[scores={bpdown=1..,mcc_matphase=0}] run function mcc:blueprint/nudge/down
+execute as @a[scores={bpturnright=1..,mcc_matphase=0}] run function mcc:state/bp_turn_right
+execute as @a[scores={bpturnleft=1..,mcc_matphase=0}] run function mcc:state/bp_turn_left
+execute as @a[scores={bpflip=1..,mcc_matphase=0}] at @s run function mcc:state/bp_flip_lr
+execute as @a[scores={bpflipfb=1..,mcc_matphase=0}] at @s run function mcc:state/bp_flip_fb
+execute as @a[scores={bpreset=1..,mcc_matphase=0}] run function mcc:state/bp_reset
+execute as @a[scores={turnright=1..,mcc_matphase=0}] run function mcc:rotate_edit/r90
+execute as @a[scores={turnleft=1..,mcc_matphase=0}] run function mcc:rotate_edit/r270
+execute as @a[scores={flip=1..,mcc_matphase=0}] at @s run function mcc:flip/left_right
+execute as @a[scores={flipfb=1..,mcc_matphase=0}] at @s run function mcc:flip/front_back
 execute as @a[scores={mcc_bpscan=1..}] run function mcc:blueprint/scan_batch
 execute as @a[scores={mcc_bpover_scan=1}] run function mcc:blueprint/recount_batch
 execute as @a[scores={mcc_matphase=1..2}] run function mcc:materials/process_batch
@@ -108,6 +123,15 @@ scoreboard players set @a[scores={bpforward=1..}] bpforward 0
 scoreboard players set @a[scores={bpbackward=1..}] bpbackward 0
 scoreboard players set @a[scores={bpup=1..}] bpup 0
 scoreboard players set @a[scores={bpdown=1..}] bpdown 0
+scoreboard players set @a[scores={bpturnright=1..}] bpturnright 0
+scoreboard players set @a[scores={bpturnleft=1..}] bpturnleft 0
+scoreboard players set @a[scores={bpflip=1..}] bpflip 0
+scoreboard players set @a[scores={bpflipfb=1..}] bpflipfb 0
+scoreboard players set @a[scores={bpreset=1..}] bpreset 0
+scoreboard players set @a[scores={turnright=1..}] turnright 0
+scoreboard players set @a[scores={turnleft=1..}] turnleft 0
+scoreboard players set @a[scores={flip=1..}] flip 0
+scoreboard players set @a[scores={flipfb=1..}] flipfb 0
 
 scoreboard players enable @a copypaste
 scoreboard players enable @a cphelp
@@ -142,3 +166,12 @@ scoreboard players enable @a bpforward
 scoreboard players enable @a bpbackward
 scoreboard players enable @a bpup
 scoreboard players enable @a bpdown
+scoreboard players enable @a bpturnright
+scoreboard players enable @a bpturnleft
+scoreboard players enable @a bpflip
+scoreboard players enable @a bpflipfb
+scoreboard players enable @a bpreset
+scoreboard players enable @a turnright
+scoreboard players enable @a turnleft
+scoreboard players enable @a flip
+scoreboard players enable @a flipfb

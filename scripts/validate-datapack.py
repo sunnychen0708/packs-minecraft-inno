@@ -175,6 +175,7 @@ def check_function_references(functions: dict[str, Path]):
     missing = []
     direct_macro_calls = []
     empty_macro_lines = []
+    unprefixed_macro_lines = []
     macro_functions = {}
 
     for fid, path in functions.items():
@@ -186,6 +187,9 @@ def check_function_references(functions: dict[str, Path]):
                 if not args:
                     empty_macro_lines.append((fid, line_no))
                 placeholders.update(args)
+            elif not line.lstrip().startswith("#") and "dynamic/run_command" not in line and MACRO_ARG_RE.search(line):
+                # Without the leading $ the placeholder is printed/run literally, e.g. "$(item_id)" in chat.
+                unprefixed_macro_lines.append((fid, line_no))
         if placeholders:
             macro_functions[fid] = placeholders
 
@@ -216,6 +220,10 @@ def check_function_references(functions: dict[str, Path]):
     if empty_macro_lines:
         details = ", ".join(f"{src}:{line}" for src, line in empty_macro_lines[:20])
         raise ValidationError(f"Macro lines without variables: {details}")
+
+    if unprefixed_macro_lines:
+        details = ", ".join(f"{src}:{line}" for src, line in unprefixed_macro_lines[:20])
+        raise ValidationError(f"Macro variables on lines without the $ prefix: {details}")
 
     return macro_functions
 

@@ -5,7 +5,7 @@ Every action is typed/clicked into the real Minecraft client through OS input
 from chat/log PASS lines.
 """
 from __future__ import annotations
-import json, math, os, sys, time
+import json, math, os, re, sys, time
 from pathlib import Path
 from collections import Counter
 HERE = Path(__file__).parent
@@ -46,7 +46,21 @@ def record(name, ok, detail=''):
 
 # ---------- game actions ----------
 def cmd(c, settle=0.5): d.chat('/' + c, settle)
-def trig(t, settle=1.2): cmd('trigger ' + t, settle)
+def trig(t, settle=1.2):
+    """Run a trigger and require the game's own confirmation in the log."""
+    pos = d.log_len()
+    cmd('trigger ' + t, settle)
+    name = t.split()[0]
+    if not d.wait_log(pos, r'\[CHAT\] 已觸發 \[' + re.escape(name) + r'\]', 5):
+        raise RuntimeError(f'trigger {name} was not confirmed by the game')
+
+def reload_packs():
+    """/reload, then wait for Copy/Paste's own load message; never continue on an unloaded pack."""
+    pos = d.log_len()
+    cmd('reload', 1.0)
+    if not d.wait_log(pos, r'\[Copy/Paste\] v[0-9.]+ 已載入', 30):
+        raise RuntimeError('reload not confirmed (no Copy/Paste load message)')
+    time.sleep(1.0)
 
 def save_world():
     """Pause (Esc) makes the integrated server save every chunk; then resume."""
