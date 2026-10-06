@@ -544,6 +544,9 @@ def run(path):
         print("\n".join(selected[-200:]))
     elif op == "inno-identity-status":
         print(json.dumps(inno_identity_status(os.environ.get("EXAROTON_API_TOKEN", "")), ensure_ascii=False, indent=2))
+    elif op in {"inno-uuid-migrate-dry-run", "inno-uuid-migrate-apply"}:
+        from exaroton_inno_uuid_migrate import plan_or_apply
+        plan_or_apply("dry-run" if op.endswith("dry-run") else "apply")
     else: raise Error(f"unsupported operation: {op}")
 
 if __name__ == "__main__":
