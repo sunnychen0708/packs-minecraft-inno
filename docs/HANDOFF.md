@@ -1,13 +1,26 @@
-# 交接：Copy/Paste v1.3 + Warehouse v4.4.1（2026-10-06 更新）
+# 交接：Copy/Paste v1.3 + Warehouse v4.4.1（2026-10-06 下午更新）
 
 > 給下一位接手的人（或 Claude）。請一律用**繁體中文**與使用者溝通。
 
-## 0. 2026-10-06 更新摘要（先讀這段）
+## 0a. 2026-10-06 下午：PR #26 真人驗證（先讀這段）
+
+- 分支 `claude/lucid-brown-1zoaky` → PR [#26](https://github.com/sunnychen0708/packs-minecraft-inno/pull/26)（#25 已合併）。
+- **PR #26 已在真人 client 驗證通過**（結果在 `dist/real-client-pr26/`，判定一律讀存檔）：
+  - Blueprint 預覽：86 個 `block_display` 逐一落在目標格的**方塊角**、blockstate 完全一致；旋轉 90／180、鏡像 X 的預覽也 86/86 對齊，且施工結果與預覽一致。
+  - Build／Undo 退料／Redo 再扣、0 掉落、Warehouse 精確扣一份：全過。
+  - `/trigger cphelp` 聊天教學正常顯示（截圖 `cphelp.png`）。
+  - **材料不足拒絕施工（stage4）**：Warehouse 石磚 0 → Build 被拒、世界與庫存都沒動；補 40 石磚 → 施工逐格正確、扣一份、0 掉落；Undo 後全額退回。全過。
+- 這次發現並修掉的 bug：**Warehouse Pick 缺貨訊息印出字面上的 `$(item_id)`**（`pick/withdraw` 第 8 行少了 macro `$`）。`validate-datapack.py` 已加檢查：非 `$` 行出現 `$(var)` 就失敗（Dialog 的 `dynamic/run_command` template 除外）。真人 client 重測：訊息正確顯示 `minecraft:diamond_block`。
+- 測試腳本修正：Blueprint 的旋轉／鏡像是**玩家設定，會跨 Copy 保留**；上次中斷殘留 `rotate=270`，害第一輪 Blueprint 檢查全錯。`stage3`/`stage4` 現在先 `reset_xform()`。PR #26 新加的 display 檢查原本把 `block_state` 當 dict（26.3 存檔是字串），已改用 `mcworld.fmt` 比對完整 state。
+- MCC-Test 目前狀態：乾淨。61 箱已註冊、Warehouse 剛好 2 倍 BOM、小屋與箱內物品在原位、旋轉／鏡像已重設、沒有殘留建築。備份：`backups\MCC-Test-before-e1eea6e-20261006`。
+- 注意：世界難度不是和平，晚上會生怪；把時間調成白天時殭屍曬死會掉腐肉，`no_drops` 會誤報（rotten_flesh），不是 Copy/Paste 問題。
+
+## 0. 2026-10-06 上午更新摘要
 
 - **真人 client 驗證已完成**（使用者的 Windows 電腦、官方 26.3 client、可丟棄的 `MCC-Test` 超平坦創造世界）。做法見 §8：用作業系統層級的鍵盤／滑鼠輸入真的操作遊戲，**結果一律讀世界存檔逐格判定，不看 log 的 PASS**。
 - 結果：Warehouse 61 箱真實註冊、自訂分類、Copy/Blueprint/Build 扣料、Undo 退料、Redo 再扣、旋轉 90/180/270 施工、X/Z 鏡像施工、Cut→V（含箱子內容物）、Move、Flip X/Z、直接 Rotate、Pick **全部通過，沒有發現 Copy/Paste 或 Warehouse 的 bug**。詳表見 §3。
 - **舊真人 harness（`build-copy-paste-live-test.py`）的 Warehouse 段落不可信**：它用兩個 `setblock chest` 擺成兩個**單箱**，再直接寫 `warehouse:chests` storage 假裝註冊，沒有走玩家流程。使用者明確指出「箱子根本放錯」。它在真人世界跑出 `pass=92 fail=10`，10 個 FAIL 都是「剛分類完的 warehouse stock」計數。要嘛修 harness，要嘛直接以 §8 的工具為準。
-- 尚未做：材料不足時拒絕施工的真人驗證（`scripts/real-client/stage4_shortage.py` 已寫好，未執行）；新 Dialog 的使用者主觀評價。
+- 尚未做：新 Dialog 的使用者主觀評價。（材料不足拒絕施工已於下午驗證，見 §0a。）
 
 ## 1. 目前在哪裡
 
@@ -67,7 +80,7 @@
 
 ## 4. 下一步（照優先順序）
 
-1. 真人跑 `scripts/real-client/stage4_shortage.py`（材料不足拒絕施工 → 補料後成功）。注意先處理 §7 的 MCC-Test 殘留狀態。
+1. ~~真人跑 stage4~~（已完成，§0a）。
 2. 修舊真人 harness 的 Warehouse 段（改成真的大箱子；註冊盡量走玩家流程），或直接淘汰它、以 `scripts/real-client/` 為準。
 3. 請使用者實際看新 Dialog，依回饋調整。
 4. 打 release tag（`copy-paste-v1.3`、`warehouse-v4.4.1`）前**一定要先問使用者**。
@@ -111,10 +124,11 @@ python3 scripts/build-copy-paste-live-test.py   # → dist/mcc-live-test
 
 ## 7. 已知限制 / 尚未處理
 
+- 本機沒有 `zip` 指令，`build-pack.sh` 會失敗；用 Python `zipfile` 以 pack 目錄為根打包即可。
 - Warehouse 介面沒有重做（使用者這次只要求驗證）。
 - 雙人同時操作的真人測試（`build-copy-paste-multiplayer-test.py`）沒跑過。
 - 貼上到真實世界的 `clone` 仍會觸發方塊更新（為了讓邊界的柵欄、紅石等正常連接）；目前測試沒有發現掉落問題。
-- **MCC-Test 世界目前有殘留**：真人驗證最後一段不小心把 stage 3 重跑了一半，留下一棟「Blueprint 旋轉 270° 施工」的建築（約在 x 1075..1081、z 1054..1060）沒有 Undo，Warehouse 也多了一份 2 倍 BOM。乾淨備份在 `%APPDATA%\.minecraft\backups\MCC-Test-before-a1ae428-20261006`（放入最新 datapack 之前）。下次驗證前建議先還原或另開新世界。
+- ~~MCC-Test 殘留~~（已於 §0a 清除）：真人驗證最後一段不小心把 stage 3 重跑了一半，留下一棟「Blueprint 旋轉 270° 施工」的建築（約在 x 1075..1081、z 1054..1060）沒有 Undo，Warehouse 也多了一份 2 倍 BOM。乾淨備份在 `%APPDATA%\.minecraft\backups\MCC-Test-before-a1ae428-20261006`（放入最新 datapack 之前）。下次驗證前建議先還原或另開新世界。
 - 舊真人 harness 的 10 個「剛分類完 warehouse stock」FAIL 沒有在 §8 重現（§8 等 20 秒讓分類完成後讀存檔，數量完全正確）；推測是 harness 在分類尚未完成時就呼叫 `count_item`，加上它的假箱子設定，未深究。
 
 ## 8. 真人 client 驗證工具（`scripts/real-client/`，Windows）
