@@ -6,9 +6,9 @@
 
 | Pack | 版本 | Release |
 | --- | --- | --- |
-| Utilities | v3.4.1 | `utilities-v3.4.1` |
-| Warehouse | v4.4.2 | `warehouse-v4.4.2` |
-| Copy/Paste | v1.3.2 | `copy-paste-v1.3.1`（v1.3.2 尚未發布） |
+| Utilities | v3.5 | `utilities-v3.5` |
+| Warehouse | v4.5 | `warehouse-v4.5` |
+| Copy/Paste | v1.4 | `copy-paste-v1.4` |
 | cat-door-sounds | v1.0 | `cat-door-sounds-v1.0` |
 
 - 所有原始碼版本都已發布，遠端只剩 `main` 分支，沒有進行中的 PR。
@@ -25,17 +25,18 @@
 - 介面：使用者偏好 Dialog（要乾淨、按鈕少、置中），不要加狀態文字區塊；只改使用者要求的部分。
 - 不要有載入訊息；要叫玩家開介面時寫「按 G」，不要叫玩家打 `/trigger copypaste`。
 - 大改動或設計選擇先問（可用選項讓使用者選）；小 bug 直接修。
+- **版本號一律兩段**（例如 v1.4、v4.5），不要用三段式；小修正就是下一個小版本。曾經發過的三段式版本已併入 Warehouse v4.5、Copy/Paste v1.4、Utilities v3.5。
 
 ## 3. 重要設計
 
-### Copy/Paste v1.3.2
+### Copy/Paste v1.4
 - **介面**：玩家按 G →「建築工具」（`/trigger copypaste` 也可，但訊息一律叫玩家按 G）。全部是 function 產生的 inline Dialog，`/reload` 就會更新：主畫面 `ui/show`（9 顆）、`set 2` 調整預覽 `ui/adjust`、`set 3` 更多 `ui/more`、`set 4` 直接改原本建築 `ui/edit`。聊天教學 `/trigger cphelp` 是 1～5 步驟式。
-- **轉向／翻面以玩家面向為準**：只動預覽 `bpturnright`／`bpturnleft`／`bpflip`／`bpflipfb`／`bpreset`（翻面換算在 `state/bp_flip_axis`：F·R(k)·M = R(−k)·(F·M)）；直接改建築 `turnright`／`turnleft`／`flip`／`flipfb`。舊的 `rotate`、`mirror`、`rotate90`、`rotate270`、`flipx`、`flipz` 已在 v1.3.2 移除（`rotate180` 保留給「原地轉 180°」）。
+- **轉向／翻面以玩家面向為準**：只動預覽 `bpturnright`／`bpturnleft`／`bpflip`／`bpflipfb`／`bpreset`（翻面換算在 `state/bp_flip_axis`：F·R(k)·M = R(−k)·(F·M)）；直接改建築 `turnright`／`turnleft`／`flip`／`flipfb`。舊的 `rotate`、`mirror`、`rotate90`、`rotate270`、`flipx`、`flipz` 已在 v1.4 移除（`rotate180` 保留給「原地轉 180°」）。
 - **扣料**：先扣玩家背包 0～35 格與副手（有 components 的物品不用），再扣 Warehouse。Undo／扣料失敗退料時，背包扣的退回背包（依最大堆疊算空間，塞不下退 Warehouse），Warehouse 扣的退 Warehouse 入口箱再自動分類。記錄在 `bom/items` 的 `.inv` 與 `.taken`。
 - **物品名稱**：`scripts/gen-item-names.py` 從 26.3 server `--reports` 產生 `function/names/load.mcfunction`（翻譯鍵與最大堆疊表）。**換 Minecraft 版本要重跑。**
 - 材料檢查（job 2）只報告，不扣料（`materials/check_done`；v1.1～v1.2 曾經會直接施工）。
 
-### Warehouse v4.4.2
+### Warehouse v4.5
 - 主畫面一律是 `dialog/main.json`（G 和「回主選單」相同）。
 - 選了某個箱子之後的頁面，返回會回到選它的那一頁：選箱時 `ui/back_from_code` 記到 `wh_back`，按鈕送 `wh_nav set 9` → `ui/back`；入口箱頁是 nav 17／37／57／67。`wh_back` 在 `load` 每次建立。
 - 頁面寬度一律 ≤ 390（太寬會讓整頁偏右）；三欄按鈕 120 寬。

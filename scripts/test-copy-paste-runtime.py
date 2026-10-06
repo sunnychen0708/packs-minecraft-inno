@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Isolated vanilla 26.3 behavioral regression for Copy/Paste v1.3.2.
+"""Isolated vanilla 26.3 behavioral regression for Copy/Paste v1.4.
 
 Uses a non-player armor stand test actor to exercise internal datapack functions.
 This complements (not replaces) the opt-in real-player trigger/client harnesses.
