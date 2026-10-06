@@ -533,39 +533,77 @@ def plan_or_apply(mode: str):
         if transformed != raw:
             region_changes.append((path, raw, transformed, stats))
 
+    # Minecraft 26.3 moved player identity data under world/players/.
+    # Old offline .dat_old files are preserved as history only; never overwrite
+    # a current online .dat with them, because that could roll back inventory,
+    # position, XP, ender-chest data, etc.
+    player_data_root = f"{world}/players/data"
+    advancements_root = f"{world}/players/advancements"
+    stats_root = f"{world}/players/stats"
+
     player_changes = []
     identity_summary = {}
     for name, (old_uuid, new_uuid) in PLAYER_MAP.items():
-        old_player = client.read_file_optional(f"{world}/playerdata/{old_uuid}.dat")
-        new_player = client.read_file_optional(f"{world}/playerdata/{new_uuid}.dat")
+        old_player = client.read_file_optional(f"{player_data_root}/{old_uuid}.dat")
+        old_player_backup = client.read_file_optional(f"{player_data_root}/{old_uuid}.dat_old")
+        new_player = client.read_file_optional(f"{player_data_root}/{new_uuid}.dat")
+
         if new_player is None and old_player is not None:
             candidate, meta = transform_player_nbt(old_player)
-            player_changes.append((f"{world}/playerdata/{new_uuid}.dat", None, candidate, {"source": "offline", **meta}))
+            player_changes.append((
+                f"{player_data_root}/{new_uuid}.dat",
+                None,
+                candidate,
+                {"source": "offline-current", **meta},
+            ))
         elif new_player is not None:
+            # Only rewrite exact stale offline UUID references inside the
+            # canonical online player file. Do not import old inventory/state.
             candidate, meta = transform_player_nbt(new_player)
             if candidate != new_player:
-                player_changes.append((f"{world}/playerdata/{new_uuid}.dat", new_player, candidate, {"source": "online", **meta}))
+                player_changes.append((
+                    f"{player_data_root}/{new_uuid}.dat",
+                    new_player,
+                    candidate,
+                    {"source": "online-current", **meta},
+                ))
 
-        old_adv = client.read_file_optional(f"{world}/advancements/{old_uuid}.json")
-        new_adv = client.read_file_optional(f"{world}/advancements/{new_uuid}.json")
+        old_adv = client.read_file_optional(f"{advancements_root}/{old_uuid}.json")
+        new_adv = client.read_file_optional(f"{advancements_root}/{new_uuid}.json")
         merged_adv, adv_changed = merge_advancements(old_adv, new_adv)
         if merged_adv is not None and adv_changed:
-            player_changes.append((f"{world}/advancements/{new_uuid}.json", new_adv, merged_adv, {"merged": True}))
+            player_changes.append((
+                f"{advancements_root}/{new_uuid}.json",
+                new_adv,
+                merged_adv,
+                {"merged": True},
+            ))
 
-        old_stats = client.read_file_optional(f"{world}/stats/{old_uuid}.json")
-        new_stats = client.read_file_optional(f"{world}/stats/{new_uuid}.json")
+        old_stats = client.read_file_optional(f"{stats_root}/{old_uuid}.json")
+        new_stats = client.read_file_optional(f"{stats_root}/{new_uuid}.json")
         merged_stats, stats_changed = merge_stats(old_stats, new_stats)
         if merged_stats is not None and stats_changed:
-            player_changes.append((f"{world}/stats/{new_uuid}.json", new_stats, merged_stats, {"merged": True, "strategy": "max-per-counter"}))
+            player_changes.append((
+                f"{stats_root}/{new_uuid}.json",
+                new_stats,
+                merged_stats,
+                {"merged": True, "strategy": "max-per-counter"},
+            ))
 
         identity_summary[name] = {
-            "offline_playerdata": old_player is not None,
+            "offline_playerdata_current": old_player is not None,
+            "offline_playerdata_backup": old_player_backup is not None,
             "online_playerdata": new_player is not None,
             "offline_advancements": old_adv is not None,
             "online_advancements": new_adv is not None,
             "offline_stats": old_stats is not None,
             "online_stats": new_stats is not None,
-            "canonical_playerdata": "online" if new_player is not None else ("offline-copied" if old_player is not None else "missing"),
+            "canonical_playerdata": (
+                "online"
+                if new_player is not None
+                else ("offline-current-copied" if old_player is not None else "missing")
+            ),
+            "offline_dat_old_action": "preserved-not-merged",
         }
 
     usercache_raw = client.read_file_optional("usercache.json")
