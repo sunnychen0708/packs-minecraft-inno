@@ -12,11 +12,7 @@ execute if score @s up matches 1.. run scoreboard players set @s mcc_tmp 1
 execute if score @s down matches 1.. run scoreboard players set @s mcc_tmp 1
 execute if score @s forward matches 1.. run scoreboard players set @s mcc_tmp 1
 execute if score @s backward matches 1.. run scoreboard players set @s mcc_tmp 1
-execute if score @s flipx matches 1.. run scoreboard players set @s mcc_tmp 1
-execute if score @s flipz matches 1.. run scoreboard players set @s mcc_tmp 1
-execute if score @s rotate90 matches 1.. run scoreboard players set @s mcc_tmp 1
 execute if score @s rotate180 matches 1.. run scoreboard players set @s mcc_tmp 1
-execute if score @s rotate270 matches 1.. run scoreboard players set @s mcc_tmp 1
 execute if score @s bpleft matches 1.. run scoreboard players set @s mcc_tmp 1
 execute if score @s bpright matches 1.. run scoreboard players set @s mcc_tmp 1
 execute if score @s bpforward matches 1.. run scoreboard players set @s mcc_tmp 1

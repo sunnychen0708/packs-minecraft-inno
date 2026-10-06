@@ -1,4 +1,4 @@
-"""Build an opt-in real-player v1.3.1 integration test datapack; never runs on load.
+"""Build an opt-in real-player v1.3.2 integration test datapack; never runs on load.
 
 Run /function mcc_test:start in a BACKED UP disposable creative world.
 Uses the real player's triggers and Minecraft tick dispatch, with delayed assertions.
@@ -16,7 +16,7 @@ parser.add_argument('--output',type=Path,default=Path(__file__).resolve().parent
 OUT=parser.parse_args().output.resolve()
 F=OUT/'data/mcc_test/function'
 F.mkdir(parents=True,exist_ok=True)
-(OUT/'pack.mcmeta').write_text(json.dumps({'pack':{'description':'Opt-in CopyPaste v1.3.1 live regression','min_format':121,'max_format':121}},ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+(OUT/'pack.mcmeta').write_text(json.dumps({'pack':{'description':'Opt-in CopyPaste v1.3.2 live regression','min_format':121,'max_format':121}},ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 
 steps=[]
 def step(*commands): steps.append(list(commands))
@@ -68,7 +68,7 @@ fixture(); selection()
 check('overworld fixture ready','in minecraft:overworld if block -200 250 90 gold_block if block -180 249 90 stone')
 check('raycast selection','if score @s mcc_p1x matches -200 if score @s mcc_p1y matches 250 if score @s mcc_p1z matches 90 if score @s mcc_p2x matches -198 if score @s mcc_p2z matches 91')
 
-# v1.3.1 selection contract: reselecting Pos1/Pos2 changes the next Copy, while
+# v1.3.2 selection contract: reselecting Pos1/Pos2 changes the next Copy, while
 # doing another Copy without new Pos keeps using the current selection.
 selection2(); trigger('c')
 target(-170,105); trigger('v')
@@ -80,7 +80,7 @@ check('selection persists without new pos','in minecraft:overworld positioned -1
 trigger('previewclear')
 selection()
 
-# v1.3.1 Anchor lifecycle: external pivots are valid, Clear Anchor works through the
+# v1.3.2 Anchor lifecycle: external pivots are valid, Clear Anchor works through the
 # real trigger/tick path, and reselecting either endpoint drops a stale custom Anchor.
 step('execute in minecraft:overworld run setblock -190 250 100 stone')
 aim(-190,100); trigger('anchor')
@@ -91,7 +91,7 @@ aim(-190,100); trigger('anchor')
 aim(-200,90); trigger('pos1')
 check('pos1 reselection clears stale anchor','if score @s mcc_hasa matches 0 if score @s mcc_p1x matches -200 if score @s mcc_p1z matches 90')
 aim(-190,100); trigger('anchor')
-trigger('rotate90')
+trigger('turnright')
 check('external anchor rotate real','in minecraft:overworld if block -180 250 90 gold_block if block -180 250 92 diamond_block if block -181 250 90 emerald_block if block -181 250 92 iron_block if score @s mcc_anx matches -190 if score @s mcc_anz matches 100')
 trigger('undo')
 check('external anchor rotate undo','in minecraft:overworld if block -200 250 90 gold_block if block -198 250 91 iron_block')
@@ -121,7 +121,7 @@ check('preview clear','in minecraft:overworld unless entity @e[type=minecraft:bl
 # Copy/Blueprint is not a real world edit and must not consume its Clipboard.
 check('copy clipboard persists','if score @s mcc_clip matches 1 if score @s mcc_cliptype matches 1')
 
-# v1.3.1 material-backed Build through the real player trigger path.
+# v1.3.2 material-backed Build through the real player trigger path.
 # The harness expects the Warehouse datapack to be installed alongside Copy/Paste.
 target(); trigger('v')
 step(
@@ -138,7 +138,7 @@ check('material build consumed warehouse stock','in minecraft:overworld unless d
 fixture(); selection()
 
 # Cut is X. It edits real blocks; Undo invalidates the live Cut clipboard and
-# Redo rebuilds the original one (v1.3.1).
+# Redo rebuilds the original one (v1.3.2).
 trigger('x')
 check('x cuts real source','in minecraft:overworld if block -200 250 90 air if block -198 250 91 air if score @s mcc_cliptype matches 2')
 trigger('undo')
@@ -175,7 +175,7 @@ trigger('undo')
 # New real edit after Undo invalidates Redo.
 trigger('up set 1'); trigger('undo')
 check('redo exists after undo','if score @s mcc_redo matches 1')
-trigger('flipx')
+trigger('flip')
 check('new real edit invalidates redo','if score @s mcc_redo matches 0')
 trigger('undo')
 
@@ -186,7 +186,7 @@ check('blueprint preserves redo','if score @s mcc_redo matches 1')
 trigger('previewclear'); trigger('redo'); trigger('undo')
 
 # Flip remains a direct real edit and is Redo-able.
-trigger('flipx')
+trigger('flip')
 check('flipx real','in minecraft:overworld if block -198 250 90 gold_block if block -200 250 90 diamond_block')
 trigger('undo')
 check('flip undo','in minecraft:overworld if block -200 250 90 gold_block if block -198 250 90 diamond_block')
@@ -195,7 +195,7 @@ check('flip redo','in minecraft:overworld if block -198 250 90 gold_block if blo
 trigger('undo')
 
 # Direct real Rotate about Pos1.
-trigger('rotate90')
+trigger('turnright')
 check('rotate90 real','in minecraft:overworld if block -200 250 90 gold_block if block -200 250 92 diamond_block if block -201 250 90 emerald_block if block -201 250 92 iron_block')
 trigger('undo')
 check('rotate90 undo','in minecraft:overworld if block -200 250 90 gold_block if block -198 250 90 diamond_block if block -200 250 91 emerald_block')
@@ -206,7 +206,7 @@ trigger('undo')
 trigger('rotate180')
 check('rotate180 real','in minecraft:overworld if block -200 250 90 gold_block if block -202 250 90 diamond_block if block -200 250 89 emerald_block if block -202 250 89 iron_block')
 trigger('undo')
-trigger('rotate270')
+trigger('turnleft')
 check('rotate270 real','in minecraft:overworld if block -200 250 90 gold_block if block -200 250 88 diamond_block if block -199 250 90 emerald_block if block -199 250 88 iron_block')
 trigger('undo')
 
@@ -340,4 +340,4 @@ for i,cmds in enumerate(steps):
     'function mcc_test:step_0\n',
     encoding='utf-8'
 )
-print(f'Built {len(steps)} v1.3.1 live steps at {OUT}')
+print(f'Built {len(steps)} v1.3.2 live steps at {OUT}')

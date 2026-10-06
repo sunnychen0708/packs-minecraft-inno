@@ -11,9 +11,9 @@ RE_FUNC = re.compile(r'\bfunction\s+(mcc:[a-z0-9_./-]+)')
 RE_OBJ = re.compile(r'^scoreboard objectives add (\S+) (\S+)', re.M)
 RE_TRIGGER = re.compile(r'^scoreboard objectives add (\S+) trigger$', re.M)
 USER_TRIGGERS = {
-    'copypaste','cphelp','pos1','pos2','anchor','c','x','v','undo','redo','mode','rotate','mirror',
-    'right','left','up','down','forward','backward','flipx','flipz',
-    'rotate90','rotate180','rotate270','previewclear','build','materials','bpleft','bpright','bpforward','bpbackward','bpup','bpdown',
+    'copypaste','cphelp','pos1','pos2','anchor','c','x','v','undo','redo','mode',
+    'right','left','up','down','forward','backward',
+    'rotate180','previewclear','build','materials','bpleft','bpright','bpforward','bpbackward','bpup','bpdown',
     'bpturnright','bpturnleft','bpflip','bpflipfb','bpreset','turnright','turnleft','flip','flipfb'
 }
 
@@ -292,9 +292,9 @@ def check_v100_semantics(pack: Path):
     assert 'scoreboard objectives add x trigger' in load
     assert 'scoreboard objectives add cut trigger' not in load
     assert 'scoreboard objectives add redo trigger' in load
-    assert 'scoreboard objectives add rotate90 trigger' in load
     assert 'scoreboard objectives add rotate180 trigger' in load
-    assert 'scoreboard objectives add rotate270 trigger' in load
+    for legacy in ('rotate','mirror','rotate90','rotate270','flipx','flipz'):
+        assert f'scoreboard objectives add {legacy} trigger' not in load, f'legacy trigger {legacy} must stay removed'
     assert 'scoreboard objectives add previewclear trigger' in load
     assert 'scoreboard objectives add build trigger' in load
     assert 'scores={x=1..}' in tick and 'function mcc:cut/run' in tick
