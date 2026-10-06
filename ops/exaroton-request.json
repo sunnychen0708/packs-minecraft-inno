@@ -1,6 +1,6 @@
 {
-  "request_id": 28,
-  "operation": "run-copy-paste-multiplayer-test",
-  "command": "",
+  "request_id": 29,
+  "operation": "inno-uuid-migrate-verify",
+  "command": "uuid-migration-1791312983.json",
   "pack": ""
 }
