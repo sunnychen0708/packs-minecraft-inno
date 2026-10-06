@@ -827,7 +827,7 @@ def run(path):
             self.require_offline()
             self.req(
                 "PUT",
-                f"/servers/{self._sidq()}/files/data/{migration.remote_path(path)}",
+                f"/servers/{self._sidq()}/files/data/{migration.remote_path(path)}/",
                 raw=data,
             )
 
