@@ -49,11 +49,12 @@ def integration(java: Path, server: Path):
     # The main UI is a macro Dialog; render it with sample values as a static dialog
     # so the official server's registry load rejects any schema error.
     import re as _re
-    show=(PACK/'data/mcc/function/ui/show.mcfunction').read_text(encoding='utf-8').strip()
-    assert show.startswith('$dialog show @s ')
-    rendered=_re.sub(r'\$\(([a-z0-9_]+)\)',lambda m:f'sample {m.group(1)}',show[len('$dialog show @s '):])
     (harness/'data/mcc_server_test/dialog').mkdir(parents=True)
-    (harness/'data/mcc_server_test/dialog/ui_preview.json').write_text(rendered,encoding='utf-8')
+    for name in ('show','adjust','more_show','edit'):
+        show=(PACK/f'data/mcc/function/ui/{name}.mcfunction').read_text(encoding='utf-8').strip().lstrip('$')
+        assert show.startswith('dialog show @s '), name
+        rendered=_re.sub(r'\$\(([a-z0-9_]+)\)',lambda m:f'sample {m.group(1)}',show[len('dialog show @s '):])
+        (harness/f'data/mcc_server_test/dialog/ui_preview_{name}.json').write_text(rendered,encoding='utf-8')
     (harness/'pack.mcmeta').write_text(json.dumps({'pack':{'min_format':121,'max_format':121,'description':'CopyPaste server regression'}}),encoding='utf-8')
 
     actor='@e[type=minecraft:armor_stand,tag=mcc_server_actor,limit=1]'
@@ -1021,8 +1022,8 @@ def integration(java: Path, server: Path):
 
     # Main UI toggle labels are built from the player's real state.
     hsel()
-    run_as('mcc:ui/open')
-    check('if data storage mcc:ui mode','ui_toggle_labels')
+    run_as('mcc:ui/more')
+    check('if data storage mcc:ui mode if data storage mcc:ui modetip','ui_paste_mode_label')
 
     # A gated trigger pressed while a material job runs is reported, not silently dropped.
     lines.extend([

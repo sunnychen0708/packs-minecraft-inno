@@ -28,7 +28,11 @@ execute as @a unless score @s mcc_bpover matches 0.. run scoreboard players set 
 execute as @a unless score @s mcc_buildconfirm matches 0..1 run scoreboard players set @s mcc_buildconfirm 0
 execute as @a unless score @s mcc_bpover_scan matches 0..1 run scoreboard players set @s mcc_bpover_scan 0
 execute as @a unless score @s mcc_bpoindex matches 0.. run scoreboard players set @s mcc_bpoindex 0
-execute as @a[scores={copypaste=1..}] run function mcc:ui/open
+execute as @a[scores={copypaste=1}] run function mcc:ui/open
+execute as @a[scores={copypaste=2}] run function mcc:ui/adjust
+execute as @a[scores={copypaste=3}] run function mcc:ui/more
+execute as @a[scores={copypaste=4}] run function mcc:ui/edit
+execute as @a[scores={copypaste=5..}] run function mcc:ui/open
 execute as @a[scores={cphelp=1..}] run function mcc:ui/tutorial
 
 execute as @a[scores={pos1=1..}] at @s run function mcc:select/start_pos1
@@ -42,6 +46,8 @@ execute as @a[scores={v=1..,mcc_matphase=0}] at @s run function mcc:select/start
 execute as @a[scores={undo=1..,mcc_matphase=0}] run function mcc:undo/run
 execute as @a[scores={redo=1..,mcc_matphase=0}] run function mcc:redo/run
 execute as @a[scores={mode=1..}] run function mcc:mode_toggle
+# The "More" page button sends mode 2: reopen it so the new mode is visible at once.
+execute as @a[scores={mode=2}] run function mcc:ui/more
 execute as @a[scores={rotate=1}] run function mcc:state/rot_cycle
 execute as @a[scores={rotate=10}] run function mcc:state/rot_0
 execute as @a[scores={rotate=20}] run function mcc:state/rot_90
