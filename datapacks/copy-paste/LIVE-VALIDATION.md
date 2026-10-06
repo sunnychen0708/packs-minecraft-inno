@@ -15,13 +15,16 @@
 | **真人 client** | `scripts/real-client/`（Windows） | 用作業系統層級的鍵盤／滑鼠真的操作遊戲，**讀世界存檔逐格判定** |
 | 雙人 harness | `python3 scripts/build-copy-paste-multiplayer-test.py` | 兩位真人同時操作（尚未執行過） |
 
+**GitHub Actions 只跑前四層。** CI 不會執行 `scripts/real-client/`（要 Windows 上真的開著的 Minecraft client），對兩個 trigger harness 也只確認「產生得出來」，不會讓真人玩家去跑。所以 CI 綠燈不能證明 G、Dialog 點擊、真人 `/trigger` dispatch、準星 raycast 這條路徑沒問題。`test-copy-paste.py` 只會確認 `scripts/real-client/*.py` 能編譯、沒有在等已經拿掉的載入訊息。
+
 ## Headless behavioral runtime
 
-`scripts/test-copy-paste-runtime.py` 目前 **187 個動態 assertions**，涵蓋：
+`scripts/test-copy-paste-runtime.py` 目前 **191 個動態 assertions**，涵蓋：
 
 - Pos1／Pos2／Anchor／V 的 raycast；沒有自訂 Anchor 時以 Pos1 為基準（Pos1 不是最小角也精確對位）。
 - 自訂 Anchor（含選區外）的 12 種 Rotate/Mirror 組合與連續大半徑 Rotate、Undo。
 - Copy → Blueprint 不改真實世界；Blueprint 預覽落在方塊角；六方向微調與覆蓋重算。
+- 微調後覆蓋重算還在跑時清除預覽或旋轉重建：重算會被取消，暫存區（跨兩個 chunk）的 forceload 全部解除。
 - 材料唯讀報表（材料齊全時也不扣料、不施工）、缺料 all-or-nothing、足料 Build。
 - 先從持有者背包／副手扣料（實際從副手扣掉），再用 Warehouse；Undo 退料、Redo 再扣、防複製 guard。
 - Cut + V、Move、Flip、Rotate 90/180/270、五層 Undo/Redo、每種編輯的防複製快照。
@@ -45,9 +48,11 @@
 | `stage8_names` | 材料檢查與缺料清單顯示 zh_tw 物品名稱 |
 | `stage9_checkonly` | 材料齊全時「材料檢查」不扣料、不施工 |
 | `stage10_inventory` | 背包／副手優先扣料、改名物品不使用、Undo 退回背包、背包滿時其餘退 Warehouse 且 0 掉落、Redo 同樣先扣背包 |
-| `stage12_all_packs` | Utilities + Warehouse + Copy/Paste 一起安裝：三包載入無錯誤、沒有載入訊息、G 開 Warehouse 主畫面、Utilities 設家／回家／返回／說明正常；同時重跑 `stage5`、`stage10`、`stage9` 全數通過 |
+| `stage12_all_packs` | Utilities + Warehouse + Copy/Paste 一起安裝：三包都在 `/datapack list enabled`、載入無錯誤、沒有載入／第一次加入的聊天訊息、G 開 Warehouse 主畫面、Utilities 設家／回家／返回／說明正常；同時重跑 `stage5`、`stage10`、`stage9` |
 
 **尚未驗證：** 兩位真人 client 同時操作。
+
+`stage12_all_packs` 的注意：repo 裡原本的版本還在等「Copy/Paste v… 已載入」並要求 Utilities／Copy/Paste 印出載入訊息，和 v1.3.1／Utilities v3.4.1 拿掉載入訊息的行為矛盾，照原樣重跑會 timeout／失敗。腳本已改成檢查「沒有載入訊息」並用 `/datapack list enabled` 確認三包都啟用；**改過的版本還沒在真人 client 重跑過**，上表 stage12 的結果要等重跑後才算數。
 
 2026-10-06 晚間三包一起重跑時，一度出現「材料表是空的、施工沒扣料」：原因是測試用小屋在 18:08 被手動 Cut 搬走，測試等於在複製空氣，並不是 pack 的問題。`stage3_house.snapshot()` 現在發現小屋不完整就直接停止。
 

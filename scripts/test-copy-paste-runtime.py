@@ -1046,6 +1046,55 @@ def integration(java: Path, server: Path):
     check('if data storage mcc:materials p991.bom."minecraft:oak_planks"{invhave:2,have:2}','inventory_count_sees_offhand')
     lines.extend([f'item replace entity {actor} weapon.offhand with minecraft:air', 'data remove storage mcc:materials p991'])
 
+    # Clearing or rebuilding a Blueprint must cancel a pending overlap recount and
+    # release its forceload. A 17-wide row puts the actor's buffer (x=20019712,
+    # chunk-aligned) across two X chunks; turned 90° it spans two Z chunks instead,
+    # so the second X chunk is only released if the recount itself is cancelled.
+    def forced(name,x,z):
+        lines.append(f'execute in minecraft:overworld store success score #{name} mccst run forceload query {x} {z}')
+    run_as('mcc:blueprint/clear_internal')
+    lines.extend([
+        'fill 0 88 26 16 88 26 stone',
+        f'scoreboard players set {actor} mcc_rot 0',
+        f'scoreboard players set {actor} mcc_mir 0',
+        f'scoreboard players set {actor} mcc_hasa 0',
+        f'scoreboard players set {actor} mcc_has1 1',
+        f'scoreboard players set {actor} mcc_has2 1',
+        f'scoreboard players set {actor} mcc_p1x 0',
+        f'scoreboard players set {actor} mcc_p1y 88',
+        f'scoreboard players set {actor} mcc_p1z 26',
+        f'scoreboard players set {actor} mcc_p1d 1',
+        f'scoreboard players set {actor} mcc_p2x 16',
+        f'scoreboard players set {actor} mcc_p2y 88',
+        f'scoreboard players set {actor} mcc_p2z 26',
+        f'scoreboard players set {actor} mcc_p2d 1',
+        f'data merge entity {actor} {{Rotation:[0f,0f]}}',
+    ])
+    run_as('mcc:copy/run')
+    for path in ('clear','rebuild'):
+        target(0,88,28)
+        run_as('mcc:paste/dispatch')
+        scan()
+        lines.append(f'scoreboard players set {actor} bpright 1')
+        run_as('mcc:blueprint/nudge/right')
+        forced('fla',20019712,20002000); forced('flb',20019728,20002000)
+        check(f'if score {actor} mcc_bpover_scan matches 1 if score #fla mccst matches 1 if score #flb mccst matches 1','recount_pending_before_'+path)
+        if path=='clear':
+            # Checked before any recount_batch: a stale job would otherwise finish and hide the leak.
+            run_as('mcc:blueprint/clear_internal')
+            forced('fla',20019712,20002000); forced('flb',20019728,20002000)
+            check(f'if score {actor} mcc_bpover_scan matches 0 if score {actor} mcc_bpactive matches 0 if score #fla mccst matches 0 if score #flb mccst matches 0 unless entity @e[type=minecraft:block_display,tag=mcc_blueprint]','clear_cancels_pending_recount')
+        else:
+            run_as('mcc:state/bp_turn_right')
+            scan(4)
+            forced('fla',20019712,20002000); forced('flb',20019728,20002000); forced('flc',20019712,20002016)
+            check(f'if score {actor} mcc_bpover_scan matches 0 if score {actor} mcc_bpready matches 1 if score {actor} mcc_rot matches 1 if score {actor} mcc_bpsx2 matches 20019712 if score {actor} mcc_bpsz2 matches 20002016 if score #fla mccst matches 0 if score #flb mccst matches 0 if score #flc mccst matches 0','rebuild_cancels_pending_recount_forceload')
+    run_as('mcc:blueprint/clear_internal')
+    lines.extend([
+        'fill 0 88 26 16 88 26 air',
+        f'scoreboard players set {actor} mcc_rot 0',
+    ])
+
     # A gated trigger pressed while a material job runs is reported, not silently dropped.
     lines.extend([
         f'scoreboard players set {actor} mcc_tmp 0',

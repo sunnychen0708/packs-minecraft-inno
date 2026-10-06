@@ -578,7 +578,29 @@ def check_version_labels(pack: Path, repo: Path|None=None):
         "material build real",
     ):
         assert required in live, f'v{version} real-player harness missing: {required}'
+    # CI cannot run the real-client stages, so at least keep them in step with the pack:
+    # they must compile and must not wait for or check a load message that no pack prints.
+    for script in sorted((source_repo/'scripts/real-client').glob('*.py')):
+        text=read(script)
+        compile(text, str(script), 'exec')
+        for line in text.splitlines():
+            if '已載入' in line and ('wait_log' in line or 'any(' in line):
+                raise AssertionError(f'{script.name} still waits for or requires a datapack load message: {line.strip()}')
     return version
+
+def check_blueprint_lifecycle(pack: Path):
+    fn=pack/'data/mcc/function/blueprint'
+    clear=read(fn/'clear_internal.mcfunction')
+    cancel=read(fn/'cancel_recount.mcfunction')
+    create=read(fn/'create.mcfunction')
+    # Clearing (previewclear, Copy, Build, rebuild) must also stop a pending overlap recount and
+    # release its forceload while the buffer bounds are still the ones recount_start used.
+    assert 'execute if score @s mcc_bpover_scan matches 1 run function mcc:blueprint/cancel_recount' in clear
+    assert clear.index('cancel_recount') < clear.index('kill_owner')
+    assert 'scoreboard players set @s mcc_bpover_scan 0' in clear
+    assert 'function mcc:blueprint/forceload_remove with storage mcc:temp' in cancel
+    assert 'scoreboard players set @s mcc_bpover_scan 0' in cancel
+    assert create.index('function mcc:blueprint/clear_internal') < create.index('init_direct')
 
 def check_history_safety(pack: Path):
     commit=read(pack/'data/mcc/function/history/commit_edit.mcfunction')
@@ -650,6 +672,7 @@ def main():
     check_selection_math(pack)
     check_flip_anchor_formula(pack)
     check_history_safety(pack)
+    check_blueprint_lifecycle(pack)
     check_busy_notice(pack)
     check_no_update_writes(pack)
     check_move_model()

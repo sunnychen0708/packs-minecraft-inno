@@ -91,5 +91,7 @@ Copy/Paste runtime 失敗時會印出 `MCCST_DIAG_DROP_<步驟>`（掉了什麼�
 ## 8. 尚未處理
 
 - 兩位真人 client 同時操作沒測過（`scripts/build-copy-paste-multiplayer-test.py`）。
+- CI 不跑 `scripts/real-client/`，兩個 trigger harness 也只檢查能產生；CI 綠燈不代表 G、Dialog 點擊、真人 trigger／raycast 沒問題。改了玩家看得到的行為要自己重跑相關 stage。
+- `stage12_all_packs` 已改成檢查「沒有載入訊息」＋`/datapack list enabled`，改過的版本還沒在真人 client 重跑。
 - 舊 Trigger harness（`build-copy-paste-live-test.py`）的 Warehouse 段是假的（單箱＋直接寫 storage），正式驗證以 `scripts/real-client/` 為準。
 - 貼上到真實世界的 `clone` 仍會觸發方塊更新（為了讓邊界的柵欄、紅石正常連接）；目前沒發現掉落問題。
