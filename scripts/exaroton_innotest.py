@@ -128,6 +128,201 @@ class APIClient:
         sid = urllib.parse.quote(str(server["id"]), safe="")
         return self.req("POST", f"/servers/{sid}/files/config/{remote_path(path)}/", obj=values)
 
+
+INNO_READONLY_TARGET = "inno.exaroton.me"
+
+class InnoReadOnlyClient:
+    """GET-only exaroton client hard-locked to the production inno server."""
+    def __init__(self, token: str, opener=urllib.request.urlopen):
+        if not token.strip():
+            raise Error("EXAROTON_API_TOKEN is not configured")
+        self.token, self.opener = token.strip(), opener
+
+    def get_json(self, path):
+        headers = {
+            "Authorization": f"Bearer {self.token}",
+            "User-Agent": "packs-minecraft-inno/1 inno-readonly",
+        }
+        request = urllib.request.Request(API + path, headers=headers, method="GET")
+        try:
+            with self.opener(request, timeout=30) as response:
+                data = response.read()
+        except urllib.error.HTTPError as e:
+            detail = e.read().decode("utf-8", "replace")[:500]
+            raise Error(f"exaroton HTTP {e.code}: {detail or e.reason}") from e
+        except urllib.error.URLError as e:
+            raise Error(f"cannot reach exaroton API: {e.reason}") from e
+        try:
+            result = json.loads(data.decode())
+        except Exception as e:
+            raise Error("exaroton returned invalid JSON") from e
+        if isinstance(result, dict) and result.get("success") is False:
+            raise Error(f"exaroton error: {result.get('error') or 'unknown'}")
+        return result.get("data") if isinstance(result, dict) and "data" in result else result
+
+    def get_raw(self, path):
+        headers = {
+            "Authorization": f"Bearer {self.token}",
+            "User-Agent": "packs-minecraft-inno/1 inno-readonly",
+        }
+        request = urllib.request.Request(API + path, headers=headers, method="GET")
+        try:
+            with self.opener(request, timeout=30) as response:
+                return response.read()
+        except urllib.error.HTTPError as e:
+            detail = e.read().decode("utf-8", "replace")[:500]
+            raise Error(f"exaroton HTTP {e.code}: {detail or e.reason}") from e
+        except urllib.error.URLError as e:
+            raise Error(f"cannot reach exaroton API: {e.reason}") from e
+
+    def target(self):
+        servers = self.get_json("/servers/")
+        matches = [
+            server for server in servers
+            if isinstance(server, dict)
+            and addr(server.get("address")) == INNO_READONLY_TARGET
+        ]
+        if len(matches) != 1:
+            raise Error(
+                f"read-only safety lock: expected exactly one "
+                f"{INNO_READONLY_TARGET}, found {len(matches)}"
+            )
+        sid = matches[0].get("id")
+        if not sid:
+            raise Error("read-only safety lock: inno has no server id")
+        server = self.get_json(f"/servers/{urllib.parse.quote(str(sid), safe='')}")
+        if addr(server.get("address")) != INNO_READONLY_TARGET:
+            raise Error("read-only safety lock: target verification failed")
+        return server
+
+    def read_file_optional(self, sid, path):
+        sid_q = urllib.parse.quote(str(sid), safe="")
+        try:
+            return self.get_raw(
+                f"/servers/{sid_q}/files/data/{remote_path(path)}/"
+            )
+        except Error as e:
+            if "HTTP 404" in str(e):
+                return None
+            raise
+
+    def file_info_optional(self, sid, path):
+        sid_q = urllib.parse.quote(str(sid), safe="")
+        try:
+            return self.get_json(
+                f"/servers/{sid_q}/files/info/{remote_path(path)}/"
+            )
+        except Error as e:
+            if "HTTP 404" in str(e):
+                return None
+            raise
+
+
+def _json_file(client, sid, path):
+    raw = client.read_file_optional(sid, path)
+    if raw is None:
+        return []
+    try:
+        value = json.loads(raw.decode("utf-8"))
+    except Exception as e:
+        raise Error(f"{path} is not valid JSON") from e
+    return value
+
+
+def _uuid_files(info, suffix):
+    children = (info or {}).get("children") or []
+    out = []
+    for child in children:
+        if not isinstance(child, dict):
+            continue
+        name = str(child.get("name") or "")
+        if not name.endswith(suffix):
+            continue
+        candidate = name[:-len(suffix)]
+        try:
+            parsed = str(uuid.UUID(candidate))
+        except ValueError:
+            continue
+        out.append(parsed)
+    return sorted(set(out))
+
+
+def inno_identity_status(token):
+    """Read identity-related files from inno without starting or mutating it."""
+    client = InnoReadOnlyClient(token)
+    server = client.target()
+    sid = server["id"]
+
+    properties = client.read_file_optional(sid, "server.properties")
+    if properties is None:
+        raise Error("inno server.properties not found")
+    world = level_name(properties)
+
+    whitelist = _json_file(client, sid, "whitelist.json")
+    usercache = _json_file(client, sid, "usercache.json")
+    ops = _json_file(client, sid, "ops.json")
+
+    playerdata = _uuid_files(
+        client.file_info_optional(sid, f"{world}/playerdata"), ".dat"
+    )
+    advancements = _uuid_files(
+        client.file_info_optional(sid, f"{world}/advancements"), ".json"
+    )
+    stats = _uuid_files(
+        client.file_info_optional(sid, f"{world}/stats"), ".json"
+    )
+
+    known = {}
+    for source, entries in (
+        ("whitelist", whitelist),
+        ("usercache", usercache),
+        ("ops", ops),
+    ):
+        if not isinstance(entries, list):
+            continue
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            raw_uuid = str(entry.get("uuid") or "")
+            try:
+                key = str(uuid.UUID(raw_uuid))
+            except ValueError:
+                continue
+            item = known.setdefault(key, {"names": [], "sources": []})
+            name = str(entry.get("name") or "")
+            if name and name not in item["names"]:
+                item["names"].append(name)
+            if source not in item["sources"]:
+                item["sources"].append(source)
+
+    all_world_uuids = sorted(set(playerdata) | set(advancements) | set(stats))
+    unexplained = [
+        {"uuid": u, **known.get(u, {"names": [], "sources": []})}
+        for u in all_world_uuids
+        if u not in known
+    ]
+
+    code = int(server.get("status", -1))
+    return {
+        "server": {
+            "name": server.get("name"),
+            "address": server.get("address"),
+            "status": code,
+            "status_name": STATUS.get(code, "UNKNOWN"),
+        },
+        "world": world,
+        "whitelist": whitelist,
+        "usercache": usercache,
+        "ops": ops,
+        "world_uuid_files": {
+            "playerdata": playerdata,
+            "advancements": advancements,
+            "stats": stats,
+            "union": all_world_uuids,
+        },
+        "world_uuids_not_present_in_whitelist_usercache_ops": unexplained,
+    }
+
 def pack_zip(name):
     if name not in PACKS: raise Error(f"unsupported datapack: {name}")
     base = ROOT / "datapacks" / name
@@ -342,6 +537,8 @@ def run(path):
         print(json.dumps(result, ensure_ascii=False, indent=2))
     elif op == "migrate-offline-bot-identities":
         migrate_bot_identities(client)
+    elif op == "inno-identity-status":
+        print(json.dumps(inno_identity_status(os.environ.get("EXAROTON_API_TOKEN", "")), ensure_ascii=False, indent=2))
     else: raise Error(f"unsupported operation: {op}")
 
 if __name__ == "__main__":
