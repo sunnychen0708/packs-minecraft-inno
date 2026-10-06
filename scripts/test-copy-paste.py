@@ -555,7 +555,7 @@ def check_version_labels(pack: Path, repo: Path|None=None):
     assert m, f'pack description has no semantic version: {desc}'
     version=m.group(1)
     load=read(pack/'data/mcc/function/load.mcfunction')
-    assert f'v{version} 已載入' in load, f'load message not synced to v{version}'
+    assert '已載入' not in load and 'tellraw @a' not in load, 'Copy/Paste must not announce itself on load'
     assert f'v{version}' in read(pack/'README.md').splitlines()[0], f'pack README not synced to v{version}'
     assert f'v{version}' in read(pack/'LIVE-VALIDATION.md').splitlines()[0], f'LIVE-VALIDATION not synced to v{version}'
     assert f'v{version}' in read(pack/'MULTIPLAYER-VALIDATION.md').splitlines()[0], f'MULTIPLAYER-VALIDATION not synced to v{version}'

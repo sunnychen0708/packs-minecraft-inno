@@ -17,7 +17,12 @@ def sel_cells():
 
 def snapshot():
     w = world()
-    return w, {p: w.block(*p) for p in sel_cells()}
+    src = {p: w.block(*p) for p in sel_cells()}
+    # The 3D house is the test fixture: if someone moved it, every check would compare air with air.
+    solid = sum(1 for s in src.values() if s != 'minecraft:air')
+    if solid < len(house.BLOCKS):
+        raise RuntimeError(f'test house missing at {HOUSE_O}: only {solid}/{len(house.BLOCKS)} blocks in the selection')
+    return w, src
 
 def compare(w, expect, label, extra_air=()):
     bad = [(p, e, w.block(*p)) for p, e in expect.items() if w.block(*p) != e]
