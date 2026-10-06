@@ -6,7 +6,7 @@
 
 | Pack | 版本 | Release |
 | --- | --- | --- |
-| Utilities | v3.4 | `utilities-v3.4` |
+| Utilities | v3.4.1 | `utilities-v3.4.1` |
 | Warehouse | v4.4.2 | `warehouse-v4.4.2` |
 | Copy/Paste | v1.3.1 | `copy-paste-v1.3.1` |
 | cat-door-sounds | v1.0 | `cat-door-sounds-v1.0` |
@@ -23,6 +23,7 @@
 - 驗證要用**真實情境**：3D、多種方塊、真的從 Warehouse／背包扣料、真的點 Dialog；結果讀存檔判定，不看 log 的 PASS。不要把「headless server 通過」說成「實機驗過」。
 - Warehouse 玩家會**自訂分類**，測試不能假設預設分類。
 - 介面：使用者偏好 Dialog（要乾淨、按鈕少、置中），不要加狀態文字區塊；只改使用者要求的部分。
+- 不要有載入訊息；要叫玩家開介面時寫「按 G」，不要叫玩家打 `/trigger copypaste`。
 - 大改動或設計選擇先問（可用選項讓使用者選）；小 bug 直接修。
 
 ## 3. 重要設計
@@ -68,7 +69,7 @@ Copy/Paste runtime 失敗時會印出 `MCCST_DIAG_DROP_<步驟>`（掉了什麼�
 ## 6. 真人 client 工具（`scripts/real-client/`，Windows）
 
 - `mcdrive.py`：Win32 `SendInput` 送鍵盤／滑鼠。打指令會先清空聊天框；指令變成一般聊天或被拒絕就丟例外。Minecraft 不在前景時拒絕送輸入。
-- `realplay.py`：`trig()` 必須看到遊戲回的「已觸發 [名稱]」；`reload_packs()` 要等到「Copy/Paste v… 已載入」；存檔用「按 Esc 暫停」（單人不能 `/save-all`）。
+- `realplay.py`：`trig()` 必須看到遊戲回的「已觸發 [名稱]」；`reload_packs()` 要看到遊戲的「重新載入中！」並用 `/datapack list enabled` 確認每個 pack 都在；`join_world()` 等「加入了遊戲」，並自動按掉實驗性設定警告頁；存檔用「按 Esc 暫停」（單人不能 `/save-all`）。
 - `mcworld.py` 讀存檔；`defaults.json` 補上 26.3 palette 省略的預設屬性。`xform.py` 算 rotate／mirror 後的預期 blockstate。
 - `stage1`～`stage11`：場地、註冊、Copy/Paste 主流程、缺料、多箱、轉向翻面、選單、名稱、只檢查、背包扣料、Warehouse 返回按鈕。各腳本測什麼見 `datapacks/copy-paste/LIVE-VALIDATION.md`。
 - 要重進世界（讓 Dialog JSON 生效）：Esc →「儲存並回到標題畫面」→「單人遊戲」→ 選 MCC-Test →「進入所選的世界」。視窗 870×519 時座標約為 (433,379)、(433,267)、(283,147)、(276,427)，先截圖確認。

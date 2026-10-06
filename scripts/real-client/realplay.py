@@ -54,13 +54,19 @@ def trig(t, settle=1.2):
     if not d.wait_log(pos, r'\[CHAT\] 已觸發 \[' + re.escape(name) + r'\]', 5):
         raise RuntimeError(f'trigger {name} was not confirmed by the game')
 
-def reload_packs():
-    """/reload, then wait for Copy/Paste's own load message; never continue on an unloaded pack."""
+def reload_packs(expect=('copy-paste', 'warehouse')):
+    """/reload, confirmed by the game's own 重新載入中！, then check the expected packs are enabled."""
     pos = d.log_len()
     cmd('reload', 1.0)
-    if not d.wait_log(pos, r'\[Copy/Paste\] v[0-9.]+ 已載入', 30):
-        raise RuntimeError('reload not confirmed (no Copy/Paste load message)')
-    time.sleep(1.0)
+    if not d.wait_log(pos, r'\[CHAT\] (重新載入中！|Reloading!)', 15):
+        raise RuntimeError('reload not confirmed by the game')
+    time.sleep(2.0)
+    pos = d.log_len()
+    cmd('datapack list enabled', 1.0)
+    listed = d.log_since(pos)
+    missing = [p for p in expect if f'file/{p}' not in listed]
+    if missing:
+        raise RuntimeError(f'packs not enabled after reload: {missing}')
 
 def save_world():
     """Pause (Esc) makes the integrated server save every chunk; then resume."""
@@ -120,6 +126,7 @@ def storage(ns):
 # ---------- leaving / entering the world (Dialog JSON only loads when a world opens) ----------
 # Window coordinates for an 870x519 client window; screenshot first if the window size differs.
 PAUSE_SAVE_QUIT, TITLE_SINGLEPLAYER, WORLD_FIRST_ROW, WORLD_PLAY = (433, 379), (433, 267), (283, 147), (276, 427)
+EXPERIMENTAL_OK = (593, 305)   # 「我知道我在做什麼！」
 
 def leave_world():
     """Esc -> 儲存並回到標題畫面; returns once the integrated server has stopped."""
@@ -132,13 +139,16 @@ def leave_world():
     time.sleep(4)
 
 def join_world():
-    """Title -> 單人遊戲 -> top world (MCC-Test is the most recently played) -> play; waits for Copy/Paste to load."""
+    """Title -> 單人遊戲 -> top world (MCC-Test is the most recently played) -> play; waits for the player to join."""
     d.click_rel(*TITLE_SINGLEPLAYER); time.sleep(3)
     d.click_rel(*WORLD_FIRST_ROW); time.sleep(1)
     d.screenshot(str(OUT / 'join_world_list.png'))
     pos = d.log_len()
     d.click_rel(*WORLD_PLAY)
-    if not d.wait_log(pos, r'\[Copy/Paste\] v[0-9.]+ 已載入', 90):
+    # When datapacks were just added, Minecraft asks about experimental settings first.
+    if not d.wait_log(pos, r'加入了遊戲|joined the game', 6):
+        d.click_rel(*EXPERIMENTAL_OK)
+    if not d.wait_log(pos, r'加入了遊戲|joined the game', 90):
         raise RuntimeError('world did not load')
     time.sleep(4)
     return pos

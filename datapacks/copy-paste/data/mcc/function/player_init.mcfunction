@@ -41,4 +41,3 @@ scoreboard players set @s mcc_buildconfirm 0
 scoreboard players set @s mcc_bpover_scan 0
 scoreboard players set @s mcc_bpoindex 0
 scoreboard players set @s mcc_usel 0
-tellraw @s [{"text":"[Copy/Paste] ","color":"gold"},{"text":"已建立你的個人 Clipboard。按 ","color":"gray"},{"text":"G","color":"yellow"},{"text":" →「建築工具」開啟控制面板。","color":"gray"}]
