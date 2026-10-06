@@ -490,6 +490,197 @@ def migrate_bot_identities(client):
     else:
         print("innotest was offline before migration; left offline")
 
+
+def migrate_inno_online_to_innotest_offline(client, token):
+    """Copy the four production online-mode identities into innotest offline UUIDs.
+
+    Source is strictly GET-only inno.exaroton.me. Destination writes are strictly
+    hard-locked by APIClient to innotest.exaroton.me.
+    """
+    source = InnoReadOnlyClient(token)
+    source_server = source.target()
+    source_status = int(source_server.get("status", -1))
+    if source_status != 0:
+        raise Error(
+            f"safety lock: production inno must remain OFFLINE for migration; "
+            f"current status is {STATUS.get(source_status, source_status)}"
+        )
+    source_sid = source_server["id"]
+
+    source_props = source.read_file_optional(source_sid, "server.properties")
+    if source_props is None:
+        raise Error("production inno server.properties not found")
+    source_world = level_name(source_props)
+
+    source_whitelist = _json_file(source, source_sid, "whitelist.json")
+    if not isinstance(source_whitelist, list):
+        raise Error("production inno whitelist.json is not a list")
+
+    source_by_name = {}
+    for entry in source_whitelist:
+        if not isinstance(entry, dict):
+            continue
+        name = str(entry.get("name") or "")
+        raw_uuid = str(entry.get("uuid") or "")
+        if not name or not raw_uuid:
+            continue
+        try:
+            parsed = str(uuid.UUID(raw_uuid))
+        except ValueError:
+            continue
+        source_by_name[name.lower()] = {"name": name, "uuid": parsed}
+
+    missing_names = [name for name in BOT_PLAYERS if name.lower() not in source_by_name]
+    if missing_names:
+        raise Error(
+            "production inno whitelist is missing required players: "
+            + ", ".join(missing_names)
+        )
+
+    target_server = client.target()
+    target_status = int(target_server.get("status", -1))
+    if target_status not in (0, 1):
+        raise Error(
+            f"refusing innotest migration while server is "
+            f"{STATUS.get(target_status, target_status)}"
+        )
+
+    options = client.get_config("server.properties")
+    online_mode = next(
+        (
+            item.get("value")
+            for item in options
+            if isinstance(item, dict) and item.get("key") == "online-mode"
+        ),
+        None,
+    )
+    if online_mode is not False:
+        raise Error("innotest migration requires online-mode=false")
+
+    restart_after = target_status == 1
+    if restart_after:
+        client.action("stop")
+        print("stopping innotest before copying production online UUID data")
+        wait_status(client, 0)
+
+    target_world = level_name(client.read_file("server.properties"))
+    whitelist_raw = client.read_file("whitelist.json")
+    whitelist = json.loads(whitelist_raw.decode("utf-8"))
+    if not isinstance(whitelist, list):
+        raise Error("innotest whitelist.json is not a list")
+
+    whitelist_names = {
+        str(e.get("name") or "").lower()
+        for e in whitelist
+        if isinstance(e, dict)
+    }
+    required_names = {name.lower() for name in BOT_PLAYERS}
+    if whitelist_names != required_names or len(whitelist) != 4:
+        raise Error(
+            "safety lock: innotest whitelist must contain exactly "
+            + ", ".join(BOT_PLAYERS)
+        )
+
+    ops_raw = client.read_file_optional("ops.json")
+    ops = json.loads(ops_raw.decode("utf-8")) if ops_raw else []
+
+    stamp = int(time.time())
+    client.write_file(
+        f"whitelist.pre-inno-online-copy-{stamp}.json",
+        whitelist_raw,
+    )
+    if ops_raw is not None:
+        client.write_file(
+            f"ops.pre-inno-online-copy-{stamp}.json",
+            ops_raw,
+        )
+
+    result = {}
+    specs = [
+        ("playerdata", ".dat"),
+        ("playerdata", ".dat_old"),
+        ("advancements", ".json"),
+        ("stats", ".json"),
+    ]
+
+    for name in BOT_PLAYERS:
+        source_uuid = source_by_name[name.lower()]["uuid"]
+        target_uuid = offline_uuid(name)
+        copied = []
+        missing = []
+
+        for folder, suffix in specs:
+            source_path = f"{source_world}/{folder}/{source_uuid}{suffix}"
+            target_path = f"{target_world}/{folder}/{target_uuid}{suffix}"
+            source_data = source.read_file_optional(source_sid, source_path)
+
+            if source_data is None:
+                missing.append(f"{folder}{suffix}")
+                continue
+
+            existing = client.read_file_optional(target_path)
+            if existing is not None and existing != source_data:
+                client.write_file(
+                    target_path + f".pre-inno-online-copy-{stamp}.backup",
+                    existing,
+                )
+
+            client.write_file(target_path, source_data)
+            verified = client.read_file(target_path)
+            if hashlib.sha256(verified).digest() != hashlib.sha256(source_data).digest():
+                raise Error(f"verification failed after writing {target_path}")
+
+            copied.append(
+                {
+                    "kind": f"{folder}{suffix}",
+                    "source_online_uuid": source_uuid,
+                    "target_offline_uuid": target_uuid,
+                    "bytes": len(source_data),
+                }
+            )
+
+        for entry in whitelist:
+            if (
+                isinstance(entry, dict)
+                and str(entry.get("name") or "").lower() == name.lower()
+            ):
+                entry["uuid"] = target_uuid
+
+        for entry in ops:
+            if (
+                isinstance(entry, dict)
+                and str(entry.get("name") or "").lower() == name.lower()
+            ):
+                entry["uuid"] = target_uuid
+
+        result[name] = {
+            "source_online_uuid": source_uuid,
+            "target_offline_uuid": target_uuid,
+            "copied": copied,
+            "missing_source_files": missing,
+        }
+
+    client.write_file(
+        "whitelist.json",
+        (json.dumps(whitelist, ensure_ascii=False, indent=2) + "\n").encode("utf-8"),
+    )
+    if ops_raw is not None:
+        client.write_file(
+            "ops.json",
+            (json.dumps(ops, ensure_ascii=False, indent=2) + "\n").encode("utf-8"),
+        )
+
+    print("copied production inno online UUID data into innotest offline UUIDs:")
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+
+    if restart_after:
+        client.action("start")
+        print("starting innotest after production-data copy")
+        wait_status(client, 1)
+        print("innotest is ONLINE")
+    else:
+        print("innotest was offline before migration; left offline")
+
 def run(path):
     try: r = json.loads(Path(path).read_text(encoding="utf-8"))
     except Exception as e: raise Error(f"invalid request file: {path}") from e
@@ -537,6 +728,11 @@ def run(path):
         print(json.dumps(result, ensure_ascii=False, indent=2))
     elif op == "migrate-offline-bot-identities":
         migrate_bot_identities(client)
+    elif op == "migrate-inno-online-to-innotest-offline":
+        migrate_inno_online_to_innotest_offline(
+            client,
+            os.environ.get("EXAROTON_API_TOKEN", ""),
+        )
     elif op == "bot-log-status":
         lines = client.log().splitlines()
         keys = [n.lower() for n in BOT_PLAYERS] + ["disconnect", "lost connection", "kicked", "uuid"]
