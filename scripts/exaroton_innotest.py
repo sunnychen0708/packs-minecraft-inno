@@ -102,6 +102,11 @@ class APIClient:
         sid = urllib.parse.quote(str(server["id"]), safe="")
         self.req("PUT", f"/servers/{sid}/files/data/{remote_path(path)}/", raw=content)
 
+    def get_config(self, path):
+        server = self.target()
+        sid = urllib.parse.quote(str(server["id"]), safe="")
+        return self.req("GET", f"/servers/{sid}/files/config/{remote_path(path)}/")
+
     def update_config(self, path, values):
         server = self.target(); server = self.verify(server["id"])
         sid = urllib.parse.quote(str(server["id"]), safe="")
@@ -188,6 +193,12 @@ def run(path):
     elif op == "command": client.command(str(r.get("command") or "")); print(f"command sent to {TARGET}")
     elif op == "deploy-datapack": deploy(client, str(r.get("pack") or ""))
     elif op == "set-online-mode-false": set_offline_mode(client)
+    elif op == "online-mode-status":
+        options = client.get_config("server.properties")
+        online = next((item.get("value") for item in options if isinstance(item, dict) and item.get("key") == "online-mode"), None)
+        server = client.target()
+        code = int(server.get("status", -1))
+        print(json.dumps({"online-mode": online, "server_status": STATUS.get(code, "UNKNOWN")}, ensure_ascii=False))
     else: raise Error(f"unsupported operation: {op}")
 
 if __name__ == "__main__":
