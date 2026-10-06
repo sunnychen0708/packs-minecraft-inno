@@ -1,6 +1,6 @@
 {
   "request_id": 12,
-  "operation": "inno-identity-status",
+  "operation": "status",
   "command": "",
   "pack": ""
 }
