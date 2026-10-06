@@ -10,13 +10,10 @@ scoreboard objectives add undo trigger
 scoreboard objectives add redo trigger
 scoreboard objectives add mode trigger
 scoreboard objectives add rotate180 trigger
-# v1.4 removed these triggers; drop the objectives worlds upgraded from v1.3 still carry.
-scoreboard objectives remove rotate
-scoreboard objectives remove mirror
-scoreboard objectives remove rotate90
-scoreboard objectives remove rotate270
-scoreboard objectives remove flipx
-scoreboard objectives remove flipz
+# v1.4 stopped creating the legacy rotate/mirror triggers.
+# Do not remove those global objective names here: another datapack may own them.
+# Worlds upgraded from v1.3 may optionally clean Copy/Paste's old objectives with
+# /function mcc:admin/cleanup_legacy_triggers after the admin confirms they are unused elsewhere.
 scoreboard objectives add right trigger
 scoreboard objectives add left trigger
 scoreboard objectives add up trigger
