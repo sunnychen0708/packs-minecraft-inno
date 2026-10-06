@@ -1,8 +1,12 @@
-# Minecraft Copy/Paste Datapack v1.3.1
+# Minecraft Copy/Paste Datapack v1.3.2
 
 適用：Minecraft Java Edition 26.3（Data Pack 121.0）
 
 純 Vanilla datapack。操作使用 Trigger 或 Dialog。施工材料先從玩家背包（含副手）拿，不夠再從同 repo 的 Warehouse datapack 共用材料來源拿。
+
+## v1.3.2
+
+- 移除舊指令 `rotate`、`mirror`、`rotate90`、`rotate270`、`flipx`、`flipz`；改用以玩家面向為準的 `bpturnright`／`bpturnleft`／`bpflip`／`bpflipfb`／`bpreset` 與 `turnright`／`turnleft`／`flip`／`flipfb`（`rotate180` 保留）。
 
 ## v1.3.1
 
@@ -109,7 +113,7 @@ Blueprint 建立完成後可以先調整方向（只動預覽，不動原本建�
 /trigger bpreset       # 回到原本方向
 ```
 
-每次調整後聊天欄會顯示目前方向（例如「右轉 90°，並翻面」），預覽立即重建，不必重新 Copy。這個方向也套用到 Cut 之後的 `v`。舊的 `/trigger rotate`、`/trigger mirror` 仍可使用。
+每次調整後聊天欄會顯示目前方向（例如「右轉 90°，並翻面」），預覽立即重建，不必重新 Copy。這個方向也套用到 Cut 之後的 `v`。
 
 確認後：
 
@@ -206,7 +210,6 @@ Cut 是搬移，不需要材料箱。來源先被真正移除，下一次 `v` �
 /trigger flipfb        # 原地前後翻
 ```
 
-舊的 `/trigger flipx`、`flipz`、`rotate90`、`rotate270` 仍可使用。
 
 ## Undo / Redo
 
