@@ -113,6 +113,11 @@ class APIClient:
         sid = urllib.parse.quote(str(server["id"]), safe="")
         self.req("PUT", f"/servers/{sid}/files/data/{remote_path(path)}/", raw=content)
 
+    def delete_file(self, path):
+        server = self.target(); server = self.verify(server["id"])
+        sid = urllib.parse.quote(str(server["id"]), safe="")
+        self.req("DELETE", f"/servers/{sid}/files/data/{remote_path(path)}/")
+
     def file_info(self, path):
         server = self.target()
         sid = urllib.parse.quote(str(server["id"]), safe="")
@@ -404,6 +409,120 @@ def deploy(client, which):
         client.command("reload"); print("server online: reload issued")
     else:
         print("server offline/not-online: not started, no reload issued")
+
+def zip_tree(base):
+    if not base.is_dir():
+        raise Error(f"missing directory to zip: {base}")
+    out = io.BytesIO()
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
+        for p in sorted(base.rglob("*")):
+            if p.is_symlink():
+                raise Error(f"symlink refused: {p}")
+            if p.is_file():
+                z.write(p, p.relative_to(base).as_posix())
+    return out.getvalue()
+
+def player_count(server):
+    players = server.get("players")
+    if isinstance(players, int):
+        return players
+    if isinstance(players, list):
+        return len(players)
+    if isinstance(players, dict):
+        for key in ("count", "online", "current"):
+            value = players.get(key)
+            if isinstance(value, int):
+                return value
+        listing = players.get("list")
+        if isinstance(listing, list):
+            return len(listing)
+    return -1
+
+def wait_players(client, minimum=4, timeout=180):
+    deadline = time.time() + timeout
+    last = -1
+    while time.time() < deadline:
+        server = client.target()
+        if int(server.get("status", -1)) != 1:
+            time.sleep(2)
+            continue
+        last = player_count(server)
+        if last >= minimum:
+            return server
+        time.sleep(2)
+    raise Error(f"timeout waiting for at least {minimum} players; last count={last}")
+
+def run_copy_paste_multiplayer_test(client):
+    current = client.target()
+    if int(current.get("status", -1)) != 1:
+        raise Error("innotest must be ONLINE before live multiplayer testing")
+
+    # Deploy the exact datapacks from the checked-out main commit first.
+    deploy(client, "all")
+    time.sleep(5)
+
+    import subprocess
+    subprocess.check_call([sys.executable, str(ROOT / "scripts" / "build-copy-paste-multiplayer-test.py")])
+    harness = ROOT / "dist" / "mcc-multiplayer-test"
+    payload = zip_tree(harness)
+    world = level_name(client.read_file("server.properties"))
+    remote_harness = f"{world}/datapacks/mcc-multiplayer-test.zip"
+    client.write_file(remote_harness, payload)
+    print(f"deployed live multiplayer harness -> {remote_harness} ({len(payload)} bytes)")
+    client.command("reload")
+    time.sleep(6)
+
+    server = wait_players(client, 4, 180)
+    print(f"live multiplayer test starting with player count={player_count(server)}")
+
+    # Use two named real-player entities while the other two remain connected.
+    commands = [
+        "tag @a remove mcc_mp_a",
+        "tag @a remove mcc_mp_b",
+        "execute as @a[name=SunnyChen,limit=1] run function mcc_mp_test:join_a",
+        "execute as @a[name=penguin0531,limit=1] run function mcc_mp_test:join_b",
+        "execute as @a[name=SunnyChen,limit=1] run function mcc_mp_test:start",
+    ]
+    for command in commands:
+        client.command(command)
+        time.sleep(1)
+
+    time.sleep(35)
+    log = client.log()
+    result_lines = [line for line in log.splitlines() if "MCCMP_RESULT " in line]
+    result = result_lines[-1] if result_lines else ""
+
+    # Clean the temporary harness and its reserved test state after capturing result.
+    cleanup = [
+        "fill -305 248 85 -270 255 130 air",
+        "tag @a remove mcc_mp_a",
+        "tag @a remove mcc_mp_b",
+        "scoreboard objectives remove mccmp",
+    ]
+    for command in cleanup:
+        try:
+            client.command(command)
+        except Error:
+            pass
+    try:
+        client.delete_file(remote_harness)
+    finally:
+        try:
+            client.command("reload")
+        except Error:
+            pass
+
+    if "MCCMP_RESULT PASS" in result:
+        print(result)
+        print("COPY_PASTE_MULTIPLAYER_LIVE_TEST=PASS")
+        return
+
+    tail = "\n".join(
+        line for line in log.splitlines()[-500:]
+        if "MCCMP" in line or "Unknown function" in line or "Failed" in line
+    )
+    print(tail)
+    raise Error(f"live multiplayer test did not pass; result={result or '<missing>'}")
 
 def wait_status(client, wanted, timeout=180):
     deadline = time.time() + timeout
@@ -747,6 +866,7 @@ def run(path):
     elif op in {"start", "stop", "restart"}: client.action(op); print(f"{op} requested for {TARGET}")
     elif op == "command": client.command(str(r.get("command") or "")); print(f"command sent to {TARGET}")
     elif op == "deploy-datapack": deploy(client, str(r.get("pack") or ""))
+    elif op == "run-copy-paste-multiplayer-test": run_copy_paste_multiplayer_test(client)
     elif op == "set-online-mode-false": set_offline_mode(client)
     elif op == "online-mode-status":
         options = client.get_config("server.properties")
