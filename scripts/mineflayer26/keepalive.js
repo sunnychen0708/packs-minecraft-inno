@@ -18,8 +18,9 @@ if (host !== TARGET) {
   console.error(`SAFETY LOCK: refusing Minecraft connection to ${host}; only ${TARGET} is allowed`)
   process.exit(2)
 }
-if (names.length !== 4 || new Set(names).size !== 4) {
-  console.error('Exactly four unique bot names are required')
+const allowedNames = new Set(['SunnyChen', 'penguin0531', 'geena0701', 'Felicitypeng'])
+if (![1, 4].includes(names.length) || new Set(names).size !== names.length || names.some(name => !allowedNames.has(name))) {
+  console.error('Use either one allowed player or all four unique allowed players')
   process.exit(2)
 }
 if (!Number.isFinite(durationMs) || durationMs < 30000 || durationMs > 300000) {
@@ -72,10 +73,10 @@ async function main () {
       const s = states.get(name)
       console.error(JSON.stringify({ name, ...s }))
     }
-    throw new Error(`failed to keep all four bots online: ${failures.join(', ')}`)
+    throw new Error(`failed to keep requested bot(s) online: ${failures.join(', ')}`)
   }
 
-  console.log(`READY 4/4 on ${TARGET}:${port} as ${names.join(',')}`)
+  console.log(`READY ${names.length}/${names.length} on ${TARGET}:${port} as ${names.join(',')}`)
   const endAt = Date.now() + durationMs
   while (Date.now() < endAt) {
     const ended = names.filter(name => states.get(name).ended)
