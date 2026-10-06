@@ -27,7 +27,17 @@ def aim(tag,x,z,y=250):
     step(f'execute in minecraft:overworld run tp @a[tag={tag},limit=1] {x+.5} {y+4} {z+.5} 0 90')
 def check(label,*conditions):
     cmds=['scoreboard players set #ok mccmp 1']
-    for cond in conditions: cmds.append(f'execute unless {cond} run scoreboard players set #ok mccmp 0')
+    for cond in conditions:
+        if cond.startswith('in '):
+            if ' if ' in cond:
+                negated = cond.replace(' if ', ' unless ', 1)
+            elif ' unless ' in cond:
+                negated = cond.replace(' unless ', ' if ', 1)
+            else:
+                raise ValueError(f'cannot negate execute condition: {cond}')
+            cmds.append(f'execute {negated} run scoreboard players set #ok mccmp 0')
+        else:
+            cmds.append(f'execute unless {cond} run scoreboard players set #ok mccmp 0')
     cmds += [
         f'execute if score #ok mccmp matches 1 run tellraw @a[tag=mcc_mp_a] "MCCMP PASS {label}"',
         f'execute if score #ok mccmp matches 1 run tellraw @a[tag=mcc_mp_b] "MCCMP PASS {label}"',
