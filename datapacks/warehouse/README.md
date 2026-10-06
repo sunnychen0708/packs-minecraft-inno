@@ -1,4 +1,4 @@
-# Warehouse v4.4.2
+# Warehouse v4.5
 
 Minecraft Java 26.3 automatic sorting warehouse data pack.
 
@@ -6,9 +6,9 @@ The actual pack source lives directly in this directory. Keep `pack.mcmeta` and 
 
 ## Release
 
-Current version: `v4.4.2`
+Current version: `v4.5`
 
-Latest published release: `warehouse-v4.4.2.zip`
+Latest published release: `warehouse-v4.5.zip`
 
 ## 玩家說明
 
@@ -17,7 +17,7 @@ Latest published release: `warehouse-v4.4.2.zip`
 ### 安裝／升級
 
 1. 移除舊版 Minecraft_Warehouse_26.2_v*.zip、Minecraft_Warehouse_26.3_v*.zip 或舊 warehouse-v*.zip；不要同時載入兩份。
-2. 將 warehouse-v4.4.2.zip 放入世界 datapacks 資料夾。
+2. 將 warehouse-v4.5.zip 放入世界 datapacks 資料夾。
 3. 退出世界再重新進入（Dialog 介面只在進入世界時載入，只打 /reload 不會更新介面）。
 4. 既有 61 箱註冊、玩家分類覆寫、自訂箱名、scoreboard 與其他世界資料會沿用；migration 不會重設這些資料。
 
@@ -44,12 +44,12 @@ Latest published release: `warehouse-v4.4.2.zip`
 
 ### 舊資料相容性
 
-- 可從 Minecraft 26.2 v3.2、26.3 v3.3/v3.4、Warehouse v4.0～v4.4.1 直接升級。
+- 可從 Minecraft 26.2 v3.2、26.3 v3.3/v3.4、Warehouse v4.0～v4.4 直接升級。
 - 不重設 warehouse:chests：61 箱座標、dimension 與其他既有註冊 metadata 保留。
 - 不重設 warehouse:boxnames：玩家自訂箱名保留。
 - 不重設 warehouse:rules overrides：玩家新增／移動／移除的分類覆寫保留。
 - 不更名既有 scoreboard objectives；既有玩家與系統分數可繼續使用。
-- v4.0～v4.4.2 migrations 都以可再生成資料或版本 marker 為主；目前 v4.4.2 marker 不會清空既有世界資料。
+- v4.0～v4.5 migrations 都以可再生成資料或版本 marker 為主；目前 v4.5 marker 不會清空既有世界資料。
 - 搜尋索引屬可重建資料；v4.2 起使用 72-shard 建立流程。
 
 ### 目前限制

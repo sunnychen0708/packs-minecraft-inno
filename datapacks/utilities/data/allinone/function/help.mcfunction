@@ -1,6 +1,6 @@
 scoreboard players set @s help 0
 tellraw @s {"text":"──────────────────────────────","color":"dark_gray"}
-tellraw @s {"text":"─────── v3.4.1 功能總覽 ───────","color":"gold"}
+tellraw @s {"text":"─────── v3.5 功能總覽 ───────","color":"gold"}
 tellraw @s {"text":"指令教學放在最上方；點指令只會自動填入聊天欄，不會直接執行。","color":"gray"}
 tellraw @s {"text":" "}
 

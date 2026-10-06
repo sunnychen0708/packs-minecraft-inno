@@ -6,11 +6,8 @@
 
 ## v1.4
 
-- 移除舊指令 `rotate`、`mirror`、`rotate90`、`rotate270`、`flipx`、`flipz`；改用以玩家面向為準的 `bpturnright`／`bpturnleft`／`bpflip`／`bpflipfb`／`bpreset` 與 `turnright`／`turnleft`／`flip`／`flipfb`（`rotate180` 保留）。
-
-## v1.3.1
-
 - 拿掉載入時與第一次使用時的聊天訊息；介面一律從 G →「建築工具」開啟。
+- 移除舊指令 `rotate`、`mirror`、`rotate90`、`rotate270`、`flipx`、`flipz`；改用以玩家面向為準的 `bpturnright`／`bpturnleft`／`bpflip`／`bpflipfb`／`bpreset` 與 `turnright`／`turnleft`／`flip`／`flipfb`（`rotate180` 保留）。
 
 ## v1.3
 
