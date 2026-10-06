@@ -197,6 +197,11 @@ def main() -> int:
 
     local_md = "file:../node-minecraft-data"
     patch_package(dest / "node-minecraft-protocol", deps={"minecraft-data": local_md})
+    patch_package(
+        dest / "prismarine-chunk",
+        deps={"minecraft-data": local_md},
+        overrides={"minecraft-data": "$minecraft-data"},
+    )
     patch_package(dest / "prismarine-physics", deps={"minecraft-data": local_md})
     patch_package(
         dest / "mineflayer",
