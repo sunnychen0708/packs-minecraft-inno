@@ -323,6 +323,50 @@ def inno_identity_status(token):
         "world_uuids_not_present_in_whitelist_usercache_ops": unexplained,
     }
 
+
+def inno_world_layout_status(token):
+    """Inspect only directory metadata needed to locate 26.3 player identity files."""
+    client = InnoReadOnlyClient(token)
+    server = client.target()
+    sid = server["id"]
+    properties = client.read_file_optional(sid, "server.properties")
+    if properties is None:
+        raise Error("inno server.properties not found")
+    world = level_name(properties)
+    candidates = [
+        world,
+        f"{world}/dimensions",
+        f"{world}/dimensions/minecraft",
+        f"{world}/dimensions/minecraft/overworld",
+        f"{world}/dimensions/minecraft/overworld/playerdata",
+        f"{world}/dimensions/minecraft/overworld/advancements",
+        f"{world}/dimensions/minecraft/overworld/stats",
+    ]
+    result = {"world": world, "paths": {}}
+    for path in candidates:
+        info = client.file_info_optional(sid, path)
+        if info is None:
+            result["paths"][path] = None
+            continue
+        children = []
+        for child in (info.get("children") or []):
+            if not isinstance(child, dict):
+                continue
+            children.append({
+                "name": child.get("name"),
+                "path": child.get("path"),
+                "isDirectory": child.get("isDirectory"),
+                "size": child.get("size"),
+            })
+        result["paths"][path] = {
+            "path": info.get("path"),
+            "name": info.get("name"),
+            "isDirectory": info.get("isDirectory"),
+            "children": children,
+        }
+    return result
+
+
 def pack_zip(name):
     if name not in PACKS: raise Error(f"unsupported datapack: {name}")
     base = ROOT / "datapacks" / name
@@ -740,6 +784,8 @@ def run(path):
         print("\n".join(selected[-200:]))
     elif op == "inno-identity-status":
         print(json.dumps(inno_identity_status(os.environ.get("EXAROTON_API_TOKEN", "")), ensure_ascii=False, indent=2))
+    elif op == "inno-world-layout-status":
+        print(json.dumps(inno_world_layout_status(os.environ.get("EXAROTON_API_TOKEN", "")), ensure_ascii=False, indent=2))
     elif op in {"inno-uuid-migrate-dry-run", "inno-uuid-migrate-apply"}:
         import exaroton_inno_uuid_migrate as migration
         original_remote_path = migration.remote_path
