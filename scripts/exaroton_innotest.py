@@ -644,11 +644,12 @@ def migrate_inno_online_to_innotest_offline(client, token):
         )
 
     result = {}
+    # Minecraft Java 26.3 stores per-player files below world/players/*.
     specs = [
-        ("playerdata", ".dat"),
-        ("playerdata", ".dat_old"),
-        ("advancements", ".json"),
-        ("stats", ".json"),
+        ("players/data", ".dat"),
+        ("players/data", ".dat_old"),
+        ("players/advancements", ".json"),
+        ("players/stats", ".json"),
     ]
 
     for name in BOT_PLAYERS:
