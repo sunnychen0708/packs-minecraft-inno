@@ -6,9 +6,9 @@
 
 | Pack | 版本 | Release |
 | --- | --- | --- |
-| Utilities | v3.4.1 | `utilities-v3.4.1` |
-| Warehouse | v4.4.2 | `warehouse-v4.4.2` |
-| Copy/Paste | v1.3.1 | `copy-paste-v1.3.1` |
+| Utilities | v3.5 | `utilities-v3.5` |
+| Warehouse | v4.5 | `warehouse-v4.5` |
+| Copy/Paste | v1.4 | `copy-paste-v1.4` |
 | cat-door-sounds | v1.0 | `cat-door-sounds-v1.0` |
 
 - 所有原始碼版本都已發布，遠端只剩 `main` 分支，沒有進行中的 PR。
@@ -25,17 +25,18 @@
 - 介面：使用者偏好 Dialog（要乾淨、按鈕少、置中），不要加狀態文字區塊；只改使用者要求的部分。
 - 不要有載入訊息；要叫玩家開介面時寫「按 G」，不要叫玩家打 `/trigger copypaste`。
 - 大改動或設計選擇先問（可用選項讓使用者選）；小 bug 直接修。
+- **版本號一律兩段**（例如 v1.4、v4.5），不要用三段式；小修正就是下一個小版本。曾經發過的三段式版本已併入 Warehouse v4.5、Copy/Paste v1.4、Utilities v3.5。
 
 ## 3. 重要設計
 
-### Copy/Paste v1.3.1
+### Copy/Paste v1.4
 - **介面**：玩家按 G →「建築工具」（`/trigger copypaste` 也可，但訊息一律叫玩家按 G）。全部是 function 產生的 inline Dialog，`/reload` 就會更新：主畫面 `ui/show`（9 顆）、`set 2` 調整預覽 `ui/adjust`、`set 3` 更多 `ui/more`、`set 4` 直接改原本建築 `ui/edit`。聊天教學 `/trigger cphelp` 是 1～5 步驟式。
-- **轉向／翻面以玩家面向為準**：只動預覽 `bpturnright`／`bpturnleft`／`bpflip`／`bpflipfb`／`bpreset`（翻面換算在 `state/bp_flip_axis`：F·R(k)·M = R(−k)·(F·M)）；直接改建築 `turnright`／`turnleft`／`flip`／`flipfb`。舊的 `rotate`、`mirror`、`rotate90..270`、`flipx/z` 仍可用但不宣傳。
+- **轉向／翻面以玩家面向為準**：只動預覽 `bpturnright`／`bpturnleft`／`bpflip`／`bpflipfb`／`bpreset`（翻面換算在 `state/bp_flip_axis`：F·R(k)·M = R(−k)·(F·M)）；直接改建築 `turnright`／`turnleft`／`flip`／`flipfb`。舊的 `rotate`、`mirror`、`rotate90`、`rotate270`、`flipx`、`flipz` 已在 v1.4 移除（`rotate180` 保留給「原地轉 180°」）。
 - **扣料**：先扣玩家背包 0～35 格與副手（有 components 的物品不用），再扣 Warehouse。Undo／扣料失敗退料時，背包扣的退回背包（依最大堆疊算空間，塞不下退 Warehouse），Warehouse 扣的退 Warehouse 入口箱再自動分類。記錄在 `bom/items` 的 `.inv` 與 `.taken`。
 - **物品名稱**：`scripts/gen-item-names.py` 從 26.3 server `--reports` 產生 `function/names/load.mcfunction`（翻譯鍵與最大堆疊表）。**換 Minecraft 版本要重跑。**
 - 材料檢查（job 2）只報告，不扣料（`materials/check_done`；v1.1～v1.2 曾經會直接施工）。
 
-### Warehouse v4.4.2
+### Warehouse v4.5
 - 主畫面一律是 `dialog/main.json`（G 和「回主選單」相同）。
 - 選了某個箱子之後的頁面，返回會回到選它的那一頁：選箱時 `ui/back_from_code` 記到 `wh_back`，按鈕送 `wh_nav set 9` → `ui/back`；入口箱頁是 nav 17／37／57／67。`wh_back` 在 `load` 每次建立。
 - 頁面寬度一律 ≤ 390（太寬會讓整頁偏右）；三欄按鈕 120 寬。
@@ -85,13 +86,13 @@ Copy/Paste runtime 失敗時會印出 `MCCST_DIAG_DROP_<步驟>`（掉了什麼�
 ## 7. MCC-Test 測試世界
 
 - 只能改 `%APPDATA%\.minecraft\saves\MCC-Test`（超平坦創造），不要碰其他世界；改 datapack 前先備份到 `.minecraft\backups\`。
-- 現況：三包（Utilities、Warehouse、Copy/Paste）都已安裝；61 個大箱子已註冊到正確兩半、橡木板自訂分類到 11 號箱、小屋在原位（x1000 z1040）。使用者也會在這個世界自己玩（曾把小屋 Cut 走），測試前先確認小屋還在。Warehouse 存量隨測試變動，跑需要固定存量的段落前要先補（`stage5` 會自己重新配置）。
+- 現況：三包已換成 Utilities v3.5、Warehouse v4.5、Copy/Paste v1.4（換包前備份在 `.minecraft\backups\MCC-Test-before-allpacks-20261006-2320`）；跑完 stage10 後 Warehouse 石磚是 56 個，比 2 份材料量多 16 個；61 個大箱子已註冊到正確兩半、橡木板自訂分類到 11 號箱、小屋在原位（x1000 z1040）。使用者也會在這個世界自己玩（曾把小屋 Cut 走），測試前先確認小屋還在。Warehouse 存量隨測試變動，跑需要固定存量的段落前要先補（`stage5` 會自己重新配置）。
 - 世界開著時 datapacks 裡的 ZIP 被鎖，不能刪或改名，只能覆蓋內容；要換檔名先 `leave_world()`。
 
 ## 8. 尚未處理
 
 - 兩位真人 client 同時操作沒測過（`scripts/build-copy-paste-multiplayer-test.py`）。
 - CI 不跑 `scripts/real-client/`，兩個 trigger harness 也只檢查能產生；CI 綠燈不代表 G、Dialog 點擊、真人 trigger／raycast 沒問題。改了玩家看得到的行為要自己重跑相關 stage。
-- `stage12_all_packs` 已改成檢查「沒有載入訊息」＋`/datapack list enabled`，改過的版本還沒在真人 client 重跑。
+- `stage12_all_packs` 已改成檢查「沒有載入訊息」＋`/datapack list enabled`，改過的版本還沒在真人 client 跑（v1.4 三包用舊腳本跑時只有那 2 項載入訊息檢查失敗，見 LIVE-VALIDATION）。
 - 舊 Trigger harness（`build-copy-paste-live-test.py`）的 Warehouse 段是假的（單箱＋直接寫 storage），正式驗證以 `scripts/real-client/` 為準。
 - 貼上到真實世界的 `clone` 仍會觸發方塊更新（為了讓邊界的柵欄、紅石正常連接）；目前沒發現掉落問題。

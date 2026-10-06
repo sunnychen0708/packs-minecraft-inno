@@ -1,6 +1,6 @@
-# Copy/Paste 驗證狀態（v1.3.1）
+# Copy/Paste 驗證狀態（v1.4）
 
-目前版本 **v1.3.1**。v1.3.1 只拿掉載入與第一次使用時的聊天訊息，下列驗證結果沿用 v1.3。目標 Minecraft Java 26.3（Data Pack 121.0）。
+目前版本 **v1.4**：拿掉載入與第一次使用時的聊天訊息，並移除舊的轉向／翻面指令。目標 Minecraft Java 26.3（Data Pack 121.0）。
 
 這份文件把「官方 server headless regression」和「真人 client 驗證」分開寫。兩者不能互相冒充。
 
@@ -52,7 +52,16 @@
 
 **尚未驗證：** 兩位真人 client 同時操作。
 
-`stage12_all_packs` 的注意：repo 裡原本的版本還在等「Copy/Paste v… 已載入」並要求 Utilities／Copy/Paste 印出載入訊息，和 v1.3.1／Utilities v3.4.1 拿掉載入訊息的行為矛盾，照原樣重跑會 timeout／失敗。腳本已改成檢查「沒有載入訊息」並用 `/datapack list enabled` 確認三包都啟用；**改過的版本還沒在真人 client 重跑過**，上表 stage12 的結果要等重跑後才算數。
+**v1.4 三包重跑（2026-10-06 23:20 起）：** main 打包的 Utilities v3.5、Warehouse v4.5、Copy/Paste v1.4 裝進 MCC-Test，在真人 client 跑，結果讀存檔判定：
+
+| Stage | 結果 |
+| --- | --- |
+| `stage5_multisource` | 全過。小屋 196 格正確；石磚從 4 箱、橡木板從 3 箱扣；Undo 退料經入口箱分類回各自的箱子；Redo 正確 |
+| `stage10_inventory` | 全過。先扣背包／副手，改名石磚不動，其餘扣 Warehouse；Undo 放得下的退背包、放不下的 16 個石磚進 Warehouse；0 掉落 |
+| `stage9_checkonly` | 全過。目標位置沒蓋東西、箱子沒變、沒有施工或缺料訊息 |
+| `stage12_all_packs`（舊腳本） | 5 過 2 失敗。通過：載入沒有錯誤、G 開 Warehouse 主畫面、sethome／home／back 傳送正確、`/trigger help` 有回應。失敗的 2 項是舊腳本還在要求 Utilities 與 Copy/Paste 的「已載入／按 G」聊天訊息；這次確實沒有任何載入訊息，pack 行為正確，是腳本過時 |
+
+`stage12_all_packs.py` 已改成檢查「沒有載入／第一次加入的聊天訊息」並用 `/datapack list enabled` 確認三包都啟用；**改過的腳本還沒在真人 client 跑過**。這輪的 pack 也不含本分支的 Blueprint 覆蓋檢查修正（那部分由 headless runtime 驗證）。
 
 2026-10-06 晚間三包一起重跑時，一度出現「材料表是空的、施工沒扣料」：原因是測試用小屋在 18:08 被手動 Cut 搬走，測試等於在複製空氣，並不是 pack 的問題。`stage3_house.snapshot()` 現在發現小屋不完整就直接停止。
 

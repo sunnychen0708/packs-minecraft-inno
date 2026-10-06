@@ -192,7 +192,7 @@ def main() -> None:
     assert "warehouse:pick/from_item" in show_classified and "取一組" in show_classified
     assert "warehouse:pick/from_item" in show_unclassified and "取一組" in show_unclassified
 
-    # v4.4.2: three-column box lists fit a narrow window, and pages about one box go back to
+    # v4.5: three-column box lists fit a narrow window, and pages about one box go back to
     # the list the box was picked from (wh_back via nav 9), not to the top of the section.
     fn = PACK / "data/warehouse/function"
     for page in list(fn.rglob("*_render.mcfunction")):
