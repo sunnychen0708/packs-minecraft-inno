@@ -71,7 +71,7 @@ Copy/Paste runtime 失敗時會印出 `MCCST_DIAG_DROP_<步驟>`（掉了什麼�
 - `mcdrive.py`：Win32 `SendInput` 送鍵盤／滑鼠。打指令會先清空聊天框；指令變成一般聊天或被拒絕就丟例外。Minecraft 不在前景時拒絕送輸入。
 - `realplay.py`：`trig()` 必須看到遊戲回的「已觸發 [名稱]」；`reload_packs()` 要看到遊戲的「重新載入中！」並用 `/datapack list enabled` 確認每個 pack 都在；`join_world()` 等「加入了遊戲」，並自動按掉實驗性設定警告頁；存檔用「按 Esc 暫停」（單人不能 `/save-all`）。
 - `mcworld.py` 讀存檔；`defaults.json` 補上 26.3 palette 省略的預設屬性。`xform.py` 算 rotate／mirror 後的預期 blockstate。
-- `stage1`～`stage11`：場地、註冊、Copy/Paste 主流程、缺料、多箱、轉向翻面、選單、名稱、只檢查、背包扣料、Warehouse 返回按鈕。各腳本測什麼見 `datapacks/copy-paste/LIVE-VALIDATION.md`。
+- `stage1`～`stage12`：場地、註冊、Copy/Paste 主流程、缺料、多箱、轉向翻面、選單、名稱、只檢查、背包扣料、Warehouse 返回按鈕、三包一起。`realplay.leave_world()`／`join_world()` 會退出／重進世界（含實驗性設定警告頁）。各腳本測什麼見 `datapacks/copy-paste/LIVE-VALIDATION.md`。
 - 要重進世界（讓 Dialog JSON 生效）：Esc →「儲存並回到標題畫面」→「單人遊戲」→ 選 MCC-Test →「進入所選的世界」。視窗 870×519 時座標約為 (433,379)、(433,267)、(283,147)、(276,427)，先截圖確認。
 
 **使用者電腦的坑：**
@@ -85,8 +85,8 @@ Copy/Paste runtime 失敗時會印出 `MCCST_DIAG_DROP_<步驟>`（掉了什麼�
 ## 7. MCC-Test 測試世界
 
 - 只能改 `%APPDATA%\.minecraft\saves\MCC-Test`（超平坦創造），不要碰其他世界；改 datapack 前先備份到 `.minecraft\backups\`。
-- 現況：61 個大箱子已註冊到正確兩半、橡木板自訂分類到 11 號箱、小屋在原位（x1000 z1040）。Warehouse 存量隨測試變動，跑需要固定存量的段落前要先補（`stage5` 會自己重新配置）。
-- 世界 datapacks 資料夾裡的 Warehouse ZIP 檔名仍是 `warehouse-v4.4.1.zip`（世界開著時檔案被鎖，只能覆蓋內容），內容已是 v4.4.2。
+- 現況：三包（Utilities、Warehouse、Copy/Paste）都已安裝；61 個大箱子已註冊到正確兩半、橡木板自訂分類到 11 號箱、小屋在原位（x1000 z1040）。使用者也會在這個世界自己玩（曾把小屋 Cut 走），測試前先確認小屋還在。Warehouse 存量隨測試變動，跑需要固定存量的段落前要先補（`stage5` 會自己重新配置）。
+- 世界開著時 datapacks 裡的 ZIP 被鎖，不能刪或改名，只能覆蓋內容；要換檔名先 `leave_world()`。
 
 ## 8. 尚未處理
 
