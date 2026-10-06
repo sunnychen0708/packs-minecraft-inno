@@ -1,6 +1,6 @@
 {
-  "request_id": 17,
-  "operation": "migrate-inno-online-to-innotest-offline",
+  "request_id": 15,
+  "operation": "inno-uuid-migrate-dry-run",
   "command": "",
   "pack": ""
 }
