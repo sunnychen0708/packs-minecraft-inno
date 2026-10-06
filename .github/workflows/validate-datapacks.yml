@@ -50,7 +50,9 @@ jobs:
           python3 scripts/test-datapack-compatibility.py
           echo "::endgroup::"
 
-      - name: Build Copy/Paste opt-in live harnesses
+      # Only proves the Trigger harnesses can be generated. No real player runs them here, and
+      # scripts/real-client/ (Windows client) is not run in CI at all.
+      - name: Build Copy/Paste opt-in live harnesses (generate only, not run)
         shell: bash
         run: |
           set -euo pipefail
