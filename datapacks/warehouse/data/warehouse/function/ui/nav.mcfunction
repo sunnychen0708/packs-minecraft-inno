@@ -1,5 +1,6 @@
 execute if score @s wh_nav matches 9 run return run function warehouse:ui/back
-execute if score @s wh_nav matches 1 run function warehouse:ui/main_dynamic
+# Same main page as the G quick action (with Pick and the Copy/Paste button).
+execute if score @s wh_nav matches 1 run dialog show @s warehouse:main
 execute if score @s wh_nav matches 2 run dialog show @s warehouse:manage
 execute if score @s wh_nav matches 11 run function warehouse:ui/register_region_1
 execute if score @s wh_nav matches 12 run function warehouse:ui/register_region_2

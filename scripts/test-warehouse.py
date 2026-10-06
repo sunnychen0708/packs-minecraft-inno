@@ -218,6 +218,16 @@ def main() -> None:
     assert "trigger wh_nav set 61" in (PACK / "data/warehouse/dialog/boxname/input_13.json").read_text(encoding="utf-8")
     assert "trigger wh_nav set 67" in (PACK / "data/warehouse/dialog/boxname/input_10.json").read_text(encoding="utf-8")
 
+    # Pages stay centred only if nothing is wider than 390; 入口箱 sits under 區域 1-6;
+    # "回主選單" opens the same main page as the G quick action.
+    for page in list((PACK / "data/warehouse/dialog").rglob("*.json")) + list(fn.rglob("*.mcfunction")):
+        for w in re.findall(r'"width":\s*(\d+)', page.read_text(encoding="utf-8")):
+            assert int(w) <= 390, f"{page.name}: width {w} pushes the Dialog off centre"
+    for f in ("view/index", "register", "unregister/index", "boxname/index"):
+        acts = json.loads((PACK / f"data/warehouse/dialog/{f}.json").read_text(encoding="utf-8"))["actions"]
+        assert [a["label"]["text"] for a in acts] == [f"區域 {i}" for i in range(1, 7)] + ["入口箱"], f
+    assert "wh_nav matches 1 run dialog show @s warehouse:main" in nav
+
     print(f"PASS warehouse regression v{version}: reset/search/API/Highlight/Pick are bounded and validated")
 
 
