@@ -1,9 +1,10 @@
 """Stage 12: Utilities + Warehouse + Copy/Paste installed together in the real client.
 
 Leaves the world, installs the three ZIPs given on the command line (replacing older copies of
-the same packs), re-enters, and checks: all three load without errors, G opens the Warehouse main
-page, Utilities sethome / home / back move the player (read from the saved player data), and
-/trigger help answers. The Copy/Paste + Warehouse stages are run separately afterwards.
+the same packs), re-enters, and checks: all three are enabled and load without errors or chat
+announcements (no pack prints a load message), G opens the Warehouse main page, Utilities
+sethome / home / back move the player (read from the saved player data), and /trigger help
+answers. The Copy/Paste + Warehouse stages are run separately afterwards.
 
     python stage12_all_packs.py <dir with utilities-*.zip warehouse-*.zip copy-paste-*.zip>
 """
@@ -38,14 +39,28 @@ if not RESUME:
 
 log('=== re-enter the world')
 if RESUME:
-    d.click_rel(*EXPERIMENTAL_OK); pos = d.log_len() - 200000
-    d.wait_log(max(pos, 0), r'\[Copy/Paste\] v[0-9.]+ 已載入', 90); time.sleep(4)
+    # The world was opened by hand and may sit on the experimental-settings page or have joined
+    # already. Look back for the join, and judge chat only from after the previous world closed.
+    back = max(d.log_len() - 200000, 0)
+    d.click_rel(*EXPERIMENTAL_OK)
+    if not d.wait_log(back, r'加入了遊戲|joined the game', 90):
+        raise RuntimeError('world did not load')
+    time.sleep(4)
+    text = d.log_since(back)
+    closed = [m.end() for m in re.finditer(r'Stopping server|Saving worlds|關閉伺服器', text)]
+    pos = back + len(text[:closed[-1]].encode('utf-8')) if closed else back
 else:
     pos = join_world()
-chat = [l.split('[CHAT] ', 1)[1] for l in d.log_since(pos).splitlines() if '[System] [CHAT] ' in l]
-errors = [l for l in d.log_since(pos).splitlines() if re.search(r'Failed to load|Couldn\'t load|Failed to parse|Unknown function|Errors in currently selected', l)]
-record('all packs: no load or first-join chat messages', not any(k in l for l in chat for k in ('已載入', '已啟用', '預設開啟', '已建立你的個人')), ' | '.join(chat[:5]))
+joined = d.log_since(pos)
+chat = [l.split('[CHAT] ', 1)[1] for l in joined.splitlines() if '[System] [CHAT] ' in l]
+errors = [l for l in joined.splitlines() if re.search(r'Failed to load|Couldn\'t load|Failed to parse|Unknown function|Errors in currently selected', l)]
+announced = [l for l in chat if re.search(r'已載入|已啟用|\[Copy/Paste\]|\[屁眼派對\]|\[傳送系統\]', l)]
+record('all packs: no load or first-join chat messages', not announced, ' | '.join(announced[:3]))
 record('all packs: no datapack load errors', not errors, ' | '.join(errors[:3]))
+pos = d.log_len(); cmd('datapack list enabled', 1.0)
+listed = d.log_since(pos)
+missing = [p for p in ('utilities', 'warehouse', 'copy-paste') if f'file/{p}' not in listed]
+record('all packs: Utilities, Warehouse and Copy/Paste enabled', not missing, f'missing: {missing}' if missing else '')
 d.screenshot(str(OUT / 'allpacks_joined.png'))
 
 log('=== G opens the Warehouse main page')

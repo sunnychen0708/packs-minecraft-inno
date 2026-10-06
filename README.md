@@ -10,14 +10,14 @@
 
 | Pack | Type | Source | Latest release | Minecraft | Description |
 | --- | --- | ---: | ---: | --- | --- |
-| [`utilities`](datapacks/utilities) | Data pack | **v3.6** | [`v3.5`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/utilities-v3.5) | Java 26.3 | Teleportation, waypoints, coordinate display, and general survival utility systems. |
+| [`utilities`](datapacks/utilities) | Data pack | v3.6 | [`v3.6`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/utilities-v3.6) | Java 26.3 | Teleportation, waypoints, coordinate display, and general survival utility systems. |
 | [`warehouse`](datapacks/warehouse) | Data pack | v4.5 | [`v4.5`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/warehouse-v4.5) | Java 26.3 | Automatic sorting, shared inventory API, durable refunds, search/Highlight, and survival Pick. |
-| [`copy-paste`](datapacks/copy-paste) | Data pack | v1.4 | [`v1.4`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/copy-paste-v1.4) | Java 26.3 | Survival building editor: Blueprint preview/micro-adjust, construction from the player's inventory and Warehouse, player-relative turn/flip, Cut/Move, and material-aware Undo/Redo. |
+| [`copy-paste`](datapacks/copy-paste) | Data pack | v1.5 | [`v1.5`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/copy-paste-v1.5) | Java 26.3 | Survival building editor: Blueprint preview/micro-adjust, construction from the player's inventory and Warehouse, player-relative turn/flip, Cut/Move, and material-aware Undo/Redo. |
 | [`cat-door-sounds`](resourcepacks/cat-door-sounds) | Resource pack | v1.0 | [`v1.0`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/cat-door-sounds-v1.0) | Java 26.2 | Custom cat meow replacement and an extra wooden-door opening sound layer. |
 
 Each pack is stored as unpacked source. Release ZIPs are generated artifacts rather than development source.
 
-Current versions: Utilities **v3.6** (latest release v3.5), Warehouse **v4.5**, Copy/Paste **v1.4**, cat-door-sounds **v1.0**. Copy/Paste builds from a Blueprint preview using materials from the player's own inventory first and the shared Warehouse second; Warehouse is the shared sorting/storage backend and its API is what Copy/Paste and Pick use. Per-pack details and version history: [Utilities](datapacks/utilities/README.md), [Warehouse](datapacks/warehouse/CHANGELOG.md), [Copy/Paste](datapacks/copy-paste/README.md).
+Current versions: Utilities **v3.6**, Warehouse **v4.5**, Copy/Paste **v1.5**, cat-door-sounds **v1.0** — every source version is also the latest release. Copy/Paste builds from a Blueprint preview using materials from the player's own inventory first and the shared Warehouse second; Warehouse is the shared sorting/storage backend and its API is what Copy/Paste and Pick use. Per-pack details and version history: [Utilities](datapacks/utilities/README.md), [Warehouse](datapacks/warehouse/CHANGELOG.md), [Copy/Paste](datapacks/copy-paste/README.md).
 
 ## Installation
 
@@ -92,7 +92,7 @@ Generated ZIP files go to `dist/`, which is ignored by Git.
 ```bash
 ./scripts/build-pack.sh utilities v3.6
 ./scripts/build-pack.sh warehouse v4.5
-./scripts/build-pack.sh copy-paste v1.4
+./scripts/build-pack.sh copy-paste v1.5
 ./scripts/build-pack.sh cat-door-sounds v1.0
 ```
 

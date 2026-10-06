@@ -1,8 +1,12 @@
-# Minecraft Copy/Paste Datapack v1.4
+# Minecraft Copy/Paste Datapack v1.5
 
 適用：Minecraft Java Edition 26.3（Data Pack 121.0）
 
 純 Vanilla datapack。操作使用 Trigger 或 Dialog。施工材料先從玩家背包（含副手）拿，不夠再從同 repo 的 Warehouse datapack 共用材料來源拿。
+
+## v1.5
+
+- 修正微調 Blueprint 後、覆蓋檢查還沒跑完就清除預覽（`previewclear`、Copy）或旋轉／翻面重建時，舊的覆蓋檢查不會停止：清除後仍會跑完並說「Blueprint 覆蓋檢查更新完成」，重建時可能留下舊暫存區的永久 forceload。現在清除或重建 Blueprint 會先取消進行中的覆蓋檢查並解除它的 forceload。
 
 ## v1.4
 
