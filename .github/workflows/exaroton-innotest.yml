@@ -21,6 +21,7 @@ on:
           - restart
           - command
           - deploy-datapack
+          - set-online-mode-false
       command:
         description: Console command (only used by command)
         required: false
