@@ -1,6 +1,6 @@
 {
-  "request_id": 5,
-  "operation": "status",
+  "request_id": 4,
+  "operation": "set-online-mode-false",
   "command": "",
   "pack": ""
 }
