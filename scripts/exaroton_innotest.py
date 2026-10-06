@@ -218,15 +218,11 @@ def run(path):
             ops = json.loads(client.read_file("ops.json").decode("utf-8"))
         except Error:
             ops = []
-        world = level_name(client.read_file("server.properties"))
-        info = client.file_info(f"{world}/playerdata")
-        children = info.get("children") or [] if isinstance(info, dict) else []
-        pdata = [c.get("name") for c in children if isinstance(c, dict) and c.get("name")]
         result = {
             "whitelist": wl,
             "usercache_matches": [e for e in cache if str(e.get("name") or "").lower() in names],
             "ops_matches": [e for e in ops if str(e.get("name") or "").lower() in names],
-            "playerdata_files": pdata,
+            "world": level_name(client.read_file("server.properties")),
         }
         print(json.dumps(result, ensure_ascii=False, indent=2))
     else: raise Error(f"unsupported operation: {op}")
