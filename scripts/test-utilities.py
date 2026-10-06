@@ -21,6 +21,22 @@ DATA = PACK / 'data'
 # Vanilla experience dropped by each ore group (min, max); the others drop none.
 VEIN_XP = {'coal': (0, 2), 'lapis': (2, 5), 'redstone': (1, 5), 'diamond': (3, 7), 'emerald': (3, 7), 'quartz': (2, 5), 'nether_gold': (0, 1)}
 NO_VEIN_XP = ('iron', 'copper', 'gold', 'ancient')
+# (ore block, vein group, pickaxe one tier too low): the vanilla incorrect_for_*_tool tags forbid these drops.
+WRONG_TIER = [
+    ('diamond_ore', 'diamond', 'stone_pickaxe'), ('deepslate_diamond_ore', 'diamond', 'copper_pickaxe'),
+    ('diamond_ore', 'diamond', 'golden_pickaxe'), ('diamond_ore', 'diamond', 'wooden_pickaxe'),
+    ('ancient_debris', 'ancient', 'iron_pickaxe'), ('ancient_debris', 'ancient', 'stone_pickaxe'),
+    ('emerald_ore', 'emerald', 'stone_pickaxe'), ('gold_ore', 'gold', 'copper_pickaxe'),
+    ('redstone_ore', 'redstone', 'stone_pickaxe'), ('iron_ore', 'iron', 'wooden_pickaxe'),
+    ('lapis_ore', 'lapis', 'golden_pickaxe'), ('copper_ore', 'copper', 'wooden_pickaxe'),
+]
+# The lowest tier that may harvest each group still chains.
+RIGHT_TIER = [
+    ('diamond_ore', 'diamond', 'iron_pickaxe'), ('ancient_debris', 'ancient', 'diamond_pickaxe'),
+    ('ancient_debris', 'ancient', 'netherite_pickaxe'), ('iron_ore', 'iron', 'stone_pickaxe'),
+    ('iron_ore', 'iron', 'copper_pickaxe'), ('coal_ore', 'coal', 'wooden_pickaxe'),
+    ('nether_quartz_ore', 'quartz', 'golden_pickaxe'),
+]
 
 
 def static_checks():
@@ -28,6 +44,11 @@ def static_checks():
         json.loads(path.read_text(encoding='utf-8-sig'))
     meta = json.loads((PACK / 'pack.mcmeta').read_text(encoding='utf-8-sig'))
     assert meta['pack']['min_format'] == meta['pack']['max_format'] == [121, 0]
+    version = re.search(r'v(\d+\.\d+)', meta['pack']['description'])[1]
+    for doc in ('README.md', 'COMPATIBILITY-26.3.md'):
+        assert f'v{version}' in (PACK / doc).read_text(encoding='utf-8').splitlines()[0], f'{doc} not synced to v{version}'
+    assert f'version set value "26.3-{version}"' in (DATA / 'sunny_nav/function/load.mcfunction').read_text(encoding='utf-8'), f'sunny_nav:meta not synced to v{version}'
+    assert f'v{version} 功能總覽' in (DATA / 'allinone/function/help.mcfunction').read_text(encoding='utf-8'), f'help not synced to v{version}'
     logs = json.loads((DATA / 'survival_utils/tags/block/natural_logs.json').read_text())['values']
     stats = (DATA / 'survival_utils/function/load/stats.mcfunction').read_text()
     tick = (DATA / 'survival_utils/function/tick.mcfunction').read_text()
@@ -58,6 +79,13 @@ def static_checks():
     for ore in NO_VEIN_XP:
         body = (DATA / f'survival_utils/function/vein/{ore}/break.mcfunction').read_text(encoding='utf-8')
         assert 'vein/xp' not in body, ore
+    # Every ore group checks the pickaxe tier before it counts, loots or removes a block.
+    gate = 'execute unless function survival_utils:vein/tool_ok run return 0\n'
+    ores = sorted(p.parent.name for p in DATA.glob('survival_utils/function/vein/*/break.mcfunction'))
+    assert ores == sorted([*VEIN_XP, *NO_VEIN_XP]), ores
+    for ore in ores:
+        body = (DATA / f'survival_utils/function/vein/{ore}/break.mcfunction').read_text(encoding='utf-8')
+        assert gate in body and body.index(gate) < body.index('scoreboard players add #count') < body.index(loot), ore
     print(f'PASS static: JSON, format 121.0, {len(logs)} log events, dispatch/reset, function references, {len(VEIN_XP)} ore XP ranges', flush=True)
 
 
@@ -155,7 +183,19 @@ def integration(java, server):
     check(f'if score #count su_tmp matches 2 if score #orbs test matches 0', 'vein_xp_silk_touch_none')
     mine('iron_ore', 'iron', 2)
     check(f'if score #count su_tmp matches 2 if score #orbs test matches 0', 'vein_xp_iron_none')
-    lines.append(f'kill {orbs}')
+    # A pickaxe below the ore's vanilla tier must leave the whole vein intact: no drops, no XP, no wear.
+    items = '@e[type=minecraft:item]'
+    for ore_block, ore, tool in WRONG_TIER:
+        clear()
+        equip(tool, '[minecraft:damage=10]')
+        lines.extend([f'kill {orbs}', f'kill {items}', f'fill 3 80 3 3 81 3 minecraft:{ore_block}', f'execute as {actor} positioned 3 80 3 run function survival_utils:vein/{ore}/break'])
+        check(f'if score #count su_tmp matches 0 if block 3 80 3 minecraft:{ore_block} if block 3 81 3 minecraft:{ore_block} unless entity {items} unless entity {orbs} if items entity {actor} weapon.mainhand *[minecraft:damage=10]', f'wrong_tier_{ore_block}_{tool}')
+    for ore_block, ore, tool in RIGHT_TIER:
+        clear()
+        equip(tool)
+        lines.extend([f'kill {items}', f'fill 3 80 3 3 81 3 minecraft:{ore_block}', f'execute as {actor} positioned 3 80 3 run function survival_utils:vein/{ore}/break'])
+        check(f'if score #count su_tmp matches 2 if block 3 80 3 minecraft:air if block 3 81 3 minecraft:air if entity {items}', f'min_tier_{ore_block}_{tool}')
+    lines.extend([f'kill {orbs}', f'kill {items}'])
     lines += [f'item replace entity {actor} weapon.mainhand with minecraft:wheat_seeds 5', f'item modify entity {actor} weapon.mainhand survival_utils:consume_one']
     check(f'if items entity {actor} weapon.mainhand minecraft:wheat_seeds[minecraft:count=4]', 'consume_one')
     # Exercise the real dispatch/reset lines using a non-player selector and spy.
@@ -179,9 +219,11 @@ def integration(java, server):
             lines.append(f'execute as {actor} at @s run function {function} {args}')
     lines += [f'execute if score #passed test matches {len(assertions)} run say REGRESSION_SUCCESS', 'say REGRESSION_DONE']
     (funcs / 'run.mcfunction').write_text('\n'.join(lines) + '\n', encoding='utf-8')
+    # Every fixture is in chunk (0, 0); wait until it is loaded instead of sleeping a fixed time.
+    (funcs / 'chunks_ready.mcfunction').write_text('execute unless loaded 0 0 0 run return run say CHUNKS_PENDING\nsay CHUNKS_READY\n')
     (work / 'eula.txt').write_text('eula=true\n')
     (work / 'server.properties').write_text('server-ip=127.0.0.1\nserver-port=0\nonline-mode=false\nwhite-list=true\nview-distance=2\nsimulation-distance=2\nlevel-type=minecraft:flat\ngenerator-settings={"layers":[{"block":"minecraft:bedrock","height":1}],"biome":"minecraft:plains"}\n')
-    ready, done = threading.Event(), threading.Event()
+    ready, chunks_ready, done = threading.Event(), threading.Event(), threading.Event()
     output = []
     proc = subprocess.Popen([str(java), '-Xms256M', '-Xmx1024M', '-jar', str(server), '--nogui'], cwd=work, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding='utf-8', errors='replace')
 
@@ -190,6 +232,8 @@ def integration(java, server):
             output.append(line)
             if 'Done (' in line:
                 ready.set()
+            if 'CHUNKS_READY' in line:
+                chunks_ready.set()
             if 'REGRESSION_DONE' in line:
                 done.set()
 
@@ -199,7 +243,12 @@ def integration(java, server):
         assert ready.wait(60), 'Server did not become ready'
         proc.stdin.write('forceload add 0 0\n')
         proc.stdin.flush()
-        time.sleep(2)
+        deadline = time.monotonic() + 60
+        while not chunks_ready.is_set():
+            assert time.monotonic() < deadline, 'Forceloaded fixture chunk did not load'
+            proc.stdin.write('function regression:chunks_ready\n')
+            proc.stdin.flush()
+            chunks_ready.wait(1)
         proc.stdin.write('function regression:run\n')
         proc.stdin.flush()
         assert done.wait(45), 'Regression function did not complete'

@@ -90,6 +90,36 @@ jobs:
           retention-days: 14
 
 
+  utilities-runtime-smoke:
+    name: Utilities vanilla 26.3 regression
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Minecraft 26.3 runtime
+        uses: ./.github/actions/setup-minecraft-runtime
+
+      - name: Run Utilities runtime regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/test-utilities.py \
+            --java "$(command -v java)" \
+            --server-jar "$PWD/server.jar" \
+            --accept-eula
+
+      - name: Upload Utilities runtime evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: utilities-26.3-runtime-${{ github.run_id }}
+          path: dist/utilities-test-*
+          if-no-files-found: ignore
+          retention-days: 14
+
+
   copy-paste-runtime-smoke:
     name: Copy/Paste vanilla 26.3 smoke
     needs: validate
