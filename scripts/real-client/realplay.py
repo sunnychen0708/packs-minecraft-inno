@@ -116,3 +116,29 @@ def storage(ns):
     import gzip
     p = WORLD / 'data' / ns / 'command_storage.dat'
     return mcworld.parse_nbt(gzip.decompress(p.read_bytes()))['data']['contents']
+
+# ---------- leaving / entering the world (Dialog JSON only loads when a world opens) ----------
+# Window coordinates for an 870x519 client window; screenshot first if the window size differs.
+PAUSE_SAVE_QUIT, TITLE_SINGLEPLAYER, WORLD_FIRST_ROW, WORLD_PLAY = (433, 379), (433, 267), (283, 147), (276, 427)
+
+def leave_world():
+    """Esc -> 儲存並回到標題畫面; returns once the integrated server has stopped."""
+    d.close_screens()
+    pos = d.log_len()
+    d.esc(1); time.sleep(1.5)
+    d.click_rel(*PAUSE_SAVE_QUIT)
+    if not d.wait_log(pos, r'Stopping server|Saving worlds|關閉伺服器', 30):
+        raise RuntimeError('world did not close')
+    time.sleep(4)
+
+def join_world():
+    """Title -> 單人遊戲 -> top world (MCC-Test is the most recently played) -> play; waits for Copy/Paste to load."""
+    d.click_rel(*TITLE_SINGLEPLAYER); time.sleep(3)
+    d.click_rel(*WORLD_FIRST_ROW); time.sleep(1)
+    d.screenshot(str(OUT / 'join_world_list.png'))
+    pos = d.log_len()
+    d.click_rel(*WORLD_PLAY)
+    if not d.wait_log(pos, r'\[Copy/Paste\] v[0-9.]+ 已載入', 90):
+        raise RuntimeError('world did not load')
+    time.sleep(4)
+    return pos

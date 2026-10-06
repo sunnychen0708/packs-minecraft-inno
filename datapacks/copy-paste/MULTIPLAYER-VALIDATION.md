@@ -1,4 +1,4 @@
-# Copy/Paste v1.3 多人隔離與驗證
+# Copy/Paste v1.3.1 多人隔離與驗證
 
 目標：多位玩家可在同一個伺服器使用 Copy/Paste、Blueprint、Move/Rotate/Flip、Undo/Redo，而不把彼此的 Clipboard、歷史紀錄或材料工作狀態混在一起。Warehouse 庫存則刻意是全服共用資產。
 

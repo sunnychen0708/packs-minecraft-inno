@@ -1,8 +1,12 @@
-# Minecraft Copy/Paste Datapack v1.3
+# Minecraft Copy/Paste Datapack v1.3.1
 
 適用：Minecraft Java Edition 26.3（Data Pack 121.0）
 
 純 Vanilla datapack。操作使用 Trigger 或 Dialog。施工材料先從玩家背包（含副手）拿，不夠再從同 repo 的 Warehouse datapack 共用材料來源拿。
+
+## v1.3.1
+
+- 載入訊息與第一次使用提示改成「按 G →「建築工具」」，不再叫玩家輸入 `/trigger copypaste`。
 
 ## v1.3
 
@@ -152,7 +156,7 @@ Blueprint 建立完成後，不必重新用 `v` 定位就能直接微調。左�
 
 如果目前位置會覆蓋既有非空氣方塊，第一次 `/trigger build` 只顯示警告並要求再次確認，不會扣材料或修改世界；第二次施工才會進入正常材料檢查。只要 Blueprint 再次移動、旋轉、鏡像或覆蓋重算，確認狀態就會重置。
 
-`/trigger copypaste` 會開啟 Dialog 控制面板。主畫面只有常用的 Pos1、Pos2、Copy、Cut、Paste、Build、Undo；「調整預覽…」（`/trigger copypaste set 2`）有轉向、翻面、移動預覽、清除預覽與材料檢查；「更多…」（`set 3`）有 Anchor、貼上模式、直接改原本建築（`set 4`）、Redo 與指令教學。若 Warehouse 同時安裝，也可以從 Warehouse 主頁（G）直接進入建築工具。
+按 **G** →「建築工具」開啟 Dialog 控制面板（需要同時安裝 Warehouse；也可用 `/trigger copypaste`）。主畫面只有常用的 Pos1、Pos2、Copy、Cut、Paste、Build、Undo；「調整預覽…」（`/trigger copypaste set 2`）有轉向、翻面、移動預覽、清除預覽與材料檢查；「更多…」（`set 3`）有 Anchor、貼上模式、直接改原本建築（`set 4`）、Redo 與指令教學。若 Warehouse 同時安裝，也可以從 Warehouse 主頁（G）直接進入建築工具。
 
 ## 遊戲內指令教學
 
