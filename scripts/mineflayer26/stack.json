@@ -22,5 +22,9 @@
   "mineflayer": {
     "repo": "https://github.com/DallasCarraher/mineflayer.git",
     "commit": "865e73db4131bb9900c533963c321f40e3ee2166"
+  },
+  "mineflayer_mapper_fix": {
+    "source_pr": "https://github.com/PrismarineJS/mineflayer/pull/4120",
+    "head_commit": "f5660cf567b94cbd6b8597f242ee351a81da4b79"
   }
 }

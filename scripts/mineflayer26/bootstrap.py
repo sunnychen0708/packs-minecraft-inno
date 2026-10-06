@@ -88,6 +88,39 @@ def prepare_node_minecraft_data(path: Path, cfg: dict) -> None:
     run(["git", "checkout", "--detach", "--force", "FETCH_HEAD"], cwd=data_dir)
 
 
+def replace_exact(path: Path, old: str, new: str) -> None:
+    text = path.read_text(encoding="utf-8")
+    count = text.count(old)
+    if count != 1:
+        raise RuntimeError(f"expected exactly one mapper patch target in {path}: found {count}")
+    path.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+
+def apply_mineflayer_mapper_fix(path: Path) -> None:
+    """Apply PrismarineJS/mineflayer#4120 on top of the pinned 26.3 integration branch."""
+    replace_exact(path / "lib/plugins/bed.js", "actionId: 2,", "actionId: 'stop_sleeping',")
+    replace_exact(path / "lib/plugins/creative.js", "{ actionId: 1 }", "{ actionId: 'request_stats' }")
+    replace_exact(path / "lib/plugins/game.js", "{ action: 0 }", "{ actionId: 'perform_respawn' }")
+    replace_exact(path / "lib/plugins/health.js", "{ actionId: 0 }", "{ actionId: 'perform_respawn' }")
+    replace_exact(
+        path / "lib/plugins/physics.js",
+        "actionId: bot.supportFeature('entityActionUsesStringMapper') ? 'start_elytra_flying' : 8,",
+        "actionId: 'start_fall_flying',",
+    )
+    replace_exact(
+        path / "lib/plugins/physics.js",
+        "actionId: bot.supportFeature('entityActionUsesStringMapper')\n"
+        "          ? (state ? 'start_sprinting' : 'stop_sprinting')\n"
+        "          : (state ? 3 : 4),",
+        "actionId: state ? 'start_sprinting' : 'stop_sprinting',",
+    )
+    replace_exact(
+        path / "lib/plugins/physics.js",
+        "actionId: state ? 0 : 1,",
+        "actionId: state ? 'start_sneaking' : 'stop_sneaking',",
+    )
+
+
 def write_ready_marker(dest: Path, stack: dict) -> None:
     (dest / ".stack-ready.json").write_text(
         json.dumps({"stack": stack, "node": node_version(), "npm": npm_version()}, indent=2) + "\n",
@@ -160,6 +193,7 @@ def main() -> int:
         checkout(dest / name, cfg["repo"], cfg["commit"], force=args.force)
 
     prepare_node_minecraft_data(dest / "node-minecraft-data", stack["node_minecraft_data"])
+    apply_mineflayer_mapper_fix(dest / "mineflayer")
 
     local_md = "file:../node-minecraft-data"
     patch_package(dest / "node-minecraft-protocol", deps={"minecraft-data": local_md})
@@ -179,6 +213,7 @@ def main() -> int:
         print(f"sources prepared at {dest}; npm install skipped")
         return 0
 
+    # Install leaves generated node-minecraft-data files in place first, then consumers use that local package.
     # node-minecraft-data's prepare step generates data/types and needs its dev dependencies.
     install(dest / "node-minecraft-data", include_dev=True)
     for name in ("node-minecraft-protocol", "prismarine-chunk", "prismarine-physics", "mineflayer"):

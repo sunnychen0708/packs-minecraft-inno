@@ -9,6 +9,7 @@ Pinned pieces:
 - `prismarine-chunk`: 26.3 byte-array light masks.
 - `prismarine-physics`: 26.3 liquid-gravity feature mapping.
 - `mineflayer`: combined 26.3 branch with teleport-confirm position/rotation, `tick_end`, stepped entity movement, and shifted player-action IDs.
+- `mineflayer #4120`: standardized entity-action mapper names, including `start_fall_flying` for elytra. The bootstrap applies this diff deterministically on top of the combined branch.
 
 The exact repositories and commit SHAs are in `stack.json`. `dist/` is gitignored, so third-party source and npm output never enter this repository.
 
@@ -55,3 +56,13 @@ Configuration is by environment variable:
 For an expendable local world where `BotTester` is OP, `MF26_MUTATION_TESTS=1` additionally creates a dirt fixture and digs it, then starts/stops using a bow and verifies the bow was not dropped. Those two checks directly exercise the shifted 26.3 player-action IDs. Do not enable them against a world you do not want modified.
 
 The result is written to `dist/mineflayer-26.3-smoke.json` and the process exits non-zero on a required check failure.
+
+## Upstream gaps that are still not full 26.3 support
+
+This harness is intended to unblock the Inno test bots, but the upstream 26.3 data PR still documents protocol/data gaps. Do not call the overall PrismarineJS stack fully complete until these are resolved and live-tested:
+
+- item data components `block_transformer`, `compostable`, `cooking_fuel`, `brewing_fuel`, and `provides_pottery_pattern` currently have IDs but no wire codec; receiving an item stack that carries one can desynchronize packet decoding;
+- `villager_food` and `sign_text_front` / `sign_text_back` field names still need authoritative verification;
+- some new block/item hardness, collision shape, and stack-size values are approximated from analogues, and new-item recipes are incomplete.
+
+For the current Inno datapack validation path, the smoke test deliberately exercises login, player list, chunk/light, movement, and player-action traffic first. Any crawler that starts inspecting arbitrary 26.3 item stacks must treat the missing component codecs as a blocker rather than silently ignoring them.
