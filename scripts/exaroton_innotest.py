@@ -335,6 +335,7 @@ def inno_world_layout_status(token):
     world = level_name(properties)
     candidates = [
         world,
+        f"{world}/players",
         f"{world}/dimensions",
         f"{world}/dimensions/minecraft",
         f"{world}/dimensions/minecraft/overworld",
