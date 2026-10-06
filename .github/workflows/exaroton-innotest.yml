@@ -74,9 +74,6 @@ jobs:
               json.dump(request, handle, ensure_ascii=False)
           PY
 
-      - name: Install NBT parser
-        run: python3 -m pip install "nbtlib==1.12.1"
-
       - name: Run safe exaroton control
         shell: bash
         env:
