@@ -99,6 +99,17 @@ python3 scripts/test-warehouse-runtime.py \
 
 It boots the official server, performs `/reload`, rejects parser/datapack errors, verifies the sharded search index, exercises reset/re-registration while preserving custom data, tests the shared count/take/refund API including durable queued refunds and stale-source rejection, and covers the v4.4 Resolve Block / Pick path.
 
+Utilities has a dedicated 26.3 harness:
+
+```bash
+python3 scripts/test-utilities.py \
+  --java /path/to/java \
+  --server-jar /path/to/server.jar \
+  --accept-eula
+```
+
+It drives tree felling, vein mining (chain, vanilla XP ranges, Silk Touch, and the pickaxe tier gate: one-tier-too-low pickaxes leave the vein untouched while the minimum tier still chains), tool durability, crop seeds, the real tick dispatch, waypoint preservation across reload, and instantiates every macro.
+
 Copy/Paste also has a dedicated 26.3 behavioral harness:
 
 ```bash
@@ -151,8 +162,8 @@ For datapacks:
 2. Pack-specific regression tests must pass when present.
 3. The cross-pack static compatibility gate must pass.
 4. Datapack releases must pass the combined official Minecraft 26.3 Utilities + Warehouse + Copy/Paste runtime compatibility gate.
-5. Warehouse and Copy/Paste behavior-changing releases must also pass their dedicated 26.3 runtime harnesses.
+5. Utilities, Warehouse and Copy/Paste releases must also pass their dedicated 26.3 runtime harnesses.
 6. Do not describe a pack as "runtime validated" if only static checks were run.
 7. Do not create a release from a known failing validation run.
 
-GitHub Actions runs generic validation, pack-specific regressions, cross-pack static compatibility, dedicated Warehouse/Copy-Paste runtime jobs, and the all-datapacks 26.3 compatibility job on relevant `main` pushes and pull requests. The release workflow verifies the tag version against `pack.mcmeta`, reruns the combined all-datapacks runtime gate for every datapack tag, reruns the dedicated Warehouse or Copy/Paste runtime gate when applicable, then builds and publishes the ZIP.
+GitHub Actions runs generic validation, pack-specific regressions, cross-pack static compatibility, dedicated Utilities/Warehouse/Copy-Paste runtime jobs, and the all-datapacks 26.3 compatibility job on relevant `main` pushes and pull requests. The release workflow verifies the tag version against `pack.mcmeta`, reruns the combined all-datapacks runtime gate for every datapack tag, reruns the dedicated Utilities, Warehouse or Copy/Paste runtime gate when applicable, then builds and publishes the ZIP. Publishing is idempotent: runs for the same tag are serialized, and when the release already exists the ZIP is uploaded to it instead of failing.
