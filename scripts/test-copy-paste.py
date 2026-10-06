@@ -493,6 +493,14 @@ def check_v100_semantics(pack: Path):
     assert 'dialog' not in tutorial_dialog
     assert all(line.startswith('tellraw @s ') for line in tutorial_dialog.splitlines() if line.strip())
     assert '"action":"suggest_command","command":"/trigger build"' in tutorial_dialog
+    # Material lists show item names through translation keys (each player's language).
+    names=read(pack/'data/mcc/function/names/load.mcfunction')
+    assert names.count('":"block.minecraft.')+names.count('":"item.minecraft.')>=1500
+    assert '"minecraft:oak_door":"block.minecraft.oak_door"' in names and '"minecraft:redstone":"item.minecraft.redstone"' in names
+    assert 'function mcc:names/load' in read(pack/'data/mcc/function/load.mcfunction')
+    for f in ('report_one','report_all_one'):
+        text=read(pack/f'data/mcc/function/materials/{f}.mcfunction')
+        assert '"translate":"$(key)","fallback":"$(id)"' in text and '"text":"  $(id)' not in text, f
     assert 'scoreboard players set @s mcc_histmat 1' in place
     assert (pack/'data/mcc/tags/block/material_unsupported.json').is_file()
     return matcher_states
