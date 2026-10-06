@@ -218,7 +218,7 @@ def runtime_compatibility(java: Path, server: Path) -> None:
     check("if score #probe copypaste matches 0", "copy_paste_ui_objective")
 
     check(
-        'if data storage sunny_nav:meta {version:"26.3-3.4"}',
+        'if data storage sunny_nav:meta {version:"26.3-3.5"}',
         "utilities_storage_initialized",
     )
     check(

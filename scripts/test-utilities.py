@@ -18,6 +18,9 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[1]
 PACK = ROOT / 'datapacks/utilities'
 DATA = PACK / 'data'
+# Vanilla experience dropped by each ore group (min, max); the others drop none.
+VEIN_XP = {'coal': (0, 2), 'lapis': (2, 5), 'redstone': (1, 5), 'diamond': (3, 7), 'emerald': (3, 7), 'quartz': (2, 5), 'nether_gold': (0, 1)}
+NO_VEIN_XP = ('iron', 'copper', 'gold', 'ancient')
 
 
 def static_checks():
@@ -46,7 +49,16 @@ def static_checks():
             obj = json.loads(path.read_text())
             assert isinstance(obj, dict) and 'type' in obj, path
             assert 'function' not in obj, path
-    print(f'PASS static: JSON, format 121.0, {len(logs)} log events, dispatch/reset, function references', flush=True)
+    # Chain-mined ores drop the vanilla experience range unless mined with Silk Touch.
+    silk = 'execute unless items entity @s weapon.mainhand *[minecraft:enchantments~[{enchantments:"minecraft:silk_touch"}]] run function survival_utils:vein/xp '
+    loot = 'loot spawn ~0.5 ~0.5 ~0.5 mine ~ ~ ~ mainhand\n'
+    for ore, (low, high) in VEIN_XP.items():
+        body = (DATA / f'survival_utils/function/vein/{ore}/break.mcfunction').read_text(encoding='utf-8')
+        assert loot + silk + f'{{min:{low},max:{high}}}\nsetblock ~ ~ ~ minecraft:air\n' in body, ore
+    for ore in NO_VEIN_XP:
+        body = (DATA / f'survival_utils/function/vein/{ore}/break.mcfunction').read_text(encoding='utf-8')
+        assert 'vein/xp' not in body, ore
+    print(f'PASS static: JSON, format 121.0, {len(logs)} log events, dispatch/reset, function references, {len(VEIN_XP)} ore XP ranges', flush=True)
 
 
 def integration(java, server):
@@ -126,6 +138,24 @@ def integration(java, server):
     lines += ['fill 3 80 3 3 81 3 minecraft:diamond_ore', f'execute as {actor} positioned 3 80 3 run function survival_utils:vein/diamond/break']
     check('if score #count su_tmp matches 2 if block 3 81 3 minecraft:air', 'vein_chain')
     check(f'if items entity {actor} weapon.mainhand *[minecraft:damage=0]', 'vein_legacy_durability')
+    # Chain-mined ores spawn one orb each, within the vanilla range; Silk Touch and raw-ore groups spawn none.
+    orbs = '@e[type=minecraft:experience_orb]'
+
+    def mine(ore_block, ore, count, item='diamond_pickaxe', components=''):
+        clear()
+        equip(item, components)
+        lines.extend([f'kill {orbs}', f'fill 3 80 3 3 {79 + count} 3 minecraft:{ore_block}', f'execute as {actor} positioned 3 80 3 run function survival_utils:vein/{ore}/break',
+                      f'execute as {orbs} store result score @s test run data get entity @s Value', f'execute store result score #orbs test if entity {orbs}'])
+
+    mine('diamond_ore', 'diamond', 2)
+    check(f'if score #count su_tmp matches 2 if score #orbs test matches 2 unless entity @e[type=minecraft:experience_orb,scores={{test=..2}}] unless entity @e[type=minecraft:experience_orb,scores={{test=8..}}]', 'vein_xp_diamond_range')
+    mine('coal_ore', 'coal', 10)
+    check(f'if score #count su_tmp matches 10 if score #orbs test matches ..10 unless entity @e[type=minecraft:experience_orb,scores={{test=..0}}] unless entity @e[type=minecraft:experience_orb,scores={{test=3..}}]', 'vein_xp_coal_skips_zero')
+    mine('diamond_ore', 'diamond', 2, components='[minecraft:enchantments={"minecraft:silk_touch":1}]')
+    check(f'if score #count su_tmp matches 2 if score #orbs test matches 0', 'vein_xp_silk_touch_none')
+    mine('iron_ore', 'iron', 2)
+    check(f'if score #count su_tmp matches 2 if score #orbs test matches 0', 'vein_xp_iron_none')
+    lines.append(f'kill {orbs}')
     lines += [f'item replace entity {actor} weapon.mainhand with minecraft:wheat_seeds 5', f'item modify entity {actor} weapon.mainhand survival_utils:consume_one']
     check(f'if items entity {actor} weapon.mainhand minecraft:wheat_seeds[minecraft:count=4]', 'consume_one')
     # Exercise the real dispatch/reset lines using a non-player selector and spy.
@@ -141,7 +171,7 @@ def integration(java, server):
     check('if data storage sunny_nav:players p999.custom.s1{x:12,z:34,name:{text:"Preserved"}}', 'personal_waypoint_preserved')
     check('if data storage sunny_nav:shared s1{x:5,z:9,name:{text:"Shared"}}', 'shared_waypoint_preserved')
     # Instantiate every macro against harmless test arguments to catch lazy parser errors.
-    args = '{id:999,slot:1,name:"Regression",x:1,y:80,z:1,dim:"minecraft:overworld",yaw:0,pitch:0}'
+    args = '{id:999,slot:1,name:"Regression",x:1,y:80,z:1,dim:"minecraft:overworld",yaw:0,pitch:0,min:1,max:1,v:1}'
     for path in DATA.rglob('*.mcfunction'):
         if any(line.startswith('$') for line in path.read_text(encoding='utf-8').splitlines()):
             rel = path.relative_to(DATA)

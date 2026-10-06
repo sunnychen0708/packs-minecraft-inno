@@ -6,12 +6,12 @@
 
 | Pack | 版本 | Release |
 | --- | --- | --- |
-| Utilities | v3.4 | `utilities-v3.4` |
+| Utilities | v3.5（未發布） | `utilities-v3.4` |
 | Warehouse | v4.4.2 | `warehouse-v4.4.2` |
 | Copy/Paste | v1.3 | `copy-paste-v1.3` |
 | cat-door-sounds | v1.0 | `cat-door-sounds-v1.0` |
 
-- 所有原始碼版本都已發布，遠端只剩 `main` 分支，沒有進行中的 PR。
+- Utilities v3.5（礦脈連鎖照原版給經驗）尚未打 tag 發布；其餘原始碼版本都已發布。
 - 發布：在 `main` 推 `<pack>-v<版本>` tag，`.github/workflows/release-pack.yml` 會驗證、打包、建 Release。**打 tag 前要先問使用者。**
 - 2026-10-06 改寫過 `main` 的最後一段歷史，拿掉所有 AI 工具署名，並刪除所有舊分支。改寫前的完整備份（含所有舊分支）在使用者電腦 `C:\Users\sunny\repo-backups\packs-minecraft-inno-before-rewrite-20261006.git`。
 

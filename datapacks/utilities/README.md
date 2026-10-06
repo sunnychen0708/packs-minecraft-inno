@@ -1,6 +1,6 @@
-# Utilities v3.4
+# Utilities v3.5
 
-> Release: **utilities-v3.4** · Download: **utilities-v3.4.zip** · Previous package name: **整合_v3.2**.
+> Release: **utilities-v3.5** · Download: **utilities-v3.5.zip** · Previous package name: **整合_v3.2**.
 
 遊戲內名稱「屁眼派對」：Minecraft Java 26.3 資料包，整合生存便利三合一、回家與自訂據點、座標顯示。
 
@@ -8,7 +8,7 @@ The actual pack source lives directly in this directory. Keep `pack.mcmeta` and 
 
 ## 核心功能
 
-- 生存便利：自動補種、連鎖砍樹、礦脈挖掘
+- 生存便利：自動補種、連鎖砍樹、礦脈挖掘（連鎖挖到的礦照原版給經驗）
 - 座標顯示：Action Bar
 - 固定據點：5 個（家、礦坑、村莊、傳送門、臨時點）
 - 自訂據點：個人 8 個 + 共用 8 個
@@ -51,14 +51,17 @@ The actual pack source lives directly in this directory. Keep `pack.mcmeta` and 
 | **3.2** | 正式刪除共用據點 9～16 的相關資料與功能；help 改為**指令教學在上、操作按鈕在下**；固定據點取消直接按鈕；Dialog 按鈕改白色；**Esc／取消不再送出任何指令**，只有確認設定／儲存才會修改資料 |
 | **3.3** | 補齊 Poplar 原木挖掘事件及重置，修復三色 Poplar 連鎖砍樹；修正砍樹／挖礦共用耐久扣除、Unbreaking／Unbreakable 與工具耗盡停止；完成 26.3 相容性審核與官方伺服器回歸測試。 |
 | **3.4** | 依使用者要求撤回 v3.3 的砍樹／挖礦耐久修正，完整恢復 v3.2 的工具耐久處理；保留 Poplar 挖掘事件與 26.3 相容性修正。v3.2、v3.3 release 保持不變。 |
+| **3.5** | 礦脈挖掘連鎖挖到的礦會照原版掉經驗：煤 0～2、青金石 2～5、紅石 1～5、鑽石 3～7、綠寶石 3～7、石英 2～5、地獄金礦 0～1；鐵、銅、金礦與遠古遺骸原版不掉經驗，維持不給。用絲綢之觸挖不給經驗，和原版相同。工具耐久處理不變。 |
 
 ## 安裝與更新
 
-下載 [utilities-v3.4.zip](https://github.com/sunnychen0708/packs-minecraft-inno/releases/download/utilities-v3.4/utilities-v3.4.zip)，移除世界 `datapacks/` 中的舊 Utilities ZIP（utilities-v3.3.zip、utilities-v3.2.zip、整合_v3.2.zip 或 vanilla-utilities-v3.2.zip），ZIP 不用解壓直接放入，再執行 `/reload`。不要同時載入兩份。
+下載 [utilities-v3.5.zip](https://github.com/sunnychen0708/packs-minecraft-inno/releases/download/utilities-v3.5/utilities-v3.5.zip)，移除世界 `datapacks/` 中的舊 Utilities ZIP（utilities-v3.4.zip、utilities-v3.3.zip、utilities-v3.2.zip、整合_v3.2.zip 或 vanilla-utilities-v3.2.zip），ZIP 不用解壓直接放入，再執行 `/reload`。不要同時載入兩份。
 
 蹲下並持斧頭挖掉 Poplar 原木即可觸發；紅／橙／黃葉皆支援。單次最多連鎖 64 根，仍需附近有樹葉；無葉倒木及建築木材不會因這次更新取消保護。
 
 工具耐久處理已恢復為 v3.2 行為；v3.3 新增的逐塊扣耐久與耗盡停止邏輯已撤回。
+
+礦脈挖掘時，你親手挖的第一顆照原版給經驗；連鎖挖掉的每一顆會在原位置掉一顆經驗球，數值照原版該礦的隨機範圍。抽到 0 時不掉經驗球。
 
 ## 舊資料相容
 
@@ -80,4 +83,4 @@ Use `utilities-v<version>` for release tags and `utilities-v<version>.zip` for d
 
 [Utilities v3.2](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/utilities-v3.2) replaces the former `vanilla-utilities-v3.2` release name. This naming-only re-release preserves v3.2 gameplay and saved data; the original Git tag remains as a historical alias. Replace the old ZIP rather than loading both copies.
 
-Example: `utilities-v3.4`
+Example: `utilities-v3.5`
