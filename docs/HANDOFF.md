@@ -25,6 +25,10 @@
 - 貼上模式按鈕顯示**目前**模式（「貼上：完全取代」／「貼上：保留原方塊」，提示說明並寫「點一下改成…」），按下送 `mode set 2`：切換後馬上重開「更多」頁顯示新狀態。真人 client（`stage7_menu.py`）：四頁都打開、`mcc_mask` 0→1→0 從存檔確認、標籤跟著變。視窗窄時 3 欄 × 150 寬會超出畫面，一律用 120。
 - 主畫面按鈕改名：「V 放置」→ **Paste**、「施工」→ **Build**（調整預覽頁的施工也是 Build）。
 - **材料名稱改用翻譯鍵**：`scripts/gen-item-names.py` 從 26.3 server `--reports` 的 `components/item/*.json`（`minecraft:item_name`）產生 `function/names/load.mcfunction`（1658 個 id → key，載入到 `storage mcc:names key`）。缺料清單與材料檢查用 `{"translate":"$(key)","fallback":"$(id)"}`，滑鼠移上去顯示 id。玩家看到自己語言的名稱（zh_tw：橡木門、石磚、鑽石方塊…）。真人 client（`stage8_names.py`）從聊天日誌確認。**換 Minecraft 版本要重跑產生器。**
+- **施工也從玩家背包扣料（使用者選定）**：順序是背包 0～35 格與副手 → Warehouse；有 components 的物品（改名、附魔…）不使用。Undo／扣料失敗退料時，**背包扣的退回背包**，依 `mcc:names max`（最大堆疊表，同一個產生器）算出背包還塞得下多少，用 `give` 給回；塞不下的和 Warehouse 扣的都退 Warehouse，不會掉地上。記錄在 `bom/items .inv`，總數仍是 `.taken`。材料檢查顯示「背包 N + Warehouse M」。程式：`materials/inv_*`、`refund_split`、`warehouse_take_one`、`history/refund_undo_materials_one`。
+  - **26.3 的 inline item modifier 用 `"type"`，不是 `"function"`**。巨集裡寫錯會無聲失敗；第一版因此沒扣到背包、Undo 卻退料，**真人測試抓到物品複製**。現在每次扣除都 `store success`，失敗就不算已扣；server runtime 加了「真的從副手扣掉」測試。
+  - 真人 client `stage10_inventory.py`：背包 10 石磚＋副手 5 木板先扣、改名的石磚不動、Warehouse 只扣其餘；Undo 背包拿回 10＋5、Warehouse 回到原狀；背包只剩 4 格空間時只退 4 個、其餘 16 進 Warehouse、0 掉落。
+- 使用者說：**真人測試一律直接開始跑，不要問**（他不在用電腦）。
 - **嚴重 bug（v1.1 起，已發布的 v1.1／v1.2 都有）**：材料足夠時按「材料檢查」會直接扣料並施工。`materials/count_done` 先把 `mcc_matjob` 歸零，才判斷 job 2 要提早結束，所以永遠不會結束，一路跑進扣料。缺料時則會多印「材料不足，未施工」。已修（`materials/check_done`）；runtime 新增「材料齊全時檢查不扣料不施工」兩項（舊碼確認 FAIL）；真人 client `stage9_checkonly.py`：材料齊全時檢查，目標仍是空氣、每個箱子不變。
 - MCC-Test 目前狀態：乾淨。61 箱已註冊、Warehouse 剛好 2 倍 BOM、小屋與箱內物品在原位、旋轉／鏡像已重設、沒有殘留建築。備份：`backups\MCC-Test-before-e1eea6e-20261006`。
 - 注意：世界難度不是和平，晚上會生怪；把時間調成白天時殭屍曬死會掉腐肉，`no_drops` 會誤報（rotten_flesh），不是 Copy/Paste 問題。

@@ -1030,6 +1030,21 @@ def integration(java: Path, server: Path):
     run_as('mcc:ui/more')
     check('if data storage mcc:ui mode if data storage mcc:ui modetip','ui_paste_mode_label')
     check('if data storage mcc:names key{"minecraft:oak_door":"block.minecraft.oak_door","minecraft:redstone":"item.minecraft.redstone"}','item_name_table_loaded')
+    # Materials come from the carrier's own stacks first: the take really removes them
+    # (a modifier that fails to parse must not be recorded as taken, or Undo would duplicate).
+    lines.extend([
+        f'item replace entity {actor} weapon.offhand with minecraft:oak_planks 5',
+        'data modify storage mcc:materials p991 set value {bom:{"minecraft:oak_planks":{need:3,have:0,remain:3,missing:0,taken:0,inv:0,invhave:0}},items:[{id:"minecraft:oak_planks"}]}',
+        'data modify storage mcc:temp mat set value {id:"minecraft:oak_planks",pid:991}',
+        f'execute as {actor} run function mcc:materials/inv_take_one with storage mcc:temp mat',
+    ])
+    check(f'if data entity {actor} equipment.offhand{{id:"minecraft:oak_planks",count:2}} if data storage mcc:materials p991.bom."minecraft:oak_planks"{{remain:0,inv:3}} if data storage mcc:materials p991.items[{{id:"minecraft:oak_planks",inv:3}}]','inventory_take_removes_from_offhand')
+    lines.extend([
+        'data modify storage mcc:temp mat set value {id:"minecraft:oak_planks",pid:991}',
+        f'execute as {actor} run function mcc:materials/inv_count_one with storage mcc:temp mat',
+    ])
+    check('if data storage mcc:materials p991.bom."minecraft:oak_planks"{invhave:2,have:2}','inventory_count_sees_offhand')
+    lines.extend([f'item replace entity {actor} weapon.offhand with minecraft:air', 'data remove storage mcc:materials p991'])
 
     # A gated trigger pressed while a material job runs is reported, not silently dropped.
     lines.extend([

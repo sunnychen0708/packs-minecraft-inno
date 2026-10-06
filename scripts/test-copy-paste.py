@@ -451,8 +451,20 @@ def check_v100_semantics(pack: Path):
     assert 'mcc:materials/warehouse_take_one' in process_next
     refund_taken=read(pack/'data/mcc/function/materials/refund_taken_one.mcfunction')
     refund_undo=read(pack/'data/mcc/function/history/refund_undo_materials_one.mcfunction')
-    assert 'warehouse:api/refund_item' in refund_taken
-    assert 'warehouse:api/refund_item' in refund_undo
+    # Refunds split: what came from the player goes back to the player as far as it fits,
+    # the rest (and everything taken from Warehouse) goes to Warehouse.
+    split=read(pack/'data/mcc/function/materials/refund_split.mcfunction')
+    assert 'function mcc:materials/refund_split' in refund_taken and 'function mcc:materials/refund_split' in refund_undo
+    assert 'warehouse:api/refund_item' in split and 'mcc:history/refund_give' in split and 'mcc:materials/inv_fit' in split
+    assert 'mcc:temp mat.inv' in refund_taken and 'mcc:temp txitem.inv' in refund_undo
+    assert 'function mcc:materials/inv_take_one' in take_one and take_one.index('inv_take_one')<take_one.index('warehouse:api/take_item')
+    assert 'function mcc:materials/inv_count_one' in count_one
+    for f in ('inv_take_slot','inv_take_offhand'):
+        text=read(pack/f'data/mcc/function/materials/{f}.mcfunction')
+        # 26.3 inline item modifiers are keyed by "type"; "function" fails to parse silently in a macro.
+        assert '"type":"minecraft:set_count"' in text and '"function":' not in text and 'store success score #invok' in text, f
+    names=read(pack/'data/mcc/function/names/load.mcfunction')
+    assert 'data modify storage mcc:names max set value {' in names and '"minecraft:oak_sign":16' in names and '"minecraft:white_bed":1' in names
     assert 'mcc:temp mat.taken' in refund_taken
     assert 'mcc:temp txitem.taken' in refund_undo
     refund_tx_entry=read(pack/'data/mcc/function/history/refund_undo_materials.mcfunction')
