@@ -1,6 +1,6 @@
-# Copy/Paste 驗證狀態（v1.3）
+# Copy/Paste 驗證狀態（v1.4）
 
-目前版本 **v1.3**（已發布）。目標 Minecraft Java 26.3（Data Pack 121.0）。
+目前版本 **v1.4**：拿掉載入與第一次使用時的聊天訊息，並移除舊的轉向／翻面指令。目標 Minecraft Java 26.3（Data Pack 121.0）。
 
 這份文件把「官方 server headless regression」和「真人 client 驗證」分開寫。兩者不能互相冒充。
 
@@ -45,8 +45,11 @@
 | `stage8_names` | 材料檢查與缺料清單顯示 zh_tw 物品名稱 |
 | `stage9_checkonly` | 材料齊全時「材料檢查」不扣料、不施工 |
 | `stage10_inventory` | 背包／副手優先扣料、改名物品不使用、Undo 退回背包、背包滿時其餘退 Warehouse 且 0 掉落、Redo 同樣先扣背包 |
+| `stage12_all_packs` | Utilities + Warehouse + Copy/Paste 一起安裝：三包載入無錯誤、沒有載入訊息、G 開 Warehouse 主畫面、Utilities 設家／回家／返回／說明正常；同時重跑 `stage5`、`stage10`、`stage9` 全數通過 |
 
 **尚未驗證：** 兩位真人 client 同時操作。
+
+2026-10-06 晚間三包一起重跑時，一度出現「材料表是空的、施工沒扣料」：原因是測試用小屋在 18:08 被手動 Cut 搬走，測試等於在複製空氣，並不是 pack 的問題。`stage3_house.snapshot()` 現在發現小屋不完整就直接停止。
 
 ## 舊的 Trigger harness
 

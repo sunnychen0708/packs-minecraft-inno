@@ -17,7 +17,12 @@ def sel_cells():
 
 def snapshot():
     w = world()
-    return w, {p: w.block(*p) for p in sel_cells()}
+    src = {p: w.block(*p) for p in sel_cells()}
+    # The 3D house is the test fixture: if someone moved it, every check would compare air with air.
+    solid = sum(1 for s in src.values() if s != 'minecraft:air')
+    if solid < len(house.BLOCKS):
+        raise RuntimeError(f'test house missing at {HOUSE_O}: only {solid}/{len(house.BLOCKS)} blocks in the selection')
+    return w, src
 
 def compare(w, expect, label, extra_air=()):
     bad = [(p, e, w.block(*p)) for p, e in expect.items() if w.block(*p) != e]
@@ -72,7 +77,7 @@ def select_house():
 
 def reset_xform():
     """Rotation/mirror are per-player Blueprint settings that outlive a Copy; start from identity."""
-    trig('rotate set 10'); trig('mirror set 10')
+    trig('bpreset')
 
 def wait_sorted(sec=15):
     time.sleep(sec)
@@ -178,11 +183,12 @@ if want('build'):
     trig('undo', 1.0); wait_sorted(18)
 
 if want('rotbuild'):
-    for k, val, tx in ((1, 20, 1045), (2, 30, 1065), (3, 40, 1075)):
+    for k, tx in ((1, 1045), (2, 1065), (3, 1075)):
         log(f'=== Blueprint rotate {90 * k} -> Build')
         w, SRC = snapshot()
         T = (tx, Y0, 1060)
-        trig('c'); trig(f'rotate set {val}')
+        trig('c'); trig('bpreset')
+        for _ in range(k): trig('bpturnright')
         aim_target(T[0], T[2]); trig('v', 3.0)
         trig('build', 1.0); time.sleep(6)
         save_world(); w = world()
@@ -190,15 +196,16 @@ if want('rotbuild'):
         compare(w, exp, f'rotated build {90 * k}: exact blocks + rotated states', extra_air=box_around(exp))
         no_drops(w, f'rotated build {90 * k}: no drops')
         trig('undo', 1.0); wait_sorted(15)
-        trig('rotate set 10')
+        trig('bpreset')
     save_world(); stock_is(world(), BOM2, 'rotated builds: all refunds back in Warehouse')
 
 if want('mirbuild'):
-    for val, axis, tx in ((20, 'x', 1045), (30, 'z', 1065)):
+    for flip, axis, tx in (('bpflip', 'x', 1045), ('bpflipfb', 'z', 1065)):  # facing north: left-right = X
         log(f'=== Blueprint mirror {axis} -> Build')
         w, SRC = snapshot()
         T = (tx, Y0, 1080)
-        trig('c'); trig('rotate set 10'); trig(f'mirror set {val}')
+        trig('c'); trig('bpreset')
+        cmd('tp @s ~ ~ ~ 180 30', 0.6); trig(flip)
         aim_target(T[0], T[2]); trig('v', 3.0)
         trig('build', 1.0); time.sleep(6)
         save_world(); w = world()
@@ -209,7 +216,7 @@ if want('mirbuild'):
             compare(w, other, f'(diagnostic) mirrored build {axis} matches the OTHER axis instead?')
         no_drops(w, f'mirrored build {axis}: no drops')
         trig('undo', 1.0); wait_sorted(15)
-        trig('mirror set 10')
+        trig('bpreset')
     save_world(); stock_is(world(), BOM2, 'mirrored builds: all refunds back in Warehouse')
 
 if want('cut'):
@@ -266,10 +273,10 @@ if want('direct'):
     if 'moveonly' in ONLY: raise SystemExit
     direct('move up 2', 'up set 2', shifted(0, 2))
     cx = SX1 + SX2; cz = SZ1 + SZ2
-    direct('flipx', 'flipx', lambda S: {(cx - x, y, z): xform.mirror_state(s, 'x') for (x, y, z), s in S.items()})
-    direct('flipz', 'flipz', lambda S: {(x, y, cz - z): xform.mirror_state(s, 'z') for (x, y, z), s in S.items()})
-    for k in (1, 2, 3):
-        direct(f'rotate{90 * k}', f'rotate{90 * k}', lambda S, k=k: expect_placed(S, MARK1, k=k))
+    direct('flip (facing north = X)', 'flip', lambda S: {(cx - x, y, z): xform.mirror_state(s, 'x') for (x, y, z), s in S.items()})
+    direct('flipfb (facing north = Z)', 'flipfb', lambda S: {(x, y, cz - z): xform.mirror_state(s, 'z') for (x, y, z), s in S.items()})
+    for k, trigger in ((1, 'turnright'), (2, 'rotate180'), (3, 'turnleft')):
+        direct(trigger, trigger, lambda S, k=k: expect_placed(S, MARK1, k=k))
 
 if want('pick'):
     log('=== Pick from Warehouse')

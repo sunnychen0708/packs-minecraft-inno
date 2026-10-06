@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Isolated vanilla 26.3 behavioral regression for Copy/Paste v1.3.
+"""Isolated vanilla 26.3 behavioral regression for Copy/Paste v1.4.
 
 Uses a non-player armor stand test actor to exercise internal datapack functions.
 This complements (not replaces) the opt-in real-player trigger/client harnesses.
@@ -1057,7 +1057,7 @@ def integration(java: Path, server: Path):
     # tick resets them for the armor-stand actor, so clear every gated trigger.
     lines.extend(f'scoreboard players set {actor} {t} 0' for t in (
         'c','x','v','undo','redo','right','left','up','down','forward','backward',
-        'flipx','flipz','rotate90','rotate180','rotate270',
+        'flip','flipfb','turnright','rotate180','turnleft',
         'bpleft','bpright','bpforward','bpbackward','bpup','bpdown'))
     lines.append(f'scoreboard players set {actor} mcc_tmp 1')
     run_as('mcc:materials/busy_notice')

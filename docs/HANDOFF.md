@@ -6,12 +6,12 @@
 
 | Pack | 版本 | Release |
 | --- | --- | --- |
-| Utilities | v3.5（未發布） | `utilities-v3.4` |
-| Warehouse | v4.4.2 | `warehouse-v4.4.2` |
-| Copy/Paste | v1.3 | `copy-paste-v1.3` |
+| Utilities | v3.6（未發布） | `utilities-v3.5` |
+| Warehouse | v4.5 | `warehouse-v4.5` |
+| Copy/Paste | v1.4 | `copy-paste-v1.4` |
 | cat-door-sounds | v1.0 | `cat-door-sounds-v1.0` |
 
-- Utilities v3.5（礦脈連鎖照原版給經驗）尚未打 tag 發布；其餘原始碼版本都已發布。
+- Utilities v3.6（礦脈連鎖照原版給經驗）尚未發布；其餘原始碼版本都已發布。
 - 發布：在 `main` 推 `<pack>-v<版本>` tag，`.github/workflows/release-pack.yml` 會驗證、打包、建 Release。**打 tag 前要先問使用者。**
 - 2026-10-06 改寫過 `main` 的最後一段歷史，拿掉所有 AI 工具署名，並刪除所有舊分支。改寫前的完整備份（含所有舊分支）在使用者電腦 `C:\Users\sunny\repo-backups\packs-minecraft-inno-before-rewrite-20261006.git`。
 
@@ -23,18 +23,20 @@
 - 驗證要用**真實情境**：3D、多種方塊、真的從 Warehouse／背包扣料、真的點 Dialog；結果讀存檔判定，不看 log 的 PASS。不要把「headless server 通過」說成「實機驗過」。
 - Warehouse 玩家會**自訂分類**，測試不能假設預設分類。
 - 介面：使用者偏好 Dialog（要乾淨、按鈕少、置中），不要加狀態文字區塊；只改使用者要求的部分。
+- 不要有載入訊息；要叫玩家開介面時寫「按 G」，不要叫玩家打 `/trigger copypaste`。
 - 大改動或設計選擇先問（可用選項讓使用者選）；小 bug 直接修。
+- **版本號一律兩段**（例如 v1.4、v4.5），不要用三段式；小修正就是下一個小版本。曾經發過的三段式版本已併入 Warehouse v4.5、Copy/Paste v1.4、Utilities v3.5。
 
 ## 3. 重要設計
 
-### Copy/Paste v1.3
-- **介面**：`/trigger copypaste`（或 G → Warehouse →「建築工具」）。全部是 function 產生的 inline Dialog，`/reload` 就會更新：主畫面 `ui/show`（9 顆）、`set 2` 調整預覽 `ui/adjust`、`set 3` 更多 `ui/more`、`set 4` 直接改原本建築 `ui/edit`。聊天教學 `/trigger cphelp` 是 1～5 步驟式。
-- **轉向／翻面以玩家面向為準**：只動預覽 `bpturnright`／`bpturnleft`／`bpflip`／`bpflipfb`／`bpreset`（翻面換算在 `state/bp_flip_axis`：F·R(k)·M = R(−k)·(F·M)）；直接改建築 `turnright`／`turnleft`／`flip`／`flipfb`。舊的 `rotate`、`mirror`、`rotate90..270`、`flipx/z` 仍可用但不宣傳。
+### Copy/Paste v1.4
+- **介面**：玩家按 G →「建築工具」（`/trigger copypaste` 也可，但訊息一律叫玩家按 G）。全部是 function 產生的 inline Dialog，`/reload` 就會更新：主畫面 `ui/show`（9 顆）、`set 2` 調整預覽 `ui/adjust`、`set 3` 更多 `ui/more`、`set 4` 直接改原本建築 `ui/edit`。聊天教學 `/trigger cphelp` 是 1～5 步驟式。
+- **轉向／翻面以玩家面向為準**：只動預覽 `bpturnright`／`bpturnleft`／`bpflip`／`bpflipfb`／`bpreset`（翻面換算在 `state/bp_flip_axis`：F·R(k)·M = R(−k)·(F·M)）；直接改建築 `turnright`／`turnleft`／`flip`／`flipfb`。舊的 `rotate`、`mirror`、`rotate90`、`rotate270`、`flipx`、`flipz` 已在 v1.4 移除（`rotate180` 保留給「原地轉 180°」）。
 - **扣料**：先扣玩家背包 0～35 格與副手（有 components 的物品不用），再扣 Warehouse。Undo／扣料失敗退料時，背包扣的退回背包（依最大堆疊算空間，塞不下退 Warehouse），Warehouse 扣的退 Warehouse 入口箱再自動分類。記錄在 `bom/items` 的 `.inv` 與 `.taken`。
 - **物品名稱**：`scripts/gen-item-names.py` 從 26.3 server `--reports` 產生 `function/names/load.mcfunction`（翻譯鍵與最大堆疊表）。**換 Minecraft 版本要重跑。**
 - 材料檢查（job 2）只報告，不扣料（`materials/check_done`；v1.1～v1.2 曾經會直接施工）。
 
-### Warehouse v4.4.2
+### Warehouse v4.5
 - 主畫面一律是 `dialog/main.json`（G 和「回主選單」相同）。
 - 選了某個箱子之後的頁面，返回會回到選它的那一頁：選箱時 `ui/back_from_code` 記到 `wh_back`，按鈕送 `wh_nav set 9` → `ui/back`；入口箱頁是 nav 17／37／57／67。`wh_back` 在 `load` 每次建立。
 - 頁面寬度一律 ≤ 390（太寬會讓整頁偏右）；三欄按鈕 120 寬。
@@ -68,9 +70,9 @@ Copy/Paste runtime 失敗時會印出 `MCCST_DIAG_DROP_<步驟>`（掉了什麼�
 ## 6. 真人 client 工具（`scripts/real-client/`，Windows）
 
 - `mcdrive.py`：Win32 `SendInput` 送鍵盤／滑鼠。打指令會先清空聊天框；指令變成一般聊天或被拒絕就丟例外。Minecraft 不在前景時拒絕送輸入。
-- `realplay.py`：`trig()` 必須看到遊戲回的「已觸發 [名稱]」；`reload_packs()` 要等到「Copy/Paste v… 已載入」；存檔用「按 Esc 暫停」（單人不能 `/save-all`）。
+- `realplay.py`：`trig()` 必須看到遊戲回的「已觸發 [名稱]」；`reload_packs()` 要看到遊戲的「重新載入中！」並用 `/datapack list enabled` 確認每個 pack 都在；`join_world()` 等「加入了遊戲」，並自動按掉實驗性設定警告頁；存檔用「按 Esc 暫停」（單人不能 `/save-all`）。
 - `mcworld.py` 讀存檔；`defaults.json` 補上 26.3 palette 省略的預設屬性。`xform.py` 算 rotate／mirror 後的預期 blockstate。
-- `stage1`～`stage11`：場地、註冊、Copy/Paste 主流程、缺料、多箱、轉向翻面、選單、名稱、只檢查、背包扣料、Warehouse 返回按鈕。各腳本測什麼見 `datapacks/copy-paste/LIVE-VALIDATION.md`。
+- `stage1`～`stage12`：場地、註冊、Copy/Paste 主流程、缺料、多箱、轉向翻面、選單、名稱、只檢查、背包扣料、Warehouse 返回按鈕、三包一起。`realplay.leave_world()`／`join_world()` 會退出／重進世界（含實驗性設定警告頁）。各腳本測什麼見 `datapacks/copy-paste/LIVE-VALIDATION.md`。
 - 要重進世界（讓 Dialog JSON 生效）：Esc →「儲存並回到標題畫面」→「單人遊戲」→ 選 MCC-Test →「進入所選的世界」。視窗 870×519 時座標約為 (433,379)、(433,267)、(283,147)、(276,427)，先截圖確認。
 
 **使用者電腦的坑：**
@@ -84,8 +86,8 @@ Copy/Paste runtime 失敗時會印出 `MCCST_DIAG_DROP_<步驟>`（掉了什麼�
 ## 7. MCC-Test 測試世界
 
 - 只能改 `%APPDATA%\.minecraft\saves\MCC-Test`（超平坦創造），不要碰其他世界；改 datapack 前先備份到 `.minecraft\backups\`。
-- 現況：61 個大箱子已註冊到正確兩半、橡木板自訂分類到 11 號箱、小屋在原位（x1000 z1040）。Warehouse 存量隨測試變動，跑需要固定存量的段落前要先補（`stage5` 會自己重新配置）。
-- 世界 datapacks 資料夾裡的 Warehouse ZIP 檔名仍是 `warehouse-v4.4.1.zip`（世界開著時檔案被鎖，只能覆蓋內容），內容已是 v4.4.2。
+- 現況：三包（Utilities、Warehouse、Copy/Paste）都已安裝；61 個大箱子已註冊到正確兩半、橡木板自訂分類到 11 號箱、小屋在原位（x1000 z1040）。使用者也會在這個世界自己玩（曾把小屋 Cut 走），測試前先確認小屋還在。Warehouse 存量隨測試變動，跑需要固定存量的段落前要先補（`stage5` 會自己重新配置）。
+- 世界開著時 datapacks 裡的 ZIP 被鎖，不能刪或改名，只能覆蓋內容；要換檔名先 `leave_world()`。
 
 ## 8. 尚未處理
 

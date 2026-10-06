@@ -1,8 +1,13 @@
-# Minecraft Copy/Paste Datapack v1.3
+# Minecraft Copy/Paste Datapack v1.4
 
 適用：Minecraft Java Edition 26.3（Data Pack 121.0）
 
 純 Vanilla datapack。操作使用 Trigger 或 Dialog。施工材料先從玩家背包（含副手）拿，不夠再從同 repo 的 Warehouse datapack 共用材料來源拿。
+
+## v1.4
+
+- 拿掉載入時與第一次使用時的聊天訊息；介面一律從 G →「建築工具」開啟。
+- 移除舊指令 `rotate`、`mirror`、`rotate90`、`rotate270`、`flipx`、`flipz`；改用以玩家面向為準的 `bpturnright`／`bpturnleft`／`bpflip`／`bpflipfb`／`bpreset` 與 `turnright`／`turnleft`／`flip`／`flipfb`（`rotate180` 保留）。
 
 ## v1.3
 
@@ -105,7 +110,7 @@ Blueprint 建立完成後可以先調整方向（只動預覽，不動原本建�
 /trigger bpreset       # 回到原本方向
 ```
 
-每次調整後聊天欄會顯示目前方向（例如「右轉 90°，並翻面」），預覽立即重建，不必重新 Copy。這個方向也套用到 Cut 之後的 `v`。舊的 `/trigger rotate`、`/trigger mirror` 仍可使用。
+每次調整後聊天欄會顯示目前方向（例如「右轉 90°，並翻面」），預覽立即重建，不必重新 Copy。這個方向也套用到 Cut 之後的 `v`。
 
 確認後：
 
@@ -152,7 +157,7 @@ Blueprint 建立完成後，不必重新用 `v` 定位就能直接微調。左�
 
 如果目前位置會覆蓋既有非空氣方塊，第一次 `/trigger build` 只顯示警告並要求再次確認，不會扣材料或修改世界；第二次施工才會進入正常材料檢查。只要 Blueprint 再次移動、旋轉、鏡像或覆蓋重算，確認狀態就會重置。
 
-`/trigger copypaste` 會開啟 Dialog 控制面板。主畫面只有常用的 Pos1、Pos2、Copy、Cut、Paste、Build、Undo；「調整預覽…」（`/trigger copypaste set 2`）有轉向、翻面、移動預覽、清除預覽與材料檢查；「更多…」（`set 3`）有 Anchor、貼上模式、直接改原本建築（`set 4`）、Redo 與指令教學。若 Warehouse 同時安裝，也可以從 Warehouse 主頁（G）直接進入建築工具。
+按 **G** →「建築工具」開啟 Dialog 控制面板（需要同時安裝 Warehouse；也可用 `/trigger copypaste`）。主畫面只有常用的 Pos1、Pos2、Copy、Cut、Paste、Build、Undo；「調整預覽…」（`/trigger copypaste set 2`）有轉向、翻面、移動預覽、清除預覽與材料檢查；「更多…」（`set 3`）有 Anchor、貼上模式、直接改原本建築（`set 4`）、Redo 與指令教學。若 Warehouse 同時安裝，也可以從 Warehouse 主頁（G）直接進入建築工具。
 
 ## 遊戲內指令教學
 
@@ -202,7 +207,6 @@ Cut 是搬移，不需要材料箱。來源先被真正移除，下一次 `v` �
 /trigger flipfb        # 原地前後翻
 ```
 
-舊的 `/trigger flipx`、`flipz`、`rotate90`、`rotate270` 仍可使用。
 
 ## Undo / Redo
 

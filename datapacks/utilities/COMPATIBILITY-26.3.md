@@ -1,4 +1,4 @@
-# Utilities v3.5 — Minecraft Java 26.3 相容性審核
+# Utilities v3.6 — Minecraft Java 26.3 相容性審核
 
 依據 [Minecraft 官方 26.3 更新說明](https://www.minecraft.net/en-us/article/minecraft-java-edition-26-3)，並以 Mojang 官方 26.3 server JAR 驗證。
 
@@ -12,7 +12,7 @@
 | Pack 格式 | `min_format`、`max_format` 原本已是 `[121,0]`，保留。 |
 | Predicate／Loot Function 格式 | `is_sneaking`、`consume_one` 已使用 `type`；未使用已移除的 reference、block_state_property 或舊條件陣列格式。 |
 | 耐久處理 | 依使用者要求，v3.4 撤回 v3.3 的耐久修正。砍樹、全部 11 種礦脈 break 函數及 `damage_one` modifier 完整還原 v3.2 原始碼（`set_damage: 1, add: true`）；移除 v3.3 新增的 tool helper。此行為會將工具修復至全滿，依要求保留。 |
-| 礦脈經驗（v3.5） | 連鎖挖掉的礦原本用 `loot spawn … mine` 掉落、`setblock air` 移除，兩者都不產生經驗。v3.5 在 7 種有經驗的礦的 `break` 函數加入 `vein/xp`，用 `random value` 抽原版範圍並以巨集 `summon experience_orb {Value:…}` 生成；主手有絲綢之觸時跳過。已在官方 26.3 server 驗證經驗球數量、數值範圍、0 不生成、絲綢之觸與鐵礦不生成。 |
+| 礦脈經驗（v3.6） | 連鎖挖掉的礦原本用 `loot spawn … mine` 掉落、`setblock air` 移除，兩者都不產生經驗。v3.5 在 7 種有經驗的礦的 `break` 函數加入 `vein/xp`，用 `random value` 抽原版範圍並以巨集 `summon experience_orb {Value:…}` 生成；主手有絲綢之觸時跳過。已在官方 26.3 server 驗證經驗球數量、數值範圍、0 不生成、絲綢之觸與鐵礦不生成。 |
 | 自動補種 | 五種既有作物及扣種子 modifier 可繼續使用；新灌木與蘑菇不屬於既有自動補種功能。 |
 | 據點、傳送、座標、Dialog | 保持所有原 storage／objective ID 與 8 個個人、8 個共用據點；只更新版本 metadata。既有函數與 macro 均以 26.3 解析。 |
 | 其他 26.3 技術變動 | 本包未定義世界生成、藥水配方、探索地圖、告示牌或陶罐資料，不需相應遷移；新床、坐墊及樓梯／半磚未改變本包使用的功能。 |
