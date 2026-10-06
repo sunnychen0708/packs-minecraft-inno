@@ -176,7 +176,9 @@ check('B independent undo',
 
 step(
     'tellraw @a[tag=mcc_mp_a] [{"text":"MCCMP DONE pass="},{"score":{"name":"#pass","objective":"mccmp"}},{"text":" fail="},{"score":{"name":"#fail","objective":"mccmp"}}]',
-    'tellraw @a[tag=mcc_mp_b] [{"text":"MCCMP DONE pass="},{"score":{"name":"#pass","objective":"mccmp"}},{"text":" fail="},{"score":{"name":"#fail","objective":"mccmp"}}]'
+    'tellraw @a[tag=mcc_mp_b] [{"text":"MCCMP DONE pass="},{"score":{"name":"#pass","objective":"mccmp"}},{"text":" fail="},{"score":{"name":"#fail","objective":"mccmp"}}]',
+    'execute if score #fail mccmp matches 0 run say MCCMP_RESULT PASS',
+    'execute unless score #fail mccmp matches 0 run say MCCMP_RESULT FAIL'
 )
 for i,commands in enumerate(steps):
     if i+1<len(steps): commands.append(f'schedule function mcc_mp_test:step_{i+1} 10t replace')
