@@ -42,7 +42,7 @@ permissions:
 
 concurrency:
   group: exaroton-innotest-control
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   control:
