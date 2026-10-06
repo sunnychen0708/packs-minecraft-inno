@@ -43,6 +43,8 @@ def check(label,*conditions):
         f'execute if score #ok mccmp matches 1 run tellraw @a[tag=mcc_mp_b] "MCCMP PASS {label}"',
         f'execute unless score #ok mccmp matches 1 run tellraw @a[tag=mcc_mp_a] "MCCMP FAIL {label}"',
         f'execute unless score #ok mccmp matches 1 run tellraw @a[tag=mcc_mp_b] "MCCMP FAIL {label}"',
+        f'execute if score #ok mccmp matches 1 run say MCCMP_CHECK PASS {label}',
+        f'execute unless score #ok mccmp matches 1 run say MCCMP_CHECK FAIL {label}',
         'execute if score #ok mccmp matches 1 run scoreboard players add #pass mccmp 1',
         'execute unless score #ok mccmp matches 1 run scoreboard players add #fail mccmp 1',
     ]
@@ -88,7 +90,9 @@ step(
     'execute if score #ok mccmp matches 1 run scoreboard players add #pass mccmp 1',
     'execute unless score #ok mccmp matches 1 run scoreboard players add #fail mccmp 1',
     'execute if score #ok mccmp matches 1 run tellraw @a[tag=mcc_mp_a] "MCCMP PASS unique mcc_id"',
-    'execute if score #ok mccmp matches 1 run tellraw @a[tag=mcc_mp_b] "MCCMP PASS unique mcc_id"'
+    'execute if score #ok mccmp matches 1 run tellraw @a[tag=mcc_mp_b] "MCCMP PASS unique mcc_id"',
+    'execute if score #ok mccmp matches 1 run say MCCMP_CHECK PASS unique_mcc_id',
+    'execute unless score #ok mccmp matches 1 run say MCCMP_CHECK FAIL unique_mcc_id'
 )
 
 # Same-tick V now creates two shared-visible Blueprints, not real blocks.
@@ -116,7 +120,9 @@ step(
     'execute if score #ok mccmp matches 1 run scoreboard players add #pass mccmp 1',
     'execute unless score #ok mccmp matches 1 run scoreboard players add #fail mccmp 1',
     'execute if score #ok mccmp matches 1 run tellraw @a[tag=mcc_mp_a] "MCCMP PASS separate work/undo lanes"',
-    'execute if score #ok mccmp matches 1 run tellraw @a[tag=mcc_mp_b] "MCCMP PASS separate work/undo lanes"'
+    'execute if score #ok mccmp matches 1 run tellraw @a[tag=mcc_mp_b] "MCCMP PASS separate work/undo lanes"',
+    'execute if score #ok mccmp matches 1 run say MCCMP_CHECK PASS separate_work_undo_lanes',
+    'execute unless score #ok mccmp matches 1 run say MCCMP_CHECK FAIL separate_work_undo_lanes'
 )
 both_trigger('undo')
 check('simultaneous undo',
@@ -130,7 +136,9 @@ step(
     'execute if score #ok mccmp matches 1 run scoreboard players add #pass mccmp 1',
     'execute unless score #ok mccmp matches 1 run scoreboard players add #fail mccmp 1',
     'execute if score #ok mccmp matches 1 run tellraw @a[tag=mcc_mp_a] "MCCMP PASS separate redo lanes"',
-    'execute if score #ok mccmp matches 1 run tellraw @a[tag=mcc_mp_b] "MCCMP PASS separate redo lanes"'
+    'execute if score #ok mccmp matches 1 run tellraw @a[tag=mcc_mp_b] "MCCMP PASS separate redo lanes"',
+    'execute if score #ok mccmp matches 1 run say MCCMP_CHECK PASS separate_redo_lanes',
+    'execute unless score #ok mccmp matches 1 run say MCCMP_CHECK FAIL separate_redo_lanes'
 )
 both_trigger('redo')
 check('simultaneous redo',
