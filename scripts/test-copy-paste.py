@@ -470,7 +470,8 @@ def check_v100_semantics(pack: Path):
     assert 'mcc_bpover_scan' in read(pack/'data/mcc/function/tick.mcfunction')
     # The command tutorial is chat-only (clickable tellraw, Utilities style), not a Dialog.
     assert not (pack/'data/mcc/dialog/tutorial.json').exists()
-    # /trigger copypaste builds status strings, then shows ui/show (macro Dialog).
+    # /trigger copypaste builds the toggle labels, then shows ui/show (macro Dialog) with no status body.
+    assert '"body"' not in read(pack/'data/mcc/function/ui/show.mcfunction')
     main_dialog=read(pack/'data/mcc/function/ui/show.mcfunction')+read(pack/'data/mcc/dialog/nudge.json')+read(pack/'data/mcc/dialog/edit.json')
     tutorial_dialog=read(pack/'data/mcc/function/ui/tutorial.mcfunction')
     assert 'function mcc:ui/show with storage mcc:ui' in read(pack/'data/mcc/function/ui/open.mcfunction')

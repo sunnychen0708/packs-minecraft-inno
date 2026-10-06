@@ -1019,10 +1019,10 @@ def integration(java: Path, server: Path):
     check(f'if blocks {hbox(HR)} {hat(HS)} all {no_items}','house_rotate90_x4_returns_original')
     lines.append(f'fill 92 79 0 143 86 47 air')
 
-    # Main UI status strings are built from the player's real state.
+    # Main UI toggle labels are built from the player's real state.
     hsel()
     run_as('mcc:ui/open')
-    check('if data storage mcc:ui {s1:"Pos1 100 80 4",s2:"Pos2 104 83 8",rot:"旋轉 0°"} if data storage mcc:ui hist','ui_status_strings')
+    check('if data storage mcc:ui {rot:"旋轉 0°",mir:"鏡像 無"} if data storage mcc:ui mode','ui_toggle_labels')
 
     # A gated trigger pressed while a material job runs is reported, not silently dropped.
     lines.extend([
