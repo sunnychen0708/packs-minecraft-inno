@@ -747,11 +747,22 @@ def run(path):
 
         def _read_file_optional(self, path):
             try:
-                return self.req(
+                data = self.req(
                     "GET",
                     f"/servers/{self._sidq()}/files/data/{migration.remote_path(path)}",
                     raw_response=True,
                 )
+                if data == b"" and str(path).endswith(".mca"):
+                    info = self.info_optional(path)
+                    size = int((info or {}).get("size") or 0)
+                    if size == 0:
+                        print(f"skipping empty region file: {path}")
+                        return None
+                    raise migration.Error(
+                        f"binary region download returned 0 bytes for {path} "
+                        f"but exaroton reports size={size}"
+                    )
+                return data
             except migration.Error as e:
                 if "HTTP 404" in str(e):
                     return None
