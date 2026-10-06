@@ -42,7 +42,9 @@ def box_around(cells, pad=1):
             for z in range(min(zs) - pad, max(zs) + pad + 1)]
 
 def no_drops(w, label):
-    items = item_entities(w)
+    # Only items this build could drop count; mobs burning at daybreak drop rotten flesh etc.
+    relevant = set(house.BOM) | set(CHEST_LOOT) | {'minecraft:stone_bricks', 'minecraft:white_wool'}
+    items = [e for e in item_entities(w) if e.get('Item', {}).get('id') in relevant]
     return record(label, not items, f'dropped={[(e.get("Item", {}).get("id"), e.get("Item", {}).get("count")) for e in items][:6]}')
 
 def chest_items_at(w, p):
