@@ -1,6 +1,6 @@
 {
-  "request_id": 1,
-  "operation": "noop",
+  "request_id": 2,
+  "operation": "status",
   "command": "",
   "pack": ""
 }
