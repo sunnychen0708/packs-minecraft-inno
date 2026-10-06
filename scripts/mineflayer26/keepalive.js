@@ -35,7 +35,8 @@ function delay (ms) { return new Promise(resolve => setTimeout(resolve, ms)) }
 function createBot (username) {
   const state = { spawned: false, ended: false, errors: [], kicked: [] }
   states.set(username, state)
-  const bot = mineflayer.createBot({ host, port, username, auth: 'offline', version: '26.3' })
+  const bot = mineflayer.createBot({ host, port, username, auth: 'offline', version: '26.3', physicsEnabled: false })
+  bot.physicsEnabled = false
   bots.push(bot)
   bot.once('spawn', () => {
     state.spawned = true
