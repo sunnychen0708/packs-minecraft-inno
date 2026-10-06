@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | Utilities | v3.4.1 | `utilities-v3.4.1` |
 | Warehouse | v4.4.2 | `warehouse-v4.4.2` |
-| Copy/Paste | v1.3.2 | `copy-paste-v1.3.1`（v1.3.2 尚未發布） |
+| Copy/Paste | v1.4 | `copy-paste-v1.3.1`（v1.4 尚未發布） |
 | cat-door-sounds | v1.0 | `cat-door-sounds-v1.0` |
 
 - 所有原始碼版本都已發布，遠端只剩 `main` 分支，沒有進行中的 PR。
@@ -25,12 +25,13 @@
 - 介面：使用者偏好 Dialog（要乾淨、按鈕少、置中），不要加狀態文字區塊；只改使用者要求的部分。
 - 不要有載入訊息；要叫玩家開介面時寫「按 G」，不要叫玩家打 `/trigger copypaste`。
 - 大改動或設計選擇先問（可用選項讓使用者選）；小 bug 直接修。
+- **版本號一律兩段**（例如 v1.4、v4.5），不要用三段式。已發布的 v4.4.1、v4.4.2、v1.3.1、v3.4.1 維持原樣。
 
 ## 3. 重要設計
 
-### Copy/Paste v1.3.2
+### Copy/Paste v1.4
 - **介面**：玩家按 G →「建築工具」（`/trigger copypaste` 也可，但訊息一律叫玩家按 G）。全部是 function 產生的 inline Dialog，`/reload` 就會更新：主畫面 `ui/show`（9 顆）、`set 2` 調整預覽 `ui/adjust`、`set 3` 更多 `ui/more`、`set 4` 直接改原本建築 `ui/edit`。聊天教學 `/trigger cphelp` 是 1～5 步驟式。
-- **轉向／翻面以玩家面向為準**：只動預覽 `bpturnright`／`bpturnleft`／`bpflip`／`bpflipfb`／`bpreset`（翻面換算在 `state/bp_flip_axis`：F·R(k)·M = R(−k)·(F·M)）；直接改建築 `turnright`／`turnleft`／`flip`／`flipfb`。舊的 `rotate`、`mirror`、`rotate90`、`rotate270`、`flipx`、`flipz` 已在 v1.3.2 移除（`rotate180` 保留給「原地轉 180°」）。
+- **轉向／翻面以玩家面向為準**：只動預覽 `bpturnright`／`bpturnleft`／`bpflip`／`bpflipfb`／`bpreset`（翻面換算在 `state/bp_flip_axis`：F·R(k)·M = R(−k)·(F·M)）；直接改建築 `turnright`／`turnleft`／`flip`／`flipfb`。舊的 `rotate`、`mirror`、`rotate90`、`rotate270`、`flipx`、`flipz` 已在 v1.4 移除（`rotate180` 保留給「原地轉 180°」）。
 - **扣料**：先扣玩家背包 0～35 格與副手（有 components 的物品不用），再扣 Warehouse。Undo／扣料失敗退料時，背包扣的退回背包（依最大堆疊算空間，塞不下退 Warehouse），Warehouse 扣的退 Warehouse 入口箱再自動分類。記錄在 `bom/items` 的 `.inv` 與 `.taken`。
 - **物品名稱**：`scripts/gen-item-names.py` 從 26.3 server `--reports` 產生 `function/names/load.mcfunction`（翻譯鍵與最大堆疊表）。**換 Minecraft 版本要重跑。**
 - 材料檢查（job 2）只報告，不扣料（`materials/check_done`；v1.1～v1.2 曾經會直接施工）。

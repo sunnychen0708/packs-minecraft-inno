@@ -1,6 +1,6 @@
-# Copy/Paste 驗證狀態（v1.3.2）
+# Copy/Paste 驗證狀態（v1.4）
 
-目前版本 **v1.3.2**。v1.3.1 拿掉載入與第一次使用時的聊天訊息，v1.3.2 移除舊的轉向／翻面指令。目標 Minecraft Java 26.3（Data Pack 121.0）。
+目前版本 **v1.4**。v1.3.1 拿掉載入與第一次使用時的聊天訊息，v1.4 移除舊的轉向／翻面指令。目標 Minecraft Java 26.3（Data Pack 121.0）。
 
 這份文件把「官方 server headless regression」和「真人 client 驗證」分開寫。兩者不能互相冒充。
 
