@@ -1,6 +1,6 @@
-# Copy/Paste 驗證狀態（v1.5）
+# Copy/Paste 驗證狀態（v1.6）
 
-目前版本 **v1.5**：清除或重建 Blueprint 時會取消還在跑的覆蓋檢查。v1.4 拿掉載入與第一次使用時的聊天訊息，並移除舊的轉向／翻面指令。目標 Minecraft Java 26.3（Data Pack 121.0）。
+目前版本 **v1.6**：載入時移除升級世界殘留的舊 trigger objective。v1.5 清除或重建 Blueprint 時會取消還在跑的覆蓋檢查。v1.4 拿掉載入與第一次使用時的聊天訊息，並移除舊的轉向／翻面指令。目標 Minecraft Java 26.3（Data Pack 121.0）。
 
 這份文件把「官方 server headless regression」和「真人 client 驗證」分開寫。兩者不能互相冒充。
 
@@ -19,9 +19,9 @@
 
 ## Headless behavioral runtime
 
-`scripts/test-copy-paste-runtime.py` 目前 **191 個動態 assertions**，涵蓋：
+`scripts/test-copy-paste-runtime.py` 目前 **193 個動態 assertions**，涵蓋：
 
-- Pos1／Pos2／Anchor／V 的 raycast；沒有自訂 Anchor 時以 Pos1 為基準（Pos1 不是最小角也精確對位）。
+- Pos1／Pos2／Anchor／V 的 raycast（V 先確認北側石頭真的放好）；沒有自訂 Anchor 時以 Pos1 為基準（Pos1 不是最小角也精確對位）。
 - 自訂 Anchor（含選區外）的 12 種 Rotate/Mirror 組合與連續大半徑 Rotate、Undo。
 - Copy → Blueprint 不改真實世界；Blueprint 預覽落在方塊角；六方向微調與覆蓋重算。
 - 微調後覆蓋重算還在跑時清除預覽或旋轉重建：重算會被取消，暫存區（跨兩個 chunk）的 forceload 全部解除。
@@ -30,6 +30,8 @@
 - Cut + V、Move、Flip、Rotate 90/180/270、五層 Undo/Redo、每種編輯的防複製快照。
 - Cut → Undo 作廢 Cut Clipboard、Redo 重建；Rotate 後 Masked 貼上；外部 Anchor Flip；長距離 Move。
 - 材料工作進行中被擋下的指令會提示；名稱表與貼上模式標籤已載入；所有 Dialog 頁面能被官方 server 解析。
+- 從 v1.3 升級的世界：舊 trigger objective（`rotate`、`mirror`、`rotate90`、`rotate270`、`flipx`、`flipz`）在 `mcc:load` 後被移除，`rotate180`、`bpturnright` 保留。
+- 開始前輪詢 `execute if loaded` 等每個 forceload 的 chunk 載入完成。2026-10-06 main 上 `raycast_v_adjacent_cell_north` 曾失敗一次：當時 runner 很慢，固定 2 秒等待結束時北側石頭所在的 chunk (0,-1) 還不保證已載入。
 
 **限制：** runtime 使用 armor stand，直接呼叫多數 `mcc:...` function，所以不能證明玩家 `/trigger` 的 tick dispatch、Dialog 實際可點與版面、準星手感、雙人時序。這些由下一節的真人 client 驗證負責。
 
