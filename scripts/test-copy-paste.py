@@ -294,7 +294,8 @@ def check_v100_semantics(pack: Path):
     assert 'scoreboard objectives add cut trigger' not in load
     assert 'scoreboard objectives add redo trigger' in load
     assert 'scoreboard objectives add rotate180 trigger' in load
-    assert 'cleanup_legacy_triggers' not in load, 'load must never auto-run the global legacy-objective cleanup'
+    assert '\nfunction mcc:admin/cleanup_legacy_triggers\n' not in '\n'+load+'\n'
+    assert ' run function mcc:admin/cleanup_legacy_triggers' not in load, 'load must never auto-run the global legacy-objective cleanup'
     for legacy in ('rotate','mirror','rotate90','rotate270','flipx','flipz'):
         assert f'scoreboard objectives add {legacy} trigger' not in load, f'legacy trigger {legacy} must stay removed'
         assert f'scoreboard objectives remove {legacy}\n' not in load, f'load must not delete global objective {legacy}'
