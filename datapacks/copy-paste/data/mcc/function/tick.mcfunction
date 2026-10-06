@@ -71,6 +71,15 @@ execute as @a[scores={bpforward=1..,mcc_matphase=0}] at @s run function mcc:blue
 execute as @a[scores={bpbackward=1..,mcc_matphase=0}] at @s run function mcc:blueprint/nudge/backward
 execute as @a[scores={bpup=1..,mcc_matphase=0}] run function mcc:blueprint/nudge/up
 execute as @a[scores={bpdown=1..,mcc_matphase=0}] run function mcc:blueprint/nudge/down
+execute as @a[scores={bpturnright=1..,mcc_matphase=0}] run function mcc:state/bp_turn_right
+execute as @a[scores={bpturnleft=1..,mcc_matphase=0}] run function mcc:state/bp_turn_left
+execute as @a[scores={bpflip=1..,mcc_matphase=0}] at @s run function mcc:state/bp_flip_lr
+execute as @a[scores={bpflipfb=1..,mcc_matphase=0}] at @s run function mcc:state/bp_flip_fb
+execute as @a[scores={bpreset=1..,mcc_matphase=0}] run function mcc:state/bp_reset
+execute as @a[scores={turnright=1..,mcc_matphase=0}] run function mcc:rotate_edit/r90
+execute as @a[scores={turnleft=1..,mcc_matphase=0}] run function mcc:rotate_edit/r270
+execute as @a[scores={flip=1..,mcc_matphase=0}] at @s run function mcc:flip/left_right
+execute as @a[scores={flipfb=1..,mcc_matphase=0}] at @s run function mcc:flip/front_back
 execute as @a[scores={mcc_bpscan=1..}] run function mcc:blueprint/scan_batch
 execute as @a[scores={mcc_bpover_scan=1}] run function mcc:blueprint/recount_batch
 execute as @a[scores={mcc_matphase=1..2}] run function mcc:materials/process_batch
@@ -108,6 +117,15 @@ scoreboard players set @a[scores={bpforward=1..}] bpforward 0
 scoreboard players set @a[scores={bpbackward=1..}] bpbackward 0
 scoreboard players set @a[scores={bpup=1..}] bpup 0
 scoreboard players set @a[scores={bpdown=1..}] bpdown 0
+scoreboard players set @a[scores={bpturnright=1..}] bpturnright 0
+scoreboard players set @a[scores={bpturnleft=1..}] bpturnleft 0
+scoreboard players set @a[scores={bpflip=1..}] bpflip 0
+scoreboard players set @a[scores={bpflipfb=1..}] bpflipfb 0
+scoreboard players set @a[scores={bpreset=1..}] bpreset 0
+scoreboard players set @a[scores={turnright=1..}] turnright 0
+scoreboard players set @a[scores={turnleft=1..}] turnleft 0
+scoreboard players set @a[scores={flip=1..}] flip 0
+scoreboard players set @a[scores={flipfb=1..}] flipfb 0
 
 scoreboard players enable @a copypaste
 scoreboard players enable @a cphelp
@@ -142,3 +160,12 @@ scoreboard players enable @a bpforward
 scoreboard players enable @a bpbackward
 scoreboard players enable @a bpup
 scoreboard players enable @a bpdown
+scoreboard players enable @a bpturnright
+scoreboard players enable @a bpturnleft
+scoreboard players enable @a bpflip
+scoreboard players enable @a bpflipfb
+scoreboard players enable @a bpreset
+scoreboard players enable @a turnright
+scoreboard players enable @a turnleft
+scoreboard players enable @a flip
+scoreboard players enable @a flipfb

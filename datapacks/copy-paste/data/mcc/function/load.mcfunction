@@ -31,6 +31,15 @@ scoreboard objectives add bpforward trigger
 scoreboard objectives add bpbackward trigger
 scoreboard objectives add bpup trigger
 scoreboard objectives add bpdown trigger
+scoreboard objectives add bpturnright trigger
+scoreboard objectives add bpturnleft trigger
+scoreboard objectives add bpflip trigger
+scoreboard objectives add bpflipfb trigger
+scoreboard objectives add bpreset trigger
+scoreboard objectives add turnright trigger
+scoreboard objectives add turnleft trigger
+scoreboard objectives add flip trigger
+scoreboard objectives add flipfb trigger
 scoreboard objectives add mcc_id dummy
 scoreboard objectives add mcc_has1 dummy
 scoreboard objectives add mcc_has2 dummy
