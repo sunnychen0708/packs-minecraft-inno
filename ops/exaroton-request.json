@@ -1,6 +1,6 @@
 {
-  "request_id": 24,
-  "operation": "bot-log-status",
+  "request_id": 25,
+  "operation": "inno-uuid-migrate-apply",
   "command": "",
   "pack": ""
 }
