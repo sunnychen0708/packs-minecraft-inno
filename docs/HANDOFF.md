@@ -1,6 +1,6 @@
 # 交接：Copy/Paste v1.3 + Warehouse v4.4.1（2026-10-06 下午更新）
 
-> 給下一位接手的人（或 Claude）。請一律用**繁體中文**與使用者溝通。
+> 給下一位接手的人。請一律用**繁體中文**與使用者溝通。
 
 ## 0b. Warehouse v4.4.2（分支 `fix/warehouse-v4.4.2-nav`）
 
@@ -12,7 +12,7 @@
 
 ## 0a. 2026-10-06 下午：PR #26 真人驗證（先讀這段）
 
-- 分支 `claude/lucid-brown-1zoaky` → PR [#26](https://github.com/sunnychen0708/packs-minecraft-inno/pull/26)（#25 已合併）。
+- PR [#26](https://github.com/sunnychen0708/packs-minecraft-inno/pull/26)（#25 已合併）。
 - **PR #26 已在真人 client 驗證通過**（結果在 `dist/real-client-pr26/`，判定一律讀存檔）：
   - Blueprint 預覽：86 個 `block_display` 逐一落在目標格的**方塊角**、blockstate 完全一致；旋轉 90／180、鏡像 X 的預覽也 86/86 對齊，且施工結果與預覽一致。
   - Build／Undo 退料／Redo 再扣、0 掉落、Warehouse 精確扣一份：全過。
@@ -50,7 +50,7 @@
 
 ## 1. 目前在哪裡
 
-- 分支：`claude/lucid-brown-1zoaky` → PR [#25](https://github.com/sunnychen0708/packs-minecraft-inno/pull/25)（base `main`）
+- PR [#25](https://github.com/sunnychen0708/packs-minecraft-inno/pull/25)（base `main`）
 - 舊 PR #23、#21 已留言關閉；#25 取代它們。
 - 版本（**都還沒打 release tag**）：
   - Copy/Paste source **v1.3**（最新已發布 ZIP 仍是 v1.2）
