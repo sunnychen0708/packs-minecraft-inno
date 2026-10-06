@@ -45,7 +45,7 @@
       "width": 150,
       "action": {
         "type": "run_command",
-        "command": "trigger wh_nav set 2"
+        "command": "trigger wh_nav set 17"
       }
     }
   ],
@@ -56,7 +56,7 @@
     "width": 200,
     "action": {
       "type": "run_command",
-      "command": "trigger wh_nav set 2"
+      "command": "trigger wh_nav set 17"
     }
   },
   "can_close_with_escape": true

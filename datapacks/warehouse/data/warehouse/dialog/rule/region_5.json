@@ -23,7 +23,7 @@
       "label": {
         "text": "51  玻璃陶瓦"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 51"
@@ -33,7 +33,7 @@
       "label": {
         "text": "52  羊毛織染"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 52"
@@ -43,7 +43,7 @@
       "label": {
         "text": "53  洞窟植物"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 53"
@@ -53,7 +53,7 @@
       "label": {
         "text": "54  洞窟晶石"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 54"
@@ -63,7 +63,7 @@
       "label": {
         "text": "55  遠古城市"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 55"
@@ -73,7 +73,7 @@
       "label": {
         "text": "56  林地生態"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 56"
@@ -83,7 +83,7 @@
       "label": {
         "text": "57  沼澤生態"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 57"
@@ -93,7 +93,7 @@
       "label": {
         "text": "58  冰雪寒帶"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 58"
@@ -103,7 +103,7 @@
       "label": {
         "text": "59  海洋生態"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 59"

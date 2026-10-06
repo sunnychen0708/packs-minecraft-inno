@@ -176,6 +176,7 @@ def check_function_references(functions: dict[str, Path]):
     direct_macro_calls = []
     empty_macro_lines = []
     unprefixed_macro_lines = []
+    empty_multi_action = []
     macro_functions = {}
 
     for fid, path in functions.items():
@@ -187,6 +188,11 @@ def check_function_references(functions: dict[str, Path]):
                 if not args:
                     empty_macro_lines.append((fid, line_no))
                 placeholders.update(args)
+            if "dialog show" in line and '"minecraft:multi_action"' in line and not re.search(r'"actions":\s*\[\s*\{', line):
+                # 26.3 refuses a multi_action Dialog without buttons, so the page never opens.
+                empty_multi_action.append((fid, line_no))
+            if line.startswith("$"):
+                pass
             elif not line.lstrip().startswith("#") and "dynamic/run_command" not in line and MACRO_ARG_RE.search(line):
                 # Without the leading $ the placeholder is printed/run literally, e.g. "$(item_id)" in chat.
                 unprefixed_macro_lines.append((fid, line_no))
@@ -220,6 +226,10 @@ def check_function_references(functions: dict[str, Path]):
     if empty_macro_lines:
         details = ", ".join(f"{src}:{line}" for src, line in empty_macro_lines[:20])
         raise ValidationError(f"Macro lines without variables: {details}")
+
+    if empty_multi_action:
+        details = ", ".join(f"{src}:{line}" for src, line in empty_multi_action[:20])
+        raise ValidationError(f"multi_action Dialogs without actions (26.3 will not open them): {details}")
 
     if unprefixed_macro_lines:
         details = ", ".join(f"{src}:{line}" for src, line in unprefixed_macro_lines[:20])
