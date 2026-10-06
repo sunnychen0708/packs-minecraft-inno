@@ -1,6 +1,6 @@
 {
-  "request_id": 33,
-  "operation": "run-copy-paste-multiplayer-test",
+  "request_id": 34,
+  "operation": "stop",
   "command": "",
   "pack": ""
 }
