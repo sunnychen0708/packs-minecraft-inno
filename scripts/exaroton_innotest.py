@@ -2,6 +2,7 @@
 """GitHub Actions control for exaroton test server; writes are hard-locked to innotest."""
 from __future__ import annotations
 
+import hashlib
 import io
 import json
 import os
@@ -10,12 +11,14 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import uuid
 import zipfile
 from pathlib import Path, PurePosixPath
 
 API = "https://api.exaroton.com/v1"
 TARGET = "innotest.exaroton.me"
 PACKS = ("utilities", "warehouse", "copy-paste")
+BOT_PLAYERS = ("SunnyChen", "penguin0531", "geena0701", "Felicitypeng")
 ROOT = Path(__file__).resolve().parents[1]
 STATUS = {0:"OFFLINE",1:"ONLINE",2:"STARTING",3:"STOPPING",4:"RESTARTING",5:"SAVING",6:"LOADING",7:"CRASHED",8:"PENDING",9:"TRANSFERRING",10:"PREPARING"}
 
@@ -96,6 +99,14 @@ class APIClient:
     def read_file(self, path):
         server = self.target(); sid = urllib.parse.quote(str(server["id"]), safe="")
         return self.req("GET", f"/servers/{sid}/files/data/{remote_path(path)}/", raw_response=True)
+
+    def read_file_optional(self, path):
+        try:
+            return self.read_file(path)
+        except Error as e:
+            if "HTTP 404" in str(e):
+                return None
+            raise
 
     def write_file(self, path, content):
         server = self.target(); server = self.verify(server["id"])
@@ -180,6 +191,110 @@ def set_offline_mode(client):
     else:
         print("innotest was already offline; left it offline")
 
+def offline_uuid(name):
+    digest = bytearray(hashlib.md5(("OfflinePlayer:" + name).encode("utf-8")).digest())
+    digest[6] = (digest[6] & 0x0F) | 0x30
+    digest[8] = (digest[8] & 0x3F) | 0x80
+    return str(uuid.UUID(bytes=bytes(digest)))
+
+def migrate_bot_identities(client):
+    current = client.target()
+    status = int(current.get("status", -1))
+    if status not in (0, 1):
+        raise Error(f"refusing identity migration while server is {STATUS.get(status, status)}")
+
+    options = client.get_config("server.properties")
+    online_mode = next((item.get("value") for item in options if isinstance(item, dict) and item.get("key") == "online-mode"), None)
+    if online_mode is not False:
+        raise Error("identity migration requires online-mode=false")
+
+    restart_after = status == 1
+    if restart_after:
+        client.action("stop")
+        print("stopping innotest for offline UUID migration")
+        wait_status(client, 0)
+
+    wl_raw = client.read_file("whitelist.json")
+    wl = json.loads(wl_raw.decode("utf-8"))
+    got_names = [str(e.get("name") or "") for e in wl if isinstance(e, dict)]
+    if len(wl) != 4 or {n.lower() for n in got_names} != {n.lower() for n in BOT_PLAYERS}:
+        raise Error(f"safety lock: whitelist must contain exactly {', '.join(BOT_PLAYERS)}")
+
+    cache_raw = client.read_file_optional("usercache.json")
+    cache = json.loads(cache_raw.decode("utf-8")) if cache_raw else []
+    ops_raw = client.read_file_optional("ops.json")
+    ops = json.loads(ops_raw.decode("utf-8")) if ops_raw else []
+    world = level_name(client.read_file("server.properties"))
+
+    stamp = int(time.time())
+    client.write_file(f"whitelist.pre-offline-migration-{stamp}.json", wl_raw)
+    if ops_raw is not None:
+        client.write_file(f"ops.pre-offline-migration-{stamp}.json", ops_raw)
+
+    summary = {}
+    for entry in wl:
+        name = str(entry.get("name") or "")
+        target_uuid = offline_uuid(name)
+        original_uuid = str(entry.get("uuid") or "")
+        candidates = []
+        for candidate in [original_uuid] + [
+            str(e.get("uuid") or "") for e in cache
+            if isinstance(e, dict) and str(e.get("name") or "").lower() == name.lower()
+        ]:
+            if candidate and candidate != target_uuid and candidate not in candidates:
+                candidates.append(candidate)
+
+        copied = []
+        specs = [
+            ("playerdata", ".dat"),
+            ("playerdata", ".dat_old"),
+            ("advancements", ".json"),
+            ("stats", ".json"),
+        ]
+        for folder, suffix in specs:
+            dest_path = f"{world}/{folder}/{target_uuid}{suffix}"
+            source_data = None
+            source_uuid = None
+            for candidate in candidates:
+                data = client.read_file_optional(f"{world}/{folder}/{candidate}{suffix}")
+                if data is not None:
+                    source_data = data
+                    source_uuid = candidate
+                    break
+            if source_data is None:
+                continue
+            existing = client.read_file_optional(dest_path)
+            if existing is not None and existing != source_data:
+                client.write_file(dest_path + f".pre-migration-{stamp}.backup", existing)
+            client.write_file(dest_path, source_data)
+            copied.append({"kind": folder + suffix, "from": source_uuid})
+
+        entry["uuid"] = target_uuid
+        summary[name] = {"offline_uuid": target_uuid, "copied": copied}
+
+    for op in ops:
+        if not isinstance(op, dict):
+            continue
+        name = str(op.get("name") or "")
+        match = next((n for n in BOT_PLAYERS if n.lower() == name.lower()), None)
+        if match:
+            op["uuid"] = offline_uuid(match)
+
+    client.write_file("whitelist.json", (json.dumps(wl, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
+    if ops_raw is not None:
+        client.write_file("ops.json", (json.dumps(ops, ensure_ascii=False, indent=2) + "\n").encode("utf-8"))
+
+    print("offline UUID migration complete:")
+    print(json.dumps(summary, ensure_ascii=False, indent=2))
+
+    if restart_after:
+        client.action("start")
+        print("starting innotest after identity migration")
+        wait_status(client, 1)
+        print("innotest is ONLINE")
+    else:
+        print("innotest was offline before migration; left offline")
+
 def run(path):
     try: r = json.loads(Path(path).read_text(encoding="utf-8"))
     except Exception as e: raise Error(f"invalid request file: {path}") from e
@@ -225,6 +340,8 @@ def run(path):
             "world": level_name(client.read_file("server.properties")),
         }
         print(json.dumps(result, ensure_ascii=False, indent=2))
+    elif op == "migrate-offline-bot-identities":
+        migrate_bot_identities(client)
     else: raise Error(f"unsupported operation: {op}")
 
 if __name__ == "__main__":
