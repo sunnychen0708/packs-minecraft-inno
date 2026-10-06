@@ -135,9 +135,11 @@ That boots all three datapacks in one Java 26.3 world and verifies representativ
 
 Some things a headless server cannot show: `/trigger` dispatch for a real player, whether Dialog buttons can be clicked and fit the window, crosshair raycasts, and Dialog JSON that only loads when a world is opened. For these, `scripts/real-client/` (Windows) drives the real Minecraft client with OS-level keyboard and mouse input in a disposable test world and judges every result from the saved world files (region, entities, command storage, player data) — never from a datapack's own PASS messages.
 
-- `mcdrive.py` sends input to the Minecraft window and refuses to type when it is not in the foreground; every command must reach the log as a real command, every trigger must be confirmed by the game's "triggered" line, and `/reload` must be followed by the pack's load message.
+- `mcdrive.py` sends input to the Minecraft window and refuses to type when it is not in the foreground; every command must reach the log as a real command, every trigger must be confirmed by the game's "triggered" line, and `/reload` must be confirmed by the game's own reload line plus `/datapack list enabled` (the packs print no load message).
 - `mcworld.py` reads the save; `defaults.json` fills in the block-state defaults that 26.3 omits from palettes.
 - `stage*.py` scripts cover Warehouse registration and sorting, Copy/Paste Build/Undo/Redo, transforms, multi-chest charging, inventory charging, Dialog navigation and more; see `datapacks/copy-paste/LIVE-VALIDATION.md` and `docs/HANDOFF.md`.
+
+GitHub Actions does not run these stages (they need a real Windows client), and for the Trigger harnesses it only checks that they can be generated; the headless runtime regression drives an armor-stand actor that calls internal functions directly. A green CI run therefore says nothing about G, Dialog clicks, real-player `/trigger` dispatch or crosshair raycasts. `scripts/test-copy-paste.py` only checks that `scripts/real-client/*.py` compile and do not wait for a load message the packs no longer print.
 
 Two simultaneous real clients have not been tested yet; when a client-only check remains, document exactly what was not covered.
 
