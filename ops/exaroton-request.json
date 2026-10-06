@@ -1,6 +1,6 @@
 {
-  "request_id": 13,
-  "operation": "bot-log-status",
+  "request_id": 14,
+  "operation": "status",
   "command": "",
   "pack": ""
 }
