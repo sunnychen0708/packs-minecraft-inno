@@ -6,12 +6,12 @@
 
 | Pack | 版本 | Release |
 | --- | --- | --- |
-| Utilities | v3.6（未發布） | `utilities-v3.5` |
+| Utilities | v3.6 | `utilities-v3.6` |
 | Warehouse | v4.5 | `warehouse-v4.5` |
 | Copy/Paste | v1.5 | `copy-paste-v1.5` |
 | cat-door-sounds | v1.0 | `cat-door-sounds-v1.0` |
 
-- Utilities v3.6（礦脈連鎖照原版給經驗）尚未發布；其餘原始碼版本都已發布。
+- 所有原始碼版本都已發布，遠端只剩 `main` 分支，沒有進行中的 PR。
 - 發布：在 `main` 推 `<pack>-v<版本>` tag，`.github/workflows/release-pack.yml` 會驗證、打包、建 Release。**打 tag 前要先問使用者。**
 - 2026-10-06 改寫過 `main` 的最後一段歷史，拿掉所有 AI 工具署名，並刪除所有舊分支。改寫前的完整備份（含所有舊分支）在使用者電腦 `C:\Users\sunny\repo-backups\packs-minecraft-inno-before-rewrite-20261006.git`。
 
@@ -72,7 +72,7 @@ Copy/Paste runtime 失敗時會印出 `MCCST_DIAG_DROP_<步驟>`（掉了什麼�
 - `mcdrive.py`：Win32 `SendInput` 送鍵盤／滑鼠。打指令會先清空聊天框；指令變成一般聊天或被拒絕就丟例外。Minecraft 不在前景時拒絕送輸入。
 - `realplay.py`：`trig()` 必須看到遊戲回的「已觸發 [名稱]」；`reload_packs()` 要看到遊戲的「重新載入中！」並用 `/datapack list enabled` 確認每個 pack 都在；`join_world()` 等「加入了遊戲」，並自動按掉實驗性設定警告頁；存檔用「按 Esc 暫停」（單人不能 `/save-all`）。
 - `mcworld.py` 讀存檔；`defaults.json` 補上 26.3 palette 省略的預設屬性。`xform.py` 算 rotate／mirror 後的預期 blockstate。
-- `stage13_vein_xp`：Utilities 礦脈連鎖給經驗（生存模式、按住蹲下＋只挖第一顆，讀玩家存檔的經驗值）。
+- `stage13_vein_xp`：Utilities 礦脈連鎖給經驗（生存模式、按住蹲下＋只挖第一顆，讀玩家存檔的經驗值）。結果見 `datapacks/utilities/COMPATIBILITY-26.3.md`。
 - `stage1`～`stage12`：場地、註冊、Copy/Paste 主流程、缺料、多箱、轉向翻面、選單、名稱、只檢查、背包扣料、Warehouse 返回按鈕、三包一起。`realplay.leave_world()`／`join_world()` 會退出／重進世界（含實驗性設定警告頁）。各腳本測什麼見 `datapacks/copy-paste/LIVE-VALIDATION.md`。
 - 要重進世界（讓 Dialog JSON 生效）：Esc →「儲存並回到標題畫面」→「單人遊戲」→ 選 MCC-Test →「進入所選的世界」。視窗 870×519 時座標約為 (433,379)、(433,267)、(283,147)、(276,427)，先截圖確認。
 
@@ -87,7 +87,7 @@ Copy/Paste runtime 失敗時會印出 `MCCST_DIAG_DROP_<步驟>`（掉了什麼�
 ## 7. MCC-Test 測試世界
 
 - 只能改 `%APPDATA%\.minecraft\saves\MCC-Test`（超平坦創造），不要碰其他世界；改 datapack 前先備份到 `.minecraft\backups\`。
-- 現況：三包已換成 Utilities v3.5、Warehouse v4.5、Copy/Paste v1.5 的內容（世界裡的檔名仍是 `copy-paste-v1.4.zip`；換包前備份在 `.minecraft\backups\MCC-Test-before-allpacks-20261006-2351`）；跑完 stage10 後 Warehouse 石磚是 56 個，比 2 份材料量多 16 個；61 個大箱子已註冊到正確兩半、橡木板自訂分類到 11 號箱、小屋在原位（x1000 z1040）。使用者也會在這個世界自己玩（曾把小屋 Cut 走），測試前先確認小屋還在。Warehouse 存量隨測試變動，跑需要固定存量的段落前要先補（`stage5` 會自己重新配置）。
+- 現況：已安裝 Utilities v3.6、Warehouse v4.5、Copy/Paste v1.5（換包前備份在 `.minecraft\backups\MCC-Test-before-allpacks-20261007-0018`）；stage13 在 x1100 z1100 挖礦，跑完會清成空氣；跑完 stage10 後 Warehouse 石磚是 56 個，比 2 份材料量多 16 個；61 個大箱子已註冊到正確兩半、橡木板自訂分類到 11 號箱、小屋在原位（x1000 z1040）。使用者也會在這個世界自己玩（曾把小屋 Cut 走），測試前先確認小屋還在。Warehouse 存量隨測試變動，跑需要固定存量的段落前要先補（`stage5` 會自己重新配置）。
 - 世界開著時 datapacks 裡的 ZIP 被鎖，不能刪或改名，只能覆蓋內容；要換檔名先 `leave_world()`。
 
 ## 8. 尚未處理
