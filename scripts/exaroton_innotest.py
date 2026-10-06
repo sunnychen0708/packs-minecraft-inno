@@ -954,6 +954,61 @@ def run(path):
         migration.Client.read_file_optional = _read_file_optional
         migration.Client.write_file = _write_file
         migration.plan_or_apply("dry-run" if op.endswith("dry-run") else "apply")
+    elif op == "inno-uuid-migrate-verify":
+        import subprocess
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", "nbtlib==1.12.1"])
+        import exaroton_inno_uuid_migrate as migration
+        original_remote_path = migration.remote_path
+        migration.remote_path = lambda p: original_remote_path(str(p).lstrip("/"))
+        verifier = migration.Client(os.environ.get("EXAROTON_API_TOKEN", ""))
+        server = verifier.require_offline()
+        manifest_name = str(r.get("command") or "").strip()
+        if not manifest_name.startswith("uuid-migration-") or not manifest_name.endswith(".json"):
+            raise Error("verification requires uuid-migration-*.json manifest name")
+        manifest_raw = verifier.read_file_optional(manifest_name)
+        if manifest_raw is None:
+            raise Error(f"migration manifest not found: {manifest_name}")
+        manifest = json.loads(manifest_raw.decode("utf-8"))
+        writes = manifest.get("writes") if isinstance(manifest, dict) else None
+        if not isinstance(writes, list):
+            raise Error("migration manifest has no writes list")
+        checked = []
+        for item in writes:
+            if not isinstance(item, dict):
+                raise Error("invalid migration manifest write entry")
+            path = str(item.get("path") or "")
+            expected = str(item.get("new_sha256") or "")
+            current = verifier.read_file_optional(path)
+            if current is None:
+                raise Error(f"verification missing written file: {path}")
+            actual = hashlib.sha256(current).hexdigest()
+            if expected and actual != expected:
+                raise Error(f"verification checksum mismatch: {path}")
+            old_refs = 0
+            if path.endswith(".mca"):
+                transformed, stats = migration.transform_region(current)
+                old_refs = int(stats.get("int_array", 0)) + int(stats.get("string", 0))
+                if transformed != current or old_refs:
+                    raise Error(f"verification found remaining offline UUID refs in {path}: {old_refs}")
+            checked.append({"path": path, "sha256_ok": True, "remaining_old_uuid_refs": old_refs})
+        cache = json.loads(verifier.read_file_optional("usercache.json").decode("utf-8"))
+        typo_left = [
+            e for e in cache
+            if isinstance(e, dict) and (
+                str(e.get("name") or "").lower() == migration.TYPO_NAME.lower()
+                or migration.normalize_uuid_string(str(e.get("uuid") or "")) == str(uuid.UUID(migration.TYPO_UUID))
+            )
+        ]
+        if typo_left:
+            raise Error("verification found penguin531 still present in usercache.json")
+        print(json.dumps({
+            "server_status": int(server.get("status", -1)),
+            "server_status_name": STATUS.get(int(server.get("status", -1)), "UNKNOWN"),
+            "manifest": manifest_name,
+            "files_verified": len(checked),
+            "penguin531_entries": 0,
+            "checked": checked,
+        }, ensure_ascii=False, indent=2))
     else: raise Error(f"unsupported operation: {op}")
 
 if __name__ == "__main__":
