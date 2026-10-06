@@ -1,6 +1,6 @@
 {
-  "request_id": 10,
-  "operation": "identity-status",
+  "request_id": 11,
+  "operation": "migrate-offline-bot-identities",
   "command": "",
   "pack": ""
 }
