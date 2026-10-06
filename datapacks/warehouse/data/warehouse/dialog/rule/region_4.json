@@ -23,7 +23,7 @@
       "label": {
         "text": "41  探索導航"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 41"
@@ -33,7 +33,7 @@
       "label": {
         "text": "42  音樂唱片"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 42"
@@ -43,7 +43,7 @@
       "label": {
         "text": "43  考古文物"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 43"
@@ -53,7 +53,7 @@
       "label": {
         "text": "44  模板旗幟"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 44"
@@ -63,7 +63,7 @@
       "label": {
         "text": "45  首領收藏"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 45"
@@ -73,7 +73,7 @@
       "label": {
         "text": "46  稀有實用"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 46"
@@ -83,7 +83,7 @@
       "label": {
         "text": "47  裝飾收藏"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 47"
@@ -93,7 +93,7 @@
       "label": {
         "text": "48  試煉密室"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 48"
@@ -103,7 +103,7 @@
       "label": {
         "text": "49  容器收納"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 49"

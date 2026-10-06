@@ -1,10 +1,18 @@
 # 交接：Copy/Paste v1.3 + Warehouse v4.4.1（2026-10-06 下午更新）
 
-> 給下一位接手的人（或 Claude）。請一律用**繁體中文**與使用者溝通。
+> 給下一位接手的人。請一律用**繁體中文**與使用者溝通。
+
+## 0b. Warehouse v4.4.2（分支 `fix/warehouse-v4.4.2-nav`）
+
+使用者只要求：修按鈕被切掉、確認返回會回上一頁；**其他介面不要動**。
+- 三欄箱子清單按鈕 150→120 寬（窄視窗右排原本超出畫面）。
+- 選了某個箱子之後的頁面，返回／取消改回「選這個箱子的那一頁」：選箱時用 `ui/back_from_code` 記到 `wh_back`（register 11-16／17、view 31-36／37、unregister 51-56／57、boxname 61-66／67），按鈕送 `wh_nav set 9` → `ui/back`。靜態 Dialog（armed_00、input_xx、view error、not_registered）直接寫目標。`wh_back` 在 `load` 每次建立，舊世界也有。
+- **順便發現的舊 bug**：箱子只有 1～8 種物品時「查看倉庫」內容頁打不開（26.3 不接受沒有按鈕的 multi_action）。改成 notice；`validate-datapack.py` 會擋沒有按鈕的 multi_action。
+- 真人 client（`stage11_wh_back.py`，滑鼠實點）：所有改過的返回、實際註冊完成／解除完成後的返回、入口箱頁、以及沒改過的整條返回鏈都正確；52 解除後已重新註冊回原箱。**靜態 Dialog 要退出再進世界才會更新**，測試時有自動重進世界。
 
 ## 0a. 2026-10-06 下午：PR #26 真人驗證（先讀這段）
 
-- 分支 `claude/lucid-brown-1zoaky` → PR [#26](https://github.com/sunnychen0708/packs-minecraft-inno/pull/26)（#25 已合併）。
+- PR [#26](https://github.com/sunnychen0708/packs-minecraft-inno/pull/26)（#25 已合併）。
 - **PR #26 已在真人 client 驗證通過**（結果在 `dist/real-client-pr26/`，判定一律讀存檔）：
   - Blueprint 預覽：86 個 `block_display` 逐一落在目標格的**方塊角**、blockstate 完全一致；旋轉 90／180、鏡像 X 的預覽也 86/86 對齊，且施工結果與預覽一致。
   - Build／Undo 退料／Redo 再扣、0 掉落、Warehouse 精確扣一份：全過。
@@ -42,7 +50,7 @@
 
 ## 1. 目前在哪裡
 
-- 分支：`claude/lucid-brown-1zoaky` → PR [#25](https://github.com/sunnychen0708/packs-minecraft-inno/pull/25)（base `main`）
+- PR [#25](https://github.com/sunnychen0708/packs-minecraft-inno/pull/25)（base `main`）
 - 舊 PR #23、#21 已留言關閉；#25 取代它們。
 - 版本（**都還沒打 release tag**）：
   - Copy/Paste source **v1.3**（最新已發布 ZIP 仍是 v1.2）

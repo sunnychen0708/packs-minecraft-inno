@@ -22,7 +22,7 @@
     "width": 200,
     "action": {
       "type": "run_command",
-      "command": "trigger wh_nav set 30"
+      "command": "trigger wh_nav set 9"
     }
   }
 }

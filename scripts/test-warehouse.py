@@ -192,6 +192,42 @@ def main() -> None:
     assert "warehouse:pick/from_item" in show_classified and "取一組" in show_classified
     assert "warehouse:pick/from_item" in show_unclassified and "取一組" in show_unclassified
 
+    # v4.4.2: three-column box lists fit a narrow window, and pages about one box go back to
+    # the list the box was picked from (wh_back via nav 9), not to the top of the section.
+    fn = PACK / "data/warehouse/function"
+    for page in list(fn.rglob("*_render.mcfunction")):
+        text = page.read_text(encoding="utf-8")
+        if '"columns":3' in text:
+            assert '"width":150' not in text, f"{page.name}: three-column buttons wider than 120"
+    nav = (fn / "ui/nav.mcfunction").read_text(encoding="utf-8")
+    assert "wh_nav matches 9 run return run function warehouse:ui/back" in nav
+    for n, dlg in ((17, "register/special"), (37, "view/special"), (57, "unregister/special"), (67, "boxname/special")):
+        assert f"wh_nav matches {n} run dialog show @s warehouse:{dlg}" in nav
+    assert "scoreboard objectives add wh_back dummy" in load
+    for f, base in (("ui/select_code", 10), ("view/dispatch", 30), ("unregister/prepare", 50), ("boxname/select", 60)):
+        text = (fn / f"{f}.mcfunction").read_text(encoding="utf-8")
+        assert f"#bbase wh_tmp {base}" in text and "warehouse:ui/back_from_code" in text, f
+    for f in ("ui/show_armed", "register/show_success", "register/show_duplicate_dialog", "unregister/show_done",
+              "boxname/show_prepare", "boxname/show_saved", "view/page/empty", "view/page/p1_last", "view/page/p2_next"):
+        assert "trigger wh_nav set 9" in (fn / f"{f}.mcfunction").read_text(encoding="utf-8"), f
+    assert '"no":{"label":{"text":"取消"}' in (fn / "unregister/confirm_52_render.mcfunction").read_text(encoding="utf-8")
+    assert "trigger wh_nav set 9" in (fn / "unregister/confirm_52_render.mcfunction").read_text(encoding="utf-8")
+    for f in ("view/error_inaccessible", "view/error_unregistered", "unregister/not_registered"):
+        assert "trigger wh_nav set 9" in (PACK / f"data/warehouse/dialog/{f}.json").read_text(encoding="utf-8"), f
+    assert "trigger wh_nav set 17" in (PACK / "data/warehouse/dialog/register/armed_00.json").read_text(encoding="utf-8")
+    assert "trigger wh_nav set 61" in (PACK / "data/warehouse/dialog/boxname/input_13.json").read_text(encoding="utf-8")
+    assert "trigger wh_nav set 67" in (PACK / "data/warehouse/dialog/boxname/input_10.json").read_text(encoding="utf-8")
+
+    # Pages stay centred only if nothing is wider than 390; 入口箱 sits under 區域 1-6;
+    # "回主選單" opens the same main page as the G quick action.
+    for page in list((PACK / "data/warehouse/dialog").rglob("*.json")) + list(fn.rglob("*.mcfunction")):
+        for w in re.findall(r'"width":\s*(\d+)', page.read_text(encoding="utf-8")):
+            assert int(w) <= 390, f"{page.name}: width {w} pushes the Dialog off centre"
+    for f in ("view/index", "register", "unregister/index", "boxname/index"):
+        acts = json.loads((PACK / f"data/warehouse/dialog/{f}.json").read_text(encoding="utf-8"))["actions"]
+        assert [a["label"]["text"] for a in acts] == [f"區域 {i}" for i in range(1, 7)] + ["入口箱"], f
+    assert "wh_nav matches 1 run dialog show @s warehouse:main" in nav
+
     print(f"PASS warehouse regression v{version}: reset/search/API/Highlight/Pick are bounded and validated")
 
 

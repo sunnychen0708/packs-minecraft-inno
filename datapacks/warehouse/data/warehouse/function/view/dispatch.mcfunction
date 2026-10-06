@@ -1,3 +1,6 @@
+scoreboard players operation #bcode wh_tmp = @s wh_view
+scoreboard players set #bbase wh_tmp 30
+function warehouse:ui/back_from_code
 execute if score @s wh_view matches 100 run function warehouse:view/open/00
 execute if score @s wh_view matches 10 run function warehouse:view/open/10
 execute if score @s wh_view matches 11 run function warehouse:view/open/11
