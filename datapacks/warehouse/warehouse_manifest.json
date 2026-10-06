@@ -1,5 +1,5 @@
 {
-  "version": "4.0",
+  "version": "4.4.2",
   "minecraft": "26.3",
   "data_pack": [
     121,
@@ -216,7 +216,15 @@
     "add_16_explorer_map_item_ids",
     "rebuild_search_index_for_v4",
     "add_non_destructive_v40_migration_marker",
-    "release_v4_0"
+    "release_v4_0",
+    "v4.1_reset_registrations_hotfix",
+    "v4.2_sharded_search_index",
+    "v4.3_shared_api_highlight_copy_paste",
+    "v4.4_pick",
+    "v4.4.1_remove_legacy_read_flow",
+    "v4.4.1_pick_message_macro_fix",
+    "v4.4.2_dialog_layout_back_navigation",
+    "v4.4.2_view_page_fix"
   ],
   "release": "stable",
   "search_index_terms": 32352,
@@ -229,5 +237,6 @@
     "warehouse:rules",
     "warehouse:migration",
     "warehouse:meta"
-  ]
+  ],
+  "history": "CHANGELOG.md"
 }

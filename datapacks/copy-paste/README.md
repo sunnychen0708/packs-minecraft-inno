@@ -113,7 +113,7 @@ Blueprint 建立完成後可以先調整方向（只動預覽，不動原本建�
 /trigger build
 ```
 
-系統先建立 BOM（Bill of Materials），再透過 Warehouse API 檢查共用庫存。只有所有材料都足夠才進入扣料與施工。
+系統先建立 BOM（Bill of Materials），再計算玩家背包與 Warehouse 的庫存。只有所有材料都足夠才進入扣料與施工。
 
 材料不足時會顯示例如：
 
@@ -221,10 +221,10 @@ Build 的 Undo/Redo 會連材料交易一起處理：Undo 在施工區仍與 Bui
 
 ## 多人
 
-- 每位玩家有獨立 Clipboard、Blueprint、BOM 與 5 層 Undo/Redo；材料來源則是全伺服器共用的 Warehouse。
+- 每位玩家有獨立 Clipboard、Blueprint、BOM 與 5 層 Undo/Redo；材料先用自己的背包，再用全伺服器共用的 Warehouse。
 - Blueprint display 所有附近玩家都看得到。
 - Warehouse 材料來源是共用財產；Copy/Paste 不再保存玩家私人材料箱座標。
-- 多人同時施工時，每次 Build/Redo 都會透過 Warehouse API 重新原子扣料；材料在前一次檢查後被其他玩家取走時，不會免費施工。
+- 多人同時施工時，每次 Build/Redo 都會重新扣料（背包，再透過 Warehouse API 原子扣除）；材料在前一次檢查後被其他玩家取走時，不會免費施工。
 
 ## 限制
 

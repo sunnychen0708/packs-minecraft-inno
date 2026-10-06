@@ -1,15 +1,22 @@
-Minecraft Java 26.3 自動分類倉庫 v4.4.1
+Minecraft Java 26.3 自動分類倉庫 v4.4.2
 
 目前版本／發布
-- 原始碼版本：v4.4.1（尚未發布）
-- 最新 Release：warehouse-v4.4
+- 版本：v4.4.2
+- 最新 Release：warehouse-v4.4.2
 - Data Pack 格式：121.0（Minecraft Java 26.3）
 
 安裝／升級
 1. 移除舊版 Minecraft_Warehouse_26.2_v*.zip、Minecraft_Warehouse_26.3_v*.zip 或舊 warehouse-v*.zip；不要同時載入兩份。
-2. 將 warehouse-v4.4.zip 放入世界 datapacks 資料夾。
-3. 執行 /reload。
-4. 既有 61 箱註冊、玩家分類覆寫、自訂箱名、scoreboard 與其他世界資料會沿用；v4.4 migration 不會重設這些資料。
+2. 將 warehouse-v4.4.2.zip 放入世界 datapacks 資料夾。
+3. 退出世界再重新進入（Dialog 介面只在進入世界時載入，只打 /reload 不會更新介面）。
+4. 既有 61 箱註冊、玩家分類覆寫、自訂箱名、scoreboard 與其他世界資料會沿用；migration 不會重設這些資料。
+
+v4.4.2：介面修正
+- 修正箱子只有 1～8 種物品時「查看倉庫」打不開內容頁的問題。
+- 三欄的箱子清單按鈕縮窄，視窗較窄時右邊那排不再超出畫面；所有頁面置中。
+- 入口箱按鈕移到區域 1～6 下方。
+- 選了某個箱子之後的頁面（箱子內容、準備註冊、註冊完成、解除註冊、箱子命名）按「返回／取消」會回到選這個箱子的那一頁。
+- 「回主選單」開啟和 G 相同的主畫面（有 Pick 與建築工具）。
 
 v4.4.1：清理
 - 移除已沒有入口的舊版「讀取箱子」流程（已由「查看倉庫」取代），玩家可見行為不變。
@@ -64,12 +71,12 @@ v4.0：Minecraft 26.3 內容
 預設開啟。
 
 舊資料相容性
-- 可從 Minecraft 26.2 v3.2、26.3 v3.3/v3.4、Warehouse v4.0～v4.3 直接升級。
+- 可從 Minecraft 26.2 v3.2、26.3 v3.3/v3.4、Warehouse v4.0～v4.4.1 直接升級。
 - 不重設 warehouse:chests：61 箱座標、dimension 與其他既有註冊 metadata 保留。
 - 不重設 warehouse:boxnames：玩家自訂箱名保留。
 - 不重設 warehouse:rules overrides：玩家新增／移動／移除的分類覆寫保留。
 - 不更名既有 scoreboard objectives；既有玩家與系統分數可繼續使用。
-- v4.0～v4.4.1 migrations 都以可再生成資料或版本 marker 為主；目前 v4.4.1 marker 不會清空既有世界資料。
+- v4.0～v4.4.2 migrations 都以可再生成資料或版本 marker 為主；目前 v4.4.2 marker 不會清空既有世界資料。
 - 搜尋索引屬可重建資料；v4.2 起使用 72-shard 建立流程。
 
 目前限制
@@ -97,4 +104,4 @@ Minecraft 26.3 新物品分類（v4.0 起）
 - python3 scripts/test-datapack-compatibility.py
 - CI 會使用官方 Minecraft 26.3 server 跑 Warehouse 專用 runtime regression。
 - CI 也會把 Utilities + Warehouse + Copy/Paste 三包同時載入，跑 all-datapacks compatibility regression。
-- warehouse-v4.4 release 已使用目前的版本／runtime gate 發布。
+- warehouse-v4.4.2 release 已使用目前的版本／runtime gate 發布。
