@@ -1,6 +1,6 @@
 {
-  "request_id": 18,
-  "operation": "whitelist-status",
+  "request_id": 16,
+  "operation": "inno-uuid-migrate-dry-run",
   "command": "",
   "pack": ""
 }
