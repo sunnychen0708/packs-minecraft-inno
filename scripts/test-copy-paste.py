@@ -13,7 +13,8 @@ RE_TRIGGER = re.compile(r'^scoreboard objectives add (\S+) trigger$', re.M)
 USER_TRIGGERS = {
     'copypaste','cphelp','pos1','pos2','anchor','c','x','v','undo','redo','mode','rotate','mirror',
     'right','left','up','down','forward','backward','flipx','flipz',
-    'rotate90','rotate180','rotate270','previewclear','build','materials','bpleft','bpright','bpforward','bpbackward','bpup','bpdown'
+    'rotate90','rotate180','rotate270','previewclear','build','materials','bpleft','bpright','bpforward','bpbackward','bpup','bpdown',
+    'bpturnright','bpturnleft','bpflip','bpflipfb','bpreset','turnright','turnleft','flip','flipfb'
 }
 
 def read(p: Path) -> str:
@@ -477,9 +478,9 @@ def check_v100_semantics(pack: Path):
     assert 'function mcc:ui/show with storage mcc:ui' in read(pack/'data/mcc/function/ui/open.mcfunction')
     for command in (
         'trigger pos1','trigger pos2','trigger anchor','trigger anchor set 2','trigger c','trigger x','trigger v',
-        'trigger rotate','trigger mirror','trigger mode','trigger build','trigger materials','trigger previewclear',
+        'trigger bpturnright','trigger bpturnleft','trigger bpflip','trigger bpflipfb','trigger bpreset','trigger mode','trigger build','trigger materials','trigger previewclear',
         'trigger undo','trigger redo','trigger cphelp','trigger wh_nav set 1','trigger copypaste',
-        'trigger bpleft set 1','trigger bpdown set 5','trigger left set 1','trigger flipx','trigger rotate90',
+        'trigger bpleft set 1','trigger bpdown set 5','trigger left set 1','trigger turnright','trigger turnleft','trigger flip','trigger flipfb',
     ):
         assert f'"command":"{command}"' in main_dialog.replace('": "','":"'), f'active Dialog missing core action: {command}'
     assert '/trigger pos1' in tutorial_dialog and '/trigger pos2' in tutorial_dialog

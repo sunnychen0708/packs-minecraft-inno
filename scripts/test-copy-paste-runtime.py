@@ -1022,7 +1022,7 @@ def integration(java: Path, server: Path):
     # Main UI toggle labels are built from the player's real state.
     hsel()
     run_as('mcc:ui/open')
-    check('if data storage mcc:ui {rot:"旋轉 0°",mir:"鏡像 無"} if data storage mcc:ui mode','ui_toggle_labels')
+    check('if data storage mcc:ui mode','ui_toggle_labels')
 
     # A gated trigger pressed while a material job runs is reported, not silently dropped.
     lines.extend([

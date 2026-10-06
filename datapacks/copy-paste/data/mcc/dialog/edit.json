@@ -7,7 +7,7 @@
     {
       "type": "minecraft:plain_message",
       "contents": {
-        "text": "直接修改真實方塊，可 Undo。移動方向依你目前面向。"
+        "text": "這裡會直接修改原本的建築（不是預覽），每一步都可 Undo。左右前後都以你目前面對的方向為準。"
       },
       "width": 360
     }
@@ -79,52 +79,67 @@
     },
     {
       "label": {
-        "text": "翻轉 X"
+        "text": "原地右轉 90°"
       },
       "width": 120,
       "action": {
         "type": "minecraft:run_command",
-        "command": "trigger flipx"
+        "command": "trigger turnright"
+      },
+      "tooltip": {
+        "text": "選區在原地順時針轉 90°"
       }
     },
     {
       "label": {
-        "text": "翻轉 Z"
+        "text": "原地左轉 90°"
       },
       "width": 120,
       "action": {
         "type": "minecraft:run_command",
-        "command": "trigger flipz"
-      }
-    },
-    {
-      "label": {
-        "text": "旋轉 90°"
+        "command": "trigger turnleft"
       },
-      "width": 120,
-      "action": {
-        "type": "minecraft:run_command",
-        "command": "trigger rotate90"
+      "tooltip": {
+        "text": "選區在原地逆時針轉 90°"
       }
     },
     {
       "label": {
-        "text": "旋轉 180°"
+        "text": "原地轉 180°"
       },
       "width": 120,
       "action": {
         "type": "minecraft:run_command",
         "command": "trigger rotate180"
+      },
+      "tooltip": {
+        "text": "選區在原地轉半圈"
       }
     },
     {
       "label": {
-        "text": "旋轉 270°"
+        "text": "原地左右翻"
       },
       "width": 120,
       "action": {
         "type": "minecraft:run_command",
-        "command": "trigger rotate270"
+        "command": "trigger flip"
+      },
+      "tooltip": {
+        "text": "選區像照鏡子一樣左右翻過來"
+      }
+    },
+    {
+      "label": {
+        "text": "原地前後翻"
+      },
+      "width": 120,
+      "action": {
+        "type": "minecraft:run_command",
+        "command": "trigger flipfb"
+      },
+      "tooltip": {
+        "text": "選區前後翻過來"
       }
     }
   ],

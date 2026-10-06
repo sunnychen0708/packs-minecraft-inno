@@ -14,6 +14,13 @@
 - 測試腳本修正：Blueprint 的旋轉／鏡像是**玩家設定，會跨 Copy 保留**；上次中斷殘留 `rotate=270`，害第一輪 Blueprint 檢查全錯。`stage3`/`stage4` 現在先 `reset_xform()`。PR #26 新加的 display 檢查原本把 `block_state` 當 dict（26.3 存檔是字串），已改用 `mcworld.fmt` 比對完整 state。
 - **多箱扣料／退料分類（`stage5_multisource.py`，真人 client 全過）**：每種材料分散在 2～6 個箱子（分類箱兩半、溢位箱 10/30/60、玩家亂塞的 12/22/25…），沒有任何一箱夠一份 BOM。Build：逐格正確、每箱只減不增、總共剛好扣一份（石磚從 4 箱、木板從 3 箱扣）。Undo：退料經入口箱 → 真實分類，**每種材料剛好回到自己的分類箱**（木板依自訂規則回 11），其他箱子一格都沒變，入口箱清空。Redo 再扣一份、Undo 再退回。結果在 `dist/real-client-multisource/`。
 - **介面**：`/trigger copypaste`（G → Warehouse → 建築工具）拿掉上方狀態文字（Pos/Anchor/剪貼簿/Blueprint/Undo 計數），只剩按鈕；旋轉／鏡像按鈕和教學註明「只轉 Blueprint，不動本體」，直接改世界的那行改叫「直接翻轉／旋轉本體」。
+- **轉向／翻面指令重新設計（使用者選定）**：全部以「玩家面對的方向」為準，不再有 X/Z、`set 10/20/30/40` 代碼。
+  - 只動預覽（也套用到 Cut 後的 V）：`bpturnright`／`bpturnleft`（順／逆時針 90°）、`bpflip`（左右翻）、`bpflipfb`（前後翻）、`bpreset`。翻面是「世界方向的翻轉疊加在目前方向上」，換算在 `state/bp_flip_axis`（F·R(k)·M = R(−k)·(F·M)）。
+  - 直接改原本建築：`turnright`／`turnleft`（= rotate_edit r90/r270）、`flip`／`flipfb`（依面向選 flip/x 或 flip/z）。舊的 `rotate`、`mirror`、`rotate90/180/270`、`flipx/z` 仍可用，但不出現在教學和 Dialog。
+  - 主 Dialog 按鈕：預覽右轉 90°／左轉 90°／左右翻／前後翻／回原方向；直接編輯子 Dialog：原地右轉／左轉／轉 180°／左右翻／前後翻。聊天教學改成 1～5 步驟式。
+  - 真人 client 驗證（`stage6_orient.py`，預期值照玩家要求一步步用世界座標推出來，不讀 pack 內部分數）：面北／東／西三組組合的預覽 86/86、施工逐格一致、0 掉落；bpreset 回原方向；直接 turnright/turnleft/flip（北、東）/flipfb 全部逐格一致、箱子內容保留、Undo 精確還原。
+  - **注意：Dialog JSON（`dialog/*.json`）是註冊表，`/reload` 不會更新，要退出再進世界。**
+- 真人工具的坑：按 T 開聊天時 T 可能被打進輸入框（曾送出「t/reload」變一般聊天、沒 reload 就開跑）。`mcdrive.chat` 現在先清空輸入框，指令變成一般聊天或「未知」就丟例外；`trig()` 必須看到「已觸發 [名稱]」；`reload_packs()` 要等到「Copy/Paste v… 已載入」。
 - 使用者待辦（他說不急）：缺料清單顯示中文名稱。
 - MCC-Test 目前狀態：乾淨。61 箱已註冊、Warehouse 剛好 2 倍 BOM、小屋與箱內物品在原位、旋轉／鏡像已重設、沒有殘留建築。備份：`backups\MCC-Test-before-e1eea6e-20261006`。
 - 注意：世界難度不是和平，晚上會生怪；把時間調成白天時殭屍曬死會掉腐肉，`no_drops` 會誤報（rotten_flesh），不是 Copy/Paste 問題。
