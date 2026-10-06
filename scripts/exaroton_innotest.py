@@ -744,6 +744,29 @@ def run(path):
         import exaroton_inno_uuid_migrate as migration
         original_remote_path = migration.remote_path
         migration.remote_path = lambda p: original_remote_path(str(p).lstrip("/"))
+
+        def _read_file_optional(self, path):
+            try:
+                return self.req(
+                    "GET",
+                    f"/servers/{self._sidq()}/files/data/{migration.remote_path(path)}",
+                    raw_response=True,
+                )
+            except migration.Error as e:
+                if "HTTP 404" in str(e):
+                    return None
+                raise
+
+        def _write_file(self, path, data):
+            self.require_offline()
+            self.req(
+                "PUT",
+                f"/servers/{self._sidq()}/files/data/{migration.remote_path(path)}",
+                raw=data,
+            )
+
+        migration.Client.read_file_optional = _read_file_optional
+        migration.Client.write_file = _write_file
         migration.plan_or_apply("dry-run" if op.endswith("dry-run") else "apply")
     else: raise Error(f"unsupported operation: {op}")
 
