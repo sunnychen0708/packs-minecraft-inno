@@ -17,7 +17,7 @@
 
 Each pack is stored as unpacked source. Release ZIPs are generated artifacts rather than development source.
 
-Copy/Paste is **v1.3** and Warehouse is **v4.4.1** (dead-code cleanup plus a fix for the Pick out-of-stock message). Copy/Paste v1.3 fixes the material check that built and charged materials when stock was complete (present since v1.1), takes materials from the player's inventory before Warehouse, adds player-relative turn/flip commands, a smaller main Dialog and item names in the player's language, and closes v1.2 duplication paths (every world-edit Undo/Redo is guarded by a post-edit snapshot, and Cut → Undo invalidates the live Cut clipboard while Redo rebuilds it), fixes rotated Masked paste, external-Anchor Flip and long-distance Move buffers. Copy/Paste v1.2 includes the external-Anchor pivot fix, persistent/reselectable selection semantics, command tutorial, and expanded 26.3 behavioral regression. Copy uses Blueprint-first, material-backed construction backed by the shared Warehouse registration data and inventory API; Undo/Redo stays five-level per player and material-aware. See its [multiplayer validation notes](datapacks/copy-paste/MULTIPLAYER-VALIDATION.md).
+Current versions: Utilities **v3.4**, Warehouse **v4.4.2**, Copy/Paste **v1.3**, cat-door-sounds **v1.0** — every source version is also the latest release. Copy/Paste builds from a Blueprint preview using materials from the player's own inventory first and the shared Warehouse second; Warehouse is the shared sorting/storage backend and its API is what Copy/Paste and Pick use. Per-pack details and version history: [Utilities](datapacks/utilities/README.md), [Warehouse](datapacks/warehouse/CHANGELOG.md), [Copy/Paste](datapacks/copy-paste/README.md).
 
 ## Installation
 
@@ -31,13 +31,7 @@ Place the downloaded ZIP directly in:
 <world>/datapacks/
 ```
 
-Then run:
-
-```mcfunction
-/reload
-```
-
-or reopen the world.
+Then leave and re-enter the world. `/reload` refreshes functions only; Dialog pages stored as JSON (for example Warehouse menus) are loaded when the world opens, so after an update always re-enter the world.
 
 ### Resource packs
 
@@ -60,10 +54,18 @@ packs-minecraft-inno/
 ├─ resourcepacks/
 │  └─ cat-door-sounds/
 ├─ scripts/
-│  ├─ build-pack.sh
-│  └─ validate-datapack.py
+│  ├─ build-pack.sh                  # pack → dist/<pack>-<version>.zip
+│  ├─ validate-datapack.py           # generic static validator (+ optional server smoke test)
+│  ├─ test-<pack>.py                 # pack-specific static regressions
+│  ├─ test-*-runtime.py              # official 26.3 server behavioural regressions
+│  ├─ test-datapack-compatibility.py # all three datapacks together
+│  ├─ gen-item-names.py              # Copy/Paste item name / stack-size tables from server reports
+│  ├─ mcc_house.py                   # shared 3D test building
+│  └─ real-client/                   # drives the real Minecraft client and judges from the save files
+├─ tests/evidence/                   # archived manual test evidence
 ├─ docs/
-│  └─ datapack-validation.md
+│  ├─ datapack-validation.md
+│  └─ HANDOFF.md                     # current state and working notes for the next maintainer
 └─ .github/
    └─ workflows/
       ├─ validate-datapacks.yml
@@ -89,12 +91,12 @@ Generated ZIP files go to `dist/`, which is ignored by Git.
 
 ```bash
 ./scripts/build-pack.sh utilities v3.4
-./scripts/build-pack.sh warehouse v4.4.1
+./scripts/build-pack.sh warehouse v4.4.2
 ./scripts/build-pack.sh copy-paste v1.3
 ./scripts/build-pack.sh cat-door-sounds v1.0
 ```
 
-The resulting ZIP is written to `dist/` with the correct Minecraft pack structure at the archive root.
+The resulting ZIP is written to `dist/` with the correct Minecraft pack structure at the archive root. `build-pack.sh` needs the `zip` command (not installed on Windows by default); the release workflow runs it on Linux.
 
 ### Validate datapacks
 

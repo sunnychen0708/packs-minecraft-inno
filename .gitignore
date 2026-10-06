@@ -2,3 +2,7 @@ dist/
 .DS_Store
 Thumbs.db
 __pycache__/
+
+# Required by scripts/real-client (block-state defaults from the 26.3 server reports);
+# re-included in case a global gitignore excludes *.json.
+!scripts/real-client/defaults.json

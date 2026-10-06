@@ -31,7 +31,7 @@
 
 CI 也會拒絕非 load/tick 世界操作 function 使用 `@a`，避免某位玩家的操作直接掃到所有玩家。Raycast 的 `mcc_temp_hit` marker 會在同一次同步操作內建立、讀取並刪除。
 
-材料庫存是例外中的「刻意共用」：Warehouse 是全服共用財產。Copy/Paste 的 Build / Redo 會在真正扣料時重新透過 Warehouse API 做 count/take；若另一位玩家先取走材料，後一個操作會因庫存不足而停止，不會免費施工。
+材料庫存是例外中的「刻意共用」：Warehouse 是全服共用財產（每位玩家自己的背包則只扣自己的）。Copy/Paste 的 Build / Redo 會在真正扣料時先扣該玩家背包，不夠的部分再透過 Warehouse API 做 count/take；若另一位玩家先取走材料，後一個操作會因庫存不足而停止，不會免費施工。
 
 ## Blueprint 可見性
 
