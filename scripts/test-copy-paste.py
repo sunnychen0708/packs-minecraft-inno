@@ -288,14 +288,18 @@ def check_multiplayer_isolation(pack: Path):
 
 def check_v100_semantics(pack: Path):
     load=read(pack/'data/mcc/function/load.mcfunction')
+    cleanup=read(pack/'data/mcc/function/admin/cleanup_legacy_triggers.mcfunction')
     tick=read(pack/'data/mcc/function/tick.mcfunction')
     assert 'scoreboard objectives add x trigger' in load
     assert 'scoreboard objectives add cut trigger' not in load
     assert 'scoreboard objectives add redo trigger' in load
     assert 'scoreboard objectives add rotate180 trigger' in load
+    assert '\nfunction mcc:admin/cleanup_legacy_triggers\n' not in '\n'+load+'\n'
+    assert ' run function mcc:admin/cleanup_legacy_triggers' not in load, 'load must never auto-run the global legacy-objective cleanup'
     for legacy in ('rotate','mirror','rotate90','rotate270','flipx','flipz'):
         assert f'scoreboard objectives add {legacy} trigger' not in load, f'legacy trigger {legacy} must stay removed'
-        assert f'scoreboard objectives remove {legacy}\n' in load, f'upgraded worlds must drop legacy trigger {legacy}'
+        assert f'scoreboard objectives remove {legacy}\n' not in load, f'load must not delete global objective {legacy}'
+        assert f'scoreboard objectives remove {legacy}\n' in cleanup, f'opt-in cleanup must remove legacy trigger {legacy}'
     assert 'scoreboard objectives add previewclear trigger' in load
     assert 'scoreboard objectives add build trigger' in load
     assert 'scores={x=1..}' in tick and 'function mcc:cut/run' in tick

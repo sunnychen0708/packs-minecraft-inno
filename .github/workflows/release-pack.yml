@@ -29,6 +29,11 @@ jobs:
           PACK="${TAG%-v*}"
           VERSION="v${TAG##*-v}"
 
+          if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+$ ]]; then
+            echo "Release versions must use exactly two numeric parts, for example v1.6 or v4.5: $VERSION"
+            exit 1
+          fi
+
           if [[ -d "datapacks/$PACK" ]]; then
             KIND="datapack"
           elif [[ -d "resourcepacks/$PACK" ]]; then
@@ -59,7 +64,7 @@ jobs:
 
           meta = json.loads((Path("datapacks") / os.environ["PACK"] / "pack.mcmeta").read_text(encoding="utf-8"))
           description = str(meta["pack"]["description"])
-          match = re.search(r"v(\d+\.\d+(?:\.\d+)?)", description)
+          match = re.search(r"v(\d+\.\d+)(?!\.\d)", description)
           if not match:
               raise SystemExit(f"pack.mcmeta description has no semantic version: {description}")
           source_version = f"v{match.group(1)}"

@@ -1117,14 +1117,18 @@ def integration(java: Path, server: Path):
     run_as('mcc:materials/busy_notice')
     check(f'if score {actor} mcc_tmp matches 0','busy_notice_quiet_without_trigger')
 
-    # A world upgraded from v1.3 still carries the removed triggers; reloading must drop them
-    # and keep the current ones.
+    # Legacy objective names are global. Reloading must preserve them because another datapack
+    # may own the same names; only the explicit admin migration may remove them.
     legacy=('rotate','mirror','rotate90','rotate270','flipx','flipz')
     lines.extend(f'scoreboard objectives add {t} trigger' for t in legacy)
     lines.append('function mcc:load')
     for t in legacy+('rotate180','bpturnright'):
         lines.append(f'execute store success score #has_{t} mccst run scoreboard players set #probe {t} 0')
-    check(' '.join(f'if score #has_{t} mccst matches 0' for t in legacy)+' if score #has_rotate180 mccst matches 1 if score #has_bpturnright mccst matches 1','legacy_trigger_objectives_removed_on_load')
+    check(' '.join(f'if score #has_{t} mccst matches 1' for t in legacy)+' if score #has_rotate180 mccst matches 1 if score #has_bpturnright mccst matches 1','legacy_trigger_objectives_preserved_on_load')
+    lines.append('function mcc:admin/cleanup_legacy_triggers')
+    for t in legacy+('rotate180','bpturnright'):
+        lines.append(f'execute store success score #after_{t} mccst run scoreboard players set #probe {t} 0')
+    check(' '.join(f'if score #after_{t} mccst matches 0' for t in legacy)+' if score #after_rotate180 mccst matches 1 if score #after_bpturnright mccst matches 1','legacy_trigger_objectives_removed_by_explicit_cleanup')
 
     lines.extend([
         f'execute if score #pass mccst matches {len(assertions)} if score #fail mccst matches 0 run say MCCST_REGRESSION_SUCCESS',

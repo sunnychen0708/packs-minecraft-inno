@@ -1,12 +1,14 @@
 # Minecraft Copy/Paste Datapack v1.6
 
+> Source: **v1.6（尚未發布）** · Latest release: **copy-paste-v1.5**
+
 適用：Minecraft Java Edition 26.3（Data Pack 121.0）
 
 純 Vanilla datapack。操作使用 Trigger 或 Dialog。施工材料先從玩家背包（含副手）拿，不夠再從同 repo 的 Warehouse datapack 共用材料來源拿。
 
 ## v1.6
 
-- 從 v1.3 以前升級的世界，載入時會移除 v1.4 已拿掉的舊 trigger objective：`rotate`、`mirror`、`rotate90`、`rotate270`、`flipx`、`flipz`（v1.4 只是不再建立它們，舊世界裡仍留著）。`rotate180` 和其他指令不受影響。
+- v1.4 已不再建立舊 trigger objective：`rotate`、`mirror`、`rotate90`、`rotate270`、`flipx`、`flipz`。這些名稱是全世界共用，Minecraft 沒有 objective ownership metadata，因此 v1.6 **不會在 `/reload` 自動刪除**，避免誤刪其他 datapack 同名 objective。從 v1.3 以前升級、且管理員確認這六個名稱沒有被其他 datapack 使用時，可手動執行 `/function mcc:admin/cleanup_legacy_triggers` 清理。`rotate180` 和其他現行指令不受影響。
 
 ## v1.5
 
