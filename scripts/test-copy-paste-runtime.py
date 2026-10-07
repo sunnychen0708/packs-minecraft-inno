@@ -32,14 +32,12 @@ def integration(java: Path, server: Path):
     packs=work/'world/datapacks'
     packs.mkdir(parents=True)
 
-    # Build the current real-player harness into the same official-server world.
+    # Build the innotest 3D-house harness into the same official-server world.
     # It is not executed headlessly, but every generated mcfunction is parsed by
-    # vanilla 26.3 so stale/invalid Trigger harness commands fail CI.
-    subprocess.run([
-        sys.executable,
-        str(ROOT/'scripts/build-copy-paste-live-test.py'),
-        '--output', str(packs/'mcc-live-test'),
-    ], check=True)
+    # vanilla 26.3 so stale/invalid harness commands fail CI before innotest.
+    subprocess.run([sys.executable, str(ROOT/'scripts/build-copy-paste-multiplayer-test.py')], check=True)
+    import shutil as _shutil
+    _shutil.copytree(ROOT/'dist/mcc-multiplayer-test', packs/'mcc-multiplayer-test')
 
     with zipfile.ZipFile(packs/'copy-paste.zip','w',zipfile.ZIP_DEFLATED) as z:
         for p in PACK.rglob('*'):
