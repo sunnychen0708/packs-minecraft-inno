@@ -32,6 +32,7 @@ Without `--report` the matcher is regenerated from the committed snapshot.
 from __future__ import annotations
 import argparse
 import heapq
+import itertools
 import json
 import re
 import shutil
@@ -83,13 +84,21 @@ def snapshot_from_report(report: Path) -> dict:
         if block in AIR:
             continue
         props = data.get('properties', {})
-        default = next(s for s in data['states'] if s.get('default')).get('properties', {})
         # Every matcher shortcut relies on states being the full Cartesian product.
-        expected = 1
-        for values in props.values():
-            expected *= len(values)
-        if len(data['states']) != expected:
-            raise SystemExit(f'{block}: {len(data["states"])} states, not a Cartesian product of {props}')
+        keys = tuple(props)
+        expected = set(itertools.product(*(props[key] for key in keys)))
+        actual = []
+        for state in data['states']:
+            values = state.get('properties', {})
+            if set(values) != set(keys):
+                raise SystemExit(f'{block}: state property keys do not match the schema')
+            actual.append(tuple(values[key] for key in keys))
+        if set(actual) != expected or len(actual) != len(expected):
+            raise SystemExit(f'{block}: states are not the exact Cartesian product of {props}')
+        defaults = [s for s in data['states'] if s.get('default')]
+        if len(defaults) != 1:
+            raise SystemExit(f'{block}: expected exactly one default state')
+        default = defaults[0].get('properties', {})
         blocks[block] = {'properties': props, 'default': default} if props else {}
     return blocks
 
