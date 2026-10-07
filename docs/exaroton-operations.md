@@ -92,22 +92,21 @@ The controller:
 5. uses `SunnyChen` as player A and `penguin0531` as player B while the other two clients remain online;
 6. runs same-tick multiplayer checks;
 7. waits for the current run's unique marker and `MCCMP_RESULT` instead of relying on a fixed sleep;
-8. removes the test area, tags, scoreboard objective, temporary harness ZIP, and reloads after completion.
+8. runs `function mcc_mp_test:cleanup` (stops the chain, takes back the house materials the test gave, clears the test area, tags and objective), deletes the temporary harness ZIP, and reloads.
 
-The regression covers:
+Each player works on their own copy of the 3D test house from `scripts/mcc_house.py` (doors, slabs, stairs, log axes, panes, torch, lanterns, chest). After every world-changing step all 100 cells of the 5x4x5 box are compared block-state-exact (and against an untouched reference house with `if blocks ... all`), every wrong cell is printed as `MCCMP_DIFF`, and the area must have no dropped items. The regression covers:
 
-- independent `pos1` / `pos2` selections;
+- real `/trigger pos1` / `pos2` rays selecting the 3D house (floor corner from below, roof corner from above);
 - independent Copy clipboards and unique `mcc_id`;
-- simultaneous Blueprint creation and clearing;
-- simultaneous Move;
-- separate work/Undo/Redo lanes;
-- simultaneous Undo and Redo;
-- simultaneous direct Rotate and isolated Undo;
-- simultaneous `x` Cut and paste;
-- A-only Undo/Redo not modifying B;
-- B independent Undo.
+- simultaneous V Blueprints: one display per house block, world untouched;
+- simultaneous Build from each player's own inventory (exactly one BOM given, exactly one consumed, Undo refunds it; the test then takes back only what is above each player's baseline);
+- simultaneous Move, Undo, Redo with separate work/Undo/Redo lanes;
+- simultaneous Rotate 90 (every rotated block state) and Undo;
+- simultaneous Flip (every mirrored block state) and Undo;
+- simultaneous `x` Cut and V paste;
+- A-only Undo/Redo not modifying B, and B independent Undo twice restoring the cut source.
 
-The final assertion sequence on 2026-10-07 produced `MCCMP_RESULT PASS` with every check above passing while four bot players were online, and the final four-bot hold completed the full five-minute session. However, the same persistent server log also contains earlier failed attempts from that debugging session. The controller now places a unique session marker before deployment/reload and rejects any current-session `/ERROR]:` line before accepting PASS. A fresh run through this stricter gate is still required before calling the live validation a clean-log pass.
+Runs before 2026-10-07's house rewrite used a 2x2 layer of full blocks and only spot-checked one or two cells; they do not count as Copy/Paste validation. The 3D house version has not run on innotest yet.
 
 ## Recommended live-test sequence
 

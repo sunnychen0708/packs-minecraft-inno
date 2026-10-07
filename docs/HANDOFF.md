@@ -15,7 +15,7 @@
 - 發布：`.github/workflows/release-pack.yml` 會驗證、打包、建 Release。兩種觸發方式：在 `main` 推 `<pack>-v<版本>` tag；或手動執行這個 workflow（`workflow_dispatch`，ref 選 `main`，輸入 `tag` 例如 `utilities-v3.7`），全部 gate 通過後由 workflow 在該 `main` commit 建 annotated tag 再建 Release。雲端 session 不能推 tag，要用手動執行。**發布前要先問使用者。**
 - 2026-10-06 曾改寫 `main` 的最後一段歷史，拿掉 AI 工具署名並刪除舊分支。改寫前完整備份在使用者電腦 `C:\Users\sunny\repo-backups\packs-minecraft-inno-before-rewrite-20261006.git`。
 - **最新 CI 狀態**：Utilities、Warehouse、Copy/Paste 專用 26.3 runtime 與三包 together compatibility 都通過。
-- **最新多人實機狀態**：2026-10-07 最後一輪 Copy/Paste assertions 在四個 Mineflayer 玩家在線時全部 PASS，最後 `MCCMP_RESULT PASS`；但同一份持久化 server log 也保留前面數次失敗（harness parser error、bot invalid move、Undo/Redo FAIL）。controller 已新增 current-session `/ERROR]:` gate；在 fresh run 再通過前，不要稱為 clean live validation。
+- **最新多人實機狀態**：innotest 多人 regression 已改成用 3D 測試房子逐格比對（見 §8），新版尚未在 innotest 跑過。之前用 2×2 完整方塊的 PASS 不算 Copy/Paste 實機驗證。
 - **最新伺服器狀態**：`innotest.exaroton.me` 已關機，最後讀到 `OFFLINE`、`0/10`、Vanilla 26.3。
 - exaroton / bot / production maintenance 的操作細節集中在 [`docs/exaroton-operations.md`](exaroton-operations.md)。
 
@@ -141,11 +141,20 @@ Copy/Paste runtime 失敗時會印 `MCCST_DIAG_DROP_<步驟>` / `MCCST_DIAG_DIFF
 2. `ops/mineflayer-request.json` 觸發四 bot 300000 ms。
 3. 等 `READY 4/4`。
 4. `ops/exaroton-request.json` 觸發 `run-copy-paste-multiplayer-test`。
-5. 要看到 `COPY_PASTE_MULTIPLAYER_LIVE_TEST=PASS` 與 `MCCMP_RESULT PASS`。
-6. 測完關 `innotest`，再讀 status 確認 `OFFLINE` / `0/10`。
+5. 要看到 `COPY_PASTE_MULTIPLAYER_LIVE_TEST=PASS` 與 `MCCMP_RESULT PASS`；失敗時 `MCCMP_DIFF` 會列出每一格錯在哪。
+6. 測完保持 `innotest` 開機（見 AGENTS.md）。
 7. 三個 ops request 全部 reset 成 `noop`。
 
-2026-10-07 最後一輪 assertions 全部 PASS，涵蓋：independent selection、clipboard、unique `mcc_id`、Blueprint、Move、work/undo lane、Undo/Redo、Rotate、Cut/Paste、A/B isolated Undo/Redo。不過同一 server log 有前面失敗的歷史紀錄；新的 current-session server-error gate 尚未在 fresh innotest session 重跑，所以目前只能稱為 final assertion pass，不是 clean live validation。
+測試內容（兩位玩家 A/B 同 tick 操作，各自一棟 `scripts/mcc_house.py` 的 3D 房子）：
+
+- 真的 `/trigger pos1`（從下方瞄地板角）／`pos2`（從上方瞄屋頂角）選 5×4×5。
+- Copy → V Blueprint：每格都有 display、數量正確、世界沒動。
+- Build：每位玩家背包放剛好一份 BOM，蓋完逐格比對、確認剛好扣一份；Undo 退回一份；測試再收回多給的（只收超過玩家原本數量的部分），玩家背包回到原狀。BOM 放不進背包就不施工，避免動到 Warehouse。
+- Move 上移、Undo、Redo、Undo；Rotate 90°（逐格比對旋轉後的 blockstate）＋ Undo；Flip（逐格比對鏡像後的 blockstate）＋ Undo；Cut → V；A 單獨 Undo/Redo、B 單獨 Undo 兩次。
+- 每一步都比對整個 5×4×5 的 100 格，並檢查沒有掉落物。
+- 結束或逾時後 runner 呼叫 `mcc_mp_test:cleanup` 清區域、收回材料、移除 tag／objective。
+
+舊版（2026-10-07 以前）只用 2×2 單層完整方塊，抽查一兩格，不能證明複製正確；那些 PASS 不算 Copy/Paste 的實機驗證。3D 房子版本尚未在 innotest 跑過。
 
 ## 9. 真人 client 工具（`scripts/real-client/`，Windows）
 

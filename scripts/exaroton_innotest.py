@@ -551,7 +551,7 @@ def run_copy_paste_multiplayer_test(client):
     # The exaroton test server can fall behind under the full datapack load.
     # Wait for the scheduled regression chain itself to finish instead of
     # assuming a fixed wall-clock duration.
-    deadline = time.time() + 180
+    deadline = time.time() + 240
     result = ""
     segment = ""
     log = ""
@@ -570,18 +570,15 @@ def run_copy_paste_multiplayer_test(client):
         time.sleep(3)
 
     # Clean the temporary harness and its reserved test state only after the
-    # current run has produced a result (or timed out).
-    cleanup = [
-        "fill -305 248 85 -270 255 130 air",
-        "tag @a remove mcc_mp_a",
-        "tag @a remove mcc_mp_b",
-        "scoreboard objectives remove mccmp",
-    ]
-    for command in cleanup:
-        try:
-            client.command(command)
-        except Error:
-            pass
+    # current run has produced a result (or timed out). The harness's own
+    # cleanup stops the chain, takes back the house materials it gave the two
+    # players (only the count above each player's baseline), clears the test
+    # area and removes its tags and objective.
+    try:
+        client.command("function mcc_mp_test:cleanup")
+        time.sleep(2)
+    except Error:
+        pass
     try:
         client.delete_file(remote_harness)
     finally:
@@ -592,7 +589,8 @@ def run_copy_paste_multiplayer_test(client):
 
     current_checks = "\n".join(
         line for line in segment.splitlines()
-        if "MCCMP_CHECK " in line or "MCCMP_RESULT " in line
+        if "MCCMP_CHECK " in line or "MCCMP_DIFF " in line
+        or "MCCMP_RESULT " in line
     )
     if current_checks:
         print(current_checks)

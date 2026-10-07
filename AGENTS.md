@@ -11,6 +11,7 @@
 
 - 一律直接在 `innotest` 測（`exaroton innotest control` workflow；需要玩家時用 Mineflayer bots）。
 - 不要在本機、暫存資料夾、另建的世界或 MCC-Test 測，除非使用者指定。
+- Copy/Paste 一律用 3D 測試房子（`scripts/mcc_house.py`：門、台階、樓梯、原木軸向、玻璃片、火把、燈籠、箱子）測，每一步逐格比對完整 blockstate。只放幾個完整方塊（例如 2×2 金／鑽石塊）的測試不算驗過。
 - CI 照常跑，但只有 innotest 的結果才算驗過；回報時附上跑了什麼、workflow run 與結果。
 
 ## innotest 保持開機
