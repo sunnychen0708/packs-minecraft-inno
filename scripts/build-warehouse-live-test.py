@@ -107,8 +107,10 @@ backup = [
 restore = [
     'execute unless data storage wtest:b all.backed run return run say WTEST_RESTORE nothing to restore',
     'function wtest:remove_tagged_all',
-    'data remove storage warehouse:chests c13',
-    'data modify storage warehouse:chests c13 set from storage wtest:b all.chests.c13',
+    *[cmd for code in ('00', '10', '11', '13') for cmd in (
+        f'data remove storage warehouse:chests c{code}',
+        f'data modify storage warehouse:chests c{code} set from storage wtest:b all.chests.c{code}',
+    )],
     'data remove storage warehouse:rules overrides',
     'data modify storage warehouse:rules overrides set from storage wtest:b all.overrides',
     *[f'data remove storage warehouse:boxnames c{c}' for c in CODES],
@@ -135,27 +137,97 @@ s.step(f'execute {OW} run fill {AREA[0]} {AREA[1]} {AREA[2]} {AREA[3]} {AREA[4]}
 s.check('backup taken', 'data storage wtest:b all{backed:1b}', 'data storage warehouse:chests c00{registered:1b,valid:1b}')
 
 if RECHECK:
+    # Targeted v4.6 release gates only: real tick sorter overflow safety,
+    # background Compact dispatch, and the player-facing main Dialog navigation.
+    IX, IY, IZ = O[0], O[1], O[2] + 6
+    OX, OY, OZ = O[0] + 4, O[1], O[2] + 6
+    MX, MY, MZ = O[0] + 8, O[1], O[2] + 6
+
+    def pair(x, y, z):
+        return [f'execute {OW} run setblock {x} {y} {z} minecraft:chest[facing=south,type=right]',
+                f'execute {OW} run setblock {x+1} {y} {z} minecraft:chest[facing=south,type=left]']
+
+    def point_box(code, x, y, z):
+        return [f'data modify storage warehouse:chests c{code}.dimension set value "minecraft:overworld"',
+                f'data modify storage warehouse:chests c{code}.a_x set value {x}',
+                f'data modify storage warehouse:chests c{code}.a_y set value {y}',
+                f'data modify storage warehouse:chests c{code}.a_z set value {z}',
+                f'data modify storage warehouse:chests c{code}.b_x set value {x+1}',
+                f'data modify storage warehouse:chests c{code}.b_y set value {y}',
+                f'data modify storage warehouse:chests c{code}.b_z set value {z}',
+                f'data modify storage warehouse:chests c{code}.registered set value 1b',
+                f'data modify storage warehouse:chests c{code}.valid set value 1b']
+
     s.speed(True)
-    s.step(f'execute as {A} run function warehouse:search/run {{q:"鵝卵石"}}')
-    s.check('search by Chinese name lists the item (鵝卵石 matches 8 items)',
-            # the result ids are consumed while the list renders; 8 = every 鵝卵石 index hit, cobblestone included
-            ('data storage warehouse:runtime search{query:"鵝卵石",total:8}', '鵝卵石 did not return its 8 index hits'))
-    s.step(*count('minecraft:cobblestone', '#a1'),
-           'execute store result storage wtest:arg big.count int 1 run scoreboard players add #a1 htest 1',
-           'data modify storage wtest:arg big.item_id set value "minecraft:cobblestone"',
-           'function warehouse:api/take_item with storage wtest:arg big',
-           # keep the take result: count_item below overwrites warehouse:api result
-           'data modify storage wtest:arg take set from storage warehouse:api result',
-           *count('minecraft:cobblestone', '#a2'), 'scoreboard players remove #a1 htest 1')
-    s.check('take_item over the stock is refused', 'data storage wtest:arg take{ok:0b}')
-    s.check('take_item over the stock reports insufficient_stock', 'data storage wtest:arg take{error:"insufficient_stock"}')
-    s.check('take_item over the stock takes nothing', 'score #a2 htest = #a1 htest')
-    s.step('function warehouse:api/material_sources/refresh',
-           'execute store result score #msc htest run data get storage warehouse:api material_source_count')
-    s.check('material sources list the registered boxes within the 64 limit',
-            'data storage warehouse:api meta{material_source_limit:64}', 'data storage warehouse:api material_sources[0]',
-            'score #msc htest matches 1..64')
+    s.step('function warehouse:system/off',
+           *pair(IX, IY, IZ), *pair(OX, OY, OZ), *pair(MX, MY, MZ),
+           *point_box('00', IX, IY, IZ), *point_box('10', OX, OY, OZ), *point_box('11', MX, MY, MZ),
+           'function warehouse:system/on')
+
+    # 1) Full main box must route to its region overflow box.
+    fill_main = [
+        f'execute {OW} run item replace block {x} {MY} {MZ} container.{slot} with minecraft:stone 64'
+        for x in (MX, MX + 1) for slot in range(27)
+    ]
+    s.step(*fill_main,
+           f'execute {OW} run item replace block {IX} {IY} {IZ} container.0 with minecraft:diamond[minecraft:custom_data={{wtest:1b,i:90}}] 1')
+    overflow_item = (f'in minecraft:overworld if data block {OX} {OY} {OZ} '
+                     'Items[{id:"minecraft:diamond",components:{"minecraft:custom_data":{wtest:1b,i:90}}}]')
+    overflow_item_b = (f'in minecraft:overworld if data block {OX+1} {OY} {OZ} '
+                       'Items[{id:"minecraft:diamond",components:{"minecraft:custom_data":{wtest:1b,i:90}}}]')
+    s.wait('full main box routes to overflow',
+           [f'in minecraft:overworld unless data block {IX} {IY} {IZ} Items[{{components:{{"minecraft:custom_data":{{wtest:1b,i:90}}}}}}]'],
+           tries=400)
+    s.step('scoreboard players set #ovgot htest 0',
+           f'execute {overflow_item} run scoreboard players set #ovgot htest 1',
+           f'execute {overflow_item_b} run scoreboard players set #ovgot htest 1')
+    s.check('full main box sends the item to its overflow box', 'score #ovgot htest matches 1')
+
+    # 2) Full main + full overflow must preserve the source item in the entry box.
+    s.step(f'execute {OW} run fill {IX} {IY} {IZ} {MX+1} {MY} {MZ} air',
+           *pair(IX, IY, IZ), *pair(OX, OY, OZ), *pair(MX, MY, MZ))
+    fill_main_and_overflow = [
+        f'execute {OW} run item replace block {x} {IY} {IZ if x in (IX, IX+1) else (OZ if x in (OX, OX+1) else MZ)} container.{slot} with minecraft:stone 64'
+        for x in (OX, OX + 1, MX, MX + 1) for slot in range(27)
+    ]
+    s.step(*fill_main_and_overflow,
+           f'execute {OW} run item replace block {IX} {IY} {IZ} container.0 with minecraft:diamond[minecraft:custom_data={{wtest:1b,i:91}}] 1',
+           delay=400)
+    s.check('full main and overflow keep the item in the entry box',
+            f'in minecraft:overworld if data block {IX} {IY} {IZ} Items[{{id:"minecraft:diamond",components:{{"minecraft:custom_data":{{wtest:1b,i:91}}}}}}]')
+
+    # 3) Exercise Compact through warehouse:tick, not by directly calling compact/slot.
+    s.step(f'execute {OW} run fill {IX} {IY} {IZ} {MX+1} {MY} {MZ} air',
+           *pair(IX, IY, IZ), *pair(OX, OY, OZ), *pair(MX, MY, MZ),
+           f'execute {OW} run item replace block {MX} {MY} {MZ} container.0 with minecraft:cobblestone[minecraft:custom_data={{wtest:1b,i:92}}] 40',
+           f'execute {OW} run item replace block {MX} {MY} {MZ} container.1 with minecraft:cobblestone[minecraft:custom_data={{wtest:1b,i:92}}] 30',
+           'scoreboard players set #compact_code wh_tmp 2',
+           'scoreboard players set #compact_slot wh_tmp 1')
+    s.wait('background compact merges partial stacks',
+           [f'in minecraft:overworld if data block {MX} {MY} {MZ} Items[{{Slot:0b,id:"minecraft:cobblestone",count:64}}]',
+            f'in minecraft:overworld if data block {MX} {MY} {MZ} Items[{{Slot:1b,id:"minecraft:cobblestone",count:6}}]'],
+           tries=200)
+    s.check('background compact preserves the exact total',
+            f'in minecraft:overworld if data block {MX} {MY} {MZ} Items[{{Slot:0b,id:"minecraft:cobblestone",count:64}}]',
+            f'in minecraft:overworld if data block {MX} {MY} {MZ} Items[{{Slot:1b,id:"minecraft:cobblestone",count:6}}]')
+
+    # 4) Basic G/main navigation: require actual show_dialog packets received by the bot.
+    s.speed(False)
+    s.dialog('a', 'trigger wh_nav set 1', 'G/main Warehouse Dialog opens')
+    s.dialog('a', 'trigger wh_action set 2', 'main to box management Dialog')
+    s.dialog('a', 'trigger wh_nav set 1', 'box management returns to main Dialog')
+    s.dialog('a', 'trigger wh_action set 7', 'main to warehouse view Dialog')
+    s.dialog('a', 'trigger wh_nav set 1', 'warehouse view returns to main Dialog')
+    s.dialog('a', 'trigger wh_nav set 40', 'main to classification Dialog')
+    s.dialog('a', 'trigger wh_nav set 1', 'classification returns to main Dialog')
+    s.dialog('a', 'trigger wh_action set 6', 'main to help Dialog')
+    s.dialog('a', 'trigger wh_nav set 1', 'help returns to main Dialog')
+
     s.step('function wtest:restore', delay=4)
+    s.check('release-gate test restored registrations and removed fixtures',
+            'data storage warehouse:chests c00',
+            'data storage warehouse:chests c10',
+            'data storage warehouse:chests c11')
 else:
     # ---- 1. register / unregister by right-click (real bot) ------------------------
     RX, RY, RZ = O[0] + 6, O[1], O[2] + 4
