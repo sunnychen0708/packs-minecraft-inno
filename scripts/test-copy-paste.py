@@ -70,8 +70,12 @@ def check_trigger_lifecycle(pack: Path):
 
 def check_upgrade_and_mode(pack: Path):
     tick=read(pack/'data/mcc/function/tick.mcfunction')
-    for objective,valid in [('mcc_rot','0..3'),('mcc_mir','0..2'),('mcc_usel','0..1'),('mcc_cliptype','0..2'),('mcc_redo','0..1'),('mcc_ucnt','0..5'),('mcc_uhead','0..5'),('mcc_rcnt','0..5'),('mcc_rhead','0..5'),('mcc_bpscan','0..1'),('mcc_bpactive','0..1'),('mcc_bpready','0..1'),('mcc_bpbad','0..1'),('mcc_matphase','0..2'),('mcc_matleft','0..'),('mcc_bpover','0..'),('mcc_buildconfirm','0..1'),('mcc_bpover_scan','0..1'),('mcc_bpoindex','0..')]:
+    for objective,valid in [('mcc_rot','0..3'),('mcc_mir','0..2'),('mcc_usel','0..1'),('mcc_cliptype','0..2'),('mcc_redo','0..1'),('mcc_ucnt','0..5'),('mcc_uhead','0..5'),('mcc_rcnt','0..5'),('mcc_rhead','0..5'),('mcc_bpscan','0..1'),('mcc_bpactive','0..1'),('mcc_bpready','0..1'),('mcc_bpbad','0..1'),('mcc_matphase','0..2'),('mcc_matleft','0..'),('mcc_bpover','0..'),('mcc_buildconfirm','0..1'),('mcc_bpover_scan','0..1'),('mcc_bpoindex','0..'),('mcc_canchor','0..1')]:
         migration=f'execute as @a unless score @s {objective} matches {valid} run scoreboard players set @s {objective} 0'
+        assert migration in tick, f'missing non-destructive upgrade for {objective}'
+        assert tick.index(migration)<tick.index('scores={copypaste='), 'migrate before dispatch'
+    for objective in ('mcc_bpoffx','mcc_bpoffz'):
+        migration=f'execute as @a unless score @s {objective} = @s {objective} run scoreboard players set @s {objective} 0'
         assert migration in tick, f'missing non-destructive upgrade for {objective}'
         assert tick.index(migration)<tick.index('scores={copypaste='), 'migrate before dispatch'
     mode=read(pack/'data/mcc/function/mode_toggle.mcfunction').splitlines()
@@ -175,9 +179,8 @@ def check_flip_anchor_formula(pack: Path):
     transform=read(pack/'data/mcc/function/rotate_edit/run.mcfunction')
     place=read(pack/'data/mcc/function/rotate_edit/place_overworld.mcfunction')
 
-    # No custom Anchor keeps the existing in-place bounding-box Flip behavior.
-    # With a custom Anchor, route through the fixed-pivot transform engine instead
-    # of mirroring/moving the Anchor itself.
+    # Direct Flip without a custom Anchor is an in-place bounding-box mirror.
+    # Blueprint Flip must match it; a custom Anchor keeps fixed-pivot behavior.
     assert 'mcc_hasa matches 1 run return run function mcc:flip/x_anchor' in x
     assert 'mcc_hasa matches 1 run return run function mcc:flip/z_anchor' in z
     assert 'mcc_anx = @s mcc_tmp' not in x
@@ -186,6 +189,15 @@ def check_flip_anchor_formula(pack: Path):
     assert 'mcc_erot 0' in za and 'mcc_emir 2' in za and 'left_right' in za
     assert 'prepare_r0_m1' in transform and 'prepare_r0_m2' in transform
     assert '$(erot) $(emir)' in place
+    bpflip=read(pack/'data/mcc/function/state/bp_flip_axis.mcfunction')
+    assert 'mcc_bpoffx' in bpflip and 'mcc_bpoffz' in bpflip
+    assert 'function mcc:paste/prepare_transform' in bpflip
+    copyrun=read(pack/'data/mcc/function/copy/run.mcfunction')
+    assert 'mcc_canchor = @s mcc_hasa' in copyrun
+    direct=read(pack/'data/mcc/function/blueprint/init_direct.mcfunction')
+    transformed=read(pack/'data/mcc/function/blueprint/init_transformed.mcfunction')
+    assert 'mcc_bptx0 += @s mcc_bpoffx' in direct and 'mcc_bptz0 += @s mcc_bpoffz' in direct
+    assert 'mcc_dstx += @s mcc_bpoffx' in transformed and 'mcc_dstz += @s mcc_bpoffz' in transformed
 
     rng=random.Random(401)
     for _ in range(2000):
