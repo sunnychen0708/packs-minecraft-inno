@@ -268,13 +268,13 @@ def inno_identity_status(token):
     ops = _json_file(client, sid, "ops.json")
 
     playerdata = _uuid_files(
-        client.file_info_optional(sid, f"{world}/playerdata"), ".dat"
+        client.file_info_optional(sid, f"{world}/players/data"), ".dat"
     )
     advancements = _uuid_files(
-        client.file_info_optional(sid, f"{world}/advancements"), ".json"
+        client.file_info_optional(sid, f"{world}/players/advancements"), ".json"
     )
     stats = _uuid_files(
-        client.file_info_optional(sid, f"{world}/stats"), ".json"
+        client.file_info_optional(sid, f"{world}/players/stats"), ".json"
     )
 
     known = {}
@@ -635,10 +635,10 @@ def migrate_bot_identities(client):
 
         copied = []
         specs = [
-            ("playerdata", ".dat"),
-            ("playerdata", ".dat_old"),
-            ("advancements", ".json"),
-            ("stats", ".json"),
+            ("players/data", ".dat"),
+            ("players/data", ".dat_old"),
+            ("players/advancements", ".json"),
+            ("players/stats", ".json"),
         ]
         for folder, suffix in specs:
             dest_path = f"{world}/{folder}/{target_uuid}{suffix}"
