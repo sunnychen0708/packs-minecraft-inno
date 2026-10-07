@@ -657,12 +657,11 @@ def run_blueprint_matcher_live_test(client):
         client.command(f"say {run_marker} START")
         time.sleep(1)
         client.command("function mcc_bp_live:start")
-        # Progress probe: shows in the log whether the scheduled batch chain is running.
+        # Read-only progress probes; never cancel the pending first batch here.
         time.sleep(10)
         for command in ("tick query",
                         "scoreboard players get #states mccbp",
-                        "data get storage mcc_bp_live:t want",
-                        "schedule clear mcc_bp_live:batch_0"):
+                        "data get storage mcc_bp_live:t want"):
             client.command(command)
             time.sleep(1)
 
