@@ -234,6 +234,18 @@ class InnoReadOnlyClient:
                 return None
             raise
 
+    def read_binary_file_optional(self, sid, path):
+        """Binary-safe read (no trailing slash), like APIClient.read_binary_file_optional."""
+        sid_q = urllib.parse.quote(str(sid), safe="")
+        try:
+            return self.get_raw(
+                f"/servers/{sid_q}/files/data/{remote_path(str(path).lstrip('/'))}"
+            )
+        except Error as e:
+            if "HTTP 404" in str(e):
+                return None
+            raise
+
     def file_info_optional(self, sid, path):
         sid_q = urllib.parse.quote(str(sid), safe="")
         try:
@@ -396,6 +408,99 @@ def inno_world_layout_status(token):
             "isDirectory": info.get("isDirectory"),
             "children": children,
         }
+    return result
+
+
+WAREHOUSE_BOX_FIELDS = ("dimension", "a_x", "a_y", "a_z", "b_x", "b_y", "b_z")
+
+
+def command_storage_contents(raw):
+    """Parse a 26.3 data/<namespace>/command_storage.dat into its storage contents."""
+    import gzip
+    import nbtlib
+
+    data = gzip.decompress(raw) if raw[:2] == b"\x1f\x8b" else raw
+    root = nbtlib.File.parse(io.BytesIO(data))
+    if "data" not in root and "" in root:
+        root = root[""]
+    return root["data"]["contents"]
+
+
+def _tag_type(value):
+    return type(value).__name__
+
+
+def warehouse_registration_report(contents):
+    """Summarize warehouse:chests without dumping the stored values."""
+    chests = contents.get("chests") or {}
+    boxes, incomplete = {}, []
+    for code in sorted(key for key in chests if key[:1] == "c" and key[1:].isdigit()):
+        box = chests[code]
+        registered = int(box.get("registered", 0)) == 1
+        missing = [field for field in WAREHOUSE_BOX_FIELDS if field not in box]
+        types = sorted({_tag_type(box[field]) for field in WAREHOUSE_BOX_FIELDS[1:] if field in box})
+        boxes[code] = {
+            "registered": registered,
+            "valid": int(box.get("valid", 0)) == 1,
+            "missing": missing,
+            "coordinate_types": types,
+            "dimension": str(box["dimension"]) if "dimension" in box else None,
+        }
+        if registered and missing:
+            incomplete.append(code)
+    meta = contents.get("meta") or {}
+    forceload = contents.get("forceload") or {}
+    return {
+        "box_entries": len(boxes),
+        "registered": sum(1 for box in boxes.values() if box["registered"]),
+        "registered_missing_fields": incomplete,
+        "registered_non_int_coordinates": [
+            code for code, box in boxes.items()
+            if box["registered"] and any(t != "Int" for t in box["coordinate_types"])
+        ],
+        "dimensions": sorted({box["dimension"] for box in boxes.values() if box["registered"] and box["dimension"]}),
+        "meta_flags": sorted(str(key) for key in meta),
+        "forceload_records": len(forceload.get("chunks") or []),
+        "boxes": boxes,
+    }
+
+
+def utilities_waypoint_report(contents):
+    """Count saved Utilities locations and flag any whose x/y/z is not an Int tag."""
+    locations, odd = 0, []
+
+    def walk(value, path):
+        nonlocal locations
+        if not hasattr(value, "items"):
+            return
+        if all(axis in value for axis in ("x", "y", "z")):
+            locations += 1
+            types = {axis: _tag_type(value[axis]) for axis in ("x", "y", "z")}
+            if any(t != "Int" for t in types.values()):
+                odd.append({"path": path, "types": types})
+            return
+        for key, child in value.items():
+            walk(child, f"{path}.{key}" if path else str(key))
+
+    for storage in ("players", "shared"):
+        walk(contents.get(storage) or {}, storage)
+    return {"locations": locations, "non_int_locations": odd}
+
+
+def inno_storage_status(token):
+    """Read-only: summarize production Warehouse registrations and Utilities waypoint coordinate types."""
+    client = InnoReadOnlyClient(token)
+    server = client.target()
+    sid = server["id"]
+    properties = client.read_file_optional(sid, "server.properties")
+    if properties is None:
+        raise Error("inno server.properties not found")
+    world = level_name(properties)
+    result = {"world": world, "server_status": STATUS.get(int(server.get("status", -1)), "UNKNOWN")}
+    for name, report in (("warehouse", warehouse_registration_report), ("sunny_nav", utilities_waypoint_report)):
+        path = f"{world}/data/{name}/command_storage.dat"
+        raw = client.read_binary_file_optional(sid, path)
+        result[name] = {"path": path, "missing": True} if raw is None else {"path": path, **report(command_storage_contents(raw))}
     return result
 
 
@@ -1366,6 +1471,8 @@ def run(path):
         print("\n".join(selected[-200:]))
     elif op == "inno-identity-status":
         print(json.dumps(inno_identity_status(os.environ.get("EXAROTON_API_TOKEN", "")), ensure_ascii=False, indent=2))
+    elif op == "inno-storage-status":
+        print(json.dumps(inno_storage_status(os.environ.get("EXAROTON_API_TOKEN", "")), ensure_ascii=False, indent=2))
     elif op == "inno-world-layout-status":
         print(json.dumps(inno_world_layout_status(os.environ.get("EXAROTON_API_TOKEN", "")), ensure_ascii=False, indent=2))
     elif op in {"inno-uuid-migrate-dry-run", "inno-uuid-migrate-apply"}:

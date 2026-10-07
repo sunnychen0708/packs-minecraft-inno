@@ -225,6 +225,40 @@ def test_innotest_empty_region_is_skipped_safely():
     assert result["uuid_references_rewritten"] == 2
 
 
+def storage_dat(contents):
+    root = nbtlib.File({"data": nbtlib.Compound({"contents": nbtlib.Compound(contents)}), "DataVersion": nbtlib.Int(5023)})
+    out = io.BytesIO()
+    with gzip.GzipFile(fileobj=out, mode="wb") as handle:
+        root.write(handle)
+    return out.getvalue()
+
+
+def test_inno_storage_reports():
+    from nbtlib.tag import Byte, Compound, Double, Int
+
+    box = {"registered": Byte(1), "valid": Byte(1), "dimension": String("minecraft:overworld"),
+           **{f"{h}_{a}": Int(1) for h in "ab" for a in "xyz"}}
+    legacy = {"registered": Byte(1), "valid": Byte(1), "a_x": Int(1), "a_y": Int(2), "a_z": Int(3)}
+    raw = storage_dat({
+        "chests": Compound({"c00": Compound(box), "c10": Compound(legacy), "c11": Compound({"registered": Byte(0)})}),
+        "meta": Compound({"v46": Byte(1)}),
+    })
+    report = innotest.warehouse_registration_report(innotest.command_storage_contents(raw))
+    assert report["registered"] == 2
+    assert report["registered_missing_fields"] == ["c10"]
+    assert report["boxes"]["c10"]["missing"] == ["dimension", "b_x", "b_y", "b_z"]
+    assert report["meta_flags"] == ["v46"]
+
+    point = lambda x: Compound({"x": x, "y": Int(64), "z": Int(-3), "set": Byte(1)})
+    raw = storage_dat({
+        "players": Compound({"p1": Compound({"back": point(Int(5)), "custom": Compound({"s1": point(Double(5.5))})})}),
+        "shared": Compound({"s1": point(Int(1))}),
+    })
+    report = innotest.utilities_waypoint_report(innotest.command_storage_contents(raw))
+    assert report["locations"] == 3
+    assert report["non_int_locations"] == [{"path": "players.p1.custom.s1", "types": {"x": "Double", "y": "Int", "z": "Int"}}]
+
+
 def main():
     tests = [
         test_sum_stats,
@@ -233,6 +267,7 @@ def main():
         test_directional_player_nbt_uuid_rewrite,
         test_innotest_entity_rewrite_backs_up_and_is_idempotent,
         test_innotest_empty_region_is_skipped_safely,
+        test_inno_storage_reports,
     ]
     for test in tests:
         test()
