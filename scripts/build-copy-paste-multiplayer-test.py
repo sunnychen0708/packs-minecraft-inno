@@ -52,7 +52,7 @@ def check(label,*conditions):
 
 # Two visually distinct source fixtures and two target areas.
 step(
-    'execute in minecraft:overworld run fill -305 248 85 -270 255 130 air',
+    'execute in minecraft:overworld run fill -305 248 85 -245 255 130 air',
     'execute in minecraft:overworld run setblock -300 250 90 gold_block',
     'execute in minecraft:overworld run setblock -298 250 90 diamond_block',
     'execute in minecraft:overworld run setblock -300 250 91 emerald_block',
@@ -224,6 +224,59 @@ check('B independent undo',
       'in minecraft:overworld if block -280 250 90 gold_block',
       'in minecraft:overworld if block -280 250 120 air')
 
+# Undo guard ignores block-state-only changes while preserving block-ID / Block Entity safety.
+step(
+    'execute in minecraft:overworld run setblock -260 250 90 oak_door[half=lower,facing=north,hinge=left,open=false,powered=false]',
+    'execute in minecraft:overworld run setblock -260 251 90 oak_door[half=upper,facing=north,hinge=left,open=false,powered=false]'
+)
+aim('mcc_mp_a',-260,90,250); step('execute as @a[tag=mcc_mp_a,limit=1] run trigger pos1')
+aim('mcc_mp_a',-260,90,251); step('execute as @a[tag=mcc_mp_a,limit=1] run trigger pos2')
+step('execute as @a[tag=mcc_mp_a,limit=1] run trigger up set 3')
+check('state guard door moved',
+      'in minecraft:overworld if block -260 253 90 oak_door[half=lower,open=false]',
+      'in minecraft:overworld if block -260 254 90 oak_door[half=upper,open=false]')
+step(
+    'execute in minecraft:overworld run setblock -260 253 90 oak_door[half=lower,facing=north,hinge=left,open=true,powered=false]',
+    'execute in minecraft:overworld run setblock -260 254 90 oak_door[half=upper,facing=north,hinge=left,open=true,powered=false]',
+    'execute as @a[tag=mcc_mp_a,limit=1] run trigger undo'
+)
+check('undo ignores block state',
+      'in minecraft:overworld if block -260 250 90 oak_door[half=lower,open=false]',
+      'in minecraft:overworld if block -260 251 90 oak_door[half=upper,open=false]',
+      'in minecraft:overworld if block -260 253 90 air',
+      'score @a[tag=mcc_mp_a,limit=1] mcc_redo matches 1')
+
+step('execute as @a[tag=mcc_mp_a,limit=1] run trigger redo')
+check('state guard redo restored move',
+      'in minecraft:overworld if block -260 253 90 oak_door[half=lower]',
+      'score @a[tag=mcc_mp_a,limit=1] mcc_undo matches 1')
+step(
+    'execute in minecraft:overworld run setblock -260 253 90 stone',
+    'execute as @a[tag=mcc_mp_a,limit=1] run trigger undo'
+)
+check('undo still rejects block id change',
+      'in minecraft:overworld if block -260 253 90 stone',
+      'score @a[tag=mcc_mp_a,limit=1] mcc_undo matches 1')
+
+step(
+    'execute in minecraft:overworld run fill -255 248 85 -245 255 95 air strict',
+    'execute in minecraft:overworld run setblock -250 250 90 chest[facing=north]',
+    'execute in minecraft:overworld run item replace block -250 250 90 container.0 with minecraft:diamond 1'
+)
+aim('mcc_mp_a',-250,90,250); step('execute as @a[tag=mcc_mp_a,limit=1] run trigger pos1')
+aim('mcc_mp_a',-250,90,250); step('execute as @a[tag=mcc_mp_a,limit=1] run trigger pos2')
+step('execute as @a[tag=mcc_mp_a,limit=1] run trigger up set 3')
+check('block entity guard chest moved',
+      'in minecraft:overworld if block -250 253 90 chest')
+step(
+    'execute in minecraft:overworld run item replace block -250 253 90 container.0 with minecraft:emerald 1',
+    'execute as @a[tag=mcc_mp_a,limit=1] run trigger undo'
+)
+check('undo still rejects block entity change',
+      'in minecraft:overworld if block -250 253 90 chest',
+      'in minecraft:overworld if block -250 250 90 air',
+      'score @a[tag=mcc_mp_a,limit=1] mcc_undo matches 1')
+
 step(
     'tellraw @a[tag=mcc_mp_a] [{"text":"MCCMP DONE pass="},{"score":{"name":"#pass","objective":"mccmp"}},{"text":" fail="},{"score":{"name":"#fail","objective":"mccmp"}}]',
     'tellraw @a[tag=mcc_mp_b] [{"text":"MCCMP DONE pass="},{"score":{"name":"#pass","objective":"mccmp"}},{"text":" fail="},{"score":{"name":"#fail","objective":"mccmp"}}]',
@@ -250,7 +303,7 @@ for cx in range(-305//16, -270//16+1):
         ]
         chunk_cleanup.append(f'execute if score {holder} mccmp matches 0 in minecraft:overworld run forceload remove {pos}')
 (F/'cleanup.mcfunction').write_text('\n'.join([
-    'execute in minecraft:overworld run fill -305 248 85 -270 255 130 air strict',
+    'execute in minecraft:overworld run fill -305 248 85 -245 255 130 air strict',
     *chunk_cleanup,
     'tag @a remove mcc_mp_a',
     'tag @a remove mcc_mp_b',
