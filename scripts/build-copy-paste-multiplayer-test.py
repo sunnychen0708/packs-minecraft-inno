@@ -312,7 +312,7 @@ check('undo diagnostic reports material and coordinate',
       'score @a[tag=mcc_mp_a,limit=1] mcc_diagcount matches 1',
       'score @a[tag=mcc_mp_a,limit=1] mcc_diagmissing matches 1',
       'data storage mcc:temp diag.materials."minecraft:oak_stairs"',
-      'data storage mcc:temp diag.coords[0]{x:-260,y:253,z:90,expected:"minecraft:oak_stairs",current:"minecraft:stone",kind:1}')
+      'data storage mcc:temp diag.coords[{x:-260,y:253,z:90,expected:"minecraft:oak_stairs",current:"minecraft:stone",kind:1}]')
 
 step(
     'execute in minecraft:overworld run fill -255 248 85 -245 255 95 air strict',
@@ -335,7 +335,7 @@ check('undo still rejects block entity change',
 check('undo diagnostic reports block entity coordinate',
       'score @a[tag=mcc_mp_a,limit=1] mcc_diagcount matches 1',
       'score @a[tag=mcc_mp_a,limit=1] mcc_diagcontent matches 1',
-      'data storage mcc:temp diag.coords[0]{x:-250,y:253,z:90,expected:"minecraft:chest",current:"minecraft:chest",kind:3}')
+      'data storage mcc:temp diag.coords[{x:-250,y:253,z:90,expected:"minecraft:chest",current:"minecraft:chest",kind:3}]')
 
 step(
     'tellraw @a[tag=mcc_mp_a] [{"text":"MCCMP DONE pass="},{"score":{"name":"#pass","objective":"mccmp"}},{"text":" fail="},{"score":{"name":"#fail","objective":"mccmp"}}]',
