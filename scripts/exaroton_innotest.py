@@ -884,10 +884,6 @@ def migrate_inno_online_to_innotest_offline(client, token):
     except Exception as e:
         raise Error(f"cannot prepare online-to-offline UUID mapping: {e}") from e
 
-    entity_rewrite = rewrite_innotest_entity_uuid_refs(
-        client, target_world, uuid_pairs, stamp
-    )
-
     whitelist_raw = client.read_file("whitelist.json")
     whitelist = json.loads(whitelist_raw.decode("utf-8"))
     if not isinstance(whitelist, list):
@@ -907,6 +903,10 @@ def migrate_inno_online_to_innotest_offline(client, token):
 
     ops_raw = client.read_file_optional("ops.json")
     ops = json.loads(ops_raw.decode("utf-8")) if ops_raw else []
+
+    entity_rewrite = rewrite_innotest_entity_uuid_refs(
+        client, target_world, uuid_pairs, stamp
+    )
 
     client.write_file(
         f"whitelist.pre-inno-online-copy-{stamp}.json",
