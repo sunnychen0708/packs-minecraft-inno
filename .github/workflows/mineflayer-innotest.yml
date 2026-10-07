@@ -26,14 +26,16 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: mineflayer-innotest
-  cancel-in-progress: true
-
 jobs:
-  bots:
+  # Resolving the request never touches the bot session, so a no-op push
+  # (for example resetting ops/mineflayer-request.json) cannot stop bots
+  # that another run is using.
+  request:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    outputs:
+      run: ${{ steps.request.outputs.run }}
+      duration_ms: ${{ steps.request.outputs.duration_ms }}
+      names: ${{ steps.request.outputs.names }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -96,22 +98,33 @@ jobs:
         if: steps.request.outputs.run != 'true'
         run: echo "Mineflayer request is idle (noop)."
 
+  bots:
+    needs: request
+    if: needs.request.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    # A new bot session waits for the running one to finish instead of
+    # cancelling it (cancelling disconnects the bots in the middle of a test).
+    concurrency:
+      group: mineflayer-innotest
+      cancel-in-progress: false
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
       - name: Set up Node.js
-        if: steps.request.outputs.run == 'true'
         uses: actions/setup-node@v6
         with:
           node-version: "22"
 
       - name: Build pinned Mineflayer 26.3 stack
-        if: steps.request.outputs.run == 'true'
         shell: bash
         run: python3 scripts/mineflayer26/bootstrap.py
 
       - name: Keep requested test bots online
-        if: steps.request.outputs.run == 'true'
         shell: bash
         env:
           MF26_HOST: innotest.exaroton.me
-          MF26_BOTS: ${{ steps.request.outputs.names }}
-          MF26_DURATION_MS: ${{ steps.request.outputs.duration_ms }}
+          MF26_BOTS: ${{ needs.request.outputs.names }}
+          MF26_DURATION_MS: ${{ needs.request.outputs.duration_ms }}
         run: node scripts/mineflayer26/keepalive.js
