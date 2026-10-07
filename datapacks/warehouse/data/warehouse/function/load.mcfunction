@@ -29,3 +29,4 @@ execute unless data storage warehouse:meta v42 run function warehouse:migrate_v4
 execute unless data storage warehouse:meta v43 run function warehouse:migrate_v43
 execute unless data storage warehouse:meta v44 run function warehouse:migrate_v44
 execute unless data storage warehouse:meta v45 run function warehouse:migrate_v45
+execute unless data storage warehouse:meta v46 run function warehouse:migrate_v46

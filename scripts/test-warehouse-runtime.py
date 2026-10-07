@@ -13,6 +13,8 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 PACK = ROOT / "datapacks/warehouse"
+# Far fixture chunk for the unloaded-box search check (well outside the forceloaded test area).
+FAR_X, FAR_Z = 4000, 4000
 CODES = ["00", "10", "20", "30", "40", "50", "60"] + [
     f"{region}{slot}" for region in range(1, 7) for slot in range(1, 10)
 ]
@@ -486,6 +488,21 @@ def integration(java: Path, server: Path) -> None:
     check('if data block 1 75 10 Items[{Slot:0b,id:"minecraft:diamond",count:2}]', "sort_after_unregister_stays_in_entry")
     lines.append('data remove storage warehouse:rules overrides."minecraft:diamond"')
 
+    # Fixture for the unloaded-box search below: a registered box in a far chunk that is
+    # released again, so it unloads before the second phase runs.
+    lines.extend(
+        [
+            f"forceload add {FAR_X} {FAR_Z}",
+            f"setblock {FAR_X} 70 {FAR_Z} minecraft:chest",
+            f"setblock {FAR_X + 2} 70 {FAR_Z} minecraft:chest",
+            f"item replace block {FAR_X} 70 {FAR_Z} container.0 with minecraft:emerald 5",
+            "data modify storage warehouse:chests c13 merge value "
+            f'{{registered:1b,valid:1b,dimension:"minecraft:overworld",a_x:{FAR_X},a_y:70,a_z:{FAR_Z},b_x:{FAR_X + 2},b_y:70,b_z:{FAR_Z}}}',
+            'data modify storage warehouse:rules overrides."minecraft:emerald" set value 13',
+            f"forceload remove {FAR_X} {FAR_Z}",
+        ]
+    )
+
     lines.extend(
         [
             f"execute if score #pass whst matches {len(assertions)} if score #fail whst matches 0 run say WHST_REGRESSION_SUCCESS",
@@ -493,6 +510,30 @@ def integration(java: Path, server: Path) -> None:
         ]
     )
     (funcs / "run.mcfunction").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    # Second phase, after the far chunk has unloaded: a player searching from far away must see the
+    # box's real stock, not "箱失效", and the search must not leave a forceload ticket behind.
+    first_phase = len(assertions)
+    lines = ["scoreboard players set #pass whst 0", "scoreboard players set #fail whst 0"]
+    check(f"unless loaded {FAR_X} 70 {FAR_Z}", "far_box_chunk_unloaded_before_search")
+    lines.append(f'execute as {actor} run function warehouse:search/run {{q:"minecraft:emerald"}}')
+    check(
+        'if data storage warehouse:runtime search{item_id:"minecraft:emerald",current_code:"13",stock:"有庫存"}',
+        "search_reads_stock_of_unloaded_box",
+    )
+    lines.extend(["scoreboard players set #fl whst 1", f"execute store success score #fl whst run forceload query {FAR_X} {FAR_Z}"])
+    check("if score #fl whst matches 0", "search_releases_temporary_forceload")
+    lines.extend(
+        [
+            'data remove storage warehouse:rules overrides."minecraft:emerald"',
+            f"execute if score #pass whst matches {len(assertions) - first_phase} if score #fail whst matches 0 run say WHST_UNLOADED_SUCCESS",
+            "say WHST_UNLOADED_DONE",
+        ]
+    )
+    (funcs / "unloaded.mcfunction").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (funcs / "far_unloaded.mcfunction").write_text(
+        f"execute if loaded {FAR_X} 70 {FAR_Z} run return run say WHST_FAR_PENDING\nsay WHST_FAR_UNLOADED\n", encoding="utf-8"
+    )
 
     (work / "eula.txt").write_text("eula=true\n", encoding="utf-8")
     (work / "server.properties").write_text(
@@ -509,6 +550,8 @@ def integration(java: Path, server: Path) -> None:
 
     ready = threading.Event()
     done = threading.Event()
+    far_unloaded = threading.Event()
+    unloaded_done = threading.Event()
     output: list[str] = []
     proc = subprocess.Popen(
         [str(java), "-Xms256M", "-Xmx1024M", "-jar", str(server), "--nogui"],
@@ -529,6 +572,10 @@ def integration(java: Path, server: Path) -> None:
                 ready.set()
             if "WHST_REGRESSION_DONE" in line:
                 done.set()
+            if "WHST_FAR_UNLOADED" in line:
+                far_unloaded.set()
+            if "WHST_UNLOADED_DONE" in line:
+                unloaded_done.set()
 
     thread = threading.Thread(target=reader, daemon=True)
     thread.start()
@@ -545,6 +592,15 @@ def integration(java: Path, server: Path) -> None:
         proc.stdin.write("function warehouse_server_test:run\n")
         proc.stdin.flush()
         assert done.wait(60), "Warehouse runtime regression did not complete"
+        deadline = time.monotonic() + 60
+        while not far_unloaded.is_set():
+            assert time.monotonic() < deadline, "Far fixture chunk did not unload"
+            proc.stdin.write("function warehouse_server_test:far_unloaded\n")
+            proc.stdin.flush()
+            far_unloaded.wait(1)
+        proc.stdin.write("function warehouse_server_test:unloaded\n")
+        proc.stdin.flush()
+        assert unloaded_done.wait(60), "Unloaded-box search phase did not complete"
     finally:
         if proc.poll() is None:
             assert proc.stdin is not None
@@ -567,6 +623,7 @@ def integration(java: Path, server: Path) -> None:
     assert not failures, f"Runtime assertion failures: {failures}"
     assert not parse_errors, f"Runtime parser/datapack errors: {parse_errors[:20]}"
     assert "WHST_REGRESSION_SUCCESS" in report
+    assert "WHST_UNLOADED_SUCCESS" in report
     print(
         f"PASS Warehouse vanilla 26.3 runtime regression: {len(assertions)} assertions; evidence: {work}",
         flush=True,

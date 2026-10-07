@@ -7,11 +7,11 @@
 | Pack | Source | Latest release |
 | --- | --- | --- |
 | Utilities | v3.7 | `utilities-v3.7` |
-| Warehouse | v4.5 | `warehouse-v4.5` |
+| Warehouse | v4.6 | `warehouse-v4.5` |
 | Copy/Paste | v1.6 | `copy-paste-v1.6` |
 | cat-door-sounds | v1.0 | `cat-door-sounds-v1.0` |
 
-- 所有原始碼版本都已發布。
+- Warehouse v4.6（查詢讀取未載入箱子的庫存）只有原始碼，尚未發布；其他原始碼版本都已發布。
 - 發布：`.github/workflows/release-pack.yml` 會驗證、打包、建 Release。兩種觸發方式：在 `main` 推 `<pack>-v<版本>` tag；或手動執行這個 workflow（`workflow_dispatch`，ref 選 `main`，輸入 `tag` 例如 `utilities-v3.7`），全部 gate 通過後由 workflow 在該 `main` commit 建 annotated tag 再建 Release。雲端 session 不能推 tag，要用手動執行。**發布前要先問使用者。**
 - 2026-10-06 曾改寫 `main` 的最後一段歷史，拿掉 AI 工具署名並刪除舊分支。改寫前完整備份在使用者電腦 `C:\Users\sunny\repo-backups\packs-minecraft-inno-before-rewrite-20261006.git`。
 - **最新 CI 狀態**：Utilities、Warehouse、Copy/Paste 專用 26.3 runtime 與三包 together compatibility 都通過。

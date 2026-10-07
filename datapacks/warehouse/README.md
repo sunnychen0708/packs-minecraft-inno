@@ -1,4 +1,4 @@
-# Warehouse v4.5
+# Warehouse v4.6
 
 Minecraft Java 26.3 automatic sorting warehouse data pack.
 
@@ -6,7 +6,7 @@ The actual pack source lives directly in this directory. Keep `pack.mcmeta` and 
 
 ## Release
 
-Current version: `v4.5`
+Current version: `v4.6`（尚未發布）
 
 Latest published release: `warehouse-v4.5.zip`
 
@@ -49,7 +49,7 @@ Latest published release: `warehouse-v4.5.zip`
 - 不重設 warehouse:boxnames：玩家自訂箱名保留。
 - 不重設 warehouse:rules overrides：玩家新增／移動／移除的分類覆寫保留。
 - 不更名既有 scoreboard objectives；既有玩家與系統分數可繼續使用。
-- v4.0～v4.5 migrations 都以可再生成資料或版本 marker 為主；目前 v4.5 marker 不會清空既有世界資料。
+- v4.0～v4.6 migrations 都以可再生成資料或版本 marker 為主；目前 v4.6 marker 不會清空既有世界資料。
 - 搜尋索引屬可重建資料；v4.2 起使用 72-shard 建立流程。
 
 ### 目前限制
