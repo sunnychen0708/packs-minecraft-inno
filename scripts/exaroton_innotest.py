@@ -622,7 +622,8 @@ def run_copy_paste_multiplayer_test(client):
     time.sleep(5)
 
     import subprocess
-    subprocess.check_call([sys.executable, str(ROOT / "scripts" / "build-copy-paste-multiplayer-test.py")])
+    recheck = globals().get("RECHECK_COPY_PASTE", False)
+    subprocess.check_call([sys.executable, str(ROOT / "scripts" / "build-copy-paste-multiplayer-test.py"), *(["--recheck"] if recheck else [])])
     harness = ROOT / "dist" / "mcc-multiplayer-test"
     payload = zip_tree(harness)
     world = level_name(client.read_file("server.properties"))
@@ -721,7 +722,7 @@ def run_copy_paste_multiplayer_test(client):
 
     current_checks = "\n".join(
         line for line in segment.splitlines()
-        if "MCCMP_CHECK " in line or "MCCMP_DIAG " in line or "MCCMP_RESULT " in line
+        if "MCCMP_CHECK " in line or "MCCMP_DIAG " in line or "MCCMP_DIFF " in line or "MCCMP_RESULT " in line
     )
     if current_checks:
         print(current_checks)
@@ -1267,6 +1268,147 @@ def migrate_inno_online_to_innotest_offline(client, token):
         print("innotest was offline before migration; left offline")
 
 
+LIVE_SUITES = {
+    "utilities": ("build-utilities-live-test.py", "utilities-live-test"),
+    "warehouse": ("build-warehouse-live-test.py", "warehouse-live-test"),
+}
+
+def wait_named_players(client, names, timeout=180):
+    deadline = time.time() + timeout
+    missing = list(names)
+    while time.time() < deadline:
+        server = client.target()
+        players = server.get("players") or {}
+        listing = players.get("list") if isinstance(players, dict) else players
+        online = set(listing or [])
+        missing = [n for n in names if n not in online]
+        if int(server.get("status", -1)) == 1 and not missing:
+            # A restarted bot session drops the old clients first: require the
+            # players to still be there 10 s later before starting.
+            time.sleep(10)
+            again = client.target().get("players") or {}
+            again = set((again.get("list") if isinstance(again, dict) else again) or [])
+            if all(n in again for n in names):
+                return server
+        time.sleep(2)
+    raise Error(f"timeout waiting for test players; missing={missing}")
+
+def run_live_suite(client, suite):
+    """Deploy the checked-out packs, run one innotest live suite and clean it up.
+
+    The suite datapack is built by scripts/<builder>; it reports
+    <PREFIX>_CHECK / <PREFIX>_DIFF lines and one <PREFIX>_RESULT line, and its
+    <ns>:cleanup function restores everything the suite touched.
+    """
+    extra = []
+    if suite.endswith("-recheck"):
+        suite, extra = suite[:-len("-recheck")], ["--recheck"]
+    if suite not in LIVE_SUITES:
+        raise Error(f"unknown live suite {suite!r}; known: {sorted(LIVE_SUITES)}")
+    current = client.target()
+    if int(current.get("status", -1)) != 1:
+        raise Error("innotest must be ONLINE before a live suite")
+    builder, out_name = LIVE_SUITES[suite]
+
+    import subprocess
+    subprocess.check_call([sys.executable, str(ROOT / "scripts" / builder), *extra])
+    out = ROOT / "dist" / out_name
+    meta = json.loads((out / "suite.json").read_text(encoding="utf-8"))
+    ns, prefix, names = meta["ns"], meta["prefix"], list(meta["players"].values())
+    timeout = int(meta.get("timeout_s", 600))
+    start_function = str(meta.get("start_function") or f"{ns}:start")
+    cleanup_function = str(meta.get("cleanup_function") or f"{ns}:cleanup")
+
+    session_marker = f"{prefix}_SESSION_{int(time.time() * 1000)}"
+    client.command(f"say {session_marker} START")
+    time.sleep(1)
+    deploy(client, "all")
+    time.sleep(5)
+    payload = zip_tree(out)
+    world = level_name(client.read_file("server.properties"))
+    remote = f"{world}/datapacks/{out_name}.zip"
+    client.write_file(remote, payload)
+    print(f"deployed {suite} live suite -> {remote} ({len(payload)} bytes)")
+    client.command("reload")
+    time.sleep(6)
+
+    def remove_harness():
+        try:
+            client.delete_file(remote)
+        finally:
+            try:
+                client.command("reload")
+            except Error:
+                pass
+
+    log = client.log()
+    at = log.rfind(f"{session_marker} START")
+    if at < 0:
+        raise Error("live suite preflight marker not found in server log")
+    errors = [line for line in log[at:].splitlines() if "/ERROR]:" in line]
+    if errors:
+        remove_harness()
+        raise Error("live suite preflight found current-session server errors:\n" + "\n".join(errors[:12]))
+
+    wait_named_players(client, names, 240)
+    run_marker = f"{prefix}_RUN_{int(time.time() * 1000)}"
+    client.command(f"say {run_marker} START")
+    time.sleep(1)
+    client.command(f"function {start_function}")
+
+    deadline = time.time() + timeout
+    result = segment = ""
+    printed = 0
+    speed_done = 0
+    while time.time() < deadline:
+        log = client.log()
+        marker = log.rfind(f"{run_marker} START")
+        if marker >= 0:
+            segment = log[marker:]
+            # The suite asks for tick-rate changes (functions cannot run /tick).
+            for line in segment.splitlines():
+                parts = line.split(f"{prefix}_SPEED ", 1)
+                if len(parts) == 2:
+                    seq_rate = parts[1].split()
+                    seq, rate = int(seq_rate[0]), int(seq_rate[1])
+                    if seq > speed_done and 1 <= rate <= 10000:
+                        client.command(f"tick rate {rate}")
+                        client.command(f"scoreboard players set #speed htest {seq}")
+                        print(f"tick rate {rate} (request {seq})")
+                        speed_done = seq
+            lines = [l for l in segment.splitlines() if f"{prefix}_CHECK " in l or f"{prefix}_DIFF " in l]
+            for line in lines[printed:]:
+                print(line)
+            printed = len(lines)
+            results = [l for l in segment.splitlines() if f"{prefix}_RESULT " in l]
+            if results:
+                result = results[-1]
+                break
+        time.sleep(2)
+
+    try:
+        client.command("tick rate 20")
+        client.command(f"function {cleanup_function}")
+        time.sleep(3)
+    except Error:
+        pass
+    final_log = client.log()
+    marker = final_log.rfind(f"{run_marker} START")
+    if marker >= 0:
+        segment = final_log[marker:]
+    restore_lines = [l for l in segment.splitlines() if f"{prefix}_RESTORE" in l or f"{prefix}_CLEANUP" in l]
+    for line in restore_lines:
+        print(line)
+    remove_harness()
+
+    errors = [line for line in segment.splitlines() if "/ERROR]:" in line]
+    if errors:
+        raise Error(f"{suite} live suite produced current-run server errors:\n" + "\n".join(errors[:12]))
+    if f"{prefix}_RESULT PASS" in result:
+        print(f"{suite.upper()}_LIVE_SUITE=PASS")
+        return
+    raise Error(f"{suite} live suite did not pass; result={result or '<missing: timeout>'}")
+
 def recover_warehouse_compact_live_test(client, *, force_enable=False):
     """Restore Warehouse state left behind if the compact live test is cancelled."""
     commands = [
@@ -1681,10 +1823,11 @@ def run(path):
     elif op == "command": client.command(str(r.get("command") or "")); print(f"command sent to {TARGET}")
     elif op == "deploy-datapack": deploy(client, str(r.get("pack") or ""))
     elif op == "deploy-datapack-no-reload": deploy(client, str(r.get("pack") or ""), reload_server=False)
-    elif op == "run-copy-paste-multiplayer-test": run_copy_paste_multiplayer_test(client)
+    elif op == "run-copy-paste-multiplayer-test":\n        globals()["RECHECK_COPY_PASTE"] = str(r.get("command") or "") == "recheck"\n        run_copy_paste_multiplayer_test(client)
     elif op == "run-blueprint-matcher-live-test": run_blueprint_matcher_live_test(client)
     elif op == "run-warehouse-compact-live-test": run_warehouse_compact_live_test(client)
     elif op == "recover-warehouse-compact-live-test": recover_warehouse_compact_live_test(client, force_enable=True)
+    elif op == "run-live-suite": run_live_suite(client, str(r.get("pack") or ""))
     elif op == "run-utilities-bfs-live-test": run_utilities_bfs_live_test(client)
     elif op == "set-online-mode-false": set_offline_mode(client)
     elif op == "online-mode-status":

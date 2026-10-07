@@ -63,13 +63,17 @@ jobs:
           python3 scripts/test-datapack-compatibility.py
           echo "::endgroup::"
 
-      # Only proves the 3D-house multiplayer harness can be generated. No real player runs it here.
-      - name: Build Copy/Paste 3D-house live harness (generate only, not run)
+      # Only proves the Trigger harnesses can be generated. No real player runs them here, and
+      # scripts/real-client/ (Windows client) is not run in CI at all.
+      - name: Build innotest live harnesses (generate only, not run)
         shell: bash
         run: |
           set -euo pipefail
           python3 -m py_compile scripts/build-copy-paste-multiplayer-test.py
           python3 scripts/build-copy-paste-multiplayer-test.py
+          python3 scripts/build-utilities-live-test.py
+          python3 scripts/build-warehouse-live-test.py
+          node --check scripts/mineflayer26/keepalive.js
 
   warehouse-runtime-smoke:
     name: Warehouse vanilla 26.3 reset regression
