@@ -92,7 +92,7 @@ python3 scripts/build-copy-paste-multiplayer-test.py
 /function mcc_mp_test:start
 ```
 
-測試會讓兩位玩家在同一批 tick 中各自完成 Pos1/Pos2、Copy、Move、Undo、Flip、Paste 與獨立 Undo，並檢查 `mcc_id`、Clipboard 與世界結果沒有互換。
+測試會讓兩位玩家在同一批 tick 中，各自對一棟 3D 測試房子（`scripts/mcc_house.py`）完成 Pos1/Pos2、Copy → Blueprint → Build（背包材料）、Move、Undo/Redo、Rotate、Flip、Cut/Paste 與獨立 Undo，每一步逐格比對整棟房子的 blockstate，並檢查 `mcc_id`、Clipboard 與世界結果沒有互換。結束後執行 `/function mcc_mp_test:cleanup` 清掉測試區、收回測試給的材料。實際流程在 `innotest` 由 `run-copy-paste-multiplayer-test` 跑（見 `docs/HANDOFF.md`）。
 
 repo 目前沒有提交一份 **v1.3** 兩位真人 client 的成功 evidence，因此應描述為：**64-player 隔離架構已由 regression 證明，單 actor / 官方 server 行為已有自動 runtime 覆蓋，但 two-real-player client/server concurrency 尚未留下正式驗證證據。**
 
