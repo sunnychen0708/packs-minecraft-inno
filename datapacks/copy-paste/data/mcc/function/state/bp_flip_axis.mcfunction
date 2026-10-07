@@ -1,4 +1,12 @@
 # Input: mcc_tmp = world axis to flip (1 = X, 2 = Z), applied on top of the current direction.
+# Default Pos1 Anchor: preserve the current target bounds so Flip is an in-place
+# selection-center mirror, matching direct Flip. A custom Anchor stays a fixed pivot.
+execute if score @s mcc_cliptype matches 1 if score @s mcc_canchor matches 0 run scoreboard players operation @s mcc_dstx = @s mcc_bpoffx
+execute if score @s mcc_cliptype matches 1 if score @s mcc_canchor matches 0 run scoreboard players set @s mcc_dsty 0
+execute if score @s mcc_cliptype matches 1 if score @s mcc_canchor matches 0 run scoreboard players operation @s mcc_dstz = @s mcc_bpoffz
+execute if score @s mcc_cliptype matches 1 if score @s mcc_canchor matches 0 run function mcc:paste/prepare_transform
+execute if score @s mcc_cliptype matches 1 if score @s mcc_canchor matches 0 run scoreboard players operation @s mcc_dx = @s mcc_bminx
+execute if score @s mcc_cliptype matches 1 if score @s mcc_canchor matches 0 run scoreboard players operation @s mcc_dz = @s mcc_bminz
 # Placement is R(rot) after M(mir); a world flip F gives F*R(k)*M = R(-k)*(F*M), and
 # F*M is F (M none), nothing (M = F) or a 180 degree turn (M = the other axis).
 scoreboard players operation @s mcc_rot *= #neg mcc_id
@@ -10,5 +18,15 @@ execute if score @s mcc_tmp2 matches 1 run scoreboard players operation @s mcc_m
 execute if score @s mcc_tmp2 matches 2..3 run scoreboard players set @s mcc_mir 0
 execute if score @s mcc_tmp2 matches 3 run scoreboard players add @s mcc_rot 2
 execute if score @s mcc_rot matches 4.. run scoreboard players remove @s mcc_rot 4
+execute if score @s mcc_cliptype matches 1 if score @s mcc_canchor matches 0 run scoreboard players operation @s mcc_dstx = @s mcc_bpoffx
+execute if score @s mcc_cliptype matches 1 if score @s mcc_canchor matches 0 run scoreboard players set @s mcc_dsty 0
+execute if score @s mcc_cliptype matches 1 if score @s mcc_canchor matches 0 run scoreboard players operation @s mcc_dstz = @s mcc_bpoffz
+execute if score @s mcc_cliptype matches 1 if score @s mcc_canchor matches 0 run function mcc:paste/prepare_transform
+execute if score @s mcc_cliptype matches 1 if score @s mcc_canchor matches 0 run scoreboard players operation @s mcc_tmp2 = @s mcc_dx
+execute if score @s mcc_cliptype matches 1 if score @s mcc_canchor matches 0 run scoreboard players operation @s mcc_tmp2 -= @s mcc_bminx
+execute if score @s mcc_cliptype matches 1 if score @s mcc_canchor matches 0 run scoreboard players operation @s mcc_bpoffx += @s mcc_tmp2
+execute if score @s mcc_cliptype matches 1 if score @s mcc_canchor matches 0 run scoreboard players operation @s mcc_tmp2 = @s mcc_dz
+execute if score @s mcc_cliptype matches 1 if score @s mcc_canchor matches 0 run scoreboard players operation @s mcc_tmp2 -= @s mcc_bminz
+execute if score @s mcc_cliptype matches 1 if score @s mcc_canchor matches 0 run scoreboard players operation @s mcc_bpoffz += @s mcc_tmp2
 function mcc:state/announce_orient
 function mcc:blueprint/rebuild_if_active
