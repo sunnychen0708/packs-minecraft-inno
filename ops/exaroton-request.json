@@ -1,6 +1,6 @@
 {
-  "request_id": 202610071529,
-  "operation": "noop",
-  "command": "",
+  "request_id": 20261007172901,
+  "operation": "command",
+  "command": "tp penguin0531 SunnyChen",
   "pack": ""
 }
