@@ -1,6 +1,6 @@
 {
-  "request_id": 20261007234020,
+  "request_id": 20261007234620,
   "operation": "deploy-datapack-no-reload",
   "command": "",
-  "pack": "utilities"
+  "pack": "all"
 }
