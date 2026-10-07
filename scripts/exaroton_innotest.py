@@ -671,7 +671,8 @@ def run_blueprint_matcher_live_test(client):
             time.sleep(3)
     finally:
         for command in ("scoreboard objectives remove mccbp",
-                        "data remove storage mcc_bp_live:t",
+                        "data remove storage mcc_bp_live:t want",
+                        "execute in minecraft:overworld run setblock -440 250 120 minecraft:air strict",
                         "execute in minecraft:overworld run forceload remove -440 120"):
             try:
                 client.command(command)

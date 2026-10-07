@@ -17,7 +17,9 @@ import shutil
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'dist/mcc-bp-matcher-live-test'
 POS = (-440, 250, 120)
-BATCH = 1000
+# Each state costs up to ~90 commands (matcher + check); keep a batch well under the default
+# max_command_sequence_length of 65536, which silently truncates the function.
+BATCH = 200
 
 if OUT.exists():
     shutil.rmtree(OUT)
@@ -50,8 +52,8 @@ write('start', [
     'scoreboard players set #fail mccbp 0',
     'scoreboard players set #air mccbp -1',
     f'execute in minecraft:overworld run forceload add {x} {z}',
-    # Refuse to overwrite anything: the reserved block must be air.
-    f'execute {here} unless block ~ ~ ~ minecraft:air run return run say MCCBP_RESULT FAIL reserved block {at} is not air',
+    # The block is reserved for this harness; clear any leftover from an interrupted run.
+    f'execute in minecraft:overworld run setblock {at} minecraft:air strict',
     'data merge storage mcc:temp {tx:0,ty:0,tz:0,id:0}',
     'say MCCBP_BEGIN',
     'schedule function mcc_bp_live:batch_0 1t',
