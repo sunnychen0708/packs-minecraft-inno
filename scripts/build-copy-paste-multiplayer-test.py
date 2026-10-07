@@ -107,17 +107,20 @@ CELLS=[(x,y,z) for y in range(SY) for x in range(SX) for z in range(SZ)]
 def house_cells(origin,transform=None):
     """(world cell, expected state) for every cell of the house box after a transform.
 
-    transform: None, 'r90' (clockwise around the origin cell, like Rotate with Pos1 as pivot)
-    or 'mx' (mirror X inside the box, like Flip left/right while facing south)."""
+    transform: None; r90/r180/r270 around Pos1; mx/mz mirror inside the box."""
     out=[]
     for x,y,z in CELLS:
         state=BLOCK_AT.get((x,y,z),'minecraft:air')
-        if transform=='r90':
-            dx,dz=xform.rot_off(x,z,1)
-            state=xform.rotate_state(state,1)
+        if transform in ('r90','r180','r270'):
+            k={'r90':1,'r180':2,'r270':3}[transform]
+            dx,dz=xform.rot_off(x,z,k)
+            state=xform.rotate_state(state,k)
         elif transform=='mx':
             dx,dz=SX-1-x,z
             state=xform.mirror_state(state,'x')
+        elif transform=='mz':
+            dx,dz=x,SZ-1-z
+            state=xform.mirror_state(state,'z')
         else:
             dx,dz=x,z
         out.append(((origin[0]+dx,origin[1]+y,origin[2]+dz),(x,y,z),state))
@@ -351,6 +354,37 @@ both_trigger('flip')
 check('simultaneous flip exact states',*[c for p in P for c in house_conds(P[p]['S'],'mx')],no_items())
 both_trigger('undo')
 check('flip undo exact',*[c for p in P for c in exact_house(P[p]['S'])],no_items())
+
+# ---- remaining direct transform directions -----------------------------------
+# Facing south (yaw 0): left +X, right -X, forward +Z, backward -Z.
+for trig,(dx,dy,dz) in (
+    ('down',(0,-1,0)),
+    ('left',(1,0,0)),
+    ('right',(-1,0,0)),
+    ('forward',(0,0,1)),
+    ('backward',(0,0,-1)),
+):
+    both_trigger(f'{trig} set 1')
+    check(f'simultaneous move {trig} exact',
+          *[c for p in P for c in exact_house((P[p]['S'][0]+dx,Y+dy,P[p]['S'][2]+dz))],no_items())
+    both_trigger('undo')
+    check(f'move {trig} undo exact',*[c for p in P for c in exact_house(P[p]['S'])],no_items())
+
+both_trigger('turnleft')
+check('simultaneous rotate left exact states',*[c for p in P for c in house_conds(P[p]['S'],'r270')],no_items())
+both_trigger('undo')
+check('rotate left undo exact',*[c for p in P for c in exact_house(P[p]['S'])],no_items())
+
+both_trigger('rotate180')
+check('simultaneous rotate 180 exact states',*[c for p in P for c in house_conds(P[p]['S'],'r180')],no_items())
+both_trigger('undo')
+check('rotate 180 undo exact',*[c for p in P for c in exact_house(P[p]['S'])],no_items())
+
+# Facing south, front/back is a Z-axis mirror.
+both_trigger('flipfb')
+check('simultaneous flip front back exact states',*[c for p in P for c in house_conds(P[p]['S'],'mz')],no_items())
+both_trigger('undo')
+check('flip front back undo exact',*[c for p in P for c in exact_house(P[p]['S'])],no_items())
 
 # ---- Undo guard: block-state changes are ignored, block-ID / block-entity changes block Undo ----
 both_trigger('up set 1')
