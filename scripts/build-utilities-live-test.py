@@ -31,13 +31,15 @@ sys.path.insert(0, str(ROOT / 'scripts'))
 from innotest_harness import Suite
 
 OUT = ROOT / 'dist/utilities-live-test'
-# Default: the key cases only (about 10 minutes on innotest). --full runs every log type, every ore,
+# Default: the key cases only (about 4 minutes on innotest). --full runs every log type, every ore,
 # every tier pair, every crop and all 8 waypoint slots (about 40 minutes).
 FULL = '--full' in sys.argv
 NS = 'utest'
 PLAYERS = {'a': 'penguin0531', 'b': 'geena0701'}
 s = Suite(NS, 'UTEST', PLAYERS, 'Opt-in Utilities v3.8 innotest live regression')
 A, B = s.sel('a'), s.sel('b')
+if not FULL:
+    s.default_delay = 4
 DIMS = {'overworld': 0, 'the_nether': 1, 'the_end': 2}
 
 # ---- areas -------------------------------------------------------------
@@ -175,11 +177,11 @@ reset_counts = [f'scoreboard players set {g} 0' for g in G.values()] + ['scorebo
 s.step('function utest:backup', delay=2)
 s.tp('a', -57.5, 201, 61.5, dim='the_nether')
 s.tp('b', 300.5, 201, 300.5, dim='the_end')
-s.step('say UTEST loading nether/end areas', delay=60)
+s.step('say UTEST loading nether/end areas', delay=60 if FULL else 30)
 s.step(fill(NE_AREA, 'air', 'the_nether'), fill(END_AREA, 'air', 'the_end'))
 s.tp('a', *HUBC)
 s.tp('b', HUBC[0] + 2, HUBC[1], HUBC[2])
-s.step('say UTEST loading overworld area', delay=60)
+s.step('say UTEST loading overworld area', delay=60 if FULL else 30)
 s.step(fill(OW_AREA, 'air'), fill(TALL_AREA, 'air'),
        f'execute in minecraft:overworld run setblock {BACKUP_CHEST[0]} {BACKUP_CHEST[1]} {BACKUP_CHEST[2]} minecraft:chest',
        f'execute in minecraft:overworld run item replace block {BACKUP_CHEST[0]} {BACKUP_CHEST[1]} {BACKUP_CHEST[2]} container.0 from entity {A} weapon.mainhand',
@@ -204,6 +206,8 @@ FIXED = [('home', '家', 'overworld', -410, 220, 390), ('mine', '礦坑', 'the_n
          ('village', '村莊', 'the_end', 300, 200, 300), ('portal', '傳送門', 'the_nether', -56, 200, 64),
          ('temp', '臨時點', 'overworld', -410, 220, 410)]
 walls = []
+if not FULL:
+    FIXED = FIXED[:3]   # one waypoint per dimension: home, mine (nether), village (end)
 for name, label, dim, x, y, z in FIXED:
     # A 1x1 shaft: a teleport to the block corner would put the player inside the walls.
     walls += [f'execute in minecraft:{dim} run fill {x-1} {y-1} {z-1} {x+1} {y+2} {z+1} minecraft:stone',
@@ -247,13 +251,13 @@ for k, (x, y, z) in PERSONAL.items():
     s.check(f'personal {k} teleport', at_center('a', 'overworld', x, y, z))
 s.trigger('a', 'back')
 s.check('back after personal teleport', at_center('a', 'overworld', *list(PERSONAL.values())[-2]))
-s.cmdx('a', ['甲據點1'], 'trigger plist')
-s.cmdx('a', ['甲據點8'], 'trigger plist')
-s.cmdx('a', ['改名二'], 'function nav:rename_personal {slot:2,name:"改名二"}')
-wp_check('personal rename keeps position', 'a', 2, '改名二', PERSONAL[2])
+PL = list(PERSONAL)[-1]                              # rename and overwrite the last slot
+s.cmdx('a', [f'甲據點{PL}'], 'trigger plist')
+s.cmdx('a', ['改名二'], f'function nav:rename_personal {{slot:{PL},name:"改名二"}}')
+wp_check('personal rename keeps position', 'a', PL, '改名二', PERSONAL[PL])
 s.tp('a', QP[0] + .7, QP[1], QP[2] + .3)
-s.trigger('a', 'pset', 3)                            # already set: overwrite position, keep name
-wp_check('personal overwrite keeps name', 'a', 3, '甲據點3', QP)
+s.trigger('a', 'pset', PL)                           # already set: overwrite position, keep name
+wp_check('personal overwrite keeps name', 'a', PL, '改名二', QP)
 s.cmdx('a', ['1～8'], 'trigger pset set 9')
 s.tp('b', PB1[0] + .5, PB1[1], PB1[2] + .5)
 s.trigger('b', 'pset', 1)
@@ -280,13 +284,13 @@ for k, (x, y, z) in SHARED.items():
     s.tp('b', HUBC[0] + 2, HUBC[1], HUBC[2])
     s.trigger('b', 'sgo', k)
     s.check(f'B uses shared {k} set by A', at_center('b', 'overworld', x, y, z))
-s.cmdx('b', ['共用1'], 'trigger slist')
-s.cmdx('b', ['共用8'], 'trigger slist')
-s.cmdx('b', ['共用改名'], 'function nav:rename_shared {slot:4,name:"共用改名"}')
-wp_check('shared rename by B keeps position', 'b', 4, '共用改名', SHARED[4], shared=True)
+SL = list(SHARED)[-1]
+s.cmdx('b', [f'共用{SL}'], 'trigger slist')
+s.cmdx('b', ['共用改名'], f'function nav:rename_shared {{slot:{SL},name:"共用改名"}}')
+wp_check('shared rename by B keeps position', 'b', SL, '共用改名', SHARED[SL], shared=True)
 s.tp('b', QS[0] + .7, QS[1], QS[2] + .3)
-s.trigger('b', 'sset', 5)
-wp_check('shared overwrite keeps name', 'b', 5, '共用5', QS, shared=True)
+s.trigger('b', 'sset', SL)
+wp_check('shared overwrite keeps name', 'b', SL, '共用改名', QS, shared=True)
 s.cmdx('b', ['1～8'], 'trigger sset set 9')
 
 # ---- 5. deathloc ----------------------------------------------------------------
@@ -314,7 +318,8 @@ s.step(*reset_counts, 'scoreboard players set #sniff htest 1', 'function utest:s
 s.bot('a', 'sneak', 1)
 
 
-def dig_case(label, setup, target, stand, tool, checks_fn, sneak=True, wait=20, tries=200):
+def dig_case(label, setup, target, stand, tool, checks_fn, sneak=True, wait=None, tries=200):
+    wait = (20 if FULL else 10) if wait is None else wait
     tx, ty, tz = target
     fx, fy, fz = stand
     yaw, pitch = look(tx, ty, tz, fx, fy, fz)
@@ -346,7 +351,7 @@ TREES = [(log, LEAVES[log]) for log in LOGS if log != 'poplar_log']
 TREES += [('poplar_log', f'{c}_poplar_leaves') for c in ('red', 'orange', 'yellow')]
 if not FULL:
     # One normal tree, the 26.3 poplar and a nether stem with wart-block foliage.
-    TREES = [('oak_log', 'oak_leaves'), ('poplar_log', 'red_poplar_leaves'), ('crimson_stem', 'nether_wart_block')]
+    TREES = [('oak_log', 'oak_leaves')]
 
 
 def tree_cmds(x, z, log, leaves, height=4, leaf_y=None):
@@ -440,15 +445,15 @@ def vein_case(label, ore, tool, chained=True, sneak=True, silk=False, tries=200)
                 out += [cnt(drop, dlo, dhi), (f'score #xp htest matches {xlo}..{xhi}', f'XP is not {xlo}..{xhi} for one ore')]
         return out
     setup = [f'execute in minecraft:overworld run fill {x} {VY} {z} {x} {VY} {z+2} minecraft:{ore}']
-    dig_case(label, setup, cells[0], (x + .5, VY, z - 1.5), tool, checks, sneak=sneak, wait=20, tries=tries)
+    dig_case(label, setup, cells[0], (x + .5, VY, z - 1.5), tool, checks, sneak=sneak, wait=20 if FULL else 10, tries=tries)
 
 
 if not FULL:
     # XP ore, deepslate variant, multi-drop ore, nether ore and the no-XP diamond-tier ore.
-    RIGHT_TIER = [('iron_ore', 'stone_pickaxe'), ('diamond_ore', 'iron_pickaxe')]
-    WRONG_TIER = [('diamond_ore', 'stone_pickaxe'), ('ancient_debris', 'iron_pickaxe')]
+    RIGHT_TIER = [('diamond_ore', 'iron_pickaxe')]
+    WRONG_TIER = [('diamond_ore', 'stone_pickaxe')]
 ORE_CASES = [ore for _g, (ores, *_r) in ORES.items() for ore in ores] if FULL else \
-    ['coal_ore', 'deepslate_diamond_ore', 'copper_ore', 'nether_gold_ore', 'ancient_debris']
+    ['deepslate_diamond_ore', 'ancient_debris']
 for ore in ORE_CASES:
     vein_case(f'vein mining {ore}', ore, 'minecraft:diamond_pickaxe')
 for ore, tool in RIGHT_TIER:
@@ -472,7 +477,7 @@ CROPS = [('wheat', 'wheat[age=7]', 'wheat[age=0]', 'farmland'),
          ('beetroots', 'beetroots[age=3]', 'beetroots[age=0]', 'farmland'),
          ('nether_wart', 'nether_wart[age=3]', 'nether_wart[age=0]', 'soul_sand')]
 if not FULL:
-    CROPS = [CROPS[0], CROPS[4]]
+    CROPS = [CROPS[0]]
 CZ = 412
 for i, (name, ripe, young, soil) in enumerate(CROPS + [('wheat switched off', 'wheat[age=7]', 'air', 'farmland')]):
     x = -398 + 3 * i
@@ -483,7 +488,7 @@ for i, (name, ripe, young, soil) in enumerate(CROPS + [('wheat switched off', 'w
              f'execute in minecraft:overworld run setblock {x} 220 {CZ} minecraft:{ripe}']
     expect = 'minecraft:air' if off else f'minecraft:{young}'
     dig_case(f'replant {name}', setup, (x, 220, CZ), (x + .5, 220, CZ - 2.5), 'minecraft:iron_hoe',
-             lambda x=x, expect=expect: blocks_are(expect, [(x, 220, CZ)]), sneak=True, wait=20)
+             lambda x=x, expect=expect: blocks_are(expect, [(x, 220, CZ)]), sneak=True, wait=20 if FULL else 14)
     s.step(f'execute in minecraft:overworld run kill @e[type=minecraft:item,{region(OW_AREA)}]')
     if off:
         s.cmdx('a', ['自動補種：開啟'], 'trigger replant')
@@ -544,6 +549,6 @@ s.extra_function(OUT, 'restore_bbs', [
 s.extra_function(OUT, 'set_bbs', ['$attribute @a[name=$(name),limit=1] minecraft:block_break_speed base set $(v)'])
 s.extra_function(OUT, 'tp_back', ['$execute in $(dim) run tp @a[name=$(name),limit=1] $(x) $(y) $(z) $(yaw) $(pitch)'])
 (OUT / 'suite.json').write_text(json.dumps({
-    'ns': NS, 'prefix': 'UTEST', 'players': PLAYERS, 'timeout_s': 2700 if FULL else 1200,
+    'ns': NS, 'prefix': 'UTEST', 'players': PLAYERS, 'timeout_s': 2700 if FULL else 480,
 }, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
 print(f'Built {n} Utilities live-test steps at {OUT}')

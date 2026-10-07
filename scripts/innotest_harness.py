@@ -46,13 +46,15 @@ class Suite:
         self.steps: list[tuple] = []
         self.seq = 0
         self.cleanup_cmds: list[str] = []
+        self.default_delay = 10
 
     # ---- selectors -------------------------------------------------------
     def sel(self, p: str) -> str:
         return f'@a[name={self.players[p]},limit=1]'
 
     # ---- steps -------------------------------------------------------------
-    def step(self, *commands: str, delay: int = 10) -> None:
+    def step(self, *commands: str, delay: int | None = None) -> None:
+        delay = self.default_delay if delay is None else delay
         self.steps.append(('cmd', list(commands), delay))
 
     def wait(self, label: str, ready: list[str], fail: list[str] | None = None, tries: int = 80) -> None:
