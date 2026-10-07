@@ -248,9 +248,7 @@ for p in P:
         wx,wy,wz=t[0]+x,t[1]+y,t[2]+z
         bp.append((f'{OW} positioned {wx}.0 {wy}.0 {wz}.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.01]',
                    f'player {p.upper()} blueprint missing at {wx} {wy} {wz} ({b.split("[")[0]})'))
-step(*[f'execute store result score #{p}bp mccmp {OW} if entity @e[type=minecraft:block_display,tag=mcc_blueprint,x={P[p]["T"][0]},y={Y},z={P[p]["T"][2]},dx={SX-1},dy={SY-1},dz={SZ-1}]' for p in P])
-check('both house blueprints complete, world untouched',*bp,
-      *[(f'score #{p}bp mccmp matches {len(house.BLOCKS)}..',f'player {p.upper()} blueprint has fewer displays than the {len(house.BLOCKS)} house blocks') for p in P])
+check('both house blueprints complete, world untouched',*bp)
 
 # Blueprint Flip (facing south: left/right = mirror X) inside the same bounds, then flip back.
 def display_state(label,x,y,z,name,prop=None):
