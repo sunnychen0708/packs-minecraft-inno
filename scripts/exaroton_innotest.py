@@ -108,6 +108,21 @@ class APIClient:
                 return None
             raise
 
+    def read_binary_file_optional(self, path):
+        """Read binary world files through exaroton's non-directory data endpoint."""
+        server = self.target()
+        sid = urllib.parse.quote(str(server["id"]), safe="")
+        try:
+            return self.req(
+                "GET",
+                f"/servers/{sid}/files/data/{remote_path(str(path).lstrip('/'))}",
+                raw_response=True,
+            )
+        except Error as e:
+            if "HTTP 404" in str(e):
+                return None
+            raise
+
     def write_file(self, path, content):
         server = self.target(); server = self.verify(server["id"])
         sid = urllib.parse.quote(str(server["id"]), safe="")
@@ -650,9 +665,18 @@ def rewrite_innotest_entity_uuid_refs(client, world, uuid_pairs, stamp):
     total_refs = 0
     for path in region_files:
         path = str(path).lstrip("/")
-        raw = client.read_file_optional(path)
+        raw = client.read_binary_file_optional(path)
         if raw is None:
             continue
+        if raw == b"":
+            info = client.info_optional(path)
+            size = int((info or {}).get("size") or 0)
+            if size == 0:
+                continue
+            raise Error(
+                f"binary region download returned 0 bytes for {path} "
+                f"but exaroton reports size={size}"
+            )
         try:
             transformed, stats = migration.transform_region(
                 raw,
@@ -668,7 +692,9 @@ def rewrite_innotest_entity_uuid_refs(client, world, uuid_pairs, stamp):
         client.write_file(backup, raw)
         client.write_file(path, transformed)
 
-        verified = client.read_file(path)
+        verified = client.read_binary_file_optional(path)
+        if verified is None:
+            raise Error(f"rewritten entity region disappeared during verification: {path}")
         if hashlib.sha256(verified).digest() != hashlib.sha256(transformed).digest():
             raise Error(f"verification failed after rewriting entity region {path}")
         try:

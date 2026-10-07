@@ -150,24 +150,37 @@ def test_directional_player_nbt_uuid_rewrite():
 
 
 class FakeInnotestClient:
-    def __init__(self, region):
+    def __init__(self, region, include_empty=False):
         self.files = {"world/entities/r.0.0.mca": region}
+        self.include_empty = include_empty
+        if include_empty:
+            self.files["world/entities/r.0.1.mca"] = b""
         self.writes = []
 
     def info_optional(self, path):
         if path == "world/entities":
-            return {
-                "children": [
-                    {
-                        "name": "r.0.0.mca",
-                        "path": "world/entities/r.0.0.mca",
-                        "isDirectory": False,
-                    }
-                ]
-            }
+            children = [
+                {
+                    "name": "r.0.0.mca",
+                    "path": "world/entities/r.0.0.mca",
+                    "isDirectory": False,
+                }
+            ]
+            if self.include_empty:
+                children.append({
+                    "name": "r.0.1.mca",
+                    "path": "world/entities/r.0.1.mca",
+                    "isDirectory": False,
+                })
+            return {"children": children}
+        if path in self.files:
+            return {"size": len(self.files[path])}
         return None
 
     def read_file_optional(self, path):
+        return self.files.get(path)
+
+    def read_binary_file_optional(self, path):
         return self.files.get(path)
 
     def read_file(self, path):
@@ -199,6 +212,19 @@ def test_innotest_entity_rewrite_backs_up_and_is_idempotent():
     assert second["uuid_references_rewritten"] == 0
 
 
+def test_innotest_empty_region_is_skipped_safely():
+    online = "fa533e52-2ef3-49a2-8b74-7155a3251c9a"
+    offline = innotest.offline_uuid("Felicitypeng")
+    client = FakeInnotestClient(synthetic_region(online), include_empty=True)
+
+    result = innotest.rewrite_innotest_entity_uuid_refs(
+        client, "world", [(online, offline)], 54321
+    )
+    assert result["region_files_scanned"] == 2
+    assert result["region_files_changed"] == 1
+    assert result["uuid_references_rewritten"] == 2
+
+
 def main():
     tests = [
         test_sum_stats,
@@ -206,6 +232,7 @@ def main():
         test_directional_region_uuid_rewrite,
         test_directional_player_nbt_uuid_rewrite,
         test_innotest_entity_rewrite_backs_up_and_is_idempotent,
+        test_innotest_empty_region_is_skipped_safely,
     ]
     for test in tests:
         test()
