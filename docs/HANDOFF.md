@@ -15,8 +15,7 @@
 - 發布：`.github/workflows/release-pack.yml` 會驗證、打包、建 Release。兩種觸發方式：在 `main` 推 `<pack>-v<版本>` tag；或手動執行這個 workflow（`workflow_dispatch`，ref 選 `main`，輸入 `tag` 例如 `utilities-v3.7`），全部 gate 通過後由 workflow 在該 `main` commit 建 annotated tag 再建 Release。雲端 session 不能推 tag，要用手動執行。**發布前要先問使用者。**
 - 2026-10-06 曾改寫 `main` 的最後一段歷史，拿掉 AI 工具署名並刪除舊分支。改寫前完整備份在使用者電腦 `C:\Users\sunny\repo-backups\packs-minecraft-inno-before-rewrite-20261006.git`。
 - **最新 CI 狀態**：Utilities、Warehouse、Copy/Paste 專用 26.3 runtime 與三包 together compatibility 都通過。
-- **最新多人實機狀態**：innotest 多人 regression 已改成用 3D 測試房子逐格比對（見 §8），新版尚未在 innotest 跑過。之前用 2×2 完整方塊的 PASS 不算 Copy/Paste 實機驗證。
-- **最新伺服器狀態**：`innotest.exaroton.me` 已關機，最後讀到 `OFFLINE`、`0/10`、Vanilla 26.3。
+- **最新多人實機狀態**：innotest 多人 regression 已改成用 3D 測試房子逐格比對（見 §8）。2026-10-07 run 37625064435（20 tps）：選取、Blueprint、Blueprint 翻面、Build／BOM、Move／Undo／Redo PASS；Rotate 之後 FAIL（B 同時 Rotate 少了屋頂那層，接著 Undo 拆掉 B 的房子），待修。之前用 2×2 完整方塊的 PASS 不算 Copy/Paste 實機驗證。
 - 重跑前發現 innotest `world/datapacks` 同時有 controller 的 `utilities.zip`／`warehouse.zip`／`copy-paste.zip` 與手動放的 `*-v3.6.zip`／`*-v4.5.zip`／`*-v1.5.zip`，同一 pack 被載入兩份；已刪掉版本號檔名那三個。之後 innotest 只放 controller 的固定檔名，不要再手動放其他檔名的同一 pack。
 - **innotest 一律保持開機（ONLINE）**：測完不關機，只清測試狀態（見 `AGENTS.md`；頻繁開關比待機更耗 exaroton credits）。只有安裝／部署必須重啟時才重啟，結束後仍保持 ONLINE；使用者明確要求才關機。
 - exaroton / bot / production maintenance 的操作細節集中在 [`docs/exaroton-operations.md`](exaroton-operations.md)。
@@ -159,7 +158,7 @@ Copy/Paste runtime 失敗時會印 `MCCST_DIAG_DROP_<步驟>` / `MCCST_DIAG_DIFF
 - 每一步都比對整個 5×4×5 的 100 格，並檢查沒有掉落物。
 - 結束或逾時後 runner 呼叫 `mcc_mp_test:cleanup` 清區域、收回材料、移除 tag／objective。
 
-舊版（2026-10-07 以前）只用 2×2 單層完整方塊，抽查一兩格，不能證明複製正確；那些 PASS 不算 Copy/Paste 的實機驗證。3D 房子版本尚未在 innotest 跑過。
+舊版（2026-10-07 以前）只用 2×2 單層完整方塊，抽查一兩格，不能證明複製正確；那些 PASS 不算 Copy/Paste 的實機驗證。3D 房子版本的結果見第 1 節與 `docs/innotest-coverage.md`。
 
 ## 9. 真人 client 工具（`scripts/real-client/`，Windows）
 
