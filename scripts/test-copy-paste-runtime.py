@@ -293,9 +293,11 @@ def integration(java: Path, server: Path):
         f'scoreboard players set {actor} mcc_anz 100000',
         f'scoreboard players set {actor} mcc_and 1',
         f'scoreboard players set {actor} mcc_rot 1',
-        f'scoreboard players set {actor} mcc_mir 0',
+        f'scoreboard players set {actor} mcc_mir 1',
     ])
     run_as('mcc:copy/run')
+    check(f'if score {actor} mcc_rot matches 0 if score {actor} mcc_mir matches 0','new_copy_resets_clipboard_orientation')
+    lines.append(f'scoreboard players set {actor} mcc_rot 1')
     target(40,80,40)
     run_as('mcc:paste/dispatch')
     check(f'if score {actor} mcc_bpsx0 matches 20019712 if score {actor} mcc_bpsx2 matches 20019713 if score {actor} mcc_bpsy0 matches 0 if score {actor} mcc_bpsz0 matches 20002000 if score {actor} mcc_bpsz2 matches 20002002','far_external_anchor_blueprint_hidden_buffer_isolated')
