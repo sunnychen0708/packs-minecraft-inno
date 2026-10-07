@@ -60,13 +60,15 @@ jobs:
 
       # Only proves the Trigger harnesses can be generated. No real player runs them here, and
       # scripts/real-client/ (Windows client) is not run in CI at all.
-      - name: Build Copy/Paste opt-in live harnesses (generate only, not run)
+      - name: Build innotest live harnesses (generate only, not run)
         shell: bash
         run: |
           set -euo pipefail
           python3 -m py_compile scripts/build-copy-paste-live-test.py scripts/build-copy-paste-multiplayer-test.py
           python3 scripts/build-copy-paste-live-test.py --output /tmp/mcc-live-test
           python3 scripts/build-copy-paste-multiplayer-test.py
+          python3 scripts/build-utilities-live-test.py
+          node --check scripts/mineflayer26/keepalive.js
 
   warehouse-runtime-smoke:
     name: Warehouse vanilla 26.3 reset regression

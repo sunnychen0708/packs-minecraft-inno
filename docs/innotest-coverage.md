@@ -8,26 +8,28 @@
 - **已寫未跑**：innotest 測試已寫好，還沒在 innotest 跑過。
 - **PASS（日期、run）**：在 innotest 跑過且通過，附 workflow run。
 
+Utilities 的測試是 `scripts/build-utilities-live-test.py`，用 `exaroton innotest control` 的 `run-live-suite`（pack 選 `utilities`）跑，需要四個 bot 在線。
+
 驗法欄裡的「bot」指 Mineflayer 測試玩家（`SunnyChen`、`penguin0531`、`geena0701`、`Felicitypeng`）。bot 由測試 datapack 用 `tellraw` 下指令，自己送出 `/trigger`、挖方塊、蹲下（`scripts/mineflayer26/keepalive.js` 的 driver），不是用 `execute as` 代替玩家。測試動到的玩家背包、經驗、遊戲模式、手上物品、世界方塊與 Warehouse 庫存，結束時都要還原。
 
 ## Utilities
 
 | 功能 | innotest 驗法 | 狀態 |
 | --- | --- | --- |
-| `/trigger help` 功能總覽 | bot 送出 trigger，確認收到總覽訊息 | 未驗 |
-| 座標顯示 `/trigger coords` 開關 | bot 切換，確認每位玩家各自的開關狀態 | 未驗 |
-| 固定據點：家、礦坑、村莊、傳送門、臨時點（設定＋傳送） | bot 在已知位置設定，移到別處後傳送，比對落點是方塊正中央、維度正確 | 未驗 |
-| 個人據點 1～8（`pset`／`pgo`／`plist`）與命名、改名、覆蓋 | 8 格全部設定、傳送、改名、覆蓋位置；兩位 bot 互不影響 | 未驗 |
-| 共用據點 1～8（`sset`／`sgo`／`slist`）與命名、改名、覆蓋 | 8 格全部設定、另一位 bot 傳送到同一點 | 未驗 |
-| `/trigger back` | 每種傳送後 back 回到傳送前位置；主世界、地獄、終界 | 未驗 |
-| `/trigger deathloc` | keepInventory 下讓 bot 死亡、重生後回到死亡地點；結束還原 gamerule | 未驗 |
-| 落點置中（v3.8） | 所有傳送比對 x/z 是 .5，旁邊有牆不卡牆 | 未驗 |
-| 連鎖砍樹（蹲下＋斧頭） | 真的種一棵有葉子的樹，bot 蹲下用斧頭挖最下面的原木；全部原木掉落、無葉倒木不連鎖、64 根上限、Poplar 三色 | 未驗 |
-| 礦脈挖掘 | 每種礦一條礦脈，bot 用鎬真的挖第一顆；整條挖完、掉落、經驗範圍、絲綢之觸不給經驗 | 未驗 |
-| 礦脈鎬等級檢查（v3.7） | 等級不夠的鎬：整條不動、不掉落、不給經驗、不扣耐久；最低合格等級可以連鎖 | 未驗 |
-| 自動補種 | 成熟作物（小麥、胡蘿蔔、馬鈴薯、甜菜根、地獄疙瘩等）被 bot 採收後原地補種 | 未驗 |
-| `treecap`／`veinmine`／`replant` 個人開關 | 關閉後同樣動作不連鎖／不補種，打開後恢復；每位玩家各自 | 未驗 |
-| 名稱輸入 Dialog（`nav:set_*`、`nav:rename_*`） | bot 送出 Dialog 會送的同一個指令，比對名稱與位置 | 未驗 |
+| `/trigger help` 功能總覽 | bot 送出 trigger，確認收到總覽訊息 | 已寫未跑 |
+| 座標顯示 `/trigger coords` 開關 | bot 切換，確認每位玩家各自的開關狀態 | 已寫未跑 |
+| 固定據點：家、礦坑、村莊、傳送門、臨時點（設定＋傳送） | bot 在已知位置設定，移到別處後傳送，比對落點是方塊正中央、維度正確 | 已寫未跑 |
+| 個人據點 1～8（`pset`／`pgo`／`plist`）與命名、改名、覆蓋 | 8 格全部設定、傳送、改名、覆蓋位置；兩位 bot 互不影響 | 已寫未跑 |
+| 共用據點 1～8（`sset`／`sgo`／`slist`）與命名、改名、覆蓋 | 8 格全部設定、另一位 bot 傳送到同一點 | 已寫未跑 |
+| `/trigger back` | 每種傳送後 back 回到傳送前位置；主世界、地獄、終界 | 已寫未跑 |
+| `/trigger deathloc` | keepInventory 下讓 bot 死亡、重生後回到死亡地點；結束還原 gamerule | 已寫未跑 |
+| 落點置中（v3.8） | 所有傳送比對 x/z 是 .5，旁邊有牆不卡牆 | 已寫未跑 |
+| 連鎖砍樹（蹲下＋斧頭） | 真的種一棵有葉子的樹，bot 蹲下用斧頭挖最下面的原木；全部原木掉落、無葉倒木不連鎖、64 根上限、Poplar 三色 | 已寫未跑 |
+| 礦脈挖掘 | 每種礦一條礦脈，bot 用鎬真的挖第一顆；整條挖完、掉落、經驗範圍、絲綢之觸不給經驗 | 已寫未跑 |
+| 礦脈鎬等級檢查（v3.7） | 等級不夠的鎬：整條不動、不掉落、不給經驗；最低合格等級可以連鎖（耐久還沒驗） | 已寫未跑 |
+| 自動補種 | 成熟作物（小麥、胡蘿蔔、馬鈴薯、甜菜根、地獄疙瘩等）被 bot 採收後原地補種 | 已寫未跑 |
+| `treecap`／`veinmine`／`replant` 個人開關 | 關閉後同樣動作不連鎖／不補種，打開後恢復；每位玩家各自 | 已寫未跑 |
+| 名稱輸入 Dialog（`nav:set_*`、`nav:rename_*`） | bot 送出 Dialog 會送的同一個指令，比對名稱與位置 | 已寫未跑 |
 | 舊資料沿用 | inno 地圖上既有據點、名稱、開關在新版載入後不變 | 未驗 |
 
 ## Warehouse

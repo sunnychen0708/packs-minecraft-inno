@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       duration_ms:
-        description: Keep four bots connected for this many milliseconds (30s-300s)
+        description: Keep four bots connected for this many milliseconds (30s-1500s)
         required: true
         default: "180000"
         type: string
@@ -24,7 +24,7 @@ concurrency:
 jobs:
   bots:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 35
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -65,8 +65,8 @@ jobs:
               else:
                   raise SystemExit("unsupported mineflayer request")
 
-          if run and not 30000 <= duration <= 300000:
-              raise SystemExit("duration_ms must be 30000..300000")
+          if run and not 30000 <= duration <= 1500000:
+              raise SystemExit("duration_ms must be 30000..1500000")
 
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
               f.write(f"run={'true' if run else 'false'}\n")

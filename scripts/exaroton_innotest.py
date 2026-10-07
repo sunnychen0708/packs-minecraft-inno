@@ -615,6 +615,122 @@ def run_copy_paste_multiplayer_test(client):
         f"current-run result={result or '<missing>'}"
     )
 
+LIVE_SUITES = {
+    "utilities": ("build-utilities-live-test.py", "utilities-live-test"),
+}
+
+def wait_named_players(client, names, timeout=180):
+    deadline = time.time() + timeout
+    missing = list(names)
+    while time.time() < deadline:
+        server = client.target()
+        players = server.get("players") or {}
+        listing = players.get("list") if isinstance(players, dict) else players
+        online = set(listing or [])
+        missing = [n for n in names if n not in online]
+        if int(server.get("status", -1)) == 1 and not missing:
+            return server
+        time.sleep(2)
+    raise Error(f"timeout waiting for test players; missing={missing}")
+
+def run_live_suite(client, suite):
+    """Deploy the checked-out packs, run one innotest live suite and clean it up.
+
+    The suite datapack is built by scripts/<builder>; it reports
+    <PREFIX>_CHECK / <PREFIX>_DIFF lines and one <PREFIX>_RESULT line, and its
+    <ns>:cleanup function restores everything the suite touched.
+    """
+    if suite not in LIVE_SUITES:
+        raise Error(f"unknown live suite {suite!r}; known: {sorted(LIVE_SUITES)}")
+    current = client.target()
+    if int(current.get("status", -1)) != 1:
+        raise Error("innotest must be ONLINE before a live suite")
+    builder, out_name = LIVE_SUITES[suite]
+
+    import subprocess
+    subprocess.check_call([sys.executable, str(ROOT / "scripts" / builder)])
+    out = ROOT / "dist" / out_name
+    meta = json.loads((out / "suite.json").read_text(encoding="utf-8"))
+    ns, prefix, names = meta["ns"], meta["prefix"], list(meta["players"].values())
+    timeout = int(meta.get("timeout_s", 600))
+
+    session_marker = f"{prefix}_SESSION_{int(time.time() * 1000)}"
+    client.command(f"say {session_marker} START")
+    time.sleep(1)
+    deploy(client, "all")
+    time.sleep(5)
+    payload = zip_tree(out)
+    world = level_name(client.read_file("server.properties"))
+    remote = f"{world}/datapacks/{out_name}.zip"
+    client.write_file(remote, payload)
+    print(f"deployed {suite} live suite -> {remote} ({len(payload)} bytes)")
+    client.command("reload")
+    time.sleep(6)
+
+    def remove_harness():
+        try:
+            client.delete_file(remote)
+        finally:
+            try:
+                client.command("reload")
+            except Error:
+                pass
+
+    log = client.log()
+    at = log.rfind(f"{session_marker} START")
+    if at < 0:
+        raise Error("live suite preflight marker not found in server log")
+    errors = [line for line in log[at:].splitlines() if "/ERROR]:" in line]
+    if errors:
+        remove_harness()
+        raise Error("live suite preflight found current-session server errors:\n" + "\n".join(errors[:12]))
+
+    wait_named_players(client, names, 240)
+    run_marker = f"{prefix}_RUN_{int(time.time() * 1000)}"
+    client.command(f"say {run_marker} START")
+    time.sleep(1)
+    client.command(f"function {ns}:start")
+
+    deadline = time.time() + timeout
+    result = segment = ""
+    printed = 0
+    while time.time() < deadline:
+        log = client.log()
+        marker = log.rfind(f"{run_marker} START")
+        if marker >= 0:
+            segment = log[marker:]
+            lines = [l for l in segment.splitlines() if f"{prefix}_CHECK " in l or f"{prefix}_DIFF " in l]
+            for line in lines[printed:]:
+                print(line)
+            printed = len(lines)
+            results = [l for l in segment.splitlines() if f"{prefix}_RESULT " in l]
+            if results:
+                result = results[-1]
+                break
+        time.sleep(5)
+
+    try:
+        client.command(f"function {ns}:cleanup")
+        time.sleep(3)
+    except Error:
+        pass
+    final_log = client.log()
+    marker = final_log.rfind(f"{run_marker} START")
+    if marker >= 0:
+        segment = final_log[marker:]
+    restore_lines = [l for l in segment.splitlines() if f"{prefix}_RESTORE" in l or f"{prefix}_CLEANUP" in l]
+    for line in restore_lines:
+        print(line)
+    remove_harness()
+
+    errors = [line for line in segment.splitlines() if "/ERROR]:" in line]
+    if errors:
+        raise Error(f"{suite} live suite produced current-run server errors:\n" + "\n".join(errors[:12]))
+    if f"{prefix}_RESULT PASS" in result:
+        print(f"{suite.upper()}_LIVE_SUITE=PASS")
+        return
+    raise Error(f"{suite} live suite did not pass; result={result or '<missing: timeout>'}")
+
 def wait_status(client, wanted, timeout=180):
     deadline = time.time() + timeout
     while time.time() < deadline:
@@ -1321,6 +1437,7 @@ def run(path):
     elif op == "deploy-datapack": deploy(client, str(r.get("pack") or ""))
     elif op == "run-copy-paste-multiplayer-test": run_copy_paste_multiplayer_test(client)
     elif op == "run-warehouse-compact-live-test": run_warehouse_compact_live_test(client)
+    elif op == "run-live-suite": run_live_suite(client, str(r.get("pack") or ""))
     elif op == "run-utilities-bfs-live-test": run_utilities_bfs_live_test(client)
     elif op == "set-online-mode-false": set_offline_mode(client)
     elif op == "online-mode-status":

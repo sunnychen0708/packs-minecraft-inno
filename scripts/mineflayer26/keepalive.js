@@ -6,6 +6,7 @@ const path = require('path')
 const repoRoot = path.resolve(__dirname, '..', '..')
 const stackRoot = path.resolve(process.env.MF26_STACK || path.join(repoRoot, 'dist', 'mineflayer-26.3-src'))
 const mineflayer = require(path.join(stackRoot, 'mineflayer'))
+const { Vec3 } = require(require.resolve('vec3', { paths: [path.join(stackRoot, 'mineflayer')] }))
 
 const TARGET = 'innotest.exaroton.me'
 const host = String(process.env.MF26_HOST || TARGET).trim().toLowerCase().replace(/\.$/, '')
@@ -23,8 +24,8 @@ if (![1, 4].includes(names.length) || new Set(names).size !== names.length || na
   console.error('Use either one allowed player or all four unique allowed players')
   process.exit(2)
 }
-if (!Number.isFinite(durationMs) || durationMs < 30000 || durationMs > 300000) {
-  console.error('MF26_DURATION_MS must be between 30000 and 300000 for the GitHub smoke test')
+if (!Number.isFinite(durationMs) || durationMs < 30000 || durationMs > 1500000) {
+  console.error('MF26_DURATION_MS must be between 30000 and 1500000 for the GitHub smoke test')
   process.exit(2)
 }
 
@@ -54,6 +55,7 @@ function createBot (username) {
     return rawWrite(packet, data)
   }
 
+  attachDriver(bot, username)
   bots.push(bot)
   bot.once('spawn', () => {
     state.spawned = true
@@ -67,6 +69,111 @@ function createBot (username) {
     console.log(`ENDED ${username}: ${reason || 'unknown'}`)
   })
   return bot
+}
+
+// Test driver. An innotest test datapack drives a bot with a system message
+//   tellraw <bot> "MFBOT <name> <seq> <action> <args...>"
+// and the bot acknowledges with its own /trigger mfack set <seq> when the
+// action finished (or <seq>+100000 when it failed). Only system messages
+// (tellraw, which needs OP) are read, and only a small fixed action set:
+//   cmd trigger ...|function ...   send that command as this player
+//   cmdx <n> <tok1..tokn> <command> send the command, then succeed only if one
+//                                  chat/system/action-bar message within 6 s
+//                                  contains every token
+//   dig x y z                      survival-dig the block (real start/finish destroy)
+//   sneak 0|1                      hold or release sneak
+//   slot 0..8                      select a hotbar slot
+//   use x y z                      right-click a block (e.g. open a chest)
+//   close                          close the open container window
+const COMMAND_PREFIXES = ['trigger ', 'function ']
+function attachDriver (bot, username) {
+  let queue = Promise.resolve()
+  const ack = (seq, ok) => {
+    try { bot.chat(`/trigger mfack set ${ok ? seq : seq + 100000}`) } catch (err) { console.log(`MFBOT_ACK_ERROR ${username} ${seq} ${err}`) }
+  }
+  const setSneak = on => {
+    bot.setControlState('sneak', on)
+    // With physics disabled the control state is not flushed by the physics
+    // tick, so send the 26.3 player input packet directly as well.
+    try { bot._client.write('player_input', { inputs: { shift: on } }) } catch (err) { console.log(`MFBOT_SNEAK_PACKET ${username} ${err}`) }
+  }
+  const run = async (action, args) => {
+    const xyz = () => {
+      const [x, y, z] = args.slice(0, 3).map(Number)
+      if (![x, y, z].every(Number.isInteger)) throw new Error(`bad coordinates ${args.join(' ')}`)
+      return new Vec3(x, y, z)
+    }
+    if (action === 'cmd') {
+      const command = args.join(' ')
+      if (!COMMAND_PREFIXES.some(p => command.startsWith(p))) throw new Error(`command not allowed: ${command}`)
+      bot.chat(`/${command}`)
+      await delay(250)
+    } else if (action === 'cmdx') {
+      const n = Number(args[0])
+      if (!Number.isInteger(n) || n < 1 || n > 8) throw new Error(`bad token count ${args[0]}`)
+      const tokens = args.slice(1, 1 + n)
+      const command = args.slice(1 + n).join(' ')
+      if (!COMMAND_PREFIXES.some(p => command.startsWith(p))) throw new Error(`command not allowed: ${command}`)
+      let seen = null
+      const listener = text => {
+        const t = String(text)
+        if (!seen && !t.startsWith('MFBOT ') && tokens.every(tok => t.includes(tok))) seen = t
+      }
+      bot.on('messagestr', listener)
+      try {
+        bot.chat(`/${command}`)
+        const until = Date.now() + 6000
+        while (!seen && Date.now() < until) await delay(100)
+      } finally {
+        bot.removeListener('messagestr', listener)
+      }
+      if (!seen) throw new Error(`no message containing ${JSON.stringify(tokens)}`)
+      console.log(`MFBOT_SEEN ${username}: ${seen}`)
+    } else if (action === 'dig') {
+      const pos = xyz()
+      const block = bot.blockAt(pos)
+      if (!block) throw new Error(`block not loaded at ${pos}`)
+      if (block.name === 'air') throw new Error(`nothing to dig at ${pos}`)
+      await bot.dig(block, 'ignore')
+    } else if (action === 'sneak') {
+      setSneak(args[0] === '1')
+      await delay(150)
+    } else if (action === 'slot') {
+      const slot = Number(args[0])
+      if (!Number.isInteger(slot) || slot < 0 || slot > 8) throw new Error(`bad slot ${args[0]}`)
+      bot.setQuickBarSlot(slot)
+      await delay(150)
+    } else if (action === 'use') {
+      const block = bot.blockAt(xyz())
+      if (!block) throw new Error('block not loaded')
+      await bot.activateBlock(block)
+      await delay(250)
+    } else if (action === 'close') {
+      if (bot.currentWindow) bot.closeWindow(bot.currentWindow)
+      await delay(150)
+    } else {
+      throw new Error(`unknown action ${action}`)
+    }
+  }
+  bot.on('messagestr', (text, position) => {
+    if (position !== 'system') return
+    const parts = String(text).trim().split(/\s+/)
+    if (parts[0] !== 'MFBOT' || parts[1] !== username) return
+    const seq = Number(parts[2])
+    const action = parts[3]
+    const args = parts.slice(4)
+    if (!Number.isInteger(seq) || seq < 1 || seq >= 100000) return
+    queue = queue.then(async () => {
+      try {
+        await run(action, args)
+        console.log(`MFBOT_DONE ${username} ${seq} ${action} ${args.join(' ')}`)
+        ack(seq, true)
+      } catch (err) {
+        console.log(`MFBOT_FAIL ${username} ${seq} ${action} ${args.join(' ')}: ${err && err.message ? err.message : err}`)
+        ack(seq, false)
+      }
+    })
+  })
 }
 
 async function waitForSpawn (name) {
