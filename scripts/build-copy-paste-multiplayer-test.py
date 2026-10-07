@@ -53,6 +53,10 @@ def check(label,*conditions):
 def check_display_block(label, x, y, z, block):
     """Assert the exact block ID carried by the display at one target cell.
 
+    Blueprint displays sit on the block corner (summoned at x.0 y.0 z.0). A bare
+    integer in `positioned` is centred to x.5/z.5, which is 0.71 blocks away and
+    misses distance=..0.1, so the coordinates are written with an explicit .0.
+
     Copy block_state into storage first. Entity-selector NBT matching is not
     reliable for block_display.block_state on the innotest server even though
     data inspection returns the correct scalar value.
@@ -60,7 +64,7 @@ def check_display_block(label, x, y, z, block):
     cmds=[
         'scoreboard players set #ok mccmp 0',
         'data remove storage mcc_mp_test:diag state',
-        f'execute in minecraft:overworld positioned {x} {y} {z} as @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] run data modify storage mcc_mp_test:diag state set from entity @s block_state',
+        f'execute in minecraft:overworld positioned {x}.0 {y}.0 {z}.0 as @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] run data modify storage mcc_mp_test:diag state set from entity @s block_state',
         f'execute if data storage mcc_mp_test:diag {{state:"minecraft:{block}"}} run scoreboard players set #ok mccmp 1',
         f'execute if data storage mcc_mp_test:diag {{state:{{id:"minecraft:{block}"}}}} run scoreboard players set #ok mccmp 1',
         f'execute if data storage mcc_mp_test:diag {{state:{{Name:"minecraft:{block}"}}}} run scoreboard players set #ok mccmp 1',
