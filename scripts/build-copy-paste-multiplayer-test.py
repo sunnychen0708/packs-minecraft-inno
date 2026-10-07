@@ -241,30 +241,24 @@ check('B independent undo',
       'in minecraft:overworld if block -280 250 120 air')
 
 # Undo guard ignores block-state-only changes while preserving block-ID / Block Entity safety.
-step(
-    'execute in minecraft:overworld run setblock -260 250 90 oak_door[half=lower,facing=north,hinge=left,open=false,powered=false]',
-    'execute in minecraft:overworld run setblock -260 251 90 oak_door[half=upper,facing=north,hinge=left,open=false,powered=false]'
-)
+step('execute in minecraft:overworld run setblock -260 250 90 oak_stairs[facing=north,half=bottom,shape=straight,waterlogged=false]')
 aim('mcc_mp_a',-260,90,250); step('execute as @a[tag=mcc_mp_a,limit=1] run trigger pos1')
-aim('mcc_mp_a',-260,90,251); step('execute as @a[tag=mcc_mp_a,limit=1] run trigger pos2')
+aim('mcc_mp_a',-260,90,250); step('execute as @a[tag=mcc_mp_a,limit=1] run trigger pos2')
 step('execute as @a[tag=mcc_mp_a,limit=1] run trigger up set 3')
-check('state guard door moved',
-      'in minecraft:overworld if block -260 253 90 oak_door[half=lower,open=false]',
-      'in minecraft:overworld if block -260 254 90 oak_door[half=upper,open=false]')
+check('state guard stairs moved',
+      'in minecraft:overworld if block -260 253 90 oak_stairs[facing=north,half=bottom,shape=straight,waterlogged=false]')
 step(
-    'execute in minecraft:overworld run setblock -260 253 90 oak_door[half=lower,facing=north,hinge=left,open=true,powered=false]',
-    'execute in minecraft:overworld run setblock -260 254 90 oak_door[half=upper,facing=north,hinge=left,open=true,powered=false]',
+    'execute in minecraft:overworld run setblock -260 253 90 oak_stairs[facing=east,half=top,shape=straight,waterlogged=false]',
     'execute as @a[tag=mcc_mp_a,limit=1] run trigger undo'
 )
 check('undo ignores block state',
-      'in minecraft:overworld if block -260 250 90 oak_door[half=lower,open=false]',
-      'in minecraft:overworld if block -260 251 90 oak_door[half=upper,open=false]',
+      'in minecraft:overworld if block -260 250 90 oak_stairs[facing=north,half=bottom,shape=straight,waterlogged=false]',
       'in minecraft:overworld if block -260 253 90 air',
       'score @a[tag=mcc_mp_a,limit=1] mcc_redo matches 1')
 
 step('execute as @a[tag=mcc_mp_a,limit=1] run trigger redo')
 check('state guard redo restored move',
-      'in minecraft:overworld if block -260 253 90 oak_door[half=lower]',
+      'in minecraft:overworld if block -260 253 90 oak_stairs',
       'score @a[tag=mcc_mp_a,limit=1] mcc_undo matches 1')
 step(
     'execute in minecraft:overworld run setblock -260 253 90 stone',
