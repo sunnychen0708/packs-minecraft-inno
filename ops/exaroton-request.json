@@ -1,6 +1,6 @@
 {
-  "request_id": 202610071526,
-  "operation": "deploy-datapack",
+  "request_id": 202610071527,
+  "operation": "run-warehouse-compact-live-test",
   "command": "",
-  "pack": "warehouse"
+  "pack": ""
 }
