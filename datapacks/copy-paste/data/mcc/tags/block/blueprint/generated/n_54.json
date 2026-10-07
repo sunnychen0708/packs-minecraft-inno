@@ -1,0 +1,14 @@
+{
+  "values": [
+    "minecraft:lava",
+    "minecraft:torch",
+    "minecraft:black_stained_glass",
+    "minecraft:warped_fence",
+    "minecraft:white_stained_glass_pane",
+    "minecraft:yellow_stained_glass_pane",
+    "minecraft:sulfur_brick_wall",
+    "minecraft:sulfur_wall",
+    "minecraft:tuff_brick_wall",
+    "minecraft:tuff_wall"
+  ]
+}

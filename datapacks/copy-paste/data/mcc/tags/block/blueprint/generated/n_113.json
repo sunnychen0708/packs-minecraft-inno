@@ -1,0 +1,33 @@
+{
+  "values": [
+    "minecraft:acacia_trapdoor",
+    "minecraft:bamboo_door",
+    "minecraft:bamboo_trapdoor",
+    "minecraft:birch_door",
+    "minecraft:acacia_door",
+    "minecraft:lantern",
+    "minecraft:rail",
+    "minecraft:acacia_hanging_sign",
+    "minecraft:acacia_sapling",
+    "minecraft:yellow_wall_banner",
+    "minecraft:zombie_head",
+    "minecraft:zombie_wall_head",
+    "minecraft:yellow_wool_stairs",
+    "minecraft:crafting_table",
+    "minecraft:furnace",
+    "minecraft:hay_block",
+    "minecraft:ladder",
+    "minecraft:waxed_oxidized_cut_copper_stairs",
+    "minecraft:waxed_weathered_cut_copper_slab",
+    "minecraft:waxed_weathered_cut_copper_stairs",
+    "minecraft:weathered_cut_copper_slab",
+    "minecraft:weathered_cut_copper_stairs",
+    "minecraft:white_concrete_slab",
+    "minecraft:white_concrete_stairs",
+    "minecraft:white_wool_slab",
+    "minecraft:white_wool_stairs",
+    "minecraft:yellow_concrete_slab",
+    "minecraft:yellow_concrete_stairs",
+    "minecraft:yellow_wool_slab"
+  ]
+}

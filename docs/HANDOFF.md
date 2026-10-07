@@ -8,7 +8,7 @@
 | --- | --- | --- |
 | Utilities | v3.8 | `utilities-v3.7` |
 | Warehouse | v4.6 | `warehouse-v4.5` |
-| Copy/Paste | v1.6 | `copy-paste-v1.6` |
+| Copy/Paste | v1.7 | `copy-paste-v1.6` |
 | cat-door-sounds | v1.0 | `cat-door-sounds-v1.0` |
 
 - Utilities v3.8（傳送落點置中修正）與 Warehouse v4.6（倉庫區塊常駐載入、查詢讀取未載入箱子的庫存）只有原始碼，尚未發布；其他原始碼版本都已發布。
@@ -78,7 +78,7 @@ ops/inno-maintenance-request.json
 - 修正後四 bot 已完整 hold 5 分鐘並成功結束 workflow；可穩定提供 4/10 真實玩家實體給 datapack 多人 regression。
 - 這套 client 適合 presence、trigger/state、多玩家 server-side regression；**不要假設目前已能當完整走路/操作世界的通用 client**。
 
-## 5. Copy/Paste v1.6 重要設計
+## 5. Copy/Paste v1.7 重要設計
 
 - **介面**：玩家按 G →「建築工具」（`/trigger copypaste` 仍可，但玩家提示統一叫按 G）。主畫面 `ui/show`、調整預覽 `ui/adjust`、更多 `ui/more`、直接改原本建築 `ui/edit`。聊天教學 `/trigger cphelp` 是步驟式。
 - **Anchor**：預設 pos1；自訂 anchor 不限制必須在選區內，否則無法做大半徑旋轉。

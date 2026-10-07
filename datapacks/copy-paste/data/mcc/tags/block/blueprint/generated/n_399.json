@@ -1,0 +1,20 @@
+{
+  "values": [
+    "minecraft:smooth_quartz",
+    "minecraft:smooth_red_sandstone",
+    "minecraft:smooth_sandstone",
+    "minecraft:sniffer_egg",
+    "minecraft:soul_campfire",
+    "minecraft:soul_fire",
+    "minecraft:soul_lantern",
+    "minecraft:soul_sand",
+    "minecraft:soul_soil",
+    "minecraft:soul_torch",
+    "minecraft:soul_wall_torch",
+    "minecraft:spawner",
+    "minecraft:sponge",
+    "minecraft:spore_blossom",
+    "minecraft:spruce_hanging_sign",
+    "minecraft:spruce_sapling"
+  ]
+}

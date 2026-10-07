@@ -1,0 +1,8 @@
+{
+  "values": [
+    "minecraft:test_block",
+    "minecraft:test_instance_block",
+    "minecraft:tinted_glass",
+    "minecraft:tnt"
+  ]
+}

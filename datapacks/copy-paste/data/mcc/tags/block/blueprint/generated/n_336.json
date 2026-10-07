@@ -1,0 +1,20 @@
+{
+  "values": [
+    "minecraft:moving_piston",
+    "minecraft:mud",
+    "minecraft:muddy_mangrove_roots",
+    "minecraft:mycelium",
+    "minecraft:nether_gold_ore",
+    "minecraft:nether_portal",
+    "minecraft:nether_quartz_ore",
+    "minecraft:nether_sprouts",
+    "minecraft:nether_wart",
+    "minecraft:nether_wart_block",
+    "minecraft:netherite_block",
+    "minecraft:netherrack",
+    "minecraft:note_block",
+    "minecraft:oak_hanging_sign",
+    "minecraft:oak_sapling",
+    "minecraft:oak_shelf"
+  ]
+}
