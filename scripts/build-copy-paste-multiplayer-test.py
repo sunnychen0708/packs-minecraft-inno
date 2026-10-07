@@ -181,7 +181,8 @@ for p in P:
             f'scoreboard players set {sel(p)} mcc_hasa 0',
             f'scoreboard players set {sel(p)} mcc_buildconfirm 0']
 setup+=['scoreboard players set #pass mccmp 0','scoreboard players set #fail mccmp 0']
-step(*setup)
+# Nothing in this test waits for a bot reply, so the whole chain runs at the fastest tick rate.
+step('tick rate 10000',*setup)
 check('house fixtures ready',
       *[f'{OW} if blocks {box(REF)} {at(P[p]["S"])} all' for p in P],
       *[air_box(P[p]['T']) for p in P],
@@ -231,6 +232,38 @@ step(*[f'execute store result score #{p}bp mccmp {OW} if entity @e[type=minecraf
 check('both house blueprints complete, world untouched',*bp,
       *[(f'score #{p}bp mccmp matches {len(house.BLOCKS)}',f'player {p.upper()} blueprint has wrong display count (expected {len(house.BLOCKS)})') for p in P])
 
+# Blueprint Flip (facing south: left/right = mirror X) inside the same bounds, then flip back.
+def display_state(label,x,y,z,name,prop=None):
+    """The Blueprint display at x,y,z shows block `name` (and property k=v when given)."""
+    pk,pv=(prop.split('=') if prop else (None,None))
+    want=[f'{{state:{{Name:"minecraft:{name}"{(",Properties:{"+pk+":\""+pv+"\"}") if prop else ""}}}}}',
+          f'{{state:{{id:"minecraft:{name}"{(",properties:{"+pk+":\""+pv+"\"}") if prop else ""}}}}}']
+    step('data remove storage mcc_mp_test:diag state',
+         f'execute {OW} positioned {x}.0 {y}.0 {z}.0 as @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.01,limit=1] run data modify storage mcc_mp_test:diag state set from entity @s block_state')
+    step('scoreboard players set #ds mccmp 0',
+         *[f'execute if data storage mcc_mp_test:diag {w} run scoreboard players set #ds mccmp 1' for w in want])
+    check(label,(f'score #ds mccmp matches 1',f'display at {x} {y} {z} is not {name} {prop or ""}'))
+
+both_trigger('bpflip')
+wait('flipped blueprints ready',[c for p in P for c in (f'score {sel(p)} mcc_bpready matches 1',f'score {sel(p)} mcc_bpscan matches 0')])
+flip_cells=[]
+for p in P:
+    t=P[p]['T']
+    for x,y,z,b in house.BLOCKS:
+        wx,wy,wz=t[0]+SX-1-x,t[1]+y,t[2]+z
+        flip_cells.append((f'{OW} positioned {wx}.0 {wy}.0 {wz}.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.01]',
+                           f'player {p.upper()} flipped blueprint missing at {wx} {wy} {wz}'))
+check('blueprint flip keeps the house bounds',*flip_cells,*[f'score {sel(p)} mcc_bptx0 matches {P[p]["T"][0]}' for p in P])
+ta=P['a']['T']
+display_state('blueprint flip turns the wall torch',ta[0]+3,Y+2,ta[2]+1,'wall_torch','facing=west')
+display_state('blueprint flip turns the chest',ta[0]+1,Y+1,ta[2]+3,'chest','facing=east')
+display_state('blueprint flip changes the door hinge',ta[0]+2,Y+1,ta[2],'oak_door','hinge=right')
+display_state('blueprint flip turns the roof stair',ta[0]+4,Y+3,ta[2]+2,'oak_stairs','facing=west')
+both_trigger('bpflip')
+wait('blueprints flipped back',[c for p in P for c in (f'score {sel(p)} mcc_bpready matches 1',f'score {sel(p)} mcc_bpscan matches 0')])
+display_state('blueprint flip twice restores the torch',ta[0]+1,Y+2,ta[2]+1,'wall_torch','facing=east')
+display_state('blueprint flip twice restores the chest',ta[0]+3,Y+1,ta[2]+3,'chest','facing=west')
+
 # Exactly one BOM into each player's inventory, measured against the player's own baseline.
 step(*count_cmds('base'),
      *[f'give {sel(p)} {item} {n}' for p in P for item,n in ITEMS])
@@ -272,6 +305,9 @@ both_trigger('undo')
 check('move restored before rotate',*[c for p in P for c in exact_house(P[p]['S'])])
 
 # ---- same-tick real Rotate around Pos1, full state check, Undo ----
+# Two cells of the turned footprint are occupied: the turned house must replace them, Undo must bring them back.
+OCC=[(-2,1,2),(-4,0,0)]   # relative to Pos1: lantern / floor plank land here after the turn
+step(*[f'execute {OW} run setblock {P[p]["S"][0]+dx} {Y+dy} {P[p]["S"][2]+dz} minecraft:stone' for p in P for dx,dy,dz in OCC])
 both_trigger('turnright')
 rot=[]
 for p in P:
@@ -280,8 +316,16 @@ for p in P:
     rot.append(air_box((s[0]+1,Y,s[2]),dx=SX-1))   # the part of the old footprint the turned house left
 check('simultaneous rotate 90 exact states',*rot,no_items())
 both_trigger('undo')
-check('rotate undo exact',*[c for p in P for c in exact_house(P[p]['S'])],
-      *[air_box((P[p]['S'][0]-SX+1,Y,P[p]['S'][2]),dx=SX-1) for p in P],no_items())
+left=[]
+for p in P:
+    s0=P[p]['S']
+    for dx in range(-SX+1,0):
+        for dy in range(SY):
+            for dz in range(SZ):
+                want='minecraft:stone' if (dx,dy,dz) in OCC else 'minecraft:air'
+                left.append((f'{OW} if block {s0[0]+dx} {Y+dy} {s0[2]+dz} {want}',f'{s0[0]+dx} {Y+dy} {s0[2]+dz} expected {want} after undo'))
+check('rotate undo exact and restores the occupied cells',*[c for p in P for c in exact_house(P[p]['S'])],*left,no_items())
+step(*[f'execute {OW} run setblock {P[p]["S"][0]+dx} {Y+dy} {P[p]["S"][2]+dz} minecraft:air' for p in P for dx,dy,dz in OCC])
 
 # ---- same-tick Flip (facing south: left/right = mirror X), full state check, Undo ----
 step(*[aim_down(p,P[p]['S'][0]+2,Y+SY-1,P[p]['S'][2]+2) for p in P])
@@ -289,6 +333,31 @@ both_trigger('flip')
 check('simultaneous flip exact states',*[c for p in P for c in house_conds(P[p]['S'],'mx')],no_items())
 both_trigger('undo')
 check('flip undo exact',*[c for p in P for c in exact_house(P[p]['S'])],no_items())
+
+# ---- Undo guard: block-state changes are ignored, block-ID / block-entity changes block Undo ----
+both_trigger('up set 1')
+sa,sb=P['a']['S'],P['b']['S']
+step(f'execute {OW} run setblock {sa[0]} {Y+4} {sa[2]+2} minecraft:oak_stairs[facing=west,half=bottom,shape=straight,waterlogged=false]')
+both_trigger('undo')
+check('undo ignores a changed block state',*[c for p in P for c in exact_house(P[p]['S'])],
+      *[f'score {sel(p)} mcc_redo matches 1' for p in P])
+both_trigger('redo')
+step(f'execute {OW} run setblock {sa[0]+1} {Y+1} {sa[2]+2} minecraft:stone')
+step(f'execute as {sel("a")} run trigger undo')
+check('undo rejects a changed block id and reports it',
+      f'{OW} if block {sa[0]+1} {Y+1} {sa[2]+2} minecraft:stone',*exact_house((sb[0],Y+1,sb[2])),
+      f'score {sel("a")} mcc_undo matches 1',f'score {sel("a")} mcc_diagcount matches 1',f'score {sel("a")} mcc_diagmissing matches 1',
+      (f'data storage mcc:temp diag.coords[{{x:{sa[0]+1},y:{Y+1},z:{sa[2]+2},expected:"minecraft:oak_planks",current:"minecraft:stone",kind:1}}]','diagnostic does not name the changed plank'))
+step(f'execute {OW} run item replace block {sb[0]+3} {Y+2} {sb[2]+3} container.0 with minecraft:diamond 1')
+step(f'execute as {sel("b")} run trigger undo')
+check('undo rejects a changed chest content and reports it',
+      f'{OW} if block {sb[0]+3} {Y+2} {sb[2]+3} minecraft:chest',f'score {sel("b")} mcc_undo matches 1',
+      f'score {sel("b")} mcc_diagcount matches 1',f'score {sel("b")} mcc_diagcontent matches 1',
+      (f'data storage mcc:temp diag.coords[{{x:{sb[0]+3},y:{Y+2},z:{sb[2]+3},expected:"minecraft:chest",current:"minecraft:chest",kind:3}}]','diagnostic does not name the chest'))
+step(f'execute {OW} run setblock {sa[0]+1} {Y+1} {sa[2]+2} minecraft:oak_planks',
+     f'execute {OW} run item replace block {sb[0]+3} {Y+2} {sb[2]+3} container.0 with minecraft:air')
+both_trigger('undo')
+check('undo works again once the changes are put back',*[c for p in P for c in exact_house(P[p]['S'])],no_items())
 
 # ---- X (Cut) and V paste of real blocks; per-player isolated Undo/Redo ----
 both_trigger('x')
@@ -313,6 +382,7 @@ check('B second undo restores cut source',*exact_house(P['b']['S']),air_box(P['b
 
 step(
     *[f'tellraw @a[tag={P[p]["tag"]}] [{{"text":"MCCMP DONE pass="}},{{"score":{{"name":"#pass","objective":"mccmp"}}}},{{"text":" fail="}},{{"score":{{"name":"#fail","objective":"mccmp"}}}}]' for p in P],
+    'tick rate 20',
     'execute if score #fail mccmp matches 0 run say MCCMP_RESULT PASS',
     'execute unless score #fail mccmp matches 0 run say MCCMP_RESULT FAIL'
 )
@@ -322,18 +392,18 @@ for i,s in enumerate(steps):
     nxt=f'mcc_mp_test:step_{i+1}' if i+1<len(steps) else None
     if s[0]=='cmd':
         commands=list(s[1])
-        if nxt: commands.append(f'schedule function {nxt} 10t replace')
+        if nxt: commands.append(f'schedule function {nxt} 4t replace')
     else:
         _,label,conds,tries=s
         tag=label.replace(' ','_')
         ready='execute '+' '.join(chained(c) for c in conds)
         commands=['scoreboard players add #wait mccmp 1',
                   f'{ready} run scoreboard players set #wait mccmp 0',
-                  f'{ready} run return run schedule function {nxt} 10t replace',
+                  f'{ready} run return run schedule function {nxt} 4t replace',
                   f'execute if score #wait mccmp matches {tries}.. run say MCCMP_CHECK FAIL wait_{tag}',
                   f'execute if score #wait mccmp matches {tries}.. run scoreboard players add #fail mccmp 1',
                   f'execute if score #wait mccmp matches {tries}.. run scoreboard players set #wait mccmp 0',
-                  f'execute if score #wait mccmp matches 0 run return run schedule function {nxt} 10t replace',
+                  f'execute if score #wait mccmp matches 0 run return run schedule function {nxt} 4t replace',
                   f'schedule function mcc_mp_test:step_{i} 5t replace']
     (F/f'step_{i}.mcfunction').write_text('\n'.join(commands)+'\n',encoding='utf-8')
 
@@ -354,7 +424,7 @@ for i,s in enumerate(steps):
 )
 # Cleanup: stop the chain, take back anything the test gave (count above the
 # player's own baseline), clear the area and the test state.
-cleanup=[f'schedule clear mcc_mp_test:step_{i}' for i in range(len(steps))]
+cleanup=['tick rate 20']+[f'schedule clear mcc_mp_test:step_{i}' for i in range(len(steps))]
 cleanup+=[f'execute as {sel(p)} run trigger previewclear' for p in P]
 cleanup.append('function mcc_mp_test:restore_inventory')
 restore=[]

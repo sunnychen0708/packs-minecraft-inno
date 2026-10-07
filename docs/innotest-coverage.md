@@ -12,6 +12,12 @@ Utilities 的測試是 `scripts/build-utilities-live-test.py`，用 `exaroton in
 
 驗法欄裡的「bot」預設指 `penguin0531`、`geena0701`、`Felicitypeng`；`SunnyChen` 保留給真人登入監督或 Computer Use，只有確實需要第 4 位玩家時才由 bot 使用。bot 由測試 datapack 用 `tellraw` 下指令，自己送出 `/trigger`、挖方塊、蹲下（`scripts/mineflayer26/keepalive.js` 的 driver），不是用 `execute as` 代替玩家。測試動到的玩家背包、經驗、遊戲模式、手上物品、世界方塊與 Warehouse 庫存，結束時都要還原。
 
+時間上限：每個 pack 的 innotest 測試都要在 4 分鐘內跑完。只有 server 在跑的段落用 `tick rate 10000`（最快）；要等 bot 回應或等 chunk 載入的段落用 20 tps；結束與清理一律調回 20。
+
+Warehouse 的測試是 `scripts/build-warehouse-live-test.py`（`run-live-suite`，pack 選 `warehouse`）：用 inno 地圖上真的倉庫與玩家自訂分類，測試物品帶 `custom_data {wtest:1b}`，結束後從每一箱移除；分類、規則修改與移除、查詢、Pick、共用 API、檢視、改名、右鍵註冊／刪除註冊、chunk forceload、系統開關、load/migration 重跑都有。溢位箱只在主箱滿時記錄 `WTEST_NOTE`，沒有主動塞滿主箱測。
+
+Copy/Paste 的測試是 `scripts/build-copy-paste-multiplayer-test.py`（`run-copy-paste-multiplayer-test`），全程用最快 tick。
+
 ## Utilities
 
 | 功能 | innotest 驗法 | 狀態 |
@@ -36,20 +42,20 @@ Utilities 的測試是 `scripts/build-utilities-live-test.py`，用 `exaroton in
 
 | 功能 | innotest 驗法 | 狀態 |
 | --- | --- | --- |
-| 自動分類（入口箱 → 分類箱） | 把已知物品放進 inno 地圖上真的入口箱，依當下的玩家自訂分類（`warehouse:rules overrides`，沒有才用預設）比對每樣物品落在哪一箱；結束把放進去的物品原數收回 | 未驗 |
+| 自動分類（入口箱 → 分類箱） | 把已知物品放進 inno 地圖上真的入口箱，依當下的玩家自訂分類（`warehouse:rules overrides`，沒有才用預設）比對每樣物品落在哪一箱；結束把放進去的物品原數收回 | 已寫未跑 |
 | 溢位箱、滿箱保留來源 | 主箱塞滿後放入同類物品，確認進溢位箱；都滿時留在入口箱 | 未驗 |
-| 箱子註冊、刪除註冊、重設、重複註冊提示 | bot 看著箱子用 trigger 註冊／刪除；結束從備份還原 `warehouse:chests` | 未驗 |
-| 自訂箱名 | bot 改名，比對 `warehouse:boxnames`；結束還原 | 未驗 |
-| 查詢物品（中文、分類名、Minecraft ID、一個字、前 30 筆） | bot 送出查詢，比對結果與庫存狀態 | 未驗 |
-| 分類設定：新增、移動、移除分類；舊主箱庫存背景搬移 | bot 改分類後確認 override 與實際搬移；結束還原 override 與物品位置 | 未驗 |
-| Highlight | bot 觸發，確認粒子位置與聊天訊息；未註冊／失效箱拒絕 | 未驗 |
-| Pick（`/trigger pick`、查詢結果「取一組」） | bot 看著方塊 pick，比對拿到的數量與倉庫減少的數量；結束歸還 | 未驗 |
-| 倉庫瀏覽（`wh_view`、分頁） | bot 開各頁，確認收到 Dialog 且沒有錯誤 | 未驗 |
-| 共用 API：`count_item`、`take_item`、`refund_item`、`material_sources`、`highlight`、`resolve_block`、pending refund | 在真的倉庫上呼叫，比對結果與箱子內容；結束還原 | 未驗 |
+| 箱子註冊、刪除註冊、重設、重複註冊提示 | bot 看著箱子用 trigger 註冊／刪除；結束從備份還原 `warehouse:chests` | 已寫未跑 |
+| 自訂箱名 | bot 改名，比對 `warehouse:boxnames`；結束還原 | 已寫未跑 |
+| 查詢物品（中文、分類名、Minecraft ID、一個字、前 30 筆） | bot 送出查詢，比對結果與庫存狀態 | 已寫未跑 |
+| 分類設定：新增、移動、移除分類；舊主箱庫存背景搬移 | bot 改分類後確認 override 與實際搬移；結束還原 override 與物品位置 | 已寫未跑 |
+| Highlight | bot 觸發，確認粒子位置與聊天訊息；未註冊／失效箱拒絕 | 已寫未跑 |
+| Pick（`/trigger pick`、查詢結果「取一組」） | bot 看著方塊 pick，比對拿到的數量與倉庫減少的數量；結束歸還 | 已寫未跑 |
+| 倉庫瀏覽（`wh_view`、分頁） | bot 開各頁，確認收到 Dialog 且沒有錯誤 | 已寫未跑 |
+| 共用 API：`count_item`、`take_item`、`refund_item`、`material_sources`、`highlight`、`resolve_block`、pending refund | 在真的倉庫上呼叫，比對結果與箱子內容；結束還原 | 已寫未跑 |
 | Compact（整理合併堆疊） | 在一箱放不滿的同類堆疊，確認被合併、總數不變 | 部分（`run-warehouse-compact-live-test` 只驗直接呼叫） |
-| 倉庫 chunk 常駐 forceload（v4.6） | 確認 61 箱所在 chunk 都 forceload；別人加的 forceload 不被移除；`chunks/release` 只移除自己的 | 未驗 |
-| 自動整理開關（`system/on|off|toggle`） | 關閉時入口箱不動，打開後恢復 | 未驗 |
-| Migration（v4.0～v4.6）重跑 | 在 inno 地圖資料上載入新版，61 箱註冊、override、箱名、scoreboard 不變；重跑不出錯 | 未驗 |
+| 倉庫 chunk 常駐 forceload（v4.6） | 確認 61 箱所在 chunk 都 forceload；別人加的 forceload 不被移除；`chunks/release` 只移除自己的 | 已寫未跑 |
+| 自動整理開關（`system/on|off|toggle`） | 關閉時入口箱不動，打開後恢復 | 已寫未跑 |
+| Migration（v4.0～v4.6）重跑 | 在 inno 地圖資料上載入新版，61 箱註冊、override、箱名、scoreboard 不變；重跑不出錯 | 已寫未跑 |
 | G 主畫面與各 Dialog | bot 開啟主畫面與各子頁，確認收到 Dialog 且沒有錯誤 | 未驗 |
 
 ## Copy/Paste

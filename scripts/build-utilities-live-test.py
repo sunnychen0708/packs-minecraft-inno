@@ -177,11 +177,11 @@ reset_counts = [f'scoreboard players set {g} 0' for g in G.values()] + ['scorebo
 s.step('function utest:backup', delay=2)
 s.tp('a', -57.5, 201, 61.5, dim='the_nether')
 s.tp('b', 300.5, 201, 300.5, dim='the_end')
-s.step('say UTEST loading nether/end areas', delay=60 if FULL else 30)
+s.step('say UTEST loading nether/end areas', delay=60 if FULL else 30, realtime=True)
 s.step(fill(NE_AREA, 'air', 'the_nether'), fill(END_AREA, 'air', 'the_end'))
 s.tp('a', *HUBC)
 s.tp('b', HUBC[0] + 2, HUBC[1], HUBC[2])
-s.step('say UTEST loading overworld area', delay=60 if FULL else 30)
+s.step('say UTEST loading overworld area', delay=60 if FULL else 30, realtime=True)
 s.step(fill(OW_AREA, 'air'), fill(TALL_AREA, 'air'),
        f'execute in minecraft:overworld run setblock {BACKUP_CHEST[0]} {BACKUP_CHEST[1]} {BACKUP_CHEST[2]} minecraft:chest',
        f'execute in minecraft:overworld run item replace block {BACKUP_CHEST[0]} {BACKUP_CHEST[1]} {BACKUP_CHEST[2]} container.0 from entity {A} weapon.mainhand',
@@ -250,7 +250,8 @@ for k, (x, y, z) in PERSONAL.items():
     s.trigger('a', 'pgo', k)
     s.check(f'personal {k} teleport', at_center('a', 'overworld', x, y, z))
 s.trigger('a', 'back')
-s.check('back after personal teleport', at_center('a', 'overworld', *list(PERSONAL.values())[-2]))
+# Every pgo above started from the hub, so back returns there.
+s.check('back after personal teleport', at_center('a', 'overworld', *HUB))
 PL = list(PERSONAL)[-1]                              # rename and overwrite the last slot
 s.cmdx('a', [f'甲據點{PL}'], 'trigger plist')
 s.cmdx('a', ['改名二'], f'function nav:rename_personal {{slot:{PL},name:"改名二"}}')
@@ -298,8 +299,8 @@ D = (-53, 200, 67)
 s.step(f'execute in minecraft:the_nether run setblock {D[0]} {D[1]-1} {D[2]} minecraft:stone',
        'gamerule minecraft:keep_inventory true')
 s.tp('a', D[0] + .3, D[1], D[2] + .7, dim='the_nether')
-s.step(f'kill {A}', delay=40)
-s.wait('A respawned', [f'entity @a[name={PLAYERS["a"]},nbt={{Health:20.0f}}]'], tries=120)
+s.step(f'kill {A}', delay=40, realtime=True)
+s.wait('A respawned', [f'entity @a[name={PLAYERS["a"]},nbt={{Health:20.0f}}]'], tries=120, realtime=True)
 s.step('execute if data storage utest:b all{ki:0} run gamerule minecraft:keep_inventory false')
 s.step(f'data modify storage utest:arg v set value {{x:{D[0]},y:{D[1]},z:{D[2]},dim:1}}',
        'data modify storage utest:arg v.id set from storage utest:b all.a_id',

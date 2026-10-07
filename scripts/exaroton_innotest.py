@@ -681,6 +681,7 @@ def run_copy_paste_multiplayer_test(client):
     # Clean the temporary harness and its reserved test state only after the
     # current run has produced a result (or timed out).
     cleanup = [
+        "tick rate 20",
         "function mcc_mp_test:cleanup",
     ]
     for command in cleanup:
@@ -909,6 +910,7 @@ def run_live_suite(client, suite):
         time.sleep(5)
 
     try:
+        client.command("tick rate 20")
         client.command(f"function {cleanup_function}")
         time.sleep(3)
     except Error:

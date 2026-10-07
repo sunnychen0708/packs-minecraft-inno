@@ -20,6 +20,10 @@ import json
 import shutil
 
 ALLOWED_BOTS = ('SunnyChen', 'penguin0531', 'geena0701', 'Felicitypeng')
+# Server-only stretches run at the fastest tick rate; anything that waits for a bot (or for
+# chunks to load) runs at the normal 20 tps, because those finish in wall-clock time and a
+# tick-counted wait would otherwise time out before the bot answers.
+FAST_TICK_RATE = 10000
 
 
 def chained(cond: str) -> str:
@@ -47,19 +51,23 @@ class Suite:
         self.seq = 0
         self.cleanup_cmds: list[str] = []
         self.default_delay = 10
+        self.realtime: list[bool] = []
+        self._in_bot = False
 
     # ---- selectors -------------------------------------------------------
     def sel(self, p: str) -> str:
         return f'@a[name={self.players[p]},limit=1]'
 
     # ---- steps -------------------------------------------------------------
-    def step(self, *commands: str, delay: int | None = None) -> None:
+    def step(self, *commands: str, delay: int | None = None, realtime: bool = False) -> None:
         delay = self.default_delay if delay is None else delay
         self.steps.append(('cmd', list(commands), delay))
+        self.realtime.append(realtime or self._in_bot)
 
-    def wait(self, label: str, ready: list[str], fail: list[str] | None = None, tries: int = 80) -> None:
+    def wait(self, label: str, ready: list[str], fail: list[str] | None = None, tries: int = 80, realtime: bool = False) -> None:
         """Poll every 5 ticks until all `ready` conditions hold. Any `fail` condition, or `tries` polls, counts a FAIL."""
         self.steps.append(('wait', label, list(ready), list(fail or []), tries))
+        self.realtime.append(realtime or self._in_bot)
 
     def check(self, label: str, *conditions) -> None:
         """Each condition is a string, or (condition, diff text) to print when it fails."""
@@ -84,12 +92,14 @@ class Suite:
         seq = self.seq
         text = ' '.join(['MFBOT', self.players[p], str(seq), action, *map(str, args)])
         quoted = text.replace('\\', '\\\\').replace('"', '\\"')
+        self._in_bot = True
         self.step(f'scoreboard players enable {self.sel(p)} mfack',
                   f'scoreboard players set {self.sel(p)} mfack 0',
                   f'tellraw {self.sel(p)} "{quoted}"', delay=1)
         lab = label or f'{p} {action} {" ".join(map(str, args))}'.strip()
         self.wait(f'bot {lab}', [f'score {self.sel(p)} mfack matches {seq}'],
                   fail=[f'score {self.sel(p)} mfack matches {seq + 100000}'], tries=tries)
+        self._in_bot = False
 
     def trigger(self, p: str, objective: str, value: int | None = None) -> None:
         """The bot sends /trigger itself, like a player typing it."""
@@ -121,8 +131,9 @@ class Suite:
         (out / 'pack.mcmeta').write_text(json.dumps(
             {'pack': {'description': self.description, 'min_format': 121, 'max_format': 121}},
             ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-        self.step(f'execute if score #fail htest matches 0 run say {self.prefix}_RESULT PASS',
-                  f'execute unless score #fail htest matches 0 run say {self.prefix}_RESULT FAIL')
+        self.step('tick rate 20',
+                  f'execute if score #fail htest matches 0 run say {self.prefix}_RESULT PASS',
+                  f'execute unless score #fail htest matches 0 run say {self.prefix}_RESULT FAIL', realtime=True)
         n = len(self.steps)
         for i, s in enumerate(self.steps):
             nxt = f'{self.ns}:step_{i+1}' if i + 1 < n else None
@@ -148,6 +159,9 @@ class Suite:
                           f'execute if score #wait htest matches {tries}.. run scoreboard players set #wait htest 0',
                           f'execute if score #wait htest matches 0 run return run schedule function {nxt} 5t replace',
                           f'schedule function {self.ns}:step_{i} 5t replace']
+            rt = self.realtime[i]
+            if i == 0 or rt != self.realtime[i - 1]:
+                lines.insert(0, 'tick rate 20' if rt else f'tick rate {FAST_TICK_RATE}')
             (fn / f'step_{i}.mcfunction').write_text('\n'.join(lines) + '\n', encoding='utf-8')
         start = ['scoreboard objectives remove htest', 'scoreboard objectives add htest dummy',
                  'scoreboard objectives add mfack trigger',
@@ -158,7 +172,7 @@ class Suite:
             start.append(f'execute unless entity {self.sel(p)} run return fail')
         start.append(f'function {self.ns}:step_0')
         (fn / 'start.mcfunction').write_text('\n'.join(start) + '\n', encoding='utf-8')
-        cleanup = [f'schedule clear {self.ns}:step_{i}' for i in range(n)]
+        cleanup = ['tick rate 20'] + [f'schedule clear {self.ns}:step_{i}' for i in range(n)]
         cleanup += self.cleanup_cmds
         cleanup += ['scoreboard objectives remove mfack', 'scoreboard objectives remove htest',
                     f'say {self.prefix}_CLEANUP DONE']

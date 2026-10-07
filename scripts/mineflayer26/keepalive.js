@@ -100,6 +100,10 @@ function attachDriver (bot, username) {
   // screens) as plain text, for cmdx token matching.
   bot.on('messagestr', text => bot.emit('mfbot_text', String(text)))
   bot.on('actionBar', msg => bot.emit('mfbot_text', msg && msg.toString ? msg.toString() : String(msg)))
+  // 26.3 action bars arrive as set_action_bar_text or as system_chat with overlay=true; read the raw packets too.
+  const rawText = packet => { try { return JSON.stringify(packet, (k, v) => typeof v === 'bigint' ? v.toString() : v) } catch (err) { return String(err) } }
+  bot._client.on('set_action_bar_text', packet => bot.emit('mfbot_text', rawText(packet)))
+  bot._client.on('system_chat', packet => { if (packet && (packet.isActionBar || packet.overlay)) bot.emit('mfbot_text', rawText(packet)) })
   bot._client.on('show_dialog', packet => {
     let text = ''
     try { text = JSON.stringify(packet, (k, v) => typeof v === 'bigint' ? v.toString() : v) } catch (err) { text = String(err) }
