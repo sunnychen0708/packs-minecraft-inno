@@ -1,10 +1,14 @@
-# Minecraft Copy/Paste Datapack v1.7
+# Minecraft Copy/Paste Datapack v1.8
 
-> Source: **v1.7（尚未發布）** · Latest release: **copy-paste-v1.6** · Download: **copy-paste-v1.6.zip**
+> Source: **v1.8** · Latest release: **copy-paste-v1.7** · Download: **copy-paste-v1.7.zip**
 
 適用：Minecraft Java Edition 26.3（Data Pack 121.0）
 
 純 Vanilla datapack。操作使用 Trigger 或 Dialog。施工材料先從玩家背包（含副手）拿，不夠再從同 repo 的 Warehouse datapack 共用材料來源拿。
+
+## v1.8
+
+- 修正新的 Copy／Cut 會繼承上一個 Blueprint 的 Rotate／Flip 狀態：現在每次新的 Copy、Cut，以及 Cut → Undo → Redo 重建 Clipboard，都從原方向（0°、未翻面）開始。
 
 ## v1.7
 
@@ -130,7 +134,7 @@ Blueprint 建立完成後可以先調整方向（只動預覽，不動原本建�
 /trigger bpreset       # 回到原本方向
 ```
 
-每次調整後聊天欄會顯示目前方向（例如「右轉 90°，並翻面」），預覽立即重建，不必重新 Copy。這個方向也套用到 Cut 之後的 `v`。
+每次調整後聊天欄會顯示目前方向（例如「右轉 90°，並翻面」），預覽立即重建，不必重新 Copy。每次新的 Copy／Cut 都會從原方向開始；只有之後明確執行的 Rotate／Flip 才會改變方向。
 
 確認後：
 
