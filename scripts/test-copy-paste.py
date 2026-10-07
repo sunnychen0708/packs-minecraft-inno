@@ -463,6 +463,19 @@ def check_v100_semantics(pack: Path):
     assert 'function mcc:materials/redo_start' in redo_hist
     assert 'function mcc:history/copy_redo_snapshot_to_material_guard' in redo_apply
     assert (pack/'data/mcc/function/history/compare_hidden.mcfunction').is_file()
+    compare_hidden=read(pack/'data/mcc/function/history/compare_hidden.mcfunction')
+    assert 'function mcc:history/compare_hidden_state' in compare_hidden
+    assert 'mcc_cmpmode matches 1' in read(pack/'data/mcc/function/blueprint/summon.mcfunction')
+    for name in (
+        'compare_hidden_state.mcfunction','compare_hidden_x_loop.mcfunction',
+        'compare_hidden_y_loop.mcfunction','compare_hidden_z_loop.mcfunction',
+        'compare_chunk.mcfunction','compare_line.mcfunction','compare_block.mcfunction',
+        'compare_block_id_callback.mcfunction','compare_block_id.mcfunction',
+    ):
+        assert (pack/'data/mcc/function/history'/name).is_file()
+    load_text=read(pack/'data/mcc/function/load.mcfunction')
+    assert 'scoreboard objectives add mcc_cmpmode dummy' in load_text
+    assert 'scoreboard objectives add mcc_cmpaxis dummy' in load_text
 
     for p in (
         pack/'data/mcc/function/move/run.mcfunction',
