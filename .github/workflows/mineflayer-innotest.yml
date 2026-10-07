@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - claude/innotest-house-regression
     paths:
       - "ops/mineflayer-request.json"
   workflow_dispatch:
