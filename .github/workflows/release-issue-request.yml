@@ -33,7 +33,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.request.outputs.tag }}
         shell: bash
-        run: gh workflow run release-pack.yml --ref main -f tag="$TAG"
+        run: gh workflow run release-pack.yml -R "$GITHUB_REPOSITORY" --ref main -f tag="$TAG"
 
       - name: Close release request issue
         env:
