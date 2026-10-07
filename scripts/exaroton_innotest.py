@@ -1057,7 +1057,7 @@ def run_utilities_bfs_live_test(client):
         raise Error("innotest must be ONLINE before utilities BFS live testing")
 
     marker = f"UTIL_BFS_LIVE_{int(time.time() * 1000)}"
-    area = "-375 244 90 -345 260 105"
+    area = "-375 243 90 -345 276 105"
     force_from = "-375 90"
     force_to = "-345 105"
     scores = ("#bfs_near", "#bfs_far", "#bfs_xout", "#bfs_yout", "#bfs_none")
