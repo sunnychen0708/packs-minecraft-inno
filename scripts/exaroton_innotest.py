@@ -599,7 +599,8 @@ def run_copy_paste_multiplayer_test(client):
     time.sleep(5)
 
     import subprocess
-    subprocess.check_call([sys.executable, str(ROOT / "scripts" / "build-copy-paste-multiplayer-test.py")])
+    recheck = globals().get("RECHECK_COPY_PASTE", False)
+    subprocess.check_call([sys.executable, str(ROOT / "scripts" / "build-copy-paste-multiplayer-test.py"), *(["--recheck"] if recheck else [])])
     harness = ROOT / "dist" / "mcc-multiplayer-test"
     payload = zip_tree(harness)
     world = level_name(client.read_file("server.properties"))
@@ -844,6 +845,9 @@ def run_live_suite(client, suite):
     <PREFIX>_CHECK / <PREFIX>_DIFF lines and one <PREFIX>_RESULT line, and its
     <ns>:cleanup function restores everything the suite touched.
     """
+    extra = []
+    if suite.endswith("-recheck"):
+        suite, extra = suite[:-len("-recheck")], ["--recheck"]
     if suite not in LIVE_SUITES:
         raise Error(f"unknown live suite {suite!r}; known: {sorted(LIVE_SUITES)}")
     current = client.target()
@@ -852,7 +856,7 @@ def run_live_suite(client, suite):
     builder, out_name = LIVE_SUITES[suite]
 
     import subprocess
-    subprocess.check_call([sys.executable, str(ROOT / "scripts" / builder)])
+    subprocess.check_call([sys.executable, str(ROOT / "scripts" / builder), *extra])
     out = ROOT / "dist" / out_name
     meta = json.loads((out / "suite.json").read_text(encoding="utf-8"))
     ns, prefix, names = meta["ns"], meta["prefix"], list(meta["players"].values())
@@ -1654,7 +1658,9 @@ def run(path):
     elif op in {"start", "stop", "restart"}: client.action(op); print(f"{op} requested for {TARGET}")
     elif op == "command": client.command(str(r.get("command") or "")); print(f"command sent to {TARGET}")
     elif op == "deploy-datapack": deploy(client, str(r.get("pack") or ""))
-    elif op == "run-copy-paste-multiplayer-test": run_copy_paste_multiplayer_test(client)
+    elif op == "run-copy-paste-multiplayer-test":
+        globals()["RECHECK_COPY_PASTE"] = str(r.get("command") or "") == "recheck"
+        run_copy_paste_multiplayer_test(client)
     elif op == "run-blueprint-matcher-live-test": run_blueprint_matcher_live_test(client)
     elif op == "run-warehouse-compact-live-test": run_warehouse_compact_live_test(client)
     elif op == "run-live-suite": run_live_suite(client, str(r.get("pack") or ""))

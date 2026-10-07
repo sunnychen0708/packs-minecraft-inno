@@ -34,6 +34,8 @@ OUT = ROOT / 'dist/utilities-live-test'
 # Default: the key cases only (about 4 minutes on innotest). --full runs every log type, every ore,
 # every tier pair, every crop and all 8 waypoint slots (about 40 minutes).
 FULL = '--full' in sys.argv
+# --recheck: only the checks that have not passed on innotest yet; setup is kept.
+RECHECK = '--recheck' in sys.argv
 NS = 'utest'
 PLAYERS = {'a': 'penguin0531', 'b': 'geena0701'}
 s = Suite(NS, 'UTEST', PLAYERS, 'Opt-in Utilities v3.8 innotest live regression')
@@ -194,6 +196,7 @@ s.check('backup taken',
         ('data storage utest:b all.b_dim', 'could not read player B dimension'))
 
 # ---- 1. help and coords ---------------------------------------------------
+MARK_PASSED_FROM = len(s.steps)
 s.cmdx('a', ['功能總覽'], 'trigger help')
 s.cmdx('a', ['[座標]', '已關閉'], 'trigger coords')
 s.check('coords off only for A', f'score {A} c26_show matches 0', f'score {B} c26_show matches 1')
@@ -494,6 +497,22 @@ for i, (name, ripe, young, soil) in enumerate(CROPS + [('wheat switched off', 'w
     if off:
         s.cmdx('a', ['自動補種：開啟'], 'trigger replant')
 
+MARK_PASSED_TO = len(s.steps)
+if RECHECK:
+    rc_from = len(s.steps)
+    s.cmdx('a', ['220', '400', '/'], 'trigger mfack', label='a sees coords action bar')
+    P1 = (-414, 220, 386)
+    s.step(f'execute in minecraft:overworld run setblock {P1[0]} {P1[1]-1} {P1[2]} minecraft:stone', 'function utest:nav_clear_custom {key:"a"}')
+    s.tp('a', P1[0] + .2, P1[1], P1[2] + .8)
+    s.trigger('a', 'pset', 1)
+    s.cmdx('a', ['甲據點1'], 'function nav:set_personal {slot:1,name:"甲據點1"}')
+    s.tp('a', *HUBC)
+    s.trigger('a', 'pgo', 1)
+    s.trigger('a', 'back')
+    s.check('back after personal teleport', at_center('a', 'overworld', *HUB))
+    rc = s.steps[rc_from:], s.realtime[rc_from:]
+    del s.steps[MARK_PASSED_FROM:], s.realtime[MARK_PASSED_FROM:]
+    s.steps += rc[0]; s.realtime += rc[1]
 s.step('function utest:restore', delay=20)
 s.check('player data restored after the test',
         *[(f'score #navdiff_{p} htest matches 0', f'{PLAYERS[p]} waypoint data differs from the backup') for p in PLAYERS],

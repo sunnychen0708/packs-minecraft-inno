@@ -20,6 +20,9 @@ The generated test never runs on load and is intended only for innotest.
 """
 from pathlib import Path
 import json
+import sys
+# --recheck: only the parts that have not passed on innotest yet (Rotate onward); setup is kept.
+RECHECK='--recheck' in sys.argv
 import shutil
 import sys
 
@@ -216,6 +219,7 @@ for p in P:
 check('independent 3d selections',*conds)
 
 # ---- same-tick Copy -> V Blueprint -> Build from inventory ---------------------
+MARK_PASSED_FROM=len(steps)
 both_trigger('c')
 check('independent copy clipboards',
       *[f'score {sel(p)} mcc_cliptype matches 1' for p in P])
@@ -318,6 +322,7 @@ both_trigger('undo')
 check('move restored before rotate',*[c for p in P for c in exact_house(P[p]['S'])])
 
 # ---- same-tick real Rotate around Pos1, full state check, Undo ----
+MARK_PASSED_TO=len(steps)
 # Two cells of the turned footprint are occupied: the turned house must replace them, Undo must bring them back.
 OCC=[(-2,1,2),(-4,0,0)]   # relative to Pos1: lantern / floor plank land here after the turn
 step(*[f'execute {OW} run setblock {P[p]["S"][0]+dx} {Y+dy} {P[p]["S"][2]+dz} minecraft:stone' for p in P for dx,dy,dz in OCC])
@@ -400,6 +405,8 @@ step(
 )
 
 # ---- write functions ---------------------------------------------------------
+if RECHECK:
+    del steps[MARK_PASSED_FROM:MARK_PASSED_TO]
 for i,s in enumerate(steps):
     nxt=f'mcc_mp_test:step_{i+1}' if i+1<len(steps) else None
     if s[0]=='cmd':

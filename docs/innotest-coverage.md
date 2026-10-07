@@ -12,7 +12,7 @@ Utilities 的測試是 `scripts/build-utilities-live-test.py`，用 `exaroton in
 
 驗法欄裡的「bot」預設指 `penguin0531`、`geena0701`、`Felicitypeng`；`SunnyChen` 保留給真人登入監督或 Computer Use，只有確實需要第 4 位玩家時才由 bot 使用。bot 由測試 datapack 用 `tellraw` 下指令，自己送出 `/trigger`、挖方塊、蹲下（`scripts/mineflayer26/keepalive.js` 的 driver），不是用 `execute as` 代替玩家。測試動到的玩家背包、經驗、遊戲模式、手上物品、世界方塊與 Warehouse 庫存，結束時都要還原。
 
-時間上限：每個 pack 的 innotest 測試都要在 4 分鐘內跑完。只有 server 在跑的段落用 `tick rate 10000`（最快）；要等 bot 回應或等 chunk 載入的段落用 20 tps；結束與清理一律調回 20。
+時間上限：每個 pack 的 innotest 測試都要在 4 分鐘內跑完。已在 innotest 通過的項目不重跑：`--recheck` 只跑還沒通過的項目（`run-live-suite` 的 pack 填 `utilities-recheck`／`warehouse-recheck`；Copy/Paste 的 command 填 `recheck`）。只有 server 在跑的段落用 `tick rate 10000`（最快）；要等 bot 回應或等 chunk 載入的段落用 20 tps；結束與清理一律調回 20。
 
 Warehouse 的測試是 `scripts/build-warehouse-live-test.py`（`run-live-suite`，pack 選 `warehouse`）：用 inno 地圖上真的倉庫與玩家自訂分類，測試物品帶 `custom_data {wtest:1b}`，結束後從每一箱移除；分類、規則修改與移除、查詢、Pick、共用 API、檢視、改名、右鍵註冊／刪除註冊、chunk forceload、系統開關、load/migration 重跑都有。溢位箱只在主箱滿時記錄 `WTEST_NOTE`，沒有主動塞滿主箱測。
 
