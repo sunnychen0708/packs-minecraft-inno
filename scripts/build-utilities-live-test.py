@@ -3,10 +3,12 @@
 Two Mineflayer bots act as real players through the test driver: they send
 their own /trigger commands, dig blocks in survival and sneak.
 
-Covered: help, coords toggle and action bar, the five fixed waypoints in all
-three dimensions (set, teleport to the block centre, back), personal and
-shared waypoints 1-8 (first set with a name, teleport, list, rename,
-overwrite, invalid slot, two-player isolation), deathloc, tree felling for
+Covered: v3.7 -> v3.8 old-world data compatibility (fixed/personal/shared
+waypoints, names and per-player feature switches), help, coords toggle and
+action bar, the five fixed waypoints in all three dimensions (set, teleport
+to the block centre, back), personal and shared waypoints 1-8 (first set
+with a name, teleport, list, rename, overwrite, invalid slot, two-player
+isolation), deathloc, tree felling for
 every log type (and the not-sneaking, switched-off, no-leaves and 64-log
 limits), vein mining for every ore (drops, vanilla XP, pickaxe tier gate,
 silk touch, not sneaking, switched off) and auto replant for every crop.
@@ -190,10 +192,59 @@ s.step(fill(OW_AREA, 'air'), fill(TALL_AREA, 'air'),
        f'execute in minecraft:overworld run setblock {HUB[0]} {HUB[1]-1} {HUB[2]} minecraft:stone',
        *[f'gamemode survival {s.sel(p)}' for p in PLAYERS],
        *[f'scoreboard players set {s.sel(p)} {obj} 1' for p in PLAYERS for obj in ('su_tree', 'su_vein', 'su_plant', 'c26_show')])
+s.step('execute store result score #legacy_a_id htest run scoreboard players get @a[name=penguin0531,limit=1] sunny_id')
 s.check('backup taken',
         'data storage utest:b all{backed:1b}',
         ('data storage utest:b all.a_dim', 'could not read player A dimension'),
         ('data storage utest:b all.b_dim', 'could not read player B dimension'))
+
+# ---- 0b. v3.7 -> v3.8 old-world compatibility -----------------------------
+# Use the exact v3.7 storage/score layout, then execute the v3.8 load path.
+# The real innotest player data is already backed up above and is restored
+# by utest:restore even if this check fails.
+s.step(
+    'data modify storage sunny_nav:meta version set value "26.3-3.7"',
+    'data modify storage survival_utils:meta version set value "26.3-1.1"',
+    'data modify storage allinone:meta version set value "26.3-3.0"',
+    'data modify storage utest:arg legacy set value {}',
+    'data modify storage utest:arg legacy.id set from storage utest:b all.a_id',
+    'function utest:legacy_nav_fixture with storage utest:arg legacy',
+    'data modify storage sunny_nav:shared s1 set value {x:-91,y:73,z:27,dim:0,set:1b,name:"舊共用一"}',
+    'data modify storage sunny_nav:shared s8 set value {x:44,y:66,z:-155,dim:2,set:1b,name:"舊共用八"}',
+    f'scoreboard players set {A} su_init 1',
+    f'scoreboard players set {A} su_tree 0',
+    f'scoreboard players set {A} su_vein 1',
+    f'scoreboard players set {A} su_plant 0',
+    f'scoreboard players set {A} c26_show 0',
+    f'scoreboard players set {B} su_init 1',
+    f'scoreboard players set {B} su_tree 1',
+    f'scoreboard players set {B} su_vein 0',
+    f'scoreboard players set {B} su_plant 1',
+    f'scoreboard players set {B} c26_show 1',
+    'function allinone:load',
+    delay=4)
+s.step('scoreboard players set #legacy_nav htest 0',
+       'data modify storage utest:arg legacy.id set from storage utest:b all.a_id',
+       'function utest:legacy_nav_is with storage utest:arg legacy',
+       delay=1)
+s.check('v3.7 world data survives v3.8 load',
+        ('score #legacy_nav htest matches 1', 'v3.7 fixed/personal waypoint data or names changed'),
+        ('data storage sunny_nav:shared s1{x:-91,y:73,z:27,dim:0,set:1b,name:"舊共用一"}', 'v3.7 shared slot 1 changed'),
+        ('data storage sunny_nav:shared s8{x:44,y:66,z:-155,dim:2,set:1b,name:"舊共用八"}', 'v3.7 shared slot 8 changed'),
+        ('data storage sunny_nav:meta {version:"26.3-3.8"}', 'sunny_nav version did not upgrade to 3.8'),
+        f'score {A} sunny_id = #legacy_a_id htest',
+        f'score {A} su_tree matches 0',
+        f'score {A} su_vein matches 1',
+        f'score {A} su_plant matches 0',
+        f'score {A} c26_show matches 0',
+        f'score {B} su_tree matches 1',
+        f'score {B} su_vein matches 0',
+        f'score {B} su_plant matches 1',
+        f'score {B} c26_show matches 1')
+# Restore the normal suite's expected enabled state; the original values are
+# still kept in utest:b and restored at cleanup.
+s.step(*[f'scoreboard players set {s.sel(p)} {obj} 1'
+         for p in PLAYERS for obj in ('su_tree', 'su_vein', 'su_plant', 'c26_show')])
 
 # ---- 1. help and coords ---------------------------------------------------
 MARK_PASSED_FROM = len(s.steps)
@@ -552,6 +603,20 @@ s.extra_function(OUT, 'personal_is', [
     '$execute if data storage sunny_nav:players p$(id).custom.s$(slot){name:"$(name)",x:$(x),y:$(y),z:$(z),dim:$(dim),set:1b} run scoreboard players set #r htest 1'])
 s.extra_function(OUT, 'shared_is', [
     '$execute if data storage sunny_nav:shared s$(slot){name:"$(name)",x:$(x),y:$(y),z:$(z),dim:$(dim),set:1b} run scoreboard players set #r htest 1'])
+s.extra_function(OUT, 'legacy_nav_fixture', [
+    '$data modify storage sunny_nav:players p$(id) set value {home:{x:-123,y:64,z:45,dim:0,set:1b},mine:{x:17,y:70,z:-22,dim:1,set:1b},village:{x:333,y:80,z:-444,dim:2,set:1b},portal:{x:-8,y:65,z:201,dim:1,set:1b},temp:{x:72,y:91,z:-36,dim:0,set:1b},custom:{s1:{x:-12,y:70,z:34,dim:0,set:1b,name:"舊個人一"},s8:{x:205,y:77,z:-19,dim:2,set:1b,name:"舊個人八"}},death:{x:9,y:63,z:-7,dim:1,set:1b}}',
+])
+s.extra_function(OUT, 'legacy_nav_is', [
+    '$execute unless data storage sunny_nav:players p$(id).home{x:-123,y:64,z:45,dim:0,set:1b} run return 0',
+    '$execute unless data storage sunny_nav:players p$(id).mine{x:17,y:70,z:-22,dim:1,set:1b} run return 0',
+    '$execute unless data storage sunny_nav:players p$(id).village{x:333,y:80,z:-444,dim:2,set:1b} run return 0',
+    '$execute unless data storage sunny_nav:players p$(id).portal{x:-8,y:65,z:201,dim:1,set:1b} run return 0',
+    '$execute unless data storage sunny_nav:players p$(id).temp{x:72,y:91,z:-36,dim:0,set:1b} run return 0',
+    '$execute unless data storage sunny_nav:players p$(id).custom.s1{x:-12,y:70,z:34,dim:0,set:1b,name:"舊個人一"} run return 0',
+    '$execute unless data storage sunny_nav:players p$(id).custom.s8{x:205,y:77,z:-19,dim:2,set:1b,name:"舊個人八"} run return 0',
+    '$execute unless data storage sunny_nav:players p$(id).death{x:9,y:63,z:-7,dim:1,set:1b} run return 0',
+    'scoreboard players set #legacy_nav htest 1',
+])
 s.extra_function(OUT, 'return_player', [
     '$data modify storage utest:arg r set value {name:"$(name)"}',
     '$data modify storage utest:arg r.dim set from storage utest:b all.$(p)_dim',
