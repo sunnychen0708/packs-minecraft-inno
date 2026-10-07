@@ -591,6 +591,51 @@ def backup_and_write(client: Client, path: str, old: bytes | None, new: bytes, s
     })
 
 
+STATS_SUM_STATE = "uuid-migration-stats-sum-state.json"
+
+
+def _stats_sum_state(raw):
+    if raw is None:
+        return {"version": 1, "strategy": "sum-per-counter", "players": {}}
+    try:
+        value = json.loads(raw.decode("utf-8"))
+    except Exception as e:
+        raise Error(f"invalid {STATS_SUM_STATE}") from e
+    if not isinstance(value, dict) or value.get("version") != 1:
+        raise Error(f"unsupported {STATS_SUM_STATE} format")
+    players = value.get("players")
+    if not isinstance(players, dict):
+        raise Error(f"{STATS_SUM_STATE} players must be an object")
+    return value
+
+
+def find_pre_migration_stats_backup(client: Client, stats_root: str, online_uuid: str):
+    """Return the earliest backup of online stats made by the legacy max merger."""
+    info = client.info_optional(stats_root)
+    if info is None:
+        return None, None
+    prefix = f"{online_uuid}.json.pre-online-uuid-migration-"
+    suffix = ".bak"
+    candidates = []
+    for child in child_list(info):
+        if not isinstance(child, dict) or child.get("isDirectory"):
+            continue
+        name = str(child.get("name") or "")
+        if not (name.startswith(prefix) and name.endswith(suffix)):
+            continue
+        stamp_text = name[len(prefix):-len(suffix)]
+        try:
+            stamp = int(stamp_text)
+        except ValueError:
+            continue
+        path = str(child.get("path") or "") or f"{stats_root}/{name}"
+        candidates.append((stamp, path))
+    if not candidates:
+        return None, None
+    _, path = min(candidates)
+    return path, client.read_file_optional(path)
+
+
 def plan_or_apply(mode: str):
     if mode not in {"dry-run", "apply"}:
         raise Error("mode must be dry-run or apply")
@@ -624,6 +669,10 @@ def plan_or_apply(mode: str):
     player_data_root = f"{world}/players/data"
     advancements_root = f"{world}/players/advancements"
     stats_root = f"{world}/players/stats"
+    stats_state_raw = client.read_file_optional(STATS_SUM_STATE)
+    stats_state = _stats_sum_state(stats_state_raw)
+    stats_state_players = stats_state["players"]
+    stats_state_updates = {}
 
     player_changes = []
     identity_summary = {}
@@ -665,13 +714,55 @@ def plan_or_apply(mode: str):
 
         old_stats = client.read_file_optional(f"{stats_root}/{old_uuid}.json")
         new_stats = client.read_file_optional(f"{stats_root}/{new_uuid}.json")
-        merged_stats, stats_changed = merge_stats(old_stats, new_stats)
+        stats_strategy = "none"
+        legacy_stats_backup = None
+        state_entry = stats_state_players.get(name)
+        if old_stats is not None and isinstance(state_entry, dict):
+            recorded_source = str(state_entry.get("offline_stats_sha256") or "")
+            current_source = sha256(old_stats)
+            if recorded_source != current_source:
+                raise Error(
+                    f"offline stats changed after summed migration for {name}; "
+                    "refusing to add the historical source twice"
+                )
+            if new_stats is None:
+                raise Error(
+                    f"online stats missing for {name} after summed migration state was recorded"
+                )
+            merged_stats, stats_changed = new_stats, False
+            stats_strategy = "already-summed"
+        else:
+            if old_stats is not None and new_stats is not None:
+                legacy_stats_backup, baseline_stats = find_pre_migration_stats_backup(
+                    client, stats_root, new_uuid
+                )
+            else:
+                baseline_stats = None
+            if old_stats is not None and new_stats is not None and baseline_stats is not None:
+                merged_stats, stats_changed = merge_stats_after_legacy_max(
+                    old_stats, baseline_stats, new_stats
+                )
+                stats_strategy = "sum-corrected-from-legacy-max"
+            else:
+                merged_stats, stats_changed = merge_stats(old_stats, new_stats)
+                stats_strategy = "sum-per-counter" if old_stats is not None else "none"
+            if old_stats is not None and merged_stats is not None:
+                stats_state_updates[name] = {
+                    "offline_stats_sha256": sha256(old_stats),
+                    "target_online_uuid": str(uuid.UUID(new_uuid)),
+                    "strategy": "sum-per-counter",
+                }
+
         if merged_stats is not None and stats_changed:
             player_changes.append((
                 f"{stats_root}/{new_uuid}.json",
                 new_stats,
                 merged_stats,
-                {"merged": True, "strategy": "max-per-counter"},
+                {
+                    "merged": True,
+                    "strategy": stats_strategy,
+                    "legacy_pre_max_backup": legacy_stats_backup,
+                },
             ))
 
         identity_summary[name] = {
@@ -682,6 +773,8 @@ def plan_or_apply(mode: str):
             "online_advancements": new_adv is not None,
             "offline_stats": old_stats is not None,
             "online_stats": new_stats is not None,
+            "stats_strategy": stats_strategy,
+            "legacy_pre_max_stats_backup": legacy_stats_backup,
             "canonical_playerdata": (
                 "online"
                 if new_player is not None
@@ -713,6 +806,8 @@ def plan_or_apply(mode: str):
         "entity_region_files_to_change": len(region_changes),
         "entity_uuid_references_to_change": sum(x[3]["int_array"] + x[3]["string"] for x in region_changes),
         "player_related_files_to_change": len(player_changes),
+        "stats_merge_strategy": "sum-per-counter",
+        "stats_sum_state_updates": sorted(stats_state_updates),
         "penguin531_usercache_entries_to_remove": cache_removed,
         "players": identity_summary,
         "region_changes": [{"path": x[0], **x[3]} for x in region_changes],
@@ -736,9 +831,23 @@ def plan_or_apply(mode: str):
     if cache_removed:
         backup_and_write(client, "usercache.json", usercache_raw, cache_new, stamp, manifest)
 
+    if stats_state_updates:
+        next_state = json.loads(json.dumps(stats_state))
+        next_players = next_state["players"]
+        for name, entry in stats_state_updates.items():
+            next_players[name] = {**entry, "applied_at_unix": stamp}
+        state_bytes = (
+            json.dumps(next_state, ensure_ascii=False, indent=2) + "\n"
+        ).encode("utf-8")
+        backup_and_write(
+            client, STATS_SUM_STATE, stats_state_raw, state_bytes, stamp, manifest
+        )
+
     manifest_obj = {
         "created_at_unix": stamp,
         "mapping": {name: {"offline": old, "online": new} for name, (old, new) in PLAYER_MAP.items()},
+        "stats_merge_strategy": "sum-per-counter",
+        "stats_sum_state": STATS_SUM_STATE,
         "penguin531_removed_from_usercache": cache_removed,
         "writes": manifest,
     }
