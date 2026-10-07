@@ -238,51 +238,61 @@ def normalize_uuid_string(value: str):
         return None
 
 
-INT_MAPPING = {uuid_ints(old): uuid_ints(new) for old, new in PLAYER_MAP.values()}
-STR_MAPPING = {str(uuid.UUID(old)): str(uuid.UUID(new)) for old, new in PLAYER_MAP.values()}
+def uuid_mappings(pairs):
+    """Build NBT UUID mappings from an iterable of (old_uuid, new_uuid) pairs."""
+    normalized = [(str(uuid.UUID(old)), str(uuid.UUID(new))) for old, new in pairs]
+    return (
+        {uuid_ints(old): uuid_ints(new) for old, new in normalized},
+        {old: new for old, new in normalized},
+    )
 
 
-def replace_uuid_refs(node, counts):
-    """Recursively replace exact old player UUID values in NBT, regardless of key name."""
+INT_MAPPING, STR_MAPPING = uuid_mappings(PLAYER_MAP.values())
+
+
+def replace_uuid_refs(node, counts, int_mapping=None, str_mapping=None):
+    """Recursively replace exact player UUID values in NBT, regardless of key name."""
+    int_mapping = INT_MAPPING if int_mapping is None else int_mapping
+    str_mapping = STR_MAPPING if str_mapping is None else str_mapping
     changed = False
     if isinstance(node, Compound):
         for key in list(node.keys()):
             value = node[key]
             if isinstance(value, IntArray) and len(value) == 4:
                 old_tuple = tuple(int(x) for x in value)
-                if old_tuple in INT_MAPPING:
-                    node[key] = IntArray(INT_MAPPING[old_tuple])
+                if old_tuple in int_mapping:
+                    node[key] = IntArray(int_mapping[old_tuple])
                     counts["int_array"] += 1
                     changed = True
                     continue
             if isinstance(value, String):
                 normalized = normalize_uuid_string(str(value))
-                if normalized in STR_MAPPING:
-                    node[key] = String(STR_MAPPING[normalized])
+                if normalized in str_mapping:
+                    node[key] = String(str_mapping[normalized])
                     counts["string"] += 1
                     changed = True
                     continue
             if isinstance(value, (Compound, List)):
-                if replace_uuid_refs(value, counts):
+                if replace_uuid_refs(value, counts, int_mapping, str_mapping):
                     changed = True
     elif isinstance(node, List):
         for idx, value in enumerate(list(node)):
             if isinstance(value, IntArray) and len(value) == 4:
                 old_tuple = tuple(int(x) for x in value)
-                if old_tuple in INT_MAPPING:
-                    node[idx] = IntArray(INT_MAPPING[old_tuple])
+                if old_tuple in int_mapping:
+                    node[idx] = IntArray(int_mapping[old_tuple])
                     counts["int_array"] += 1
                     changed = True
                     continue
             if isinstance(value, String):
                 normalized = normalize_uuid_string(str(value))
-                if normalized in STR_MAPPING:
-                    node[idx] = String(STR_MAPPING[normalized])
+                if normalized in str_mapping:
+                    node[idx] = String(str_mapping[normalized])
                     counts["string"] += 1
                     changed = True
                     continue
             if isinstance(value, (Compound, List)):
-                if replace_uuid_refs(value, counts):
+                if replace_uuid_refs(value, counts, int_mapping, str_mapping):
                     changed = True
     return changed
 
@@ -367,7 +377,7 @@ def build_region(chunks):
     return bytes(locations + timestamps + body)
 
 
-def transform_region(data: bytes):
+def transform_region(data: bytes, int_mapping=None, str_mapping=None):
     chunks = parse_region(data)
     total_counts = {"int_array": 0, "string": 0}
     changed_chunks = 0
@@ -378,7 +388,7 @@ def transform_region(data: bytes):
         except Exception as e:
             raise Error(f"NBT parse failed in region chunk {chunk.index}: {e}") from e
         counts = {"int_array": 0, "string": 0}
-        changed = replace_uuid_refs(nbt, counts)
+        changed = replace_uuid_refs(nbt, counts, int_mapping, str_mapping)
         if not changed:
             continue
         out = io.BytesIO()
@@ -393,7 +403,7 @@ def transform_region(data: bytes):
     return build_region(chunks), {"changed_chunks": changed_chunks, **total_counts}
 
 
-def transform_player_nbt(data: bytes):
+def transform_player_nbt(data: bytes, int_mapping=None, str_mapping=None):
     try:
         with gzip.GzipFile(fileobj=io.BytesIO(data), mode="rb") as gz:
             raw = gz.read()
@@ -401,7 +411,7 @@ def transform_player_nbt(data: bytes):
         raw = data
     nbt = nbtlib.File.parse(io.BytesIO(raw))
     counts = {"int_array": 0, "string": 0}
-    if not replace_uuid_refs(nbt, counts):
+    if not replace_uuid_refs(nbt, counts, int_mapping, str_mapping):
         return data, {"changed": False, **counts}
     out = io.BytesIO()
     nbt.write(out)
@@ -411,34 +421,108 @@ def transform_player_nbt(data: bytes):
     return raw_out, {"changed": True, **counts}
 
 
+def _number(value):
+    return isinstance(value, (int, float)) and not isinstance(value, bool)
+
+
+def _stats_doc(raw: bytes | None):
+    if raw is None:
+        return None
+    value = json.loads(raw.decode("utf-8"))
+    if not isinstance(value, dict):
+        raise Error("stats JSON must be an object")
+    return value
+
+
+def _counter_value(doc, category, key):
+    if not isinstance(doc, dict):
+        return 0
+    stats = doc.get("stats")
+    if not isinstance(stats, dict):
+        return 0
+    entries = stats.get(category)
+    if not isinstance(entries, dict):
+        return 0
+    value = entries.get(key)
+    return value if _number(value) else 0
+
+
+def _all_counter_keys(*docs):
+    result = set()
+    for doc in docs:
+        if not isinstance(doc, dict):
+            continue
+        stats = doc.get("stats")
+        if not isinstance(stats, dict):
+            continue
+        for category, entries in stats.items():
+            if not isinstance(entries, dict):
+                continue
+            for key, value in entries.items():
+                if _number(value):
+                    result.add((category, key))
+    return sorted(result)
+
+
+def _write_counter(doc, category, key, value):
+    stats = doc.setdefault("stats", {})
+    if not isinstance(stats, dict):
+        raise Error("stats JSON field 'stats' must be an object")
+    entries = stats.setdefault(category, {})
+    if not isinstance(entries, dict):
+        raise Error(f"stats category {category!r} must be an object")
+    entries[key] = value
+
+
 def merge_stats(old_raw: bytes | None, new_raw: bytes | None):
+    """Merge disjoint offline/online play history by summing numeric counters."""
     if old_raw is None:
         return new_raw, False
     if new_raw is None:
         return old_raw, True
-    old = json.loads(old_raw.decode("utf-8"))
-    new = json.loads(new_raw.decode("utf-8"))
+    old = _stats_doc(old_raw)
+    new = _stats_doc(new_raw)
     changed = False
-    old_stats = old.get("stats") if isinstance(old, dict) else None
-    new_stats = new.setdefault("stats", {}) if isinstance(new, dict) else None
-    if isinstance(old_stats, dict) and isinstance(new_stats, dict):
-        for category, entries in old_stats.items():
-            if not isinstance(entries, dict):
-                continue
-            target = new_stats.setdefault(category, {})
-            if not isinstance(target, dict):
-                continue
-            for key, value in entries.items():
-                if not isinstance(value, (int, float)):
-                    continue
-                current = target.get(key)
-                merged = value if not isinstance(current, (int, float)) else max(current, value)
-                if current != merged:
-                    target[key] = merged
-                    changed = True
+    for category, key in _all_counter_keys(old):
+        old_value = _counter_value(old, category, key)
+        current = _counter_value(new, category, key)
+        merged = current + old_value
+        if current != merged:
+            _write_counter(new, category, key, merged)
+            changed = True
     if not changed:
         return new_raw, False
     return (json.dumps(new, ensure_ascii=False, separators=(",", ":")) + "\n").encode(), True
+
+
+def merge_stats_after_legacy_max(
+    old_raw: bytes,
+    pre_max_online_raw: bytes,
+    current_online_raw: bytes,
+):
+    """Correct a previous max-per-counter merge without losing later online progress.
+
+    Previous code produced max(offline, online). The first migration backup contains
+    the original online counters. Any growth above that legacy max is post-migration
+    play and is preserved while rebuilding the desired offline + online total.
+    """
+    old = _stats_doc(old_raw)
+    baseline = _stats_doc(pre_max_online_raw)
+    current = _stats_doc(current_online_raw)
+    changed = False
+    for category, key in _all_counter_keys(old, baseline, current):
+        old_value = _counter_value(old, category, key)
+        baseline_value = _counter_value(baseline, category, key)
+        current_value = _counter_value(current, category, key)
+        legacy_max = max(old_value, baseline_value)
+        later_progress = max(current_value - legacy_max, 0)
+        merged = old_value + baseline_value + later_progress
+        if current_value != merged:
+            _write_counter(current, category, key, merged)
+            changed = True
+    if not changed:
+        return current_online_raw, False
+    return (json.dumps(current, ensure_ascii=False, separators=(",", ":")) + "\n").encode(), True
 
 
 def merge_advancements(old_raw: bytes | None, new_raw: bytes | None):
