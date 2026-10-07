@@ -628,7 +628,7 @@ def find_pre_migration_stats_backup(client: Client, stats_root: str, online_uuid
             stamp = int(stamp_text)
         except ValueError:
             continue
-        path = str(child.get("path") or "") or f"{stats_root}/{name}"
+        path = (str(child.get("path") or "") or f"{stats_root}/{name}").lstrip("/")
         candidates.append((stamp, path))
     if not candidates:
         return None, None
