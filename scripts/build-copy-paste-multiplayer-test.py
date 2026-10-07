@@ -50,6 +50,32 @@ def check(label,*conditions):
     ]
     step(*cmds)
 
+def check_display_block(label, x, y, z, block):
+    """Assert the exact block_display block ID at one target cell.
+
+    26.3 server implementations can serialize block_state as a scalar or as a
+    compound. Accept the known equivalent NBT shapes, but still require the
+    requested block ID at the exact display position.
+    """
+    cmds=['scoreboard players set #ok mccmp 0']
+    for state_nbt in (
+        f'"minecraft:{block}"',
+        f'{{id:"minecraft:{block}"}}',
+        f'{{Name:"minecraft:{block}"}}',
+    ):
+        cmds.append(
+            f'execute in minecraft:overworld positioned {x} {y} {z} '
+            f'if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={{block_state:{state_nbt}}},limit=1] '
+            f'run scoreboard players set #ok mccmp 1'
+        )
+    cmds += [
+        f'execute if score #ok mccmp matches 1 run say MCCMP_CHECK PASS {label}',
+        f'execute unless score #ok mccmp matches 1 run say MCCMP_CHECK FAIL {label}',
+        'execute if score #ok mccmp matches 1 run scoreboard players add #pass mccmp 1',
+        'execute unless score #ok mccmp matches 1 run scoreboard players add #fail mccmp 1',
+    ]
+    step(*cmds)
+
 # Two visually distinct source fixtures and two target areas.
 step(
     'execute in minecraft:overworld run fill -305 248 85 -245 255 130 air',
@@ -118,11 +144,10 @@ check('blueprint flip offset',
       'score @a[tag=mcc_mp_b,limit=1] mcc_bpoffx matches 2',
       'score @a[tag=mcc_mp_a,limit=1] mcc_bpoffz matches 0',
       'score @a[tag=mcc_mp_b,limit=1] mcc_bpoffz matches 0')
-check('blueprint flip content',
-      'in minecraft:overworld positioned -278 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]',
-      'in minecraft:overworld positioned -280 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:diamond_block"},limit=1]',
-      'in minecraft:overworld positioned -278 250 120 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:copper_block"},limit=1]',
-      'in minecraft:overworld positioned -280 250 120 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:lapis_block"},limit=1]')
+check_display_block('blueprint flip A gold', -278, 250, 90, 'gold_block')
+check_display_block('blueprint flip A diamond', -280, 250, 90, 'diamond_block')
+check_display_block('blueprint flip B copper', -278, 250, 120, 'copper_block')
+check_display_block('blueprint flip B lapis', -280, 250, 120, 'lapis_block')
 
 # Dump the actual A-side display states so live failures distinguish a bad transform
 # from a stale/incorrect assertion. The macro function prints the exact saved NBT.
@@ -146,9 +171,8 @@ check('blueprint flip twice restores offset',
       'score @a[tag=mcc_mp_b,limit=1] mcc_bpoffx matches 0',
       'score @a[tag=mcc_mp_a,limit=1] mcc_bpoffz matches 0',
       'score @a[tag=mcc_mp_b,limit=1] mcc_bpoffz matches 0')
-check('blueprint flip twice restores content',
-      'in minecraft:overworld positioned -280 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]',
-      'in minecraft:overworld positioned -280 250 120 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:copper_block"},limit=1]')
+check_display_block('blueprint flip twice A gold', -280, 250, 90, 'gold_block')
+check_display_block('blueprint flip twice B copper', -280, 250, 120, 'copper_block')
 both_trigger('previewclear')
 check('both blueprints clear','in minecraft:overworld unless entity @e[type=minecraft:block_display,tag=mcc_blueprint]')
 
