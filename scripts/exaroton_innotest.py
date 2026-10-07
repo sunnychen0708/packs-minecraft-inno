@@ -1823,7 +1823,9 @@ def run(path):
     elif op == "command": client.command(str(r.get("command") or "")); print(f"command sent to {TARGET}")
     elif op == "deploy-datapack": deploy(client, str(r.get("pack") or ""))
     elif op == "deploy-datapack-no-reload": deploy(client, str(r.get("pack") or ""), reload_server=False)
-    elif op == "run-copy-paste-multiplayer-test":\n        globals()["RECHECK_COPY_PASTE"] = str(r.get("command") or "") == "recheck"\n        run_copy_paste_multiplayer_test(client)
+    elif op == "run-copy-paste-multiplayer-test":
+        globals()["RECHECK_COPY_PASTE"] = str(r.get("command") or "") == "recheck"
+        run_copy_paste_multiplayer_test(client)
     elif op == "run-blueprint-matcher-live-test": run_blueprint_matcher_live_test(client)
     elif op == "run-warehouse-compact-live-test": run_warehouse_compact_live_test(client)
     elif op == "recover-warehouse-compact-live-test": recover_warehouse_compact_live_test(client, force_enable=True)
