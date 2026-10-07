@@ -140,6 +140,32 @@ def main() -> None:
     assert "pending_refunds[0]" in api_pending_tick
     assert "work.saved_result" in api_pending_tick
 
+    # v4.5 compact hot path: arithmetic direct dispatch replaces 61-way chest and 54-way slot scans.
+    compact_step = (PACK / "data/warehouse/function/compact/step.mcfunction").read_text(encoding="utf-8")
+    compact_dispatch = (PACK / "data/warehouse/function/compact/dispatch_code.mcfunction").read_text(encoding="utf-8")
+    compact_load = (PACK / "data/warehouse/function/compact/load_code.mcfunction").read_text(encoding="utf-8")
+    compact_slot = (PACK / "data/warehouse/function/compact/slot.mcfunction").read_text(encoding="utf-8")
+    expected_compact_codes = ["00"] + [f"{n:02d}" for n in range(10, 70)]
+    actual_compact_codes = ["00" if code == 0 else f"{code + 9:02d}" for code in range(61)]
+    assert actual_compact_codes == expected_compact_codes, "compact arithmetic code mapping must preserve c00,c10..c69"
+    expected_slots = [("a", slot) if slot <= 26 else ("b", slot - 27) for slot in range(54)]
+    assert expected_slots == [("a", i) for i in range(27)] + [("b", i) for i in range(27)]
+    assert compact_step.count("warehouse:compact/load_code") == 1, "only c00 should use the direct special case"
+    assert "matches 1..60 run function warehouse:compact/dispatch_code" in compact_step
+    assert "scoreboard players add #compact_target wh_tmp 9" in compact_step
+    assert "c$(target){registered:1b,valid:1b}" in compact_dispatch
+    assert "function warehouse:compact/load_code with storage warehouse:chests c$(target)" in compact_dispatch
+    assert "function warehouse:compact/slot_dispatch" not in compact_load
+    assert "scoreboard players remove #compact_local wh_tmp 27" in compact_load
+    assert "warehouse:runtime compact.slot" in compact_load
+    assert compact_load.count("matches ..26") == 3 and compact_load.count("matches 27..") == 4
+    assert "container.$(slot)" in compact_slot
+    assert "Items[{Slot:$(slot)b}]" in compact_slot
+    assert "scoreboard players operation #compact_src wh_tmp = #compact_slot wh_tmp" in compact_slot
+    compact_dir = PACK / "data/warehouse/function/compact"
+    assert not (compact_dir / "slot_dispatch.mcfunction").exists(), "legacy 54-way slot dispatcher must be removed"
+    assert not list(compact_dir.glob("slot_[0-9][0-9].mcfunction")), "legacy per-slot compact handlers must be removed"
+
     main_dialog = (PACK / "data/warehouse/dialog/main.json").read_text(encoding="utf-8")
     assert f"v{version}" in main_dialog
     assert "建築工具" in main_dialog
