@@ -123,6 +123,14 @@ check('blueprint flip content',
       'in minecraft:overworld positioned -280 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:diamond_block"},limit=1]',
       'in minecraft:overworld positioned -278 250 120 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:copper_block"},limit=1]',
       'in minecraft:overworld positioned -280 250 120 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:lapis_block"},limit=1]')
+step(
+    'execute in minecraft:overworld positioned -280 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1] run say MCCMP_DIAG flip_A_gold_x=-280',
+    'execute in minecraft:overworld positioned -279 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1] run say MCCMP_DIAG flip_A_gold_x=-279',
+    'execute in minecraft:overworld positioned -278 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1] run say MCCMP_DIAG flip_A_gold_x=-278',
+    'execute in minecraft:overworld positioned -280 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:diamond_block"},limit=1] run say MCCMP_DIAG flip_A_diamond_x=-280',
+    'execute in minecraft:overworld positioned -279 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:diamond_block"},limit=1] run say MCCMP_DIAG flip_A_diamond_x=-279',
+    'execute in minecraft:overworld positioned -278 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:diamond_block"},limit=1] run say MCCMP_DIAG flip_A_diamond_x=-278'
+)
 both_trigger('bpflip')
 check('blueprint flip twice restores offset',
       'score @a[tag=mcc_mp_a,limit=1] mcc_bpoffx matches 0',
