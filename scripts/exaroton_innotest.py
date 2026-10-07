@@ -1475,8 +1475,14 @@ def run_warehouse_dimension_checks(client, marker):
             forced.append((i, dim))
             label = f"DIM_{i}_EMPTY"
             client.command(f"execute in {dim} if block {ax} {y} {z} air if block {bx} {y} {z} air run say {marker} {label}")
-            time.sleep(1)
-            if f"{marker} {label}" not in client.log():
+            deadline = time.monotonic() + 30
+            while f"{marker} {label}" not in client.log():
+                if time.monotonic() >= deadline:
+                    break
+                time.sleep(2)
+            else:
+                deadline = None
+            if deadline is not None:
                 raise Error(f"Warehouse dimension fixture is occupied or unavailable: {dim}")
             for x in (ax, bx):
                 created.append((dim, x))
@@ -1532,10 +1538,14 @@ def run_warehouse_dimension_checks(client, marker):
                 check(dims[0], ax, 5, 2, f"DIM_{i}_DECOY_A5_PASS")
                 check(dims[0], bx, 3, 3, f"DIM_{i}_DECOY_B_PASS")
 
-        time.sleep(2)
-        log = client.log()
-        segment = log[log.rfind(f"{marker} START"):]
-        missing = [label for label in required if f"{marker} {label}" not in segment]
+        deadline = time.monotonic() + 30
+        while True:
+            log = client.log()
+            segment = log[log.rfind(f"{marker} START"):]
+            missing = [label for label in required if f"{marker} {label}" not in segment]
+            if not missing or time.monotonic() >= deadline:
+                break
+            time.sleep(2)
         errors = [line for line in segment.splitlines() if any(s in line for s in ("/ERROR]:", "Unknown function", "Unknown or incomplete command", "<--[HERE]"))]
         if missing or errors:
             raise Error(f"Warehouse dimension regression failed: {missing}; errors: {errors[:10]}")
