@@ -527,10 +527,13 @@ def run_copy_paste_multiplayer_test(client):
             + preview
         )
 
-    server = wait_players(client, 4, 180)
-    print(f"live multiplayer test starting with player count={player_count(server)}")
+    # The automated test reserves SunnyChen for a real client / Computer Use. The
+    # regression itself only needs penguin0531 + geena0701; Felicitypeng may stay
+    # connected as the third default bot, but SunnyChen must not be required.
+    server = wait_named_players(client, ("penguin0531", "geena0701"), 180)
+    print(f"live multiplayer test starting with required non-SunnyChen bots online; player count={player_count(server)}")
 
-    # Use two named real-player entities while the other two remain connected.
+    # Use two named real-player entities; SunnyChen is intentionally not required.
     # Mark this run in the server log so stale results from previous attempts
     # can never be mistaken for the current test.
     run_marker = f"MCCMP_RUN_{int(time.time() * 1000)}"
