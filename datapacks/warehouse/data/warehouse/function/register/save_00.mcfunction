@@ -7,4 +7,5 @@ $data modify storage warehouse:chests c00.b_z set value $(b_z)
 $data modify storage warehouse:chests c00.dimension set value "$(dimension)"
 data modify storage warehouse:chests c00.registered set value 1b
 data modify storage warehouse:chests c00.valid set value 1b
+function warehouse:chunks/ensure
 dialog show @s warehouse:register/result/success_00

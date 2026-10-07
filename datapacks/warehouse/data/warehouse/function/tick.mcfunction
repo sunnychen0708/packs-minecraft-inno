@@ -70,3 +70,6 @@ execute as @a[scores={wh_rename=1}] run function warehouse:boxname/apply
 execute as @a[scores={wh_rename=2}] run function warehouse:boxname/reset
 execute if score #enabled wh_sys matches 1 run function warehouse:compact/tick
 execute if score #enabled wh_sys matches 1 run function warehouse:migration/tick
+# v4.6: re-assert the box chunk force-loads every 10 s (another datapack may have removed one).
+scoreboard players add #chunk_tick wh_sys 1
+execute if score #chunk_tick wh_sys matches 200.. run function warehouse:chunks/ensure

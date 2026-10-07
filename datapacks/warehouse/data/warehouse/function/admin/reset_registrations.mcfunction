@@ -121,4 +121,5 @@ data modify storage warehouse:chests c68.registered set value 0b
 data modify storage warehouse:chests c68.valid set value 0b
 data modify storage warehouse:chests c69.registered set value 0b
 data modify storage warehouse:chests c69.valid set value 0b
+function warehouse:chunks/refresh
 dialog show @s warehouse:admin_reset

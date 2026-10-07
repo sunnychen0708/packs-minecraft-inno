@@ -1161,9 +1161,9 @@ def run_warehouse_compact_live_test(client):
 
     marker = f"WH_COMPACT_LIVE_{int(time.time() * 1000)}"
     ax, ay, az = -430, 250, 120
-    bx, by, bz = -429, 250, 120
+    bx, by, bz = -428, 250, 120
     force_from = "-430 120"
-    force_to = "-429 120"
+    force_to = "-428 120"
 
     setup = [
         f"say {marker} START",
@@ -1196,23 +1196,50 @@ def run_warehouse_compact_live_test(client):
             client.command(command)
             time.sleep(0.15)
 
-        for _ in range(54):
-            client.command("function warehouse:compact/step")
+        # First call must direct-dispatch code 60 to c69 and process A slot 0.
+        client.command("function warehouse:compact/step")
+        client.command(
+            f"execute if score #compact_active wh_tmp matches 1 "
+            f"if score #compact_code wh_tmp matches 60 "
+            f"if score #compact_slot wh_tmp matches 1 "
+            f"run say {marker} CODE_PASS"
+        )
 
+        # Advance through A slot 5; the second 10-stack should merge into slot 0.
+        for _ in range(5):
+            client.command("function warehouse:compact/step")
         client.command(
             f'execute if data block {ax} {ay} {az} '
-            'Items[{id:"minecraft:diamond",count:27}] '
-            f'unless data block {ax} {ay} {az} Items[{{id:"minecraft:diamond",count:10}}] '
-            f'unless data block {bx} {by} {bz} Items[{{id:"minecraft:diamond"}}] '
-            f'run say {marker} PASS'
+            'Items[{Slot:0b,id:"minecraft:diamond",count:20}] '
+            f'unless data block {ax} {ay} {az} Items[{{Slot:5b,id:"minecraft:diamond"}}] '
+            f'run say {marker} A_PASS'
+        )
+
+        # Advance from global slot 6 through global slot 30 (B local slot 3).
+        for _ in range(25):
+            client.command("function warehouse:compact/step")
+        client.command(
+            f'execute if data block {ax} {ay} {az} '
+            'Items[{Slot:0b,id:"minecraft:diamond",count:27}] '
+            f'unless data block {bx} {by} {bz} Items[{{Slot:3b,id:"minecraft:diamond"}}] '
+            f'run say {marker} B_PASS'
+        )
+
+        # Finish the cycle and verify cursor wrap semantics.
+        for _ in range(23):
+            client.command("function warehouse:compact/step")
+        client.command(
+            f"execute if score #compact_code wh_tmp matches 0 "
+            f"if score #compact_slot wh_tmp matches 0 "
+            f"run say {marker} WRAP_PASS"
         )
         time.sleep(2)
 
         log = client.log()
-        start = log.rfind(f"{marker} START")
-        if start < 0:
+        start_at = log.rfind(f"{marker} START")
+        if start_at < 0:
             raise Error("Warehouse compact live marker not found in server log")
-        segment = log[start:]
+        segment = log[start_at:]
         current_errors = [
             line for line in segment.splitlines()
             if (
@@ -1227,16 +1254,39 @@ def run_warehouse_compact_live_test(client):
                 "Warehouse compact live test produced server/command errors:\n"
                 + "\n".join(current_errors[:12])
             )
-        if f"{marker} PASS" not in segment:
+
+        required = ("CODE_PASS", "A_PASS", "B_PASS", "WRAP_PASS")
+        missing = [name for name in required if f"{marker} {name}" not in segment]
+        if missing:
+            # Persist diagnostics into the server log before cleanup.
+            diagnostic_commands = [
+                f"data get block {ax} {ay} {az} Items",
+                f"data get block {bx} {by} {bz} Items",
+                "scoreboard players get #compact_active wh_tmp",
+                "scoreboard players get #compact_code wh_tmp",
+                "scoreboard players get #compact_slot wh_tmp",
+                "data get storage warehouse:runtime compact",
+            ]
+            for command in diagnostic_commands:
+                try:
+                    client.command(command)
+                except Error:
+                    pass
+            time.sleep(1)
+            debug = client.log()
+            debug_start = debug.rfind(f"{marker} START")
             raise Error(
-                "Warehouse compact live test did not pass; current session tail:\n"
-                + "\n".join(segment.splitlines()[-40:])
+                "Warehouse compact live test missing checkpoints "
+                + ", ".join(missing)
+                + "; current session tail:\n"
+                + "\n".join(debug[debug_start:].splitlines()[-60:])
             )
 
         print("WAREHOUSE_COMPACT_LIVE_TEST=PASS")
-        print("  compact_code 60 -> c69 arithmetic dispatch")
-        print("  slots 0..53 -> A/B local-slot macro dispatch")
-        print("  partial diamond stacks merged without loss")
+        print("  code 60 -> c69 direct dispatch: PASS")
+        print("  A global/local slot mapping and merge: PASS")
+        print("  B global 30 -> local slot 3 mapping and merge: PASS")
+        print("  54-slot cursor wrap to code 0 / slot 0: PASS")
     finally:
         cleanup = [
             f"setblock {ax} {ay} {az} minecraft:air",
