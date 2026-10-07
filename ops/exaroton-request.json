@@ -1,6 +1,6 @@
 {
-  "request_id": 0,
-  "operation": "noop",
+  "request_id": 202610071527,
+  "operation": "run-warehouse-compact-live-test",
   "command": "",
   "pack": ""
 }

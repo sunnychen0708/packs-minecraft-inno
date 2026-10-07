@@ -27,6 +27,7 @@ on:
           - deploy-datapack
           - run-copy-paste-multiplayer-test
           - run-live-feature-test
+          - run-warehouse-compact-live-test
           - set-online-mode-false
       command:
         description: Console command (only used by command)

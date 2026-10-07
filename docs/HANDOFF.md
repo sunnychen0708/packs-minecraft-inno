@@ -40,7 +40,7 @@
 - 目前 `online-mode=false`，讓四個測試玩家不用 Microsoft 授權即可登入。
 - 四個 bot 名稱固定為：`SunnyChen`、`penguin0531`、`geena0701`、`Felicitypeng`。
 - 玩家資料的正確遷移方向是：**`inno` online-mode UUID -> `innotest` 同名 offline UUID**。
-- 已完成四人資料遷移：`players/data/*.dat`、`.dat_old`、`players/advancements/*.json`、`players/stats/*.json` 都從 production online UUID 寫到 innotest offline UUID，寫後有 SHA-256 驗證；既有 target 不同內容會先備份。
+- 四人資料遷移入口會把 `players/data/*.dat`、`.dat_old`、`players/advancements/*.json`、`players/stats/*.json` 從 production online UUID 寫到 innotest offline UUID；同時改寫 copied player NBT 內部 UUID reference，並掃描 innotest 各維度 `entities/*.mca`，把寵物/坐騎等 entity 對四名玩家的 online UUID reference 改成同名 offline UUID。修改前會備份，寫後會驗證。
 - Minecraft Java 26.3 的玩家資料路徑是 `world/players/...`，**不是**舊的 `world/playerdata` / `world/advancements` / `world/stats`。
 
 ### `inno.exaroton.me`
@@ -49,7 +49,7 @@
 - 一般 exaroton 操作**不要自動啟動 `inno`**；正常檢查應保持 read-only。
 - 使用者已明確允許 repo 內的 **offline UUID maintenance** 寫入入口；這是 production write 的特例，不代表可以任意改 production。
 - 特例 workflow：`.github/workflows/exaroton-inno-maintenance.yml` + `scripts/exaroton_inno_uuid_migrate.py`。
-- Production maintenance 必須要求 `inno` 已經 OFFLINE，而且 maintenance 自己**不得啟動** production server。先 dry-run，再 apply。
+- Production maintenance 必須要求 `inno` 已經 OFFLINE，而且 maintenance 自己**不得啟動** production server。先 dry-run，再 apply。\n- Production offline/online stats 現在採 **sum-per-counter** 真正累加；`uuid-migration-stats-sum-state.json` 防止重跑時把同一份 offline 歷史再加一次。若偵測到舊 max-per-counter migration backup，會用 backup 還原 baseline，再保留之後新增的 online progress。
 - Secret 只存在 GitHub Actions `EXAROTON_API_TOKEN`，不要寫進 repo、request JSON 或 log。
 
 ### ops baseline

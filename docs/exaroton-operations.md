@@ -53,7 +53,7 @@ world/players/stats/<uuid>.json
 
 The older `world/playerdata`, `world/advancements`, and `world/stats` layout is not the correct 26.3 layout for this server.
 
-The `migrate-inno-online-to-innotest-offline` operation reads the production online UUID identities, copies the matching 26.3 player files to the target offline UUID names on innotest, preserves pre-existing target data as timestamped backups when needed, updates whitelist/ops identity UUIDs, and verifies written file content with SHA-256. Production is the source; innotest is the destination.
+The `migrate-inno-online-to-innotest-offline` operation reads the production online UUID identities, copies the matching 26.3 player files to the target offline UUID names on innotest, rewrites exact online UUID references inside copied player NBT, scans every entity-region directory and rewrites matching entity UUID/owner references to the four offline UUIDs, preserves changed target files as timestamped backups, updates whitelist/ops identity UUIDs, and verifies written content. Production is the source; innotest is the destination.
 
 ## Mineflayer 26.3 test clients
 
@@ -167,7 +167,7 @@ uuid-migrate-dry-run
 uuid-migrate-apply
 ```
 
-The production maintenance path is owner-authorized, but it is still constrained to offline UUID maintenance. It must verify that `inno` is OFFLINE and must never start the production server as part of the operation. Run `dry-run` before `apply` whenever the source world or identity set has changed.
+The production maintenance path is owner-authorized, but it is still constrained to offline UUID maintenance. It must verify that `inno` is OFFLINE and must never start the production server as part of the operation. Offline/online Minecraft statistics are merged by **summing numeric counters**, because they represent separate play histories. The migration records `uuid-migration-stats-sum-state.json` so the same offline source is not added twice on a later rerun. If an earlier max-per-counter migration backup exists, the migration reconstructs the original online baseline from that backup, converts the result to a true sum, and preserves any later online progress. Run `dry-run` before `apply` whenever the source world or identity set has changed.
 
 ## Operational cleanup rules
 

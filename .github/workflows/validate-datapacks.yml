@@ -27,6 +27,14 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
+      - name: Test exaroton UUID migration helpers
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet "nbtlib==1.12.1"
+          python3 -m py_compile scripts/exaroton_innotest.py scripts/exaroton_inno_uuid_migrate.py
+          python3 scripts/test-exaroton-migrations.py
+
       - name: Validate every datapack
         shell: bash
         run: |

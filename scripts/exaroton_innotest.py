@@ -108,6 +108,21 @@ class APIClient:
                 return None
             raise
 
+    def read_binary_file_optional(self, path):
+        """Read binary world files through exaroton's non-directory data endpoint."""
+        server = self.target()
+        sid = urllib.parse.quote(str(server["id"]), safe="")
+        try:
+            return self.req(
+                "GET",
+                f"/servers/{sid}/files/data/{remote_path(str(path).lstrip('/'))}",
+                raw_response=True,
+            )
+        except Error as e:
+            if "HTTP 404" in str(e):
+                return None
+            raise
+
     def write_file(self, path, content):
         server = self.target(); server = self.verify(server["id"])
         sid = urllib.parse.quote(str(server["id"]), safe="")
@@ -122,6 +137,14 @@ class APIClient:
         server = self.target()
         sid = urllib.parse.quote(str(server["id"]), safe="")
         return self.req("GET", f"/servers/{sid}/files/info/{remote_path(path)}/")
+
+    def info_optional(self, path):
+        try:
+            return self.file_info(str(path).lstrip("/"))
+        except Error as e:
+            if "HTTP 404" in str(e):
+                return None
+            raise
 
     def get_config(self, path):
         server = self.target()
@@ -732,6 +755,82 @@ def offline_uuid(name):
     digest[8] = (digest[8] & 0x3F) | 0x80
     return str(uuid.UUID(bytes=bytes(digest)))
 
+def rewrite_innotest_entity_uuid_refs(client, world, uuid_pairs, stamp):
+    """Rewrite production online UUID references in innotest entity region files."""
+    try:
+        import exaroton_inno_uuid_migrate as migration
+        int_mapping, str_mapping = migration.uuid_mappings(uuid_pairs)
+        region_files = migration.list_region_files(client, world)
+    except Exception as e:
+        raise Error(f"cannot prepare innotest entity UUID rewrite: {e}") from e
+
+    changes = []
+    total_refs = 0
+    for path in region_files:
+        path = str(path).lstrip("/")
+        raw = client.read_binary_file_optional(path)
+        if raw is None:
+            continue
+        if raw == b"":
+            info = client.info_optional(path)
+            size = int((info or {}).get("size") or 0)
+            if size == 0:
+                continue
+            raise Error(
+                f"binary region download returned 0 bytes for {path} "
+                f"but exaroton reports size={size}"
+            )
+        try:
+            transformed, stats = migration.transform_region(
+                raw,
+                int_mapping=int_mapping,
+                str_mapping=str_mapping,
+            )
+        except Exception as e:
+            raise Error(f"cannot rewrite entity UUIDs in {path}: {e}") from e
+        if transformed == raw:
+            continue
+
+        backup = f"{path}.pre-inno-online-copy-{stamp}.backup"
+        client.write_file(backup, raw)
+        client.write_file(path, transformed)
+
+        verified = client.read_binary_file_optional(path)
+        if verified is None:
+            raise Error(f"rewritten entity region disappeared during verification: {path}")
+        if hashlib.sha256(verified).digest() != hashlib.sha256(transformed).digest():
+            raise Error(f"verification failed after rewriting entity region {path}")
+        try:
+            verify_again, remaining = migration.transform_region(
+                verified,
+                int_mapping=int_mapping,
+                str_mapping=str_mapping,
+            )
+        except Exception as e:
+            raise Error(f"cannot verify entity UUID rewrite in {path}: {e}") from e
+        remaining_refs = int(remaining.get("int_array", 0)) + int(remaining.get("string", 0))
+        if verify_again != verified or remaining_refs:
+            raise Error(
+                f"entity UUID rewrite verification found {remaining_refs} remaining refs in {path}"
+            )
+
+        count = int(stats.get("int_array", 0)) + int(stats.get("string", 0))
+        total_refs += count
+        changes.append({
+            "path": path,
+            "backup": backup,
+            "changed_chunks": int(stats.get("changed_chunks", 0)),
+            "uuid_references_rewritten": count,
+        })
+
+    return {
+        "region_files_scanned": len(region_files),
+        "region_files_changed": len(changes),
+        "uuid_references_rewritten": total_refs,
+        "changes": changes,
+    }
+
+
 def migrate_bot_identities(client):
     current = client.target()
     status = int(current.get("status", -1))
@@ -904,6 +1003,17 @@ def migrate_inno_online_to_innotest_offline(client, token):
         wait_status(client, 0)
 
     target_world = level_name(client.read_file("server.properties"))
+    stamp = int(time.time())
+    try:
+        import exaroton_inno_uuid_migrate as migration
+        uuid_pairs = [
+            (source_by_name[name.lower()]["uuid"], offline_uuid(name))
+            for name in BOT_PLAYERS
+        ]
+        int_mapping, str_mapping = migration.uuid_mappings(uuid_pairs)
+    except Exception as e:
+        raise Error(f"cannot prepare online-to-offline UUID mapping: {e}") from e
+
     whitelist_raw = client.read_file("whitelist.json")
     whitelist = json.loads(whitelist_raw.decode("utf-8"))
     if not isinstance(whitelist, list):
@@ -924,7 +1034,10 @@ def migrate_inno_online_to_innotest_offline(client, token):
     ops_raw = client.read_file_optional("ops.json")
     ops = json.loads(ops_raw.decode("utf-8")) if ops_raw else []
 
-    stamp = int(time.time())
+    entity_rewrite = rewrite_innotest_entity_uuid_refs(
+        client, target_world, uuid_pairs, stamp
+    )
+
     client.write_file(
         f"whitelist.pre-inno-online-copy-{stamp}.json",
         whitelist_raw,
@@ -959,16 +1072,29 @@ def migrate_inno_online_to_innotest_offline(client, token):
                 missing.append(f"{folder}{suffix}")
                 continue
 
+            payload = source_data
+            nbt_uuid_rewrites = 0
+            if folder == "players/data":
+                try:
+                    payload, nbt_meta = migration.transform_player_nbt(
+                        source_data,
+                        int_mapping=int_mapping,
+                        str_mapping=str_mapping,
+                    )
+                except Exception as e:
+                    raise Error(f"cannot rewrite UUID references in {source_path}: {e}") from e
+                nbt_uuid_rewrites = int(nbt_meta.get("int_array", 0)) + int(nbt_meta.get("string", 0))
+
             existing = client.read_file_optional(target_path)
-            if existing is not None and existing != source_data:
+            if existing is not None and existing != payload:
                 client.write_file(
                     target_path + f".pre-inno-online-copy-{stamp}.backup",
                     existing,
                 )
 
-            client.write_file(target_path, source_data)
+            client.write_file(target_path, payload)
             verified = client.read_file(target_path)
-            if hashlib.sha256(verified).digest() != hashlib.sha256(source_data).digest():
+            if hashlib.sha256(verified).digest() != hashlib.sha256(payload).digest():
                 raise Error(f"verification failed after writing {target_path}")
 
             copied.append(
@@ -976,7 +1102,8 @@ def migrate_inno_online_to_innotest_offline(client, token):
                     "kind": f"{folder}{suffix}",
                     "source_online_uuid": source_uuid,
                     "target_offline_uuid": target_uuid,
-                    "bytes": len(source_data),
+                    "bytes": len(payload),
+                    "internal_uuid_references_rewritten": nbt_uuid_rewrites,
                 }
             )
 
@@ -1012,7 +1139,10 @@ def migrate_inno_online_to_innotest_offline(client, token):
         )
 
     print("copied production inno online UUID data into innotest offline UUIDs:")
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+    print(json.dumps({
+        "players": result,
+        "entity_uuid_rewrite": entity_rewrite,
+    }, ensure_ascii=False, indent=2))
 
     if restart_after:
         client.action("start")
@@ -1021,6 +1151,211 @@ def migrate_inno_online_to_innotest_offline(client, token):
         print("innotest is ONLINE")
     else:
         print("innotest was offline before migration; left offline")
+
+
+def run_warehouse_compact_live_test(client):
+    """Run a focused live regression for compact arithmetic direct dispatch."""
+    current = client.target()
+    if int(current.get("status", -1)) != 1:
+        raise Error("innotest must be ONLINE before Warehouse compact live testing")
+
+    marker = f"WH_COMPACT_LIVE_{int(time.time() * 1000)}"
+    ax, ay, az = -430, 250, 120
+    bx, by, bz = -429, 250, 120
+    force_from = "-430 120"
+    force_to = "-429 120"
+
+    setup = [
+        f"say {marker} START",
+        "scoreboard players operation #whc_old_enabled wh_sys = #enabled wh_sys",
+        "scoreboard players operation #whc_old_code wh_tmp = #compact_code wh_tmp",
+        "scoreboard players operation #whc_old_slot wh_tmp = #compact_slot wh_tmp",
+        "scoreboard players set #enabled wh_sys 0",
+        "execute store success score #whc_had wh_tmp run data get storage warehouse:chests c69",
+        "data remove storage warehouse:runtime compact_live_backup",
+        "data modify storage warehouse:runtime compact_live_backup set from storage warehouse:chests c69",
+        f"forceload add {force_from} {force_to}",
+        f"setblock {ax} {ay} {az} minecraft:chest",
+        f"setblock {bx} {by} {bz} minecraft:chest",
+        (
+            "data modify storage warehouse:chests c69 set value "
+            f'{{registered:1b,valid:1b,dimension:"minecraft:overworld",'
+            f"a_x:{ax},a_y:{ay},a_z:{az},b_x:{bx},b_y:{by},b_z:{bz}}}"
+        ),
+        f'data modify block {ax} {ay} {az} Items set value ['
+        '{Slot:0b,id:"minecraft:diamond",count:10},'
+        '{Slot:5b,id:"minecraft:diamond",count:10}]',
+        f'data modify block {bx} {by} {bz} Items set value ['
+        '{Slot:3b,id:"minecraft:diamond",count:7}]',
+        "scoreboard players set #compact_code wh_tmp 60",
+        "scoreboard players set #compact_slot wh_tmp 0",
+    ]
+
+    try:
+        for command in setup:
+            client.command(command)
+            time.sleep(0.15)
+
+        for _ in range(54):
+            client.command("function warehouse:compact/step")
+
+        client.command(
+            f'execute if data block {ax} {ay} {az} '
+            'Items[{id:"minecraft:diamond",count:27}] '
+            f'unless data block {ax} {ay} {az} Items[{{id:"minecraft:diamond",count:10}}] '
+            f'unless data block {bx} {by} {bz} Items[{{id:"minecraft:diamond"}}] '
+            f'run say {marker} PASS'
+        )
+        time.sleep(2)
+
+        log = client.log()
+        start = log.rfind(f"{marker} START")
+        if start < 0:
+            raise Error("Warehouse compact live marker not found in server log")
+        segment = log[start:]
+        current_errors = [
+            line for line in segment.splitlines()
+            if (
+                "/ERROR]:" in line
+                or "Unknown or incomplete command" in line
+                or "Unknown function" in line
+                or "<--[HERE]" in line
+            )
+        ]
+        if current_errors:
+            raise Error(
+                "Warehouse compact live test produced server/command errors:\n"
+                + "\n".join(current_errors[:12])
+            )
+        if f"{marker} PASS" not in segment:
+            raise Error(
+                "Warehouse compact live test did not pass; current session tail:\n"
+                + "\n".join(segment.splitlines()[-40:])
+            )
+
+        print("WAREHOUSE_COMPACT_LIVE_TEST=PASS")
+        print("  compact_code 60 -> c69 arithmetic dispatch")
+        print("  slots 0..53 -> A/B local-slot macro dispatch")
+        print("  partial diamond stacks merged without loss")
+    finally:
+        cleanup = [
+            f"setblock {ax} {ay} {az} minecraft:air",
+            f"setblock {bx} {by} {bz} minecraft:air",
+            f"forceload remove {force_from} {force_to}",
+            (
+                "execute if score #whc_had wh_tmp matches 1 "
+                "run data modify storage warehouse:chests c69 "
+                "set from storage warehouse:runtime compact_live_backup"
+            ),
+            (
+                "execute unless score #whc_had wh_tmp matches 1 "
+                "run data remove storage warehouse:chests c69"
+            ),
+            "data remove storage warehouse:runtime compact_live_backup",
+            "scoreboard players operation #compact_code wh_tmp = #whc_old_code wh_tmp",
+            "scoreboard players operation #compact_slot wh_tmp = #whc_old_slot wh_tmp",
+            "scoreboard players operation #enabled wh_sys = #whc_old_enabled wh_sys",
+            "scoreboard players reset #whc_had wh_tmp",
+            "scoreboard players reset #whc_old_code wh_tmp",
+            "scoreboard players reset #whc_old_slot wh_tmp",
+            "scoreboard players reset #whc_old_enabled wh_sys",
+        ]
+        for command in cleanup:
+            try:
+                client.command(command)
+            except Error:
+                pass
+
+
+def run_utilities_bfs_live_test(client):
+    """Run a focused live regression for the foliage shell-order optimization."""
+    current = client.target()
+    if int(current.get("status", -1)) != 1:
+        raise Error("innotest must be ONLINE before utilities BFS live testing")
+
+    marker = f"UTIL_BFS_LIVE_{int(time.time() * 1000)}"
+    area = "-375 243 90 -345 276 105"
+    force_from = "-375 90"
+    force_to = "-345 105"
+    scores = ("#bfs_near", "#bfs_far", "#bfs_xout", "#bfs_yout", "#bfs_none")
+
+    commands = [
+        f"say {marker} START",
+        f"forceload add {force_from} {force_to}",
+        f"fill {area} minecraft:air",
+        "setblock -350 260 100 minecraft:oak_leaves[persistent=true]",
+        "execute positioned -350 260 100 store result score #bfs_near su_tmp run function survival_utils:tree/check_foliage",
+        "execute positioned -355 244 95 store result score #bfs_far su_tmp run function survival_utils:tree/check_foliage",
+        "execute positioned -356 244 95 store result score #bfs_xout su_tmp run function survival_utils:tree/check_foliage",
+        "execute positioned -355 243 95 store result score #bfs_yout su_tmp run function survival_utils:tree/check_foliage",
+        "execute positioned -370 244 95 store result score #bfs_none su_tmp run function survival_utils:tree/check_foliage",
+        (
+            "execute if score #bfs_near su_tmp matches 1 "
+            "if score #bfs_far su_tmp matches 1 "
+            "if score #bfs_xout su_tmp matches 0 "
+            "if score #bfs_yout su_tmp matches 0 "
+            "if score #bfs_none su_tmp matches 0 "
+            f"run say {marker} PASS"
+        ),
+    ]
+
+    try:
+        for command in commands:
+            client.command(command)
+            time.sleep(0.75)
+        time.sleep(2)
+
+        log = client.log()
+        start = log.rfind(f"{marker} START")
+        if start < 0:
+            raise Error("utilities BFS live marker not found in server log")
+        segment = log[start:]
+        current_errors = [
+            line for line in segment.splitlines()
+            if (
+                "/ERROR]:" in line
+                or "Unknown or incomplete command" in line
+                or "Unknown function" in line
+                or "<--[HERE]" in line
+            )
+        ]
+        if current_errors:
+            raise Error(
+                "utilities BFS live test produced server/command errors:\n"
+                + "\n".join(current_errors[:12])
+            )
+        if f"{marker} PASS" not in segment:
+            for score in scores:
+                try:
+                    client.command(f"scoreboard players get {score} su_tmp")
+                except Error:
+                    pass
+            time.sleep(1)
+            debug = client.log()
+            debug_start = debug.rfind(f"{marker} START")
+            raise Error(
+                "utilities BFS live test did not pass; current session tail:\n"
+                + "\n".join(debug[debug_start:].splitlines()[-40:])
+            )
+
+        print("UTILITIES_BFS_LIVE_TEST=PASS")
+        print("  shell0 hit -> 1")
+        print("  far legal boundary (+5,+16,+5) -> 1")
+        print("  x outside (+6,+16,+5) -> 0")
+        print("  y outside (+5,+17,+5) -> 0")
+        print("  unrelated origin -> 0")
+    finally:
+        cleanup = [
+            f"fill {area} minecraft:air",
+            f"forceload remove {force_from} {force_to}",
+            *[f"scoreboard players reset {score} su_tmp" for score in scores],
+            "scoreboard players set #leaf su_tmp 0",
+        ]
+        for command in cleanup:
+            try:
+                client.command(command)
+            except Error:
+                pass
 
 def run(path):
     try: r = json.loads(Path(path).read_text(encoding="utf-8"))
@@ -1041,6 +1376,8 @@ def run(path):
     elif op == "deploy-datapack": deploy(client, str(r.get("pack") or ""))
     elif op == "run-copy-paste-multiplayer-test": run_copy_paste_multiplayer_test(client)
     elif op == "run-live-feature-test": run_live_feature_test(client, str(r.get("pack") or "all"))
+    elif op == "run-warehouse-compact-live-test": run_warehouse_compact_live_test(client)
+    elif op == "run-utilities-bfs-live-test": run_utilities_bfs_live_test(client)
     elif op == "set-online-mode-false": set_offline_mode(client)
     elif op == "online-mode-status":
         options = client.get_config("server.properties")
