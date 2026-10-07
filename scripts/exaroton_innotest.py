@@ -1267,6 +1267,49 @@ def migrate_inno_online_to_innotest_offline(client, token):
         print("innotest was offline before migration; left offline")
 
 
+def recover_warehouse_compact_live_test(client, *, force_enable=False):
+    """Restore Warehouse state left behind if the compact live test is cancelled."""
+    commands = [
+        "setblock -430 250 120 minecraft:air",
+        "setblock -428 250 120 minecraft:air",
+        "execute in minecraft:overworld run setblock -430 251 120 minecraft:air",
+        "execute in minecraft:overworld run setblock -428 251 120 minecraft:air",
+        "execute in minecraft:the_nether run setblock -430 251 120 minecraft:air",
+        "execute in minecraft:the_nether run setblock -428 251 120 minecraft:air",
+        "execute in minecraft:the_end run setblock -430 251 120 minecraft:air",
+        "execute in minecraft:the_end run setblock -428 251 120 minecraft:air",
+        "forceload remove -430 120 -428 120",
+        "execute if score #whd_force0 wh_tmp matches 0 in minecraft:overworld run forceload remove -430 120",
+        "execute if score #whd_force1 wh_tmp matches 0 in minecraft:the_nether run forceload remove -430 120",
+        "execute if score #whd_force2 wh_tmp matches 0 in minecraft:the_end run forceload remove -430 120",
+        "execute if score #whc_had wh_tmp matches 1 run data modify storage warehouse:chests c69 set from storage warehouse:runtime compact_live_backup",
+        "execute if score #whc_had wh_tmp matches 0 run data remove storage warehouse:chests c69",
+        "execute if score #whc_old_code wh_tmp matches -2147483648..2147483647 run scoreboard players operation #compact_code wh_tmp = #whc_old_code wh_tmp",
+        "execute if score #whc_old_slot wh_tmp matches -2147483648..2147483647 run scoreboard players operation #compact_slot wh_tmp = #whc_old_slot wh_tmp",
+        "execute if score #whc_old_enabled wh_sys matches -2147483648..2147483647 run scoreboard players operation #enabled wh_sys = #whc_old_enabled wh_sys",
+        "execute if score #whc_old_chunk wh_sys matches -2147483648..2147483647 run scoreboard players operation #chunk_tick wh_sys = #whc_old_chunk wh_sys",
+        "data remove storage warehouse:runtime compact_live_backup",
+        "scoreboard players reset #whd_force0 wh_tmp",
+        "scoreboard players reset #whd_force1 wh_tmp",
+        "scoreboard players reset #whd_force2 wh_tmp",
+        "scoreboard players reset #whc_old_chunk wh_sys",
+        "scoreboard players reset #whc_had wh_tmp",
+        "scoreboard players reset #whc_old_code wh_tmp",
+        "scoreboard players reset #whc_old_slot wh_tmp",
+        "scoreboard players reset #whc_old_enabled wh_sys",
+    ]
+    for command in commands:
+        try:
+            client.command(command)
+        except Error:
+            pass
+    if force_enable:
+        client.command("scoreboard players set #enabled wh_sys 1")
+        client.command("scoreboard players set #chunk_tick wh_sys 200")
+        client.command("function warehouse:chunks/ensure")
+    print("WAREHOUSE_COMPACT_LIVE_RECOVERY=PASS")
+
+
 def run_warehouse_compact_live_test(client):
     """Run a focused live regression for compact arithmetic direct dispatch."""
     current = client.target()
@@ -1405,35 +1448,7 @@ def run_warehouse_compact_live_test(client):
         print("  54-slot cursor wrap to code 0 / slot 0: PASS")
         run_warehouse_dimension_checks(client, marker)
     finally:
-        cleanup = [
-            f"setblock {ax} {ay} {az} minecraft:air",
-            f"setblock {bx} {by} {bz} minecraft:air",
-            f"forceload remove {force_from} {force_to}",
-            (
-                "execute if score #whc_had wh_tmp matches 1 "
-                "run data modify storage warehouse:chests c69 "
-                "set from storage warehouse:runtime compact_live_backup"
-            ),
-            (
-                "execute unless score #whc_had wh_tmp matches 1 "
-                "run data remove storage warehouse:chests c69"
-            ),
-            "data remove storage warehouse:runtime compact_live_backup",
-            "scoreboard players operation #compact_code wh_tmp = #whc_old_code wh_tmp",
-            "scoreboard players operation #compact_slot wh_tmp = #whc_old_slot wh_tmp",
-            "scoreboard players operation #enabled wh_sys = #whc_old_enabled wh_sys",
-            "scoreboard players operation #chunk_tick wh_sys = #whc_old_chunk wh_sys",
-            "scoreboard players reset #whc_old_chunk wh_sys",
-            "scoreboard players reset #whc_had wh_tmp",
-            "scoreboard players reset #whc_old_code wh_tmp",
-            "scoreboard players reset #whc_old_slot wh_tmp",
-            "scoreboard players reset #whc_old_enabled wh_sys",
-        ]
-        for command in cleanup:
-            try:
-                client.command(command)
-            except Error:
-                pass
+        recover_warehouse_compact_live_test(client)
 
 
 def run_warehouse_dimension_checks(client, marker):
@@ -1669,6 +1684,7 @@ def run(path):
     elif op == "run-copy-paste-multiplayer-test": run_copy_paste_multiplayer_test(client)
     elif op == "run-blueprint-matcher-live-test": run_blueprint_matcher_live_test(client)
     elif op == "run-warehouse-compact-live-test": run_warehouse_compact_live_test(client)
+    elif op == "recover-warehouse-compact-live-test": recover_warehouse_compact_live_test(client, force_enable=True)
     elif op == "run-utilities-bfs-live-test": run_utilities_bfs_live_test(client)
     elif op == "set-online-mode-false": set_offline_mode(client)
     elif op == "online-mode-status":
