@@ -9,7 +9,7 @@ on:
 
 permissions:
   actions: write
-  contents: read
+  contents: write
 
 concurrency:
   group: release-request
@@ -36,9 +36,10 @@ jobs:
           op = str(req.get("operation") or "")
           if op == "noop":
               print("run=false")
+              print("mode=noop")
               print("tag=")
               raise SystemExit(0)
-          if op != "release":
+          if op not in {"release", "edit-release-notes"}:
               raise SystemExit(f"unsupported release request operation: {op!r}")
 
           tag = str(req.get("tag") or "")
@@ -46,6 +47,7 @@ jobs:
               raise SystemExit(f"invalid release tag: {tag!r}")
 
           print("run=true")
+          print(f"mode={op}")
           print(f"tag={tag}")
           PY
 
@@ -54,9 +56,30 @@ jobs:
         run: echo "Release request is idle (noop)."
 
       - name: Dispatch release workflow
-        if: steps.request.outputs.run == 'true'
+        if: steps.request.outputs.run == 'true' && steps.request.outputs.mode == 'release'
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.request.outputs.tag }}
         shell: bash
         run: gh workflow run release-pack.yml --ref main -f tag="$TAG"
+
+      - name: Edit existing release notes
+        if: steps.request.outputs.run == 'true' && steps.request.outputs.mode == 'edit-release-notes'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.request.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release view "$TAG" --json body -q .body > /tmp/release-notes.md
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("/tmp/release-notes.md")
+          text = p.read_text(encoding="utf-8")
+          old = "不再每 tick 掃 31 次 @a by @sunnychen0708"
+          new = "不再每 tick 掃 31 次 `@a` by @sunnychen0708"
+          if old not in text:
+              raise SystemExit("target release-note text not found")
+          p.write_text(text.replace(old, new), encoding="utf-8")
+          PY
+          gh release edit "$TAG" --notes-file /tmp/release-notes.md
