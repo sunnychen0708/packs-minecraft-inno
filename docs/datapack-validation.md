@@ -21,8 +21,8 @@ The validator checks:
 - Function tags resolve to existing functions or function tags.
 - Macro functions are not called without arguments.
 - Lines marked as macros with `$` must actually reference at least one `$(...)` variable.
-- A `$(...)` placeholder on a line without the `$` prefix fails (it would be printed or run literally); Dialog `dynamic/run_command` templates are exempt.
-- A `multi_action` Dialog shown from a function must have at least one action (Minecraft 26.3 refuses to open it otherwise).
+- A `$(...)` placeholder on a line without the `$` prefix fails; Dialog `dynamic/run_command` templates are exempt.
+- A `multi_action` Dialog shown from a function must have at least one action.
 - Trigger objectives are inventoried; missing obvious enable/reset handling is reported as a warning.
 - User-facing trigger lifecycle is enforced in the pack-specific regression test when the pack depends on it.
 - A test ZIP can be built with `pack.mcmeta` and `data/` at archive root.
@@ -40,12 +40,12 @@ scripts/test-<pack-name>.py
 
 Examples include:
 
-- A previously reported bug reproduced as a regression test.
-- Scoreboard dispatch/reset behavior.
-- Storage migration and old-world compatibility.
-- Macro instantiation with realistic arguments.
-- Block-state transforms, coordinate math, limits, and undo buffers.
-- Expected block/entity changes from core functions.
+- a previously reported bug reproduced as a regression test;
+- scoreboard dispatch/reset behavior;
+- storage migration and old-world compatibility;
+- macro instantiation with realistic arguments;
+- block-state transforms, coordinate math, limits, and undo buffers;
+- expected block/entity changes from core functions.
 
 If a matching script exists, CI runs it automatically after the generic validator.
 
@@ -74,19 +74,7 @@ Passing this stage means the pack can boot and reload on the tested vanilla serv
 
 ## 4. Runtime regression harness
 
-For systems that change the world, the preferred final test is an isolated server harness that creates deterministic fixtures and checks results with commands.
-
-Examples:
-
-- Copy a known block cuboid, paste it, then compare destination blocks.
-- Cut a known cuboid, verify the source becomes air, run undo, and compare restoration.
-- Rotate asymmetric fixtures by 90/180/270 degrees and assert exact output coordinates and block states.
-- Mirror asymmetric fixtures and assert exact output coordinates and block states.
-- Test positive and negative coordinates.
-- Test Overworld/Nether/End paths.
-- Preserve existing scoreboard/storage data across an upgrade.
-
-A headless harness should use markers, armor stands, storage, scoreboards, and fixed blocks where possible so a human player is not required.
+For systems that change the world, the preferred automated server test is an isolated harness that creates deterministic fixtures and checks results with commands.
 
 Warehouse has a dedicated 26.3 harness:
 
@@ -97,7 +85,7 @@ python3 scripts/test-warehouse-runtime.py \
   --accept-eula
 ```
 
-It boots the official server, performs `/reload`, rejects parser/datapack errors, verifies the sharded search index, exercises reset/re-registration while preserving custom data, tests the shared count/take/refund API including durable queued refunds and stale-source rejection, and covers the v4.4 Resolve Block / Pick path.
+It boots the official server, performs `/reload`, rejects parser/datapack errors, verifies the sharded search index, exercises reset/re-registration while preserving custom data, tests the shared count/take/refund API including durable queued refunds and stale-source rejection, and covers the Resolve Block / Pick path.
 
 Utilities has a dedicated 26.3 harness:
 
@@ -108,9 +96,9 @@ python3 scripts/test-utilities.py \
   --accept-eula
 ```
 
-It drives tree felling, vein mining (chain, vanilla XP ranges, Silk Touch, and the pickaxe tier gate: one-tier-too-low pickaxes leave the vein untouched while the minimum tier still chains), tool durability, crop seeds, the real tick dispatch, waypoint preservation across reload, and instantiates every macro.
+It drives tree felling, vein mining, XP ranges, Silk Touch, the pickaxe tier gate, tool durability, crop seeds, the real tick dispatch, waypoint preservation across reload, and macro instantiation.
 
-Copy/Paste also has a dedicated 26.3 behavioral harness:
+Copy/Paste has a dedicated 26.3 behavioral harness:
 
 ```bash
 python3 scripts/test-copy-paste-runtime.py \
@@ -119,11 +107,11 @@ python3 scripts/test-copy-paste-runtime.py \
   --accept-eula
 ```
 
-It loads Copy/Paste together with Warehouse and checks Blueprint-only Copy/V behavior, all six Blueprint nudge directions, overwrite confirmation, read-only material reporting (also with complete stock), all-or-nothing material-backed Build taking from the carrier's own inventory before Warehouse, material-aware Undo/Redo, Cut, Move, direct Rotate, five-level history, and that every Dialog page parses on the official server.
+It loads Copy/Paste together with Warehouse and checks Blueprint-only Copy/V behavior, Blueprint nudges, overwrite confirmation, read-only material reporting, all-or-nothing material-backed Build, inventory-before-Warehouse charging, material-aware Undo/Redo, Cut, Move, direct Rotate, five-level history, and Dialog parsing.
 
 ## 5. Cross-pack compatibility gate
 
-Utilities, Warehouse, and Copy/Paste are designed to be installed together, so repository validation also treats coexistence as a first-class gate:
+Utilities, Warehouse, and Copy/Paste are designed to be installed together:
 
 ```bash
 python3 scripts/test-datapack-compatibility.py
@@ -131,7 +119,7 @@ python3 scripts/test-datapack-compatibility.py
 
 The static mode rejects overlapping non-Minecraft namespaces/resources, duplicate scoreboard objectives, replacement of the shared `minecraft:load` / `minecraft:tick` tags, and undeclared writes into another pack's command storage.
 
-With the official server available, run the combined runtime form:
+With the official server available:
 
 ```bash
 python3 scripts/test-datapack-compatibility.py \
@@ -140,19 +128,70 @@ python3 scripts/test-datapack-compatibility.py \
   --accept-eula
 ```
 
-That boots all three datapacks in one Java 26.3 world and verifies representative Utilities, Warehouse, and Copy/Paste objectives/storage plus the shared Warehouse API. This proves the tested coexistence contract; it is not a replacement for each pack's dedicated behavioral regression.
+That boots all three datapacks in one Java 26.3 world and verifies representative Utilities, Warehouse, and Copy/Paste objectives/storage plus the shared Warehouse API.
 
-## 6. Real-client verification
+## 6. innotest live multiplayer regression
 
-Some things a headless server cannot show: `/trigger` dispatch for a real player, whether Dialog buttons can be clicked and fit the window, crosshair raycasts, and Dialog JSON that only loads when a world is opened. For these, `scripts/real-client/` (Windows) drives the real Minecraft client with OS-level keyboard and mouse input in a disposable test world and judges every result from the saved world files (region, entities, command storage, player data) — never from a datapack's own PASS messages.
+Multiplayer-sensitive Copy/Paste changes have an additional live layer on `innotest.exaroton.me`.
 
-- `mcdrive.py` sends input to the Minecraft window and refuses to type when it is not in the foreground; every command must reach the log as a real command, every trigger must be confirmed by the game's "triggered" line, and `/reload` must be confirmed by the game's own reload line plus `/datapack list enabled` (the packs print no load message).
-- `mcworld.py` reads the save; `defaults.json` fills in the block-state defaults that 26.3 omits from palettes.
-- `stage*.py` scripts cover Warehouse registration and sorting, Copy/Paste Build/Undo/Redo, transforms, multi-chest charging, inventory charging, Dialog navigation and more; see `datapacks/copy-paste/LIVE-VALIDATION.md` and `docs/HANDOFF.md`.
+The temporary test datapack is generated by:
 
-GitHub Actions does not run these stages (they need a real Windows client), and for the Trigger harnesses it only checks that they can be generated; the headless runtime regression drives an armor-stand actor that calls internal functions directly. A green CI run therefore says nothing about G, Dialog clicks, real-player `/trigger` dispatch or crosshair raycasts. `scripts/test-copy-paste.py` only checks that `scripts/real-client/*.py` compile and do not wait for a load message the packs no longer print.
+```text
+scripts/build-copy-paste-multiplayer-test.py
+```
 
-Two simultaneous real clients have not been tested yet; when a client-only check remains, document exactly what was not covered.
+The server-side controller operation is:
+
+```text
+run-copy-paste-multiplayer-test
+```
+
+A normal run uses four Mineflayer 26.3 player connections. Two named players perform the regression while the other two stay online, so the test occurs in a real four-player server session rather than an armor-stand-only harness.
+
+The regression checks:
+
+- independent `pos1` / `pos2` selection state;
+- independent Copy clipboards;
+- unique `mcc_id` allocation;
+- two simultaneous Blueprint previews and cleanup;
+- simultaneous Move;
+- separate work / Undo / Redo lanes;
+- simultaneous Undo and Redo;
+- simultaneous direct Rotate plus isolated Undo;
+- simultaneous `x` Cut and paste;
+- A-only Undo/Redo not changing B;
+- B independent Undo.
+
+The runner writes `MCCMP_CHECK PASS/FAIL ...` for each assertion and ends with `MCCMP_RESULT PASS` only when the entire current run succeeds.
+
+Important implementation rules:
+
+- wait for four players before starting;
+- tag each run with a unique marker so an old `MCCMP_RESULT` cannot be reused accidentally;
+- do not use a fixed sleep as completion detection — exaroton can report `Can't keep up` and scheduled functions may run late;
+- clean the reserved test area, tags, scoreboard objective, temporary test ZIP, and reload only after the current run has produced a result or timed out;
+- distinguish harness/parser/bot infrastructure failures from datapack assertion failures before changing datapack code.
+
+The 2026-10-07 final run passed every check above with `MCCMP_RESULT PASS` while four bot players were online. The corresponding four-bot session also completed a full five-minute hold successfully.
+
+This layer is **not** the same as two Windows users manually operating the UI. It proves multiplayer server-side state separation with real player entities and real `/trigger`-compatible identities, not mouse/UI ergonomics.
+
+Operational details are in [`exaroton-operations.md`](exaroton-operations.md).
+
+## 7. Real-client verification
+
+Some things a headless server or Mineflayer presence test cannot show: G-key flow, whether Dialog buttons can be clicked and fit the window, crosshair raycasts, and Dialog JSON that only loads when a world is opened.
+
+For these, `scripts/real-client/` (Windows) drives the real Minecraft client with OS-level keyboard and mouse input in a disposable test world and judges results from saved world files rather than trusting a datapack's own PASS message.
+
+- `mcdrive.py` sends input only when Minecraft is foreground.
+- `realplay.py` verifies real command/trigger/reload feedback.
+- `mcworld.py` reads save data; `defaults.json` fills 26.3 block-state defaults omitted from palettes.
+- `stage*.py` scripts cover Warehouse registration/sorting, Copy/Paste Build/Undo/Redo, transforms, charging, Dialog navigation, Utilities vein behavior, and combined-pack scenarios.
+
+GitHub Actions does not run these stages. A green CI run or a green Mineflayer multiplayer run therefore does not prove G, Dialog clicks, real mouse targeting, or crosshair raycasts.
+
+Two simultaneous Windows real clients have not been tested yet; when a client-only check remains, document exactly what was not covered.
 
 ## Release rule
 
@@ -162,8 +201,11 @@ For datapacks:
 2. Pack-specific regression tests must pass when present.
 3. The cross-pack static compatibility gate must pass.
 4. Datapack releases must pass the combined official Minecraft 26.3 Utilities + Warehouse + Copy/Paste runtime compatibility gate.
-5. Utilities, Warehouse and Copy/Paste releases must also pass their dedicated 26.3 runtime harnesses.
-6. Do not describe a pack as "runtime validated" if only static checks were run.
-7. Do not create a release from a known failing validation run.
+5. Utilities, Warehouse, and Copy/Paste releases must also pass their dedicated 26.3 runtime harnesses.
+6. For multiplayer-sensitive Copy/Paste state changes, run the innotest live multiplayer regression before calling the change multiplayer-validated.
+7. Do not describe a pack as real-client validated if only CI or Mineflayer testing was run.
+8. Do not create a release from a known failing validation run.
 
-GitHub Actions runs generic validation, pack-specific regressions, cross-pack static compatibility, dedicated Utilities/Warehouse/Copy-Paste runtime jobs, and the all-datapacks 26.3 compatibility job on relevant `main` pushes and pull requests. The release workflow verifies the tag version against `pack.mcmeta`, reruns the combined all-datapacks runtime gate for every datapack tag, reruns the dedicated Utilities, Warehouse or Copy/Paste runtime gate when applicable, then builds and publishes the ZIP. Publishing is idempotent: runs for the same tag are serialized, and when the release already exists the ZIP is uploaded to it instead of failing.
+GitHub Actions runs generic validation, pack-specific regressions, cross-pack static compatibility, dedicated Utilities/Warehouse/Copy-Paste runtime jobs, and the all-datapacks 26.3 compatibility job on relevant `main` pushes and pull requests.
+
+The release workflow verifies the tag version against `pack.mcmeta`, reruns the combined all-datapacks runtime gate for every datapack tag, reruns the dedicated Utilities, Warehouse or Copy/Paste runtime gate when applicable, then builds and publishes the ZIP. Publishing is idempotent: runs for the same tag are serialized, and when the release already exists the ZIP is uploaded to it instead of failing.
