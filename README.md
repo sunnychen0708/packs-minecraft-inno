@@ -30,7 +30,7 @@ The current Java 26.3 source has passed:
 - generic static validation and pack-specific regressions;
 - dedicated Utilities, Warehouse, and Copy/Paste official-server runtime regressions;
 - all-datapacks Java 26.3 compatibility runtime;
-- an earlier `innotest` live multiplayer Copy/Paste run with four Mineflayer player connections online. That run only used a 2x2 layer of full blocks and does not count as Copy/Paste validation.
+- Copy/Paste live validation uses the 3D house regression only; the obsolete 2x2 full-block harness has been removed.
 
 The `innotest` live multiplayer regression now works on the 3D test house (`scripts/mcc_house.py`) and compares every cell after every step; that version has not run on innotest yet.
 
