@@ -207,6 +207,16 @@ def integration(java: Path, server: Path):
     scan()
     check(f'positioned 12.0 80.0 12.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={{block_state:"minecraft:iron_block"}},limit=1] if score {actor} mcc_bptx0 matches 10 if score {actor} mcc_bptz0 matches 11','default_anchor_pos1_blueprint_origin')
     check('positioned 10.0 80.0 11.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]','default_anchor_pos1_blueprint_offset')
+
+    # Default-anchor Blueprint Flip mirrors inside the current bounds, matching direct Flip.
+    run_as('mcc:state/bp_flip_lr')
+    scan()
+    check(f'if score {actor} mcc_bptx0 matches 10 if score {actor} mcc_bptz0 matches 11 if score {actor} mcc_bpoffx matches -2','default_blueprint_flip_keeps_bounds')
+    check('positioned 12.0 80.0 11.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1] positioned 10.0 80.0 12.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:iron_block"},limit=1]','default_blueprint_flip_mirrors_in_place')
+    run_as('mcc:state/bp_flip_lr')
+    scan()
+    check(f'if score {actor} mcc_bptx0 matches 10 if score {actor} mcc_bptz0 matches 11 if score {actor} mcc_bpoffx matches 0','default_blueprint_flip_twice_restores_offset')
+    check('positioned 10.0 80.0 11.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1] positioned 12.0 80.0 12.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:iron_block"},limit=1]','default_blueprint_flip_twice_restores_preview')
     run_as('mcc:blueprint/clear_internal')
 
     # 0a. Custom Anchor must land exactly on the V target, not merely near it.
