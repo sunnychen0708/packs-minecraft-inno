@@ -156,6 +156,9 @@ def main() -> None:
     assert "container.$(slot)" in compact_slot
     assert "Items[{Slot:$(slot)b}]" in compact_slot
     assert "scoreboard players operation #compact_src wh_tmp = #compact_slot wh_tmp" in compact_slot
+    compact_dir = PACK / "data/warehouse/function/compact"
+    assert not (compact_dir / "slot_dispatch.mcfunction").exists(), "legacy 54-way slot dispatcher must be removed"
+    assert not list(compact_dir.glob("slot_[0-9][0-9].mcfunction")), "legacy per-slot compact handlers must be removed"
 
     main_dialog = (PACK / "data/warehouse/dialog/main.json").read_text(encoding="utf-8")
     assert f"v{version}" in main_dialog
