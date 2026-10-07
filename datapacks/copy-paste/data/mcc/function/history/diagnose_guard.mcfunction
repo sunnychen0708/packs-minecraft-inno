@@ -11,8 +11,8 @@ $execute in minecraft:overworld run forceload add $(ex) $(ez) $(ex2) $(ez2)
 $execute in minecraft:overworld run forceload add $(cx) $(cz) $(cx2) $(cz2)
 function mcc:history/compare_hidden_state
 scoreboard players set @s mcc_cmpdiag 0
+function mcc:history/diag_resolve_materials
 $execute in minecraft:overworld run forceload remove $(ex) $(ez) $(ex2) $(ez2)
 $execute in minecraft:overworld run forceload remove $(cx) $(cz) $(cx2) $(cz2)
-function mcc:history/diag_resolve_materials
 scoreboard players set @s mcc_ok 0
 return 1
