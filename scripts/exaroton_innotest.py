@@ -569,7 +569,7 @@ def player_count(server):
             return len(listing)
     return -1
 
-def wait_players(client, minimum=4, timeout=180):
+def wait_players(client, minimum=3, timeout=180):
     deadline = time.time() + timeout
     last = -1
     while time.time() < deadline:
@@ -635,10 +635,11 @@ def run_copy_paste_multiplayer_test(client):
             + preview
         )
 
-    server = wait_players(client, 4, 180)
+    server = wait_players(client, 3, 180)
     print(f"live multiplayer test starting with player count={player_count(server)}")
 
-    # Use two named real-player entities while the other two remain connected.
+    # Reserve SunnyChen for supervision / real-client control. Use two of the
+    # three non-SunnyChen test players while the third remains connected.
     # Mark this run in the server log so stale results from previous attempts
     # can never be mistaken for the current test.
     run_marker = f"MCCMP_RUN_{int(time.time() * 1000)}"
@@ -648,9 +649,9 @@ def run_copy_paste_multiplayer_test(client):
     commands = [
         "tag @a remove mcc_mp_a",
         "tag @a remove mcc_mp_b",
-        "execute as @a[name=SunnyChen,limit=1] run function mcc_mp_test:join_a",
-        "execute as @a[name=penguin0531,limit=1] run function mcc_mp_test:join_b",
-        "execute as @a[name=SunnyChen,limit=1] run function mcc_mp_test:start",
+        "execute as @a[name=penguin0531,limit=1] run function mcc_mp_test:join_a",
+        "execute as @a[name=geena0701,limit=1] run function mcc_mp_test:join_b",
+        "execute as @a[name=penguin0531,limit=1] run function mcc_mp_test:start",
     ]
     for command in commands:
         client.command(command)
