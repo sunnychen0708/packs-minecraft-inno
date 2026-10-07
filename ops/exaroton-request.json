@@ -1,6 +1,6 @@
 {
-  "request_id": 202610071529,
-  "operation": "noop",
+  "request_id": 20261007193402,
+  "operation": "run-live-suite",
   "command": "",
-  "pack": ""
+  "pack": "utilities"
 }
