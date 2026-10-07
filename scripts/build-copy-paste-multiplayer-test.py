@@ -1,4 +1,4 @@
-"""Build an opt-in two-player v1.7 Copy/Paste regression datapack that works on the 3D test house.
+"""Build an opt-in two-player v1.8 Copy/Paste regression datapack that works on the 3D test house.
 
 Player A: /function mcc_mp_test:join_a
 Player B: /function mcc_mp_test:join_b
@@ -37,7 +37,7 @@ if OUT.exists(): shutil.rmtree(OUT)
 F=OUT/'data/mcc_mp_test/function'
 F.mkdir(parents=True,exist_ok=True)
 (OUT/'pack.mcmeta').write_text(json.dumps({
-    'pack':{'description':'Opt-in CopyPaste v1.7 two-player 3D house regression','min_format':121,'max_format':121}
+    'pack':{'description':'Opt-in CopyPaste v1.8 two-player 3D house regression','min_format':121,'max_format':121}
 },ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 
 OW='in minecraft:overworld'
