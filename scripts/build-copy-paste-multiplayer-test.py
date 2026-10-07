@@ -123,6 +123,15 @@ check('blueprint flip content',
       'in minecraft:overworld positioned -280 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:diamond_block"},limit=1]',
       'in minecraft:overworld positioned -278 250 120 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:copper_block"},limit=1]',
       'in minecraft:overworld positioned -280 250 120 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:lapis_block"},limit=1]')
+
+# Dump the actual A-side display states so live failures distinguish a bad transform
+# from a stale/incorrect assertion. The macro function prints the exact saved NBT.
+for dx in range(3):
+    x = -280 + dx
+    step(
+        f'execute in minecraft:overworld positioned {x} 250 90 as @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] run data modify storage mcc_mp_test:diag state set from entity @s block_state',
+        f'execute in minecraft:overworld positioned {x} 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] run function mcc_mp_test:diag with storage mcc_mp_test:diag'
+    )
 step(
     'execute in minecraft:overworld positioned -280 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1] run say MCCMP_DIAG flip_A_gold_x=-280',
     'execute in minecraft:overworld positioned -279 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1] run say MCCMP_DIAG flip_A_gold_x=-279',
@@ -305,6 +314,7 @@ for i,commands in enumerate(steps):
     if i+1<len(steps): commands.append(f'schedule function mcc_mp_test:step_{i+1} 10t replace')
     (F/f'step_{i}.mcfunction').write_text('\n'.join(commands)+'\n',encoding='utf-8')
 
+(F/'diag.mcfunction').write_text('$say MCCMP_DIAG display_state=$(state)\n',encoding='utf-8')
 (F/'join_a.mcfunction').write_text('tag @s remove mcc_mp_b\ntag @s add mcc_mp_a\ntellraw @s "MCCMP: registered as player A"\n',encoding='utf-8')
 (F/'join_b.mcfunction').write_text('tag @s remove mcc_mp_a\ntag @s add mcc_mp_b\ntellraw @s "MCCMP: registered as player B"\n',encoding='utf-8')
 # The fixture is far from spawn. A real client does not keep these chunks loaded
