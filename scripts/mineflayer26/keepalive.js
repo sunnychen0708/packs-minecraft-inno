@@ -81,6 +81,8 @@ function createBot (username) {
 //   cmdx <n> <tok1..tokn> <command> send the command, then succeed only if one
 //                                  chat/system/action-bar message within 6 s
 //                                  contains every token
+//   dialog <command>               send trigger/function command and succeed only
+//                                  after a clientbound show_dialog packet arrives
 //   dig x y z                      survival-dig the block (real start/finish destroy)
 //   sneak 0|1                      hold or release sneak
 //   slot 0..8                      select a hotbar slot
@@ -130,6 +132,25 @@ function attachDriver (bot, username) {
       }
       if (!seen) throw new Error(`no message containing ${JSON.stringify(tokens)}`)
       console.log(`MFBOT_SEEN ${username}: ${seen}`)
+    } else if (action === 'dialog') {
+      const command = args.join(' ')
+      if (!COMMAND_PREFIXES.some(p => command.startsWith(p))) throw new Error(`command not allowed: ${command}`)
+      let seen = null
+      const listener = packet => {
+        if (!seen) seen = packet
+      }
+      bot._client.on('show_dialog', listener)
+      try {
+        bot.chat(`/${command}`)
+        const until = Date.now() + 6000
+        while (!seen && Date.now() < until) await delay(100)
+      } finally {
+        bot._client.removeListener('show_dialog', listener)
+      }
+      if (!seen) throw new Error('no show_dialog packet received')
+      let rendered
+      try { rendered = JSON.stringify(seen) } catch (_) { rendered = String(seen) }
+      console.log(`MFBOT_DIALOG ${username}: ${rendered.slice(0, 1200)}`)
     } else if (action === 'dig') {
       const pos = xyz()
       const block = bot.blockAt(pos)
