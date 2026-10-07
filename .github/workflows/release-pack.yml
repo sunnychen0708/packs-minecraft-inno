@@ -4,6 +4,10 @@ on:
   push:
     tags:
       - "*-v*"
+    branches:
+      - main
+    paths:
+      - "ops/release-request.json"
   # Release without pushing a tag yourself: the run creates <pack>-v<version> on the main commit
   # it ran on, after every gate below has passed.
   workflow_dispatch:
@@ -42,6 +46,17 @@ jobs:
               exit 1
             fi
             TAG="$INPUT_TAG"
+          elif [[ "$GITHUB_REF" == "refs/heads/main" ]]; then
+            TAG="$(python3 - <<'PY'
+import json
+from pathlib import Path
+req = json.loads(Path("ops/release-request.json").read_text())
+tag = str(req.get("tag") or "").strip()
+if not tag:
+    raise SystemExit("ops/release-request.json is missing tag")
+print(tag)
+PY
+)"
           else
             TAG="${GITHUB_REF_NAME}"
           fi
@@ -74,7 +89,7 @@ jobs:
           echo "kind=$KIND" >> "$GITHUB_OUTPUT"
 
       - name: Check an existing tag points at this commit
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/main'
         env:
           TAG: ${{ steps.pack.outputs.tag }}
         shell: bash
