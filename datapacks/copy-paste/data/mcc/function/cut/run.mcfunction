@@ -1,5 +1,7 @@
 execute store success score @s mcc_tmp run function mcc:copy/snapshot
 execute unless score @s mcc_tmp matches 1 run return fail
+scoreboard players operation @s mcc_canchor = @s mcc_hasa
+function mcc:state/bp_offset_init
 
 scoreboard players operation @s mcc_fsx = @s mcc_sx
 scoreboard players operation @s mcc_fsz = @s mcc_sz

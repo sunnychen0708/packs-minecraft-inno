@@ -6,6 +6,7 @@ scoreboard players set @s mcc_diagshown 0
 scoreboard players set @s mcc_diagmissing 0
 scoreboard players set @s mcc_diagremove 0
 scoreboard players set @s mcc_diagcontent 0
+scoreboard players set #cmp_work mcc_id 0
 scoreboard players set @s mcc_cmpdiag 1
 $execute in minecraft:overworld run forceload add $(ex) $(ez) $(ex2) $(ez2)
 $execute in minecraft:overworld run forceload add $(cx) $(cz) $(cx2) $(cz2)

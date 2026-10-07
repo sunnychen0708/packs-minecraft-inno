@@ -1,3 +1,5 @@
+scoreboard players add #cmp_work mcc_id 1
+execute if score #cmp_work mcc_id > #cmp_work_max mcc_id run return run function mcc:history/compare_over_budget
 execute store result storage mcc:temp cmpb.sx int 1 run scoreboard players get @s mcc_mnx
 execute store result storage mcc:temp cmpb.sy int 1 run scoreboard players get @s mcc_mny
 execute store result storage mcc:temp cmpb.sz int 1 run scoreboard players get @s mcc_mnz
