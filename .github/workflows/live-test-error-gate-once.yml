@@ -1,0 +1,52 @@
+name: one-time live test error gate patch
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/live-test-error-gate-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Harden current-run log validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("scripts/exaroton_innotest.py")
+          text = path.read_text(encoding="utf-8")
+
+          old1 = '''    # Deploy the exact datapacks from the checked-out main commit first.\n    deploy(client, "all")\n'''
+          new1 = '''    # Mark the whole deployment/test session before any reload so parser/load\n    # errors from this attempt cannot be hidden by a later PASS line.\n    session_marker = f"MCCMP_SESSION_{int(time.time() * 1000)}"\n    client.command(f"say {session_marker} START")\n    time.sleep(1)\n\n    # Deploy the exact datapacks from the checked-out main commit first.\n    deploy(client, "all")\n'''
+
+          old2 = '''    client.command("reload")\n    time.sleep(6)\n\n    server = wait_players(client, 4, 180)\n'''
+          new2 = '''    client.command("reload")\n    time.sleep(6)\n\n    # Preflight only the current session. Historical errors earlier in the\n    # persistent exaroton log are irrelevant, but any new server ERROR after\n    # this session marker makes the live regression invalid.\n    preflight_log = client.log()\n    session_at = preflight_log.rfind(f"{session_marker} START")\n    if session_at < 0:\n        raise Error("live multiplayer preflight marker not found in server log")\n    preflight_segment = preflight_log[session_at:]\n    preflight_errors = [\n        line for line in preflight_segment.splitlines()\n        if "/ERROR]:" in line\n    ]\n    if preflight_errors:\n        try:\n            client.delete_file(remote_harness)\n        finally:\n            try:\n                client.command("reload")\n            except Error:\n                pass\n        preview = "\\n".join(preflight_errors[:12])\n        raise Error(\n            "live multiplayer preflight found current-session server errors:\\n"\n            + preview\n        )\n\n    server = wait_players(client, 4, 180)\n'''
+
+          old3 = '''    if "MCCMP_RESULT PASS" in result:\n        print("COPY_PASTE_MULTIPLAYER_LIVE_TEST=PASS")\n        return\n\n    raise Error(\n        f"live multiplayer test did not pass; "\n        f"current-run result={result or '<missing>'}"\n    )\n'''
+          new3 = '''    current_errors = [\n        line for line in segment.splitlines()\n        if "/ERROR]:" in line\n    ]\n    if current_errors:\n        preview = "\\n".join(current_errors[:12])\n        raise Error(\n            "live multiplayer test produced current-run server errors even "\n            "though a result line was present:\\n" + preview\n        )\n\n    if "MCCMP_RESULT PASS" in result:\n        print("COPY_PASTE_MULTIPLAYER_LIVE_TEST=PASS")\n        return\n\n    raise Error(\n        f"live multiplayer test did not pass; "\n        f"current-run result={result or '<missing>'}"\n    )\n'''
+
+          for old, new, label in ((old1, new1, "session marker"), (old2, new2, "preflight"), (old3, new3, "result gate")):\n              count = text.count(old)\n              if count != 1:\n                  raise SystemExit(f"refusing patch: expected one {label} block, found {count}")\n              text = text.replace(old, new, 1)\n\n          path.write_text(text, encoding="utf-8")\n          PY
+
+          python3 -m py_compile scripts/exaroton_innotest.py
+
+      - name: Commit patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "sunnychen0708"
+          git config user.email "144662040+sunnychen0708@users.noreply.github.com"
+          git add scripts/exaroton_innotest.py
+          git commit -m "Reject live test passes with current-run server errors"
+          git push origin HEAD:main
