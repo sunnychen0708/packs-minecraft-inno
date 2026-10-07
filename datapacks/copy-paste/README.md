@@ -114,7 +114,7 @@ Warehouse API 會從已註冊且有效的 Warehouse 容器建立最多 64 個材
 
 `v` 只建立或重定位 Blueprint，不會直接生成真實方塊。
 
-Blueprint 建立完成後可以先調整方向（只動預覽，不動原本建築；左右前後以你面對的方向為準）：
+Blueprint 建立完成後可以先調整方向（只動預覽，不動原本建築；左右前後以你面對的方向為準）。**沒有自訂 Anchor 時，Flip 會以目前 Blueprint 外框中心原地鏡射，不會把整個預覽推到另一側；有自訂 Anchor 時才以 Anchor 為鏡射基準。**
 
 ```mcfunction
 /trigger bpturnright   # 預覽向右轉 90°（順時針）
@@ -204,7 +204,7 @@ Cut 是搬移，不需要材料箱。來源先被真正移除，下一次 `v` �
 
 ## 直接移動 / 轉向 / 翻面
 
-直接修改真實選取（左右前後以你面對的方向為準）：
+直接修改真實選取（左右前後以你面對的方向為準）。**沒有自訂 Anchor 時，Flip 以目前選區外框中心原地鏡射；有自訂 Anchor 時才以 Anchor 為鏡射基準。**
 
 ```mcfunction
 /trigger right set <1..128>
