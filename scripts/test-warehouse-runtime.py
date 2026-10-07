@@ -562,6 +562,11 @@ def integration(java: Path, server: Path) -> None:
     check(f"unless data storage warehouse:forceload chunks[{{x:{FAR_X},z:{FAR_Z}}}]", "unregister_drops_forceload_record")
     lines.extend(["scoreboard players set #fl whst 0", "execute store success score #fl whst run forceload query 0 0"])
     check("if score #fl whst matches 1", "refresh_keeps_foreign_forceload")
+    # A manual release (the documented step before removing the pack) must not be undone 10 s later.
+    lines.append("function warehouse:chunks/release")
+    check("if score #chunk_tick wh_sys matches ..-1000000", "manual_release_suspends_periodic_ensure")
+    lines.append("function warehouse:chunks/ensure")
+    check("if score #chunk_tick wh_sys matches 0", "ensure_resumes_periodic_reassert")
     lines.extend(
         [
             'data remove storage warehouse:rules overrides."minecraft:emerald"',
