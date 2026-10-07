@@ -73,7 +73,7 @@ def static_checks():
     # Tree foliage validation must preserve the legacy 11x17x11 acceptance region while
     # evaluating 26-neighbor BFS (Chebyshev) shells from near to far and exiting on hit.
     foliage = (DATA / 'survival_utils/function/tree/check_foliage.mcfunction').read_text(encoding='utf-8')
-    foliage_pattern = re.compile(r'execute if block (~-?\\d*) (~-?\\d*) (~-?\\d*) #survival_utils:tree_foliage run return run scoreboard players set #leaf su_tmp 1')
+    foliage_pattern = re.compile(r'execute if block (~-?[0-9]*) (~-?[0-9]*) (~-?[0-9]*) #survival_utils:tree_foliage run return run scoreboard players set #leaf su_tmp 1')
     foliage_checks = foliage_pattern.findall(foliage)
     assert len(foliage_checks) == 2057, len(foliage_checks)
     def rel_coord(token):
