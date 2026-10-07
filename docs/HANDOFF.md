@@ -165,6 +165,8 @@ Copy/Paste runtime 失敗時會印 `MCCST_DIAG_DROP_<步驟>` / `MCCST_DIAG_DIFF
 
 ## 10. MCC-Test 本機測試世界
 
+> 測試一律直接在 innotest 跑（見 `AGENTS.md`）。MCC-Test 只有使用者明確要求時才用。
+
 - 只改 `%APPDATA%\.minecraft\saves\MCC-Test`，不要碰使用者其他世界；改 datapack 前先備份。
 - 世界開著時 datapack ZIP 可能被鎖，不能刪 / 改名；要換檔名先退出世界。
 - Warehouse 存量會隨測試變動，固定存量測試前要補齊或用 stage 自己重建 fixture。

@@ -2,6 +2,17 @@
 
 These instructions apply to the entire repository. Every contributor, coding agent, automation worker, and reviewer must follow them.
 
+## 測試直接在 innotest 跑（使用者規定）
+
+> 「測試直接在 innotest 跑，不要浪費時間在我不知道的鬼地方測試。」
+
+- 驗證任何改動，一律直接在 **`innotest`** 上跑（`exaroton innotest control` workflow：`deploy-datapack`、`run-*-test`、`command`，需要玩家時用 Mineflayer bots）。
+- **不要**自己在別的地方另外測：不要在本機或暫存資料夾開 Minecraft server、不要另建測試世界、不要用 `dist/` 裡的 server.jar 自己跑、不要拿 MCC-Test 或其他世界代替。使用者明確指定某個地方時才可以。
+- GitHub Actions CI 會自動跑，照常讓它跑，但 CI 綠燈不等於驗過；回報「已驗證」必須是 innotest 的結果。
+- 回報時寫清楚在 innotest 跑了什麼、哪個 workflow run、結果是什麼。
+
+Test every change directly on `innotest`. Do not spin up local servers, scratch worlds or temporary directories, or use any other world to test, unless the user explicitly asks for that place. CI runs on its own but is not the verification; only an innotest result counts as "verified".
+
 ## Production-world compatibility is mandatory
 
 The `inno` Minecraft server contains real, persistent player and world data. Treat compatibility with that existing data as a release requirement, not as an optional regression check.
