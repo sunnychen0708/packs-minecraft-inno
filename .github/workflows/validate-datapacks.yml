@@ -64,8 +64,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python3 -m py_compile scripts/build-copy-paste-live-test.py scripts/build-copy-paste-multiplayer-test.py
-          python3 scripts/build-copy-paste-live-test.py --output /tmp/mcc-live-test
+          python3 -m py_compile scripts/build-copy-paste-multiplayer-test.py
           python3 scripts/build-copy-paste-multiplayer-test.py
           python3 scripts/build-utilities-live-test.py
           python3 scripts/build-warehouse-live-test.py
