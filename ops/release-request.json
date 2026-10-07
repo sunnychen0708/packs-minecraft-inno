@@ -1,5 +1,5 @@
 {
-  "request_id": 20261007234130,
-  "operation": "release",
-  "tag": "warehouse-v4.6"
+  "request_id": 20261008000210,
+  "operation": "release-direct",
+  "tag": "copy-paste-v1.8"
 }
