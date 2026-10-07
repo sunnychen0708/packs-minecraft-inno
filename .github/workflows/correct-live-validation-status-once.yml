@@ -1,0 +1,68 @@
+name: correct live validation status once
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/correct-live-validation-status-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  correct:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Correct validation wording and remove this workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              "README.md": [
+                  (
+                      "The latest live multiplayer run ended with `MCCMP_RESULT PASS`. After testing, `innotest.exaroton.me` was stopped and verified `OFFLINE`, `0/10`.",
+                      "The final assertion sequence of the latest live multiplayer session ended with `MCCMP_RESULT PASS`, but the same persistent server log also contains earlier failed attempts from that debugging session. A stricter current-session server-error gate has since been added; until a fresh run passes that gate, do not describe the live validation as a clean-log pass. After testing, `innotest.exaroton.me` was stopped and verified `OFFLINE`, `0/10`."
+                  ),
+              ],
+              "docs/HANDOFF.md": [
+                  (
+                      "- **最新多人實機狀態**：`innotest` 四個 Mineflayer 玩家同時在線時，Copy/Paste multiplayer regression 全部 PASS；最後 `MCCMP_RESULT PASS`。",
+                      "- **最新多人實機狀態**：2026-10-07 最後一輪 Copy/Paste assertions 在四個 Mineflayer 玩家在線時全部 PASS，最後 `MCCMP_RESULT PASS`；但同一份持久化 server log 也保留前面數次失敗（harness parser error、bot invalid move、Undo/Redo FAIL）。controller 已新增 current-session `/ERROR]:` gate；在 fresh run 再通過前，不要稱為 clean live validation。"
+                  ),
+                  (
+                      "2026-10-07 最後一輪 live regression 全部 PASS，涵蓋：independent selection、clipboard、unique `mcc_id`、Blueprint、Move、work/undo lane、Undo/Redo、Rotate、Cut/Paste、A/B isolated Undo/Redo。",
+                      "2026-10-07 最後一輪 assertions 全部 PASS，涵蓋：independent selection、clipboard、unique `mcc_id`、Blueprint、Move、work/undo lane、Undo/Redo、Rotate、Cut/Paste、A/B isolated Undo/Redo。不過同一 server log 有前面失敗的歷史紀錄；新的 current-session server-error gate 尚未在 fresh innotest session 重跑，所以目前只能稱為 final assertion pass，不是 clean live validation。"
+                  ),
+              ],
+              "docs/exaroton-operations.md": [
+                  (
+                      "The final 2026-10-07 run produced `MCCMP_RESULT PASS` with every check above passing while four bot players were online. The final four-bot hold also completed successfully for the full five-minute session.",
+                      "The final assertion sequence on 2026-10-07 produced `MCCMP_RESULT PASS` with every check above passing while four bot players were online, and the final four-bot hold completed the full five-minute session. However, the same persistent server log also contains earlier failed attempts from that debugging session. The controller now places a unique session marker before deployment/reload and rejects any current-session `/ERROR]:` line before accepting PASS. A fresh run through this stricter gate is still required before calling the live validation a clean-log pass."
+                  ),
+              ],
+          }
+
+          for filename, pairs in replacements.items():
+              path = Path(filename)
+              text = path.read_text(encoding="utf-8")
+              for old, new in pairs:
+                  if text.count(old) != 1:
+                      raise SystemExit(f"refusing wording patch for {filename}: expected exactly one match")
+                  text = text.replace(old, new, 1)
+              path.write_text(text, encoding="utf-8")
+          PY
+
+          git rm .github/workflows/correct-live-validation-status-once.yml
+          git config user.name "sunnychen0708"
+          git config user.email "144662040+sunnychen0708@users.noreply.github.com"
+          git add README.md docs/HANDOFF.md docs/exaroton-operations.md
+          git commit -m "Clarify live validation status after log review"
+          git push origin HEAD:main
