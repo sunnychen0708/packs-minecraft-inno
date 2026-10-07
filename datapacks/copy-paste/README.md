@@ -1,10 +1,14 @@
-# Minecraft Copy/Paste Datapack v1.6
+# Minecraft Copy/Paste Datapack v1.7
 
-> Release: **copy-paste-v1.6** · Download: **copy-paste-v1.6.zip**
+> Source: **v1.7（尚未發布）** · Latest release: **copy-paste-v1.6** · Download: **copy-paste-v1.6.zip**
 
 適用：Minecraft Java Edition 26.3（Data Pack 121.0）
 
 純 Vanilla datapack。操作使用 Trigger 或 Dialog。施工材料先從玩家背包（含副手）拿，不夠再從同 repo 的 Warehouse datapack 共用材料來源拿。
+
+## v1.7
+
+- Blueprint 讀取方塊狀態變快：原本把 26.3 的 35,720 個方塊狀態逐一完整比對（一般方塊約 500 個指令），現在先用依常見程度排序的方塊標籤樹找出方塊 ID，再逐一判斷每個屬性（石頭、泥土 6 個指令，所有狀態平均約 24 個、最多 78 個）。複製出來的 Blueprint 內容和舊版完全相同；不改世界資料，不需要 migration。
 
 ## v1.6
 

@@ -1,6 +1,6 @@
-# Copy/Paste 驗證狀態（v1.6）
+# Copy/Paste 驗證狀態（v1.7）
 
-目前版本 **v1.6**：不再自動刪除全域舊 trigger objective；需要清理 v1.3 殘留時，由管理員確認無其他 datapack 使用同名 objective 後手動執行 cleanup。v1.5 清除或重建 Blueprint 時會取消還在跑的覆蓋檢查。v1.4 拿掉載入與第一次使用時的聊天訊息，並移除舊的轉向／翻面指令。目標 Minecraft Java 26.3（Data Pack 121.0）。
+目前版本 **v1.7**：Blueprint 方塊狀態比對改成先找方塊 ID、再逐一判斷屬性，結果不變、速度較快。v1.6 不再自動刪除全域舊 trigger objective；需要清理 v1.3 殘留時，由管理員確認無其他 datapack 使用同名 objective 後手動執行 cleanup。v1.5 清除或重建 Blueprint 時會取消還在跑的覆蓋檢查。v1.4 拿掉載入與第一次使用時的聊天訊息，並移除舊的轉向／翻面指令。目標 Minecraft Java 26.3（Data Pack 121.0）。
 
 這份文件把「官方 server headless regression」和「真人 client 驗證」分開寫。兩者不能互相冒充。
 

@@ -97,7 +97,7 @@ def snapshot_from_report(report: Path) -> dict:
 def write_snapshot(blocks: dict) -> None:
     SNAPSHOT.parent.mkdir(parents=True, exist_ok=True)
     lines = [f'  {json.dumps(k)}: {json.dumps(v, separators=(",", ":"))}' for k, v in blocks.items()]
-    SNAPSHOT.write_text('{\n' + ',\n'.join(lines) + '\n}\n', encoding='utf-8')
+    SNAPSHOT.write_text('{\n' + ',\n'.join(lines) + '\n}\n', encoding='utf-8', newline='\n')
 
 
 def build_tree(blocks: list[str]):
@@ -127,10 +127,10 @@ def generate(blocks: dict, func_dir: Path = FUNC_DIR, tag_dir: Path = TAG_DIR) -
     tag_dir.mkdir(parents=True)
 
     def write_func(name: str, lines: list[str]) -> None:
-        (func_dir / f'{name}.mcfunction').write_text(HEADER + '\n'.join(lines) + '\n', encoding='utf-8')
+        (func_dir / f'{name}.mcfunction').write_text(HEADER + '\n'.join(lines) + '\n', encoding='utf-8', newline='\n')
 
     def write_tag(name: str, values: list[str]) -> None:
-        (tag_dir / f'{name}.json').write_text(json.dumps({'values': values}, indent=2) + '\n', encoding='utf-8')
+        (tag_dir / f'{name}.json').write_text(json.dumps({'values': values}, indent=2) + '\n', encoding='utf-8', newline='\n')
 
     # Shared property functions: one per (property name, value set) with 3+ values. Values are
     # tested most-common-default first, then in report order.
@@ -206,7 +206,9 @@ def main() -> None:
             generate(blocks, Path(tmp) / 'function', Path(tmp) / 'tags')
             for fresh, committed in ((Path(tmp) / 'function', FUNC_DIR), (Path(tmp) / 'tags', TAG_DIR)):
                 want = {p.relative_to(fresh): p.read_bytes() for p in fresh.rglob('*') if p.is_file()}
-                have = {p.relative_to(committed): p.read_bytes() for p in committed.rglob('*') if p.is_file()}
+                # a Windows checkout with core.autocrlf has CRLF files; the committed blobs are LF
+                have = {p.relative_to(committed): p.read_bytes().replace(b'\r\n', b'\n')
+                        for p in committed.rglob('*') if p.is_file()}
                 if want != have:
                     stale = sorted(str(p) for p in set(want) | set(have) if want.get(p) != have.get(p))
                     raise SystemExit(f'{committed} is stale ({len(stale)} files, e.g. {stale[:3]}); '
