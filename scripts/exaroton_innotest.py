@@ -398,6 +398,7 @@ def inno_world_layout_status(token):
         }
     return result
 
+
 def pack_zip(name):
     if name not in PACKS: raise Error(f"unsupported datapack: {name}")
     base = ROOT / "datapacks" / name
@@ -796,7 +797,8 @@ def migrate_bot_identities(client):
             existing = client.read_file_optional(dest_path)
             if existing is not None and existing != source_data:
                 client.write_file(dest_path + f".pre-migration-{stamp}.backup", existing)
-            client.write_file(dest_path, source_data)            copied.append({"kind": folder + suffix, "from": source_uuid})
+            client.write_file(dest_path, source_data)
+            copied.append({"kind": folder + suffix, "from": source_uuid})
 
         entry["uuid"] = target_uuid
         summary[name] = {"offline_uuid": target_uuid, "copied": copied}
@@ -1286,7 +1288,8 @@ def run(path):
             if isinstance(e, dict) and (
                 str(e.get("name") or "").lower() == migration.TYPO_NAME.lower()
                 or migration.normalize_uuid_string(str(e.get("uuid") or "")) == str(uuid.UUID(migration.TYPO_UUID))
-            )        ]
+            )
+        ]
         if typo_left:
             raise Error("verification found penguin531 still present in usercache.json")
         print(json.dumps({
