@@ -51,24 +51,19 @@ def check(label,*conditions):
     step(*cmds)
 
 def check_display_block(label, x, y, z, block):
-    """Assert the exact block_display block ID at one target cell.
+    """Assert the exact block ID carried by the display at one target cell.
 
-    26.3 server implementations can serialize block_state as a scalar or as a
-    compound. Accept the known equivalent NBT shapes, but still require the
-    requested block ID at the exact display position.
+    Copy block_state into storage first. Entity-selector NBT matching is not
+    reliable for block_display.block_state on the innotest server even though
+    data inspection returns the correct scalar value.
     """
-    cmds=['scoreboard players set #ok mccmp 0']
-    for state_nbt in (
-        f'"minecraft:{block}"',
-        f'{{id:"minecraft:{block}"}}',
-        f'{{Name:"minecraft:{block}"}}',
-    ):
-        cmds.append(
-            f'execute in minecraft:overworld positioned {x} {y} {z} '
-            f'if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={{block_state:{state_nbt}}},limit=1] '
-            f'run scoreboard players set #ok mccmp 1'
-        )
-    cmds += [
+    cmds=[
+        'scoreboard players set #ok mccmp 0',
+        'data remove storage mcc_mp_test:diag state',
+        f'execute in minecraft:overworld positioned {x} {y} {z} as @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] run data modify storage mcc_mp_test:diag state set from entity @s block_state',
+        f'execute if data storage mcc_mp_test:diag {{state:"minecraft:{block}"}} run scoreboard players set #ok mccmp 1',
+        f'execute if data storage mcc_mp_test:diag {{state:{{id:"minecraft:{block}"}}}} run scoreboard players set #ok mccmp 1',
+        f'execute if data storage mcc_mp_test:diag {{state:{{Name:"minecraft:{block}"}}}} run scoreboard players set #ok mccmp 1',
         f'execute if score #ok mccmp matches 1 run say MCCMP_CHECK PASS {label}',
         f'execute unless score #ok mccmp matches 1 run say MCCMP_CHECK FAIL {label}',
         'execute if score #ok mccmp matches 1 run scoreboard players add #pass mccmp 1',
@@ -151,23 +146,6 @@ check_display_block('blueprint flip A diamond', -280, 250, 90, 'diamond_block')
 check_display_block('blueprint flip B copper', -278, 250, 120, 'copper_block')
 check_display_block('blueprint flip B lapis', -280, 250, 120, 'lapis_block')
 
-# Dump every A-side display with its real position/state. This catches coordinate
-# offsets that exact-position selectors cannot see.
-step('execute in minecraft:overworld positioned -279 250 90 as @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..5] run function mcc_mp_test:diag_entity')
-for dx in range(3):
-    x = -280 + dx
-    step(
-        f'execute in minecraft:overworld positioned {x} 250 90 as @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] run data modify storage mcc_mp_test:diag state set from entity @s block_state',
-        f'execute in minecraft:overworld positioned {x} 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] run function mcc_mp_test:diag with storage mcc_mp_test:diag'
-    )
-step(
-    'execute in minecraft:overworld positioned -280 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1] run say MCCMP_DIAG flip_A_gold_x=-280',
-    'execute in minecraft:overworld positioned -279 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1] run say MCCMP_DIAG flip_A_gold_x=-279',
-    'execute in minecraft:overworld positioned -278 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1] run say MCCMP_DIAG flip_A_gold_x=-278',
-    'execute in minecraft:overworld positioned -280 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:diamond_block"},limit=1] run say MCCMP_DIAG flip_A_diamond_x=-280',
-    'execute in minecraft:overworld positioned -279 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:diamond_block"},limit=1] run say MCCMP_DIAG flip_A_diamond_x=-279',
-    'execute in minecraft:overworld positioned -278 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:diamond_block"},limit=1] run say MCCMP_DIAG flip_A_diamond_x=-278'
-)
 both_trigger('bpflip')
 check('blueprint flip twice restores offset',
       'score @a[tag=mcc_mp_a,limit=1] mcc_bpoffx matches 0',
@@ -351,14 +329,6 @@ for i,commands in enumerate(steps):
     (F/f'step_{i}.mcfunction').write_text('\n'.join(commands)+'\n',encoding='utf-8')
 
 (F/'diag.mcfunction').write_text('$say MCCMP_DIAG display_state=$(state)\n',encoding='utf-8')
-(F/'diag_entity.mcfunction').write_text(
-    'data modify storage mcc_mp_test:diag pos set from entity @s Pos\n'
-    'data modify storage mcc_mp_test:diag state set from entity @s block_state\n'
-    'function mcc_mp_test:diag_entity_print with storage mcc_mp_test:diag\n',
-    encoding='utf-8')
-(F/'diag_entity_print.mcfunction').write_text(
-    '$say MCCMP_DIAG display pos=$(pos) state=$(state)\n',
-    encoding='utf-8')
 (F/'join_a.mcfunction').write_text('tag @s remove mcc_mp_b\ntag @s add mcc_mp_a\ntellraw @s "MCCMP: registered as player A"\n',encoding='utf-8')
 (F/'join_b.mcfunction').write_text('tag @s remove mcc_mp_a\ntag @s add mcc_mp_b\ntellraw @s "MCCMP: registered as player B"\n',encoding='utf-8')
 # The fixture is far from spawn. A real client does not keep these chunks loaded
