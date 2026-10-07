@@ -1,4 +1,5 @@
 $execute in minecraft:overworld if blocks $(sx) $(sy) $(sz) $(sx) $(sy) $(sz) $(tx) $(ty) $(tz) all run return 1
+scoreboard players add #cmp_work mcc_id 11
 scoreboard players set @s mcc_amt 0
 data modify storage mcc:temp cmp_bid set value "minecraft:air"
 $execute in minecraft:overworld if block $(sx) $(sy) $(sz) #minecraft:air if block $(tx) $(ty) $(tz) #minecraft:air run scoreboard players set @s mcc_amt 1
