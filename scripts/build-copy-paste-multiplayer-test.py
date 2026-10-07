@@ -617,4 +617,4 @@ for p in P:
          'execute unless data storage mcc_mp_test:stash a unless data storage mcc_mp_test:stash b if data storage mcc_mp_test:stash {fl:1b} in minecraft:overworld run forceload remove -310 86 -310 92',
          'execute unless data storage mcc_mp_test:stash a unless data storage mcc_mp_test:stash b run data remove storage mcc_mp_test:stash fl']
     (F/f'unstash_{p}.mcfunction').write_text('\n'.join(un)+'\n',encoding='utf-8')
-print(f'Built {len(steps)} v1.7 two-player 3D house steps at {OUT}')
+print(f'Built {len(steps)} v1.8 two-player 3D house steps at {OUT}')
