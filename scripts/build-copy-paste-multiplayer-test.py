@@ -138,7 +138,9 @@ check('blueprint flip keeps bounds',
       'score @a[tag=mcc_mp_a,limit=1] mcc_bptx0 matches -280',
       'score @a[tag=mcc_mp_b,limit=1] mcc_bptx0 matches -280',
       'score @a[tag=mcc_mp_a,limit=1] mcc_bptz0 matches 90',
-      'score @a[tag=mcc_mp_b,limit=1] mcc_bptz0 matches 120')
+      'score @a[tag=mcc_mp_b,limit=1] mcc_bptz0 matches 120',
+      'score @a[tag=mcc_mp_a,limit=1] mcc_bpready matches 1',
+      'score @a[tag=mcc_mp_b,limit=1] mcc_bpready matches 1')
 check('blueprint flip offset',
       'score @a[tag=mcc_mp_a,limit=1] mcc_bpoffx matches 2',
       'score @a[tag=mcc_mp_b,limit=1] mcc_bpoffx matches 2',
