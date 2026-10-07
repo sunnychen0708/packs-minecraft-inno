@@ -698,7 +698,7 @@ def run_copy_paste_multiplayer_test(client):
 
     current_checks = "\n".join(
         line for line in segment.splitlines()
-        if "MCCMP_CHECK " in line or "MCCMP_RESULT " in line
+        if "MCCMP_CHECK " in line or "MCCMP_DIAG " in line or "MCCMP_RESULT " in line
     )
     if current_checks:
         print(current_checks)
