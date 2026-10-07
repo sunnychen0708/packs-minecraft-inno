@@ -622,7 +622,8 @@ def run_copy_paste_multiplayer_test(client):
     time.sleep(5)
 
     import subprocess
-    recheck = globals().get("RECHECK_COPY_PASTE", False)\n    subprocess.check_call([sys.executable, str(ROOT / "scripts" / "build-copy-paste-multiplayer-test.py"), *(["--recheck"] if recheck else [])])
+    recheck = globals().get("RECHECK_COPY_PASTE", False)
+    subprocess.check_call([sys.executable, str(ROOT / "scripts" / "build-copy-paste-multiplayer-test.py"), *(["--recheck"] if recheck else [])])
     harness = ROOT / "dist" / "mcc-multiplayer-test"
     payload = zip_tree(harness)
     world = level_name(client.read_file("server.properties"))
@@ -1825,7 +1826,8 @@ def run(path):
     elif op == "run-copy-paste-multiplayer-test":\n        globals()["RECHECK_COPY_PASTE"] = str(r.get("command") or "") == "recheck"\n        run_copy_paste_multiplayer_test(client)
     elif op == "run-blueprint-matcher-live-test": run_blueprint_matcher_live_test(client)
     elif op == "run-warehouse-compact-live-test": run_warehouse_compact_live_test(client)
-    elif op == "recover-warehouse-compact-live-test": recover_warehouse_compact_live_test(client, force_enable=True)\n    elif op == "run-live-suite": run_live_suite(client, str(r.get("pack") or ""))
+    elif op == "recover-warehouse-compact-live-test": recover_warehouse_compact_live_test(client, force_enable=True)
+    elif op == "run-live-suite": run_live_suite(client, str(r.get("pack") or ""))
     elif op == "run-utilities-bfs-live-test": run_utilities_bfs_live_test(client)
     elif op == "set-online-mode-false": set_offline_mode(client)
     elif op == "online-mode-status":
