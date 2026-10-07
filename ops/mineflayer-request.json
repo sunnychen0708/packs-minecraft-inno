@@ -1,6 +1,5 @@
 {
-  "request_id": 20261007172701,
-  "operation": "probe-one",
-  "player": "penguin0531",
+  "request_id": 20261007190101,
+  "operation": "test-3-bots-with-real-client",
   "duration_ms": 300000
 }
