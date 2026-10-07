@@ -1,5 +1,6 @@
 {
-  "request_id": 20261007230613,
-  "operation": "run-live-suite",
-  "pack": "utilities-recheck"
+  "request_id": 20261007193002,
+  "operation": "run-copy-paste-multiplayer-test",
+  "command": "",
+  "pack": ""
 }
