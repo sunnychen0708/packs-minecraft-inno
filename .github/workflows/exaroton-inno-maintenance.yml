@@ -61,4 +61,12 @@ jobs:
           EXAROTON_API_TOKEN: ${{ secrets.EXAROTON_API_TOKEN }}
         run: |
           set -euo pipefail
-          python3 scripts/exaroton_inno_uuid_migrate.py "${{ steps.request.outputs.mode }}"
+          PYTHONPATH=scripts python3 - "${{ steps.request.outputs.mode }}" <<'PY'
+          import sys
+          import exaroton_inno_uuid_migrate as migration
+
+          mode = sys.argv[1]
+          original_remote_path = migration.remote_path
+          migration.remote_path = lambda p: original_remote_path(str(p).lstrip("/"))
+          migration.plan_or_apply(mode)
+          PY
