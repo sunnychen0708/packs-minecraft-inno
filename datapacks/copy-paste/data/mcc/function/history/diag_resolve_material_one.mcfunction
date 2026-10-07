@@ -4,6 +4,6 @@ $loot replace block 20008008 64 20008008 container.0 27 mine $(sx) $(sy) $(sz) m
 data remove storage mcc:temp diag_loot
 data modify storage mcc:temp diag_loot set from block 20008008 64 20008008 Items
 setblock 20008008 64 20008008 air
-$execute if data storage mcc:temp diag_loot[0].id unless data storage mcc:temp diag_loot[1].id run data modify storage mcc:temp diag_item.material set from storage mcc:temp diag_loot[0].id
+execute if data storage mcc:temp diag_loot[0].id unless data storage mcc:temp diag_loot[1].id run data modify storage mcc:temp diag_item.material set from storage mcc:temp diag_loot[0].id
 function mcc:history/diag_add_material with storage mcc:temp diag_item
 return 1
