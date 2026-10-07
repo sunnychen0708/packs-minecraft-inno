@@ -1,6 +1,6 @@
-# Copy/Paste v1.7 多人隔離與驗證
+# Copy/Paste v1.8 多人隔離與驗證
 
-2026-10-07：SunnyChen 使用 Windows 官方 client，另外三人使用 Bot；innotest 同 tick regression **18 PASS / 0 FAIL**，通過 current-session server ERROR gate。[完整證據與限制](../../docs/issue-49-validation.md)。這不是兩個真人同時點 UI 的驗證。
+2026-10-07：v1.7 的完整 3D-house innotest 同 tick regression 最終 run 37644325643 全部 PASS；更早的 Issue #49 也有 SunnyChen 官方 client + 三 Bot 的 18/18 與真人 UI 證據。[完整證據與限制](../../docs/issue-49-validation.md)。v1.8 是後續方向重置 hotfix，發布時沒有重跑完整 house suite。這些都不是兩個真人同時點 UI 的驗證。
 
 目標：多位玩家可在同一個伺服器使用 Copy/Paste、Blueprint、Move/Rotate/Flip、Undo/Redo，而不把彼此的 Clipboard、歷史紀錄或材料工作狀態混在一起。Warehouse 庫存則刻意是全服共用資產。
 
@@ -64,7 +64,7 @@ python3 scripts/test-datapack-compatibility.py
 
 此外，`test-datapack-compatibility.py` 會確認 Utilities、Warehouse、Copy/Paste 沒有 namespace/resource/objective 衝突，並在官方 Minecraft 26.3 server 上把三包一起載入驗證共存。
 
-## v1.3 雙人真人測試
+## innotest 兩位玩家 3D-house 測試
 
 產生 opt-in 測試 datapack：
 
@@ -94,6 +94,6 @@ python3 scripts/build-copy-paste-multiplayer-test.py
 
 測試會讓兩位玩家在同一批 tick 中，各自對一棟 3D 測試房子（`scripts/mcc_house.py`）完成 Pos1/Pos2、Copy → Blueprint → Build（背包材料）、Move、Undo/Redo、Rotate、Flip、Cut/Paste 與獨立 Undo，每一步逐格比對整棟房子的 blockstate，並檢查 `mcc_id`、Clipboard 與世界結果沒有互換。結束後執行 `/function mcc_mp_test:cleanup` 清掉測試區、收回測試給的材料。實際流程在 `innotest` 由 `run-copy-paste-multiplayer-test` 跑（見 `docs/HANDOFF.md`）。
 
-repo 目前沒有提交一份 **v1.3** 兩位真人 client 的成功 evidence，因此應描述為：**64-player 隔離架構已由 regression 證明，單 actor / 官方 server 行為已有自動 runtime 覆蓋，但 two-real-player client/server concurrency 尚未留下正式驗證證據。**
+目前 repo 仍沒有兩個真人 client 同時點 UI 的成功 evidence。正確描述是：**64-player 隔離架構有 regression 覆蓋，v1.7 3D-house 兩玩家 live regression 已 PASS，單 actor / 官方 server 行為也有 runtime 覆蓋；two-real-client UI concurrency 仍未正式驗證。**
 
-`scripts/build-copy-paste-multiplayer-test.py` 的產生器版本已同步到 v1.3；它仍屬 opt-in 真人測試，不會被 headless CI 假裝成 two-client evidence。
+`scripts/build-copy-paste-multiplayer-test.py` 的產生器版本跟隨目前 v1.8；它是 innotest live harness，不得被 CI 的「成功產生」冒充成 live evidence。
