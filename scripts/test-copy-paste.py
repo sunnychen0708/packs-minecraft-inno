@@ -512,15 +512,21 @@ def check_v100_semantics(pack: Path):
     assert 'function mcc:undo/backup_from_' in rotate
     assert 'function mcc:cut/clear_' in rotate
     assert 'function mcc:rotate_edit/stage_work' in rotate
-    assert 'function mcc:work/to_overworld_replace' in rotate
-    assert 'function mcc:work/to_nether_replace' in rotate
-    assert 'function mcc:work/to_end_replace' in rotate
+    assert 'function mcc:rotate_edit/to_overworld_replace' in rotate
+    assert 'function mcc:rotate_edit/to_nether_replace' in rotate
+    assert 'function mcc:rotate_edit/to_end_replace' in rotate
     assert rotate.index('function mcc:work/snapshot_selection') < rotate.index('function mcc:rotate_edit/stage_work')
     assert rotate.index('function mcc:rotate_edit/stage_work') < rotate.index('function mcc:cut/clear_')
     assert rotate.index('function mcc:undo/backup_from_') < rotate.index('function mcc:cut/clear_')
     stage_work=read(pack/'data/mcc/function/rotate_edit/stage_work.mcfunction')
-    assert 'fill $(wbx) 0 20000500 $(old_wbx2) $(wby2) $(old_wbz2) minecraft:air strict' in stage_work
+    assert 'fill $(wbx) 0 20000600 $(stage_wbx2) $(wby2) $(stage_wbz2) minecraft:air strict' in stage_work
+    assert '20000500' not in stage_work, 'Rotate staging must not clear/reuse the Work source lane'
     assert 'place template mcc:work_$(id)' in stage_work
+    assert '#stagez mcc_id 20000600' in read(pack/'data/mcc/function/load.mcfunction')
+    for dim in ('overworld','nether','end'):
+        staged=read(pack/f'data/mcc/function/rotate_edit/to_{dim}_replace.mcfunction')
+        assert 'clone from minecraft:overworld $(wbx) 0 20000600' in staged
+        assert ' strict replace force' in staged
     for name in ('r90.mcfunction','r180.mcfunction','r270.mcfunction'):
         assert (pack/'data/mcc/function/rotate_edit'/name).is_file()
 

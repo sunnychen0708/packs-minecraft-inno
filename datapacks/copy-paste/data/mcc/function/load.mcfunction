@@ -255,6 +255,8 @@ scoreboard players set #base mcc_id 20000000
 scoreboard players set #cbz mcc_id 20000000
 scoreboard players set #ubz mcc_id 20000200
 scoreboard players set #workz mcc_id 20000500
+# Rotate/Flip stages transformed structures here, separate from the just-saved Work source.
+scoreboard players set #stagez mcc_id 20000600
 scoreboard players set #redoz mcc_id 20001000
 scoreboard players set #bpz mcc_id 20002000
 scoreboard players set #bpofs mcc_id 64
