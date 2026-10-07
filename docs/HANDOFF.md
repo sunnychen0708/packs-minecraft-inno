@@ -187,5 +187,5 @@ Copy/Paste runtime 失敗時會印 `MCCST_DIAG_DROP_<步驟>` / `MCCST_DIAG_DIFF
 - GitHub CI 不跑 `scripts/real-client/`；CI 綠燈不代表 G、Dialog 點擊、crosshair raycast、真人 `/trigger` 全部正常。
 - Blueprint 覆蓋檢查取消等部分 UI / client 行為仍需對應 real-client stage 才能叫「真人實機驗過」。
 - Utilities v3.7 工具等級檢查與部分 Copy/Paste legacy trigger cleanup 主要由 headless runtime 覆蓋；若改玩家可見行為要補真人 client 驗證。
-- `build-copy-paste-live-test.py` 是舊 Trigger harness，不能取代 `scripts/real-client/`；多人 state 則以新的 `build-copy-paste-multiplayer-test.py` + innotest live runner 為準。
+- 舊的 2×2 Trigger harness 已刪除；Copy/Paste 實機驗證只使用 `build-copy-paste-multiplayer-test.py` 的 3D 房子 + innotest live runner。
 - 真實世界 paste 的 clone 仍會產生正常 block update，這是為了讓柵欄、紅石等邊界連接正確。
