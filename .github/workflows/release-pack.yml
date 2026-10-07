@@ -4,10 +4,6 @@ on:
   push:
     tags:
       - "*-v*"
-    branches:
-      - main
-    paths:
-      - "ops/release-request.json"
   # Release without pushing a tag yourself: the run creates <pack>-v<version> on the main commit
   # it ran on, after every gate below has passed.
   workflow_dispatch:
