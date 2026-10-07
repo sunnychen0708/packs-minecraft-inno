@@ -827,7 +827,13 @@ def wait_named_players(client, names, timeout=180):
         online = set(listing or [])
         missing = [n for n in names if n not in online]
         if int(server.get("status", -1)) == 1 and not missing:
-            return server
+            # A restarted bot session drops the old clients first: require the
+            # players to still be there 10 s later before starting.
+            time.sleep(10)
+            again = client.target().get("players") or {}
+            again = set((again.get("list") if isinstance(again, dict) else again) or [])
+            if all(n in again for n in names):
+                return server
         time.sleep(2)
     raise Error(f"timeout waiting for test players; missing={missing}")
 
