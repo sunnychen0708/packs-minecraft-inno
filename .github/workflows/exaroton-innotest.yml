@@ -46,6 +46,8 @@ on:
           - utilities
           - warehouse
           - copy-paste
+          - utilities-recheck
+          - warehouse-recheck
 
 permissions:
   contents: read
