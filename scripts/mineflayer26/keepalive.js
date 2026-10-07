@@ -20,8 +20,9 @@ if (host !== TARGET) {
   process.exit(2)
 }
 const allowedNames = new Set(['SunnyChen', 'penguin0531', 'geena0701', 'Felicitypeng'])
-if (![1, 4].includes(names.length) || new Set(names).size !== names.length || names.some(name => !allowedNames.has(name))) {
-  console.error('Use either one allowed player or all four unique allowed players')
+if (![1, 3, 4].includes(names.length) || new Set(names).size !== names.length ||
+    names.some(name => !allowedNames.has(name)) || (names.length === 3 && names.includes('SunnyChen'))) {
+  console.error('Use one allowed player, the three non-SunnyChen bots, or all four unique allowed players')
   process.exit(2)
 }
 if (!Number.isFinite(durationMs) || durationMs < 30000 || durationMs > 1500000) {
