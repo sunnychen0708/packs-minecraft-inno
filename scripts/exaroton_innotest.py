@@ -457,6 +457,12 @@ def run_copy_paste_multiplayer_test(client):
     if int(current.get("status", -1)) != 1:
         raise Error("innotest must be ONLINE before live multiplayer testing")
 
+    # Mark the whole deployment/test session before any reload so parser/load
+    # errors from this attempt cannot be hidden by a later PASS line.
+    session_marker = f"MCCMP_SESSION_{int(time.time() * 1000)}"
+    client.command(f"say {session_marker} START")
+    time.sleep(1)
+
     # Deploy the exact datapacks from the checked-out main commit first.
     deploy(client, "all")
     time.sleep(5)
@@ -471,6 +477,32 @@ def run_copy_paste_multiplayer_test(client):
     print(f"deployed live multiplayer harness -> {remote_harness} ({len(payload)} bytes)")
     client.command("reload")
     time.sleep(6)
+
+    # Preflight only the current session. Historical errors earlier in the
+    # persistent exaroton log are irrelevant, but any new server ERROR after
+    # this session marker makes the live regression invalid.
+    preflight_log = client.log()
+    session_at = preflight_log.rfind(f"{session_marker} START")
+    if session_at < 0:
+        raise Error("live multiplayer preflight marker not found in server log")
+    preflight_segment = preflight_log[session_at:]
+    preflight_errors = [
+        line for line in preflight_segment.splitlines()
+        if "/ERROR]:" in line
+    ]
+    if preflight_errors:
+        try:
+            client.delete_file(remote_harness)
+        finally:
+            try:
+                client.command("reload")
+            except Error:
+                pass
+        preview = "\n".join(preflight_errors[:12])
+        raise Error(
+            "live multiplayer preflight found current-session server errors:\n"
+            + preview
+        )
 
     server = wait_players(client, 4, 180)
     print(f"live multiplayer test starting with player count={player_count(server)}")
@@ -541,6 +573,17 @@ def run_copy_paste_multiplayer_test(client):
     )
     if current_checks:
         print(current_checks)
+
+    current_errors = [
+        line for line in segment.splitlines()
+        if "/ERROR]:" in line
+    ]
+    if current_errors:
+        preview = "\n".join(current_errors[:12])
+        raise Error(
+            "live multiplayer test produced current-run server errors even "
+            "though a result line was present:\n" + preview
+        )
 
     if "MCCMP_RESULT PASS" in result:
         print("COPY_PASTE_MULTIPLAYER_LIVE_TEST=PASS")
