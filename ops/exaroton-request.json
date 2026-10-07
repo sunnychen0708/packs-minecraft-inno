@@ -1,6 +1,6 @@
 {
-  "request_id": 0,
-  "operation": "noop",
+  "request_id": 202610071341,
+  "operation": "migrate-inno-online-to-innotest-offline",
   "command": "",
   "pack": ""
 }
