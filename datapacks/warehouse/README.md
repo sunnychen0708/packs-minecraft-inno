@@ -50,7 +50,7 @@ Latest published release: `warehouse-v4.7.zip`
 
 ### 舊資料相容性
 
-- 可從 Minecraft 26.2 v3.2、26.3 v3.3/v3.4、Warehouse v4.0～v4.4 直接升級。
+- 可從 Minecraft 26.2 v3.2、26.3 v3.3/v3.4、Warehouse v4.0～v4.6 直接升級。
 - 不重設 warehouse:chests：61 箱座標、dimension 與其他既有註冊 metadata 保留。
 - 不重設 warehouse:boxnames：玩家自訂箱名保留。
 - 不重設 warehouse:rules overrides：玩家新增／移動／移除的分類覆寫保留。
