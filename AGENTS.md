@@ -7,6 +7,12 @@
 - 任何寫入 inno 的動作都要使用者明確下指令才可以做，包括安裝或更新 datapack、改檔案、執行指令、啟動／關閉／重啟、UUID maintenance 的 apply。每次都要，之前的同意不能沿用。
 - 讀取 inno 不用問，直接讀。
 
+## Git 與 GitHub
+
+- commit 作者與 committer 一律用 `陳譯晴 <144662040+sunnychen0708@users.noreply.github.com>`，不用 Claude 或其他 agent 的名義。
+- commit 訊息、PR 標題與內文、comment 都不加 `Co-Authored-By: Claude`、`Claude-Session`、「Generated with Claude Code」之類的署名。
+- 新分支不用 `claude/` 開頭。
+
 ## 測試
 
 - 一律直接在 `innotest` 測（`exaroton innotest control` workflow；需要玩家時用 Mineflayer bots）。
