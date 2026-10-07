@@ -10,6 +10,7 @@
 ## 測試
 
 - 一律直接在 `innotest` 測（`exaroton innotest control` workflow；需要玩家時用 Mineflayer bots）。
+- Mineflayer 測試預設只用 `penguin0531`、`geena0701`、`Felicitypeng`，保留 `SunnyChen` 給使用者真人登入監督或 Computer Use。只有測試確實需要第 4 位玩家，或使用者明確要求，才讓 `SunnyChen` bot 上線。
 - 不要在本機、暫存資料夾、另建的世界或 MCC-Test 測，除非使用者指定。
 - 每個 datapack 的每個功能都要在 innotest 驗過，不是只有改到的那個 pack 或 Copy/Paste。功能清單與目前覆蓋狀態見 `docs/innotest-coverage.md`；新增或改功能時一起更新。
 - 測試要用接近真實使用的情境，結果要逐項比對，不能只抽查一兩格或只看有沒有報錯。只放幾個完整方塊（例如 2×2 金／鑽石塊）的測試不算驗過。
