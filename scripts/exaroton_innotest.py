@@ -620,6 +620,7 @@ def run_copy_paste_multiplayer_test(client):
 
 LIVE_SUITES = {
     "utilities": ("build-utilities-live-test.py", "utilities-live-test"),
+    "warehouse": ("build-warehouse-live-test.py", "warehouse-live-test"),
 }
 
 def wait_named_players(client, names, timeout=180):
@@ -656,6 +657,8 @@ def run_live_suite(client, suite):
     meta = json.loads((out / "suite.json").read_text(encoding="utf-8"))
     ns, prefix, names = meta["ns"], meta["prefix"], list(meta["players"].values())
     timeout = int(meta.get("timeout_s", 600))
+    start_function = str(meta.get("start_function") or f"{ns}:start")
+    cleanup_function = str(meta.get("cleanup_function") or f"{ns}:cleanup")
 
     session_marker = f"{prefix}_SESSION_{int(time.time() * 1000)}"
     client.command(f"say {session_marker} START")
@@ -692,7 +695,7 @@ def run_live_suite(client, suite):
     run_marker = f"{prefix}_RUN_{int(time.time() * 1000)}"
     client.command(f"say {run_marker} START")
     time.sleep(1)
-    client.command(f"function {ns}:start")
+    client.command(f"function {start_function}")
 
     deadline = time.time() + timeout
     result = segment = ""
@@ -713,7 +716,7 @@ def run_live_suite(client, suite):
         time.sleep(5)
 
     try:
-        client.command(f"function {ns}:cleanup")
+        client.command(f"function {cleanup_function}")
         time.sleep(3)
     except Error:
         pass
