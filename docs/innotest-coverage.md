@@ -14,7 +14,7 @@ Utilities 的測試是 `scripts/build-utilities-live-test.py`，用 `exaroton in
 
 時間上限：每個 pack 的 innotest 測試都要在 4 分鐘內跑完。已在 innotest 通過的項目不重跑：`--recheck` 只跑還沒通過的項目（`run-live-suite` 的 pack 填 `utilities-recheck`／`warehouse-recheck`；Copy/Paste 的 command 填 `recheck`）。只有 server 在跑的段落用 `tick rate 10000`（最快）；要等 bot 回應或等 chunk 載入的段落用 20 tps；結束與清理一律調回 20。
 
-Warehouse 的測試是 `scripts/build-warehouse-live-test.py`（`run-live-suite`，pack 選 `warehouse`）：用 inno 地圖上真的倉庫與玩家自訂分類，測試物品帶 `custom_data {wtest:1b}`，結束後從每一箱移除；分類、規則修改與移除、查詢、Pick、共用 API、檢視、改名、右鍵註冊／刪除註冊、chunk forceload、系統開關、load/migration 重跑都有。溢位箱只在主箱滿時記錄 `WTEST_NOTE`，沒有主動塞滿主箱測。
+Warehouse 的主要測試是 `scripts/build-warehouse-live-test.py`（`run-live-suite`，pack 選 `warehouse`）：用 inno 地圖上真的倉庫與玩家自訂分類，測試物品帶 `custom_data {wtest:1b}`，結束後從每一箱移除；分類、規則修改與移除、查詢、Pick、共用 API、檢視、改名、右鍵註冊／刪除註冊、chunk forceload、系統開關、load/migration 重跑都有。另有 targeted release gate 主動塞滿主箱驗溢位／全滿保留入口；v4.7 另跑跨維度 Compact/merge regression。
 
 Copy/Paste 的測試是 `scripts/build-copy-paste-multiplayer-test.py`（`run-copy-paste-multiplayer-test`），全程用最快 tick。
 
@@ -36,7 +36,7 @@ Copy/Paste 的測試是 `scripts/build-copy-paste-multiplayer-test.py`（`run-co
 | 自動補種 | 成熟作物（小麥、胡蘿蔔、馬鈴薯、甜菜根、地獄疙瘩等）被 bot 採收後原地補種 | PASS（小麥，2026-10-07，重點版 [37621164714](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37621164714)＋recheck [37630732909](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37630732909)） |
 | `treecap`／`veinmine`／`replant` 個人開關 | 關閉後同樣動作不連鎖／不補種，打開後恢復；每位玩家各自 | PASS（2026-10-07，重點版 [37621164714](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37621164714)＋recheck [37630732909](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37630732909)） |
 | 名稱輸入 Dialog（`nav:set_*`、`nav:rename_*`） | bot 送出 Dialog 會送的同一個指令，比對名稱與位置 | PASS（2026-10-07，重點版 [37621164714](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37621164714)＋recheck [37630732909](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37630732909)） |
-| 舊資料沿用 | inno 地圖上既有據點、名稱、開關在新版載入後不變 | 未驗 |
+| 舊資料沿用 | inno 地圖上既有據點、名稱、開關在新版載入後不變 | PASS（v3.7 world data 載入 v3.8 後保留，2026-10-07 [37642068254](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37642068254)） |
 
 ## Warehouse
 
@@ -56,30 +56,32 @@ Copy/Paste 的測試是 `scripts/build-copy-paste-multiplayer-test.py`（`run-co
 | 倉庫 chunk 常駐 forceload（v4.6） | 確認 61 箱所在 chunk 都 forceload；別人加的 forceload 不被移除；`chunks/release` 只移除自己的 | PASS（2026-10-07，[37624017827](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37624017827)＋recheck [37629667234](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37629667234)） |
 | 自動整理開關（`system/on|off|toggle`） | 關閉時入口箱不動，打開後恢復 | PASS（2026-10-07，[37624017827](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37624017827)＋recheck [37629667234](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37629667234)） |
 | Migration（v4.0～v4.6）重跑 | 在 inno 地圖資料上載入新版，61 箱註冊、override、箱名、scoreboard 不變；重跑不出錯 | PASS（2026-10-07，[37624017827](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37624017827)＋recheck [37629667234](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37629667234)） |
+| v4.7 跨維度 Compact／merge | 在主世界、地獄、終界各驗來源／主箱／溢位箱都依註冊 dimension 讀 NBT，不誤讀主世界同座標 | PASS（27 checkpoints；2026-10-08 [37656341833](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37656341833)） |
 | G 主畫面與各 Dialog | bot 開啟主畫面與各子頁，確認收到 Dialog 且沒有錯誤 | PASS（release gate 基本導航：主畫面、箱子管理、查看倉庫、分類設定、使用說明及返回；bot 實收 show_dialog；2026-10-07 [37641685439](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37641685439)） |
 
 ## Copy/Paste
 
-全部用 3D 測試房子（`scripts/mcc_house.py`）。
+目前 source / release 是 **v1.8**。最後一次完整 3D-house live regression 是 v1.7 的 [37644325643](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37644325643)，所有 `MCCMP_CHECK` PASS；v1.8 只改「新 Copy/Cut 與 Cut→Undo→Redo 重建 Clipboard 時重設方向」，依使用者要求直接發布/部署，**這個 v1.8 hotfix 尚未重跑完整 house suite**。因此下表的 PASS 是對應 v1.7 最後完整 live run，不能冒充 v1.8 exact-build live PASS。
+
+全部 live 結構測試使用 3D 測試房子（`scripts/mcc_house.py`）。
 
 | 功能 | innotest 驗法 | 狀態 |
 | --- | --- | --- |
-| Pos1／Pos2 選取（真的 raycast） | 兩位 bot 同時選取房子 | PASS（2026-10-07，[37625064435](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37625064435)） |
-| Copy → V Blueprint | 每格都有預覽、數量對、世界沒動 | PASS（2026-10-07，[37625064435](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37625064435)） |
-| Build（背包材料） | 逐格比對、剛好扣一份 BOM | PASS（2026-10-07，[37625064435](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37625064435)） |
-| Build（Warehouse 材料、背包＋Warehouse 混用、材料不足不施工） | 真的倉庫扣料，比對扣掉的數量；結束歸還 | 未驗 |
-| 覆蓋保護（第一次 build 只警告） | 目標區有方塊時第一次 build 不動世界 | 未驗 |
-| Blueprint 微調：移動、轉向、翻面、reset | 每一步逐格比對預覽位置與方塊狀態 | 未驗 |
-| `/trigger materials` 材料檢查 | 只列材料、不施工不扣料 | 未驗 |
-| Move（上下左右前後） | 已驗上移；其他方向未驗 | PASS（上移，2026-10-07，[37625064435](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37625064435)） |
-| 直接 Rotate（右轉、左轉、180） | 已寫右轉；左轉、180 未驗 | FAIL（2026-10-07，[37625064435](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37625064435)、recheck [37630606793](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37630606793)：B 同時 Rotate 少了屋頂 y=253 那層，之後的 Undo 拆掉 B 的房子；A 相同操作 PASS） |
-| 直接 Flip（左右、前後） | 已寫左右；前後未驗 | FAIL（2026-10-07，[37625064435](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37625064435)、recheck [37630606793](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37630606793)，Rotate 失敗後連帶失敗） |
-| Cut → V | 逐格比對 | FAIL（2026-10-07，[37625064435](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37625064435)、recheck [37630606793](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37630606793)，Rotate 失敗後連帶失敗） |
-| Undo／Redo（含材料退還、五層歷史） | 已寫部分；五層與材料退還到 Warehouse 未驗 | 已寫未跑（部分） |
-| Anchor、貼上模式（取代／遮罩） | 逐格比對 | 未驗 |
-| 地獄、終界 | 在三個維度各做一次 Copy/Paste | 未驗 |
-| 多人隔離 | 兩位 bot 同時操作，互不影響 | FAIL（2026-10-07，[37625064435](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37625064435)、recheck [37630606793](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37630606793)，Rotate 失敗後連帶失敗） |
-| `/trigger copypaste` Dialog、`cphelp` | bot 開啟，確認收到 Dialog／教學訊息 | 未驗 |
+| Pos1／Pos2 選取、Copy、獨立 Clipboard／mcc_id | 兩位測試玩家同 tick，逐格比對房子 | PASS（v1.7，37644325643） |
+| Copy → Blueprint → Build（背包材料） | Blueprint 完整 state、世界未動、BOM 剛好一份、Build 後逐格相同 | PASS（v1.7，37644325643） |
+| Blueprint 微調／轉向／翻面／reset | 六方向位移、左右轉、180、兩軸翻面、reset，逐格比對完整 blockstate | PASS（v1.7，37644325643） |
+| Move 六方向 | 上／下／左／右／前／後，各自 Undo | PASS（v1.7，37644325643） |
+| 直接 Rotate／Flip | 右轉 90、左轉 90、180、左右翻、前後翻，各自 Undo | PASS（v1.7，37644325643） |
+| Undo／Redo guard | 同 block ID 的 state 改動可 Undo；換 block ID 或改箱子內容會拒絕並列差異；修回後可 Undo | PASS（v1.7，37644325643） |
+| Cut → V、多人隔離 | 兩人同時 Cut/Paste；A Undo/Redo 不碰 B；B 可獨立 Undo | PASS（v1.7，37644325643） |
+| Build（Warehouse 材料、背包＋Warehouse 混用、材料不足不施工） | 真的倉庫扣料與歸還 | 未驗完整 live flow |
+| 覆蓋保護（第一次 Build 只警告） | 目標區有方塊時第一次 Build 不動世界 | 未驗 |
+| `/trigger materials` | 只列材料、不施工不扣料 | 未驗 |
+| 五層 Undo/Redo 深度、Warehouse 退款 | 連續五筆並驗材料退款 | 未完整 live 驗 |
+| Anchor、Replace／Masked | 選區內外 Anchor、兩種貼上模式逐格比對 | 未驗完整 live flow |
+| 地獄、終界 Copy/Paste | 三維度各做完整流程 | 未驗 |
+| G / Copy-Paste Dialog、`cphelp` | 真人 client 點 UI／看教學 | v1.7 有部分真人 UI 證據（Issue #49）；v1.8 未重跑 |
+| v1.8 新 Clipboard 方向重置 | 新 Copy、Cut、Cut→Undo→Redo 後確認 0°、未翻面 | 尚未重跑 innotest live suite |
 
 ## cat-door-sounds（resource pack）
 
