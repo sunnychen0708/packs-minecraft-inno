@@ -1050,6 +1050,120 @@ def migrate_inno_online_to_innotest_offline(client, token):
         print("innotest was offline before migration; left offline")
 
 
+def run_warehouse_compact_live_test(client):
+    """Run a focused live regression for compact arithmetic direct dispatch."""
+    current = client.target()
+    if int(current.get("status", -1)) != 1:
+        raise Error("innotest must be ONLINE before Warehouse compact live testing")
+
+    marker = f"WH_COMPACT_LIVE_{int(time.time() * 1000)}"
+    ax, ay, az = -430, 250, 120
+    bx, by, bz = -429, 250, 120
+    force_from = "-430 120"
+    force_to = "-429 120"
+
+    setup = [
+        f"say {marker} START",
+        "scoreboard players operation #whc_old_enabled wh_sys = #enabled wh_sys",
+        "scoreboard players operation #whc_old_code wh_tmp = #compact_code wh_tmp",
+        "scoreboard players operation #whc_old_slot wh_tmp = #compact_slot wh_tmp",
+        "scoreboard players set #enabled wh_sys 0",
+        "execute store success score #whc_had wh_tmp run data get storage warehouse:chests c69",
+        "data remove storage warehouse:runtime compact_live_backup",
+        "data modify storage warehouse:runtime compact_live_backup set from storage warehouse:chests c69",
+        f"forceload add {force_from} {force_to}",
+        f"setblock {ax} {ay} {az} minecraft:chest",
+        f"setblock {bx} {by} {bz} minecraft:chest",
+        (
+            "data modify storage warehouse:chests c69 set value "
+            f'{{registered:1b,valid:1b,dimension:"minecraft:overworld",'
+            f"a_x:{ax},a_y:{ay},a_z:{az},b_x:{bx},b_y:{by},b_z:{bz}}}"
+        ),
+        f'data modify block {ax} {ay} {az} Items set value ['
+        '{Slot:0b,id:"minecraft:diamond",count:10},'
+        '{Slot:5b,id:"minecraft:diamond",count:10}]',
+        f'data modify block {bx} {by} {bz} Items set value ['
+        '{Slot:3b,id:"minecraft:diamond",count:7}]',
+        "scoreboard players set #compact_code wh_tmp 60",
+        "scoreboard players set #compact_slot wh_tmp 0",
+    ]
+
+    try:
+        for command in setup:
+            client.command(command)
+            time.sleep(0.15)
+
+        for _ in range(54):
+            client.command("function warehouse:compact/step")
+
+        client.command(
+            f'execute if data block {ax} {ay} {az} '
+            'Items[{id:"minecraft:diamond",count:27}] '
+            f'unless data block {ax} {ay} {az} Items[{{id:"minecraft:diamond",count:10}}] '
+            f'unless data block {bx} {by} {bz} Items[{{id:"minecraft:diamond"}}] '
+            f'run say {marker} PASS'
+        )
+        time.sleep(2)
+
+        log = client.log()
+        start = log.rfind(f"{marker} START")
+        if start < 0:
+            raise Error("Warehouse compact live marker not found in server log")
+        segment = log[start:]
+        current_errors = [
+            line for line in segment.splitlines()
+            if (
+                "/ERROR]:" in line
+                or "Unknown or incomplete command" in line
+                or "Unknown function" in line
+                or "<--[HERE]" in line
+            )
+        ]
+        if current_errors:
+            raise Error(
+                "Warehouse compact live test produced server/command errors:\n"
+                + "\n".join(current_errors[:12])
+            )
+        if f"{marker} PASS" not in segment:
+            raise Error(
+                "Warehouse compact live test did not pass; current session tail:\n"
+                + "\n".join(segment.splitlines()[-40:])
+            )
+
+        print("WAREHOUSE_COMPACT_LIVE_TEST=PASS")
+        print("  compact_code 60 -> c69 arithmetic dispatch")
+        print("  slots 0..53 -> A/B local-slot macro dispatch")
+        print("  partial diamond stacks merged without loss")
+    finally:
+        cleanup = [
+            f"setblock {ax} {ay} {az} minecraft:air",
+            f"setblock {bx} {by} {bz} minecraft:air",
+            f"forceload remove {force_from} {force_to}",
+            (
+                "execute if score #whc_had wh_tmp matches 1 "
+                "run data modify storage warehouse:chests c69 "
+                "set from storage warehouse:runtime compact_live_backup"
+            ),
+            (
+                "execute unless score #whc_had wh_tmp matches 1 "
+                "run data remove storage warehouse:chests c69"
+            ),
+            "data remove storage warehouse:runtime compact_live_backup",
+            "scoreboard players operation #compact_code wh_tmp = #whc_old_code wh_tmp",
+            "scoreboard players operation #compact_slot wh_tmp = #whc_old_slot wh_tmp",
+            "scoreboard players operation #enabled wh_sys = #whc_old_enabled wh_sys",
+            "scoreboard players reset #whc_had wh_tmp",
+            "scoreboard players reset #whc_old_code wh_tmp",
+            "scoreboard players reset #whc_old_slot wh_tmp",
+            "scoreboard players reset #whc_old_enabled wh_sys",
+        ]
+        for command in cleanup:
+            try:
+                client.command(command)
+            except Error:
+                pass
+
+
 def run_utilities_bfs_live_test(client):
     """Run a focused live regression for the foliage shell-order optimization."""
     current = client.target()
@@ -1158,6 +1272,7 @@ def run(path):
     elif op == "command": client.command(str(r.get("command") or "")); print(f"command sent to {TARGET}")
     elif op == "deploy-datapack": deploy(client, str(r.get("pack") or ""))
     elif op == "run-copy-paste-multiplayer-test": run_copy_paste_multiplayer_test(client)
+    elif op == "run-warehouse-compact-live-test": run_warehouse_compact_live_test(client)
     elif op == "run-utilities-bfs-live-test": run_utilities_bfs_live_test(client)
     elif op == "set-online-mode-false": set_offline_mode(client)
     elif op == "online-mode-status":
