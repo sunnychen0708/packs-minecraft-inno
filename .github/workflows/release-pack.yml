@@ -4,13 +4,22 @@ on:
   push:
     tags:
       - "*-v*"
+  # Release without pushing a tag yourself: the run creates <pack>-v<version> on the main commit
+  # it ran on, after every gate below has passed.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to create on main, e.g. utilities-v3.7"
+        required: true
+        type: string
 
 permissions:
   contents: write
 
-# A tag pushed twice starts two runs; run them one after the other so only one creates the release.
+# A tag pushed twice (or a push and a manual run for the same tag) starts two runs; run them one
+# after the other so only one creates the release.
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
@@ -22,10 +31,26 @@ jobs:
 
       - name: Resolve pack from tag
         id: pack
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
         shell: bash
         run: |
           set -euo pipefail
-          TAG="${GITHUB_REF_NAME}"
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_dispatch" ]]; then
+            if [[ "$GITHUB_REF" != "refs/heads/main" ]]; then
+              echo "Manual releases must run on main, not $GITHUB_REF."
+              exit 1
+            fi
+            TAG="$INPUT_TAG"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+
+          if [[ ! "$TAG" =~ ^[a-z0-9]+(-[a-z0-9]+)*-v[0-9]+\.[0-9]+$ ]]; then
+            echo "Release tags must look like <pack>-v<major>.<minor>, for example utilities-v3.7: $TAG"
+            exit 1
+          fi
+
           PACK="${TAG%-v*}"
           VERSION="v${TAG##*-v}"
 
@@ -47,6 +72,27 @@ jobs:
           echo "pack=$PACK" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "kind=$KIND" >> "$GITHUB_OUTPUT"
+
+      - name: Check an existing tag points at this commit
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          TAG: ${{ steps.pack.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Fail before the gates if the tag already names another commit; never move a tag.
+          remote="$(git ls-remote origin "refs/tags/$TAG" "refs/tags/$TAG^{}")"
+          if [[ -z "$remote" ]]; then
+            echo "Tag $TAG does not exist yet; it will be created on $GITHUB_SHA after the gates pass."
+            exit 0
+          fi
+          peeled="$(awk '$2 ~ /\^\{\}$/ {print $1}' <<<"$remote")"
+          target="${peeled:-$(awk '{print $1; exit}' <<<"$remote")}"
+          if [[ "$target" != "$GITHUB_SHA" ]]; then
+            echo "Tag $TAG already points at $target, not at this run's commit $GITHUB_SHA."
+            exit 1
+          fi
+          echo "Tag $TAG already points at $GITHUB_SHA."
 
       - name: Verify datapack source version matches tag
         if: steps.pack.outputs.kind == 'datapack'
@@ -184,6 +230,26 @@ jobs:
         run: |
           chmod +x scripts/build-pack.sh
           scripts/build-pack.sh "${{ steps.pack.outputs.pack }}" "${{ steps.pack.outputs.version }}"
+
+      - name: Create tag on main
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          TAG: ${{ steps.pack.outputs.tag }}
+          TITLE: ${{ steps.pack.outputs.pack }} ${{ steps.pack.outputs.version }}
+          ACTOR: ${{ github.actor }}
+          ACTOR_ID: ${{ github.actor_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "$(git ls-remote origin "refs/tags/$TAG")" ]]; then
+            echo "Tag $TAG already exists (checked before the gates)."
+            exit 0
+          fi
+          # Annotated like the hand-pushed tags, tagged by whoever started the run. A tag pushed
+          # with GITHUB_TOKEN does not start another run of this workflow.
+          git -c user.name="$ACTOR" -c user.email="${ACTOR_ID}+${ACTOR}@users.noreply.github.com" \
+            tag -a "$TAG" -m "$TITLE" "$GITHUB_SHA"
+          git push origin "refs/tags/$TAG"
 
       - name: Create GitHub Release
         env:
