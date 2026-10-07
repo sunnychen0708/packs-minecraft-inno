@@ -47,10 +47,10 @@
 ### `inno.exaroton.me`
 
 - Production 世界。
-- 一般 exaroton 操作**不要自動啟動 `inno`**；正常檢查應保持 read-only。
+- **任何寫入 inno 都要使用者明確下指令**（裝 datapack、改檔、執行指令、開關機、UUID maintenance apply），每次都要；讀取不用問（見 `AGENTS.md`）。
 - **inno 目前實際安裝**（2026-10-07 用 `inno-storage-status` 唯讀讀取）：`world/datapacks` 只有 `Minecraft_Warehouse_26.3_v4.0.zip` 與 `utilities-v3.4.zip`，沒有 Copy/Paste。`warehouse:meta` 升級標記只到 `v40`；61 個箱位全部已註冊、都在主世界、座標欄位齊全且都是 Int。Utilities storage 版本 `26.3-3.4`，43 個存檔座標都是 Int。
 - 唯讀檢查 production 的 Warehouse 註冊與 Utilities 據點：`exaroton innotest control` 手動執行 `inno-storage-status`（只用 GET，不會寫入 inno）。
-- 使用者已明確允許 repo 內的 **offline UUID maintenance** 寫入入口；這是 production write 的特例，不代表可以任意改 production。
+- repo 內的 **offline UUID maintenance** 是寫入 inno 的入口，同樣要使用者明確下指令才能 apply；dry-run 只讀取。
 - 特例 workflow：`.github/workflows/exaroton-inno-maintenance.yml` + `scripts/exaroton_inno_uuid_migrate.py`。
 - Production maintenance 必須要求 `inno` 已經 OFFLINE，而且 maintenance 自己**不得啟動** production server。先 dry-run，再 apply。
 - Production offline/online stats 現在採 **sum-per-counter** 真正累加；`uuid-migration-stats-sum-state.json` 防止重跑時把同一份 offline 歷史再加一次。若偵測到舊 max-per-counter migration backup，會用 backup 還原 baseline，再保留之後新增的 online progress。
@@ -178,6 +178,8 @@ Copy/Paste runtime 失敗時會印 `MCCST_DIAG_DROP_<步驟>` / `MCCST_DIAG_DIFF
 - Blueprint rotate/mirror 設定會跨 Copy 保留，測試前先 `bpreset`。
 
 ## 10. MCC-Test 本機測試世界
+
+> 測試一律直接在 innotest 跑（見 `AGENTS.md`）。MCC-Test 只有使用者明確要求時才用。
 
 - 只改 `%APPDATA%\.minecraft\saves\MCC-Test`，不要碰使用者其他世界；改 datapack 前先備份。
 - 世界開著時 datapack ZIP 可能被鎖，不能刪 / 改名；要換檔名先退出世界。
