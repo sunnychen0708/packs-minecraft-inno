@@ -8,7 +8,7 @@ This document describes the operational tooling for the two exaroton servers use
 
 | Server | Role | Normal policy |
 | --- | --- | --- |
-| `inno.exaroton.me` | Production world | Do not start it from repository automation. Normal inspection is read-only. The separate offline UUID maintenance workflow is an owner-authorized exception and requires the server to remain OFFLINE before any write. |
+| `inno.exaroton.me` | Production world | Reading is always fine. **Any write** (installing a datapack, changing files, running commands, starting/stopping, UUID maintenance `apply`) needs an explicit instruction from the owner each time. The offline UUID maintenance workflow also requires the server to remain OFFLINE before any write. |
 | `innotest.exaroton.me` | Test server | May be started/stopped, have datapacks deployed, run commands, and run automated multiplayer regressions. |
 
 The API token is stored only as the GitHub Actions secret `EXAROTON_API_TOKEN`. Never put the token, a replacement token, or any other credential in the repository or an ops request file.
@@ -21,7 +21,7 @@ The repository keeps operational requests in `ops/` so an action is explicit and
 | --- | --- | --- |
 | `ops/exaroton-request.json` | `exaroton-innotest.yml` | innotest status/log/start/stop/commands/deploy/live regression and controlled identity operations |
 | `ops/mineflayer-request.json` | `mineflayer-innotest.yml` | one-player probe or four-player Mineflayer session on innotest |
-| `ops/inno-maintenance-request.json` | `exaroton-inno-maintenance.yml` | owner-authorized production UUID maintenance while inno is OFFLINE |
+| `ops/inno-maintenance-request.json` | `exaroton-inno-maintenance.yml` | production UUID maintenance while inno is OFFLINE; `apply` only on the owner's explicit instruction |
 
 The checked-in baseline for all request files should be `noop`. Change the request only when intentionally triggering an operation, then return it to `noop` after the operation is complete.
 
@@ -146,7 +146,7 @@ uuid-migrate-dry-run
 uuid-migrate-apply
 ```
 
-The production maintenance path is owner-authorized, but it is still constrained to offline UUID maintenance. It must verify that `inno` is OFFLINE and must never start the production server as part of the operation. Offline/online Minecraft statistics are merged by **summing numeric counters**, because they represent separate play histories. The migration records `uuid-migration-stats-sum-state.json` so the same offline source is not added twice on a later rerun. If an earlier max-per-counter migration backup exists, the migration reconstructs the original online baseline from that backup, converts the result to a true sum, and preserves any later online progress. Run `dry-run` before `apply` whenever the source world or identity set has changed.
+The production maintenance path writes to inno, so `apply` runs only on the owner's explicit instruction each time (`dry-run` only reads); it is constrained to offline UUID maintenance. It must verify that `inno` is OFFLINE and must never start the production server as part of the operation. Offline/online Minecraft statistics are merged by **summing numeric counters**, because they represent separate play histories. The migration records `uuid-migration-stats-sum-state.json` so the same offline source is not added twice on a later rerun. If an earlier max-per-counter migration backup exists, the migration reconstructs the original online baseline from that backup, converts the result to a true sum, and preserves any later online progress. Run `dry-run` before `apply` whenever the source world or identity set has changed.
 
 ## Operational cleanup rules
 
