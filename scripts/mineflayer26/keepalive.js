@@ -13,7 +13,7 @@ const host = String(process.env.MF26_HOST || TARGET).trim().toLowerCase().replac
 const port = Number(process.env.MF26_PORT || 25565)
 const names = (process.env.MF26_BOTS || 'SunnyChen,penguin0531,geena0701,Felicitypeng').split(',').map(x => x.trim()).filter(Boolean)
 const spawnTimeoutMs = Number(process.env.MF26_SPAWN_TIMEOUT_MS || 45000)
-const durationMs = Number(process.env.MF26_DURATION_MS || 180000)
+const durationMs = Number(process.env.MF26_DURATION_MS || 0)
 
 if (host !== TARGET) {
   console.error(`SAFETY LOCK: refusing Minecraft connection to ${host}; only ${TARGET} is allowed`)
@@ -25,8 +25,8 @@ if (![1, 3, 4].includes(names.length) || new Set(names).size !== names.length ||
   console.error('Use one allowed player, the three non-SunnyChen bots, or all four unique allowed players')
   process.exit(2)
 }
-if (!Number.isFinite(durationMs) || durationMs < 30000 || durationMs > 1500000) {
-  console.error('MF26_DURATION_MS must be between 30000 and 1500000 for the GitHub smoke test')
+if (!Number.isFinite(durationMs) || (durationMs !== 0 && (durationMs < 30000 || durationMs > 19800000))) {
+  console.error('MF26_DURATION_MS must be 0 (persistent) or between 30000 and 19800000')
   process.exit(2)
 }
 
@@ -271,6 +271,21 @@ async function main () {
   }
 
   console.log(`READY ${names.length}/${names.length} on ${TARGET}:${port} as ${names.join(',')}`)
+  if (durationMs === 0) {
+    console.log('PERSISTENT HOLD: bots stay online until this runner is explicitly stopped/replaced')
+    while (true) {
+      const ended = names.filter(name => states.get(name).ended)
+      for (const name of ended) {
+        const previous = states.get(name)
+        console.log(`RECONNECTING ${name}: ${previous.endReason || 'connection ended'}`)
+        await delay(2000)
+        createBot(name)
+        await waitForSpawn(name)
+      }
+      await delay(5000)
+    }
+  }
+
   const endAt = Date.now() + durationMs
   while (Date.now() < endAt) {
     const ended = names.filter(name => states.get(name).ended)
@@ -288,7 +303,7 @@ main()
   })
   .finally(async () => {
     for (const bot of bots) {
-      try { bot.quit('keepalive smoke complete') } catch (_) {}
+      try { bot.quit('keepalive session complete') } catch (_) {}
     }
     await delay(500)
   })
