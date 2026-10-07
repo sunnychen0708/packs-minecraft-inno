@@ -125,7 +125,7 @@ class APIClient:
 
     def info_optional(self, path):
         try:
-            return self.file_info(path)
+            return self.file_info(str(path).lstrip("/"))
         except Error as e:
             if "HTTP 404" in str(e):
                 return None
@@ -649,6 +649,7 @@ def rewrite_innotest_entity_uuid_refs(client, world, uuid_pairs, stamp):
     changes = []
     total_refs = 0
     for path in region_files:
+        path = str(path).lstrip("/")
         raw = client.read_file_optional(path)
         if raw is None:
             continue
