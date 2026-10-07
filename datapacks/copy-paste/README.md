@@ -1,6 +1,6 @@
 # Minecraft Copy/Paste Datapack v1.6
 
-> Source: **v1.6（尚未發布）** · Latest release: **copy-paste-v1.5**
+> Release: **copy-paste-v1.6** · Download: **copy-paste-v1.6.zip**
 
 適用：Minecraft Java Edition 26.3（Data Pack 121.0）
 
