@@ -2,7 +2,7 @@
 
 ## 結論與範圍
 
-Copy/Paste v1.7 的 ID tree + per-property matcher 可用於目前 26.3 的 35,720 個支援 state。沿用 `{id, properties}` 與原本 summon 路徑；沒有持久資料格式變更，不需要 migration。未安裝到 inno，也未發布或合併。
+Copy/Paste v1.7 的 ID tree + per-property matcher 可用於目前 26.3 的 35,720 個支援 state。沿用 `{id, properties}` 與原本 summon 路徑；沒有持久資料格式變更，不需要 migration。**這句狀態是本次驗證當下的歷史快照**：當時尚未安裝到 inno、發布或合併；之後 v1.7 已合併發布，並由 v1.8 hotfix 取代，v1.8 也已部署到 inno。
 
 本次接手保持原本 generated matcher 不變，補強 report 匯入驗證與 innotest 測試工具。Report 必須包含每一種合法 property 組合且不得重複，不能只靠 state 數量相等推論 Cartesian product。
 
