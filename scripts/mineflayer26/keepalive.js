@@ -23,8 +23,9 @@ if (![1, 4].includes(names.length) || new Set(names).size !== names.length || na
   console.error('Use either one allowed player or all four unique allowed players')
   process.exit(2)
 }
-if (!Number.isFinite(durationMs) || durationMs < 30000 || durationMs > 300000) {
-  console.error('MF26_DURATION_MS must be between 30000 and 300000 for the GitHub smoke test')
+// Long enough for the full live feature regression; cancel the workflow run to end earlier.
+if (!Number.isFinite(durationMs) || durationMs < 30000 || durationMs > 3600000) {
+  console.error('MF26_DURATION_MS must be between 30000 and 3600000')
   process.exit(2)
 }
 

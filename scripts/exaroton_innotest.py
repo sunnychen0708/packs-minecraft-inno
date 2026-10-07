@@ -594,6 +594,101 @@ def run_copy_paste_multiplayer_test(client):
         f"current-run result={result or '<missing>'}"
     )
 
+LIVE_SECTIONS = {"all": "", "utilities": "_utilities", "warehouse": "_warehouse", "copy-paste": "_copypaste"}
+
+def run_live_feature_test(client, section="all"):
+    """Every player-facing feature of the three packs, played by the four agent bots
+    (scripts/mineflayer26/agent.js). Builds dist/live-feature-test, starts it from the
+    console and judges only this session's log: LIVE_CHECK lines, LIVE_RESULT, /ERROR]."""
+    section = section or "all"
+    if section not in LIVE_SECTIONS:
+        raise Error(f"unsupported live test section: {section}")
+    if int(client.target().get("status", -1)) != 1:
+        raise Error("innotest must be ONLINE before the live feature test")
+
+    session_marker = f"LIVE_SESSION_{int(time.time() * 1000)}"
+    client.command(f"say {session_marker} START")
+    time.sleep(1)
+    deploy(client, "all")
+    time.sleep(5)
+
+    import subprocess
+    subprocess.check_call([sys.executable, str(ROOT / "scripts" / "build-live-feature-test.py")])
+    payload = zip_tree(ROOT / "dist" / "live-feature-test")
+    world = level_name(client.read_file("server.properties"))
+    remote_harness = f"{world}/datapacks/live-feature-test.zip"
+    client.write_file(remote_harness, payload)
+    print(f"deployed live feature harness -> {remote_harness} ({len(payload)} bytes)")
+    client.command("reload")
+    time.sleep(8)
+
+    def session_log():
+        log = client.log()
+        at = log.rfind(f"{session_marker} START")
+        return log[at:] if at >= 0 else ""
+
+    def remove_harness():
+        try:
+            client.delete_file(remote_harness)
+        finally:
+            try:
+                client.command("reload")
+            except Error:
+                pass
+
+    pre = session_log()
+    if not pre:
+        remove_harness()
+        raise Error("live feature preflight marker not found in server log")
+    pre_errors = [line for line in pre.splitlines() if "/ERROR]:" in line]
+    if pre_errors:
+        remove_harness()
+        raise Error("live feature preflight found current-session server errors:\n" + "\n".join(pre_errors[:12]))
+
+    server = wait_players(client, 4, 300)
+    print(f"live feature test{LIVE_SECTIONS[section] or ' (all sections)'} starting with player count={player_count(server)}")
+    client.command(f"function livetest:start{LIVE_SECTIONS[section]}")
+
+    # The whole run is ~15 minutes on innotest; leave plenty of room for a slow server.
+    deadline = time.time() + 50 * 60
+    segment, result, printed = "", "", 0
+    while time.time() < deadline:
+        segment = session_log()
+        lines = [line for line in segment.splitlines() if "LIVE_CHECK " in line or "LIVE_RESULT " in line]
+        for line in lines[printed:]:
+            print(line, flush=True)
+        printed = len(lines)
+        found = [line for line in lines if "LIVE_RESULT " in line]
+        if found:
+            result = found[-1]
+            break
+        time.sleep(10)
+
+    if not result:
+        # Timed out mid-run: put the players, gamerules and the test area back first.
+        for command in ["function livetest:restore", "function livetest:clear_area"]:
+            try:
+                client.command(command)
+            except Error:
+                pass
+            time.sleep(5)
+    else:
+        try:
+            client.command("function livetest:clear_area")
+        except Error:
+            pass
+        time.sleep(10)
+    remove_harness()
+
+    errors = [line for line in segment.splitlines() if "/ERROR]:" in line]
+    fails = [line for line in segment.splitlines() if "LIVE_CHECK FAIL" in line]
+    if errors:
+        raise Error("live feature test produced current-session server errors:\n" + "\n".join(errors[:12]))
+    if "LIVE_RESULT PASS" in result and not fails:
+        print("LIVE_FEATURE_TEST=PASS")
+        return
+    raise Error(f"live feature test did not pass; result={result or '<missing>'}; failed checks={len(fails)}")
+
 def wait_status(client, wanted, timeout=180):
     deadline = time.time() + timeout
     while time.time() < deadline:
@@ -937,6 +1032,7 @@ def run(path):
     elif op == "command": client.command(str(r.get("command") or "")); print(f"command sent to {TARGET}")
     elif op == "deploy-datapack": deploy(client, str(r.get("pack") or ""))
     elif op == "run-copy-paste-multiplayer-test": run_copy_paste_multiplayer_test(client)
+    elif op == "run-live-feature-test": run_live_feature_test(client, str(r.get("pack") or "all"))
     elif op == "set-online-mode-false": set_offline_mode(client)
     elif op == "online-mode-status":
         options = client.get_config("server.properties")

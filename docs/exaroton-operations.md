@@ -109,13 +109,36 @@ The regression covers:
 
 The final assertion sequence on 2026-10-07 produced `MCCMP_RESULT PASS` with every check above passing while four bot players were online, and the final four-bot hold completed the full five-minute session. However, the same persistent server log also contains earlier failed attempts from that debugging session. The controller now places a unique session marker before deployment/reload and rejects any current-session `/ERROR]:` line before accepting PASS. A fresh run through this stricter gate is still required before calling the live validation a clean-log pass.
 
+## Live feature test (all three packs, played by bots)
+
+`scripts/build-live-feature-test.py` builds a temporary `livetest` datapack that walks every
+player-facing feature of Utilities, Warehouse and Copy/Paste with two of the four bot players
+(`SunnyChen` = A, `penguin0531` = B) in an empty, never-generated area (X -440..-340,
+Y 279..300, Z 140..240). Whatever only a client can do (sneak, dig a block, right-click a
+block, respawn) is asked of the bot with `tellraw <player> "LIVEBOT <id> <action> [x y z]"`;
+`scripts/mineflayer26/agent.js` performs it and answers `/trigger livebot_ack set <id>`.
+
+Before the run the harness saves both players' inventories into two chests and their
+positions, game mode and `keepInventory`; `function livetest:restore` (also called at the end
+and by the controller on timeout) puts all of it back, and `function livetest:clear_area`
+empties the area (refused while a run still holds saved inventories).
+
+1. Start the bots: `Mineflayer 26.3 innotest` workflow, `client=agent`,
+   `duration_ms` up to `3600000` (or `ops/mineflayer-request.json` with `"operation": "agent-4-bots"`).
+2. Wait for `READY 4/4 ... (agent)` in that run.
+3. Run `run-live-feature-test` through the innotest controller; `pack` picks the section
+   (`all`, `utilities`, `warehouse`, `copy-paste`).
+4. Require `LIVE_FEATURE_TEST=PASS`: every `LIVE_CHECK` passed, `LIVE_RESULT PASS`, and no
+   `/ERROR]:` line after the session marker.
+5. Cancel the bots run (or let `duration_ms` run out).
+
 ## Recommended live-test sequence
 
 For a multiplayer-sensitive Copy/Paste change:
 
 1. Let normal GitHub validation finish first.
 2. Start `innotest` only if it is currently OFFLINE.
-3. Start a four-player Mineflayer request for 300000 ms.
+3. Start a four-player Mineflayer request (30000–3600000 ms; 300000 ms is enough here).
 4. Wait until the Mineflayer log shows `READY 4/4`.
 5. Run `run-copy-paste-multiplayer-test` through the innotest controller.
 6. Require `COPY_PASTE_MULTIPLAYER_LIVE_TEST=PASS` / `MCCMP_RESULT PASS`.

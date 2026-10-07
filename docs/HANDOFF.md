@@ -132,12 +132,22 @@ python3 scripts/test-datapack-compatibility.py --java $J --server-jar $S --accep
 
 Copy/Paste runtime 失敗時會印 `MCCST_DIAG_DROP_<步驟>` / `MCCST_DIAG_DIFF_<步驟>`。
 
+### innotest 全功能 live test（bot 實際操作三個 datapack）
+
+1. `Mineflayer 26.3 innotest` workflow：`client=agent`、`duration_ms` 最多 3600000（取消 run 可提早結束）。
+2. 等 `READY 4/4 ... (agent)`。
+3. `exaroton innotest control`：`run-live-feature-test`，`pack` 選 `all` / `utilities` / `warehouse` / `copy-paste`。
+4. 要看到 `LIVE_FEATURE_TEST=PASS`（全部 `LIVE_CHECK PASS`、`LIVE_RESULT PASS`、session 內沒有 `/ERROR]:`）。
+5. 跑完取消 bots run。harness 開始前會把兩位玩家背包存進箱子並記住位置／模式／keepInventory，結束（或逾時）時 `livetest:restore` 全部還原，`livetest:clear_area` 清空測試區。
+
+細節見 `docs/exaroton-operations.md` 的 Live feature test。
+
 ### innotest 四人 multiplayer live regression
 
 當 Copy/Paste 有多人 state / trigger / Undo / clipboard / Blueprint 相關改動時，除了 CI 還要跑：
 
 1. 確認 / 啟動 `innotest`。
-2. `ops/mineflayer-request.json` 觸發四 bot 300000 ms。
+2. `ops/mineflayer-request.json` 觸發四 bot（上限已放寬到 3600000 ms；這項 300000 ms 就夠）。
 3. 等 `READY 4/4`。
 4. `ops/exaroton-request.json` 觸發 `run-copy-paste-multiplayer-test`。
 5. 要看到 `COPY_PASTE_MULTIPLAYER_LIVE_TEST=PASS` 與 `MCCMP_RESULT PASS`。

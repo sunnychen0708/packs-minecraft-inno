@@ -9,10 +9,18 @@ on:
   workflow_dispatch:
     inputs:
       duration_ms:
-        description: Keep four bots connected for this many milliseconds (30s-300s)
+        description: Keep four bots connected for this many milliseconds (30s-60min); cancel the run to end earlier
         required: true
         default: "180000"
         type: string
+      client:
+        description: keepalive = idle players; agent = players that also follow LIVEBOT directives (live feature test)
+        required: true
+        default: keepalive
+        type: choice
+        options:
+          - keepalive
+          - agent
 
 permissions:
   contents: read
@@ -24,7 +32,7 @@ concurrency:
 jobs:
   bots:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 75
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
@@ -34,6 +42,7 @@ jobs:
         shell: bash
         env:
           INPUT_DURATION_MS: ${{ inputs.duration_ms }}
+          INPUT_CLIENT: ${{ inputs.client }}
           EVENT_NAME: ${{ github.event_name }}
         run: |
           python3 - <<'PY'
@@ -43,9 +52,11 @@ jobs:
           run = True
           names = ""
           duration = 30000
+          client = "keepalive"
 
           if os.environ["EVENT_NAME"] == "workflow_dispatch":
               duration = int(os.environ["INPUT_DURATION_MS"])
+              client = os.environ.get("INPUT_CLIENT") or "keepalive"
               names = "SunnyChen,penguin0531,geena0701,Felicitypeng"
           else:
               req = json.loads(Path("ops/mineflayer-request.json").read_text())
@@ -55,6 +66,10 @@ jobs:
               elif op == "test-4-bots":
                   names = "SunnyChen,penguin0531,geena0701,Felicitypeng"
                   duration = int(req.get("duration_ms", 180000))
+              elif op == "agent-4-bots":
+                  names = "SunnyChen,penguin0531,geena0701,Felicitypeng"
+                  duration = int(req.get("duration_ms", 1800000))
+                  client = "agent"
               elif op == "probe-one":
                   player = str(req.get("player") or "")
                   allowed = {"SunnyChen", "penguin0531", "geena0701", "Felicitypeng"}
@@ -65,13 +80,16 @@ jobs:
               else:
                   raise SystemExit("unsupported mineflayer request")
 
-          if run and not 30000 <= duration <= 300000:
-              raise SystemExit("duration_ms must be 30000..300000")
+          if client not in {"keepalive", "agent"}:
+              raise SystemExit("unsupported client")
+          if run and not 30000 <= duration <= 3600000:
+              raise SystemExit("duration_ms must be 30000..3600000")
 
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
               f.write(f"run={'true' if run else 'false'}\n")
               f.write(f"duration_ms={duration}\n")
               f.write(f"names={names}\n")
+              f.write(f"client={client}\n")
           PY
 
       - name: No-op request
@@ -96,4 +114,5 @@ jobs:
           MF26_HOST: innotest.exaroton.me
           MF26_BOTS: ${{ steps.request.outputs.names }}
           MF26_DURATION_MS: ${{ steps.request.outputs.duration_ms }}
-        run: node scripts/mineflayer26/keepalive.js
+          MF26_CLIENT: ${{ steps.request.outputs.client }}
+        run: node "scripts/mineflayer26/${MF26_CLIENT}.js"

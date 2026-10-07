@@ -26,13 +26,14 @@ on:
           - command
           - deploy-datapack
           - run-copy-paste-multiplayer-test
+          - run-live-feature-test
           - set-online-mode-false
       command:
         description: Console command (only used by command)
         required: false
         type: string
       pack:
-        description: Datapack to deploy (only used by deploy-datapack)
+        description: Datapack to deploy (deploy-datapack) or section to test (run-live-feature-test)
         required: false
         type: choice
         default: all
