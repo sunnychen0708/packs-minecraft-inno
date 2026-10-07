@@ -1,0 +1,20 @@
+{
+  "values": [
+    "minecraft:dragon_egg",
+    "minecraft:dragon_head",
+    "minecraft:dragon_wall_head",
+    "minecraft:dried_ghast",
+    "minecraft:dried_kelp_block",
+    "minecraft:dripstone_block",
+    "minecraft:dropper",
+    "minecraft:emerald_block",
+    "minecraft:emerald_ore",
+    "minecraft:enchanting_table",
+    "minecraft:end_gateway",
+    "minecraft:end_portal",
+    "minecraft:end_portal_frame",
+    "minecraft:end_rod",
+    "minecraft:end_stone",
+    "minecraft:ender_chest"
+  ]
+}

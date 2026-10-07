@@ -247,7 +247,7 @@ Build 的 Undo/Redo 會連材料交易一起處理：Undo 在施工區仍與 Bui
 - Rotate / Mirror Structure Template：每軸 ≤ 48；有自訂 Anchor 的 Flip X/Z 也走這條路徑，同樣每軸 ≤ 48。
 - Move / 直接 Rotate 的 Undo 範圍（來源加目的地）每軸 ≤ 256。
 - Warehouse 共用材料來源上限為 64；Copy/Paste 不再有自己的材料箱上限或註冊資料。
-- Blueprint exact-state matcher覆蓋 Java 26.3 的 1,283 種非空氣 block IDs、35,720 個 block states。
+- Blueprint exact-state matcher覆蓋 Java 26.3 的 1,283 種非空氣 block IDs、35,720 個 block states。它由 `scripts/gen-blueprint-matcher.py` 依官方 block report 產生：先用依出現頻率加權的 block-tag 樹找出 block ID，再逐一判斷每個 property（2 值 property 先寫預設值、再判斷一次），不再逐一列舉完整 state（#49）。
 - 實體不包含在 Copy/Cut/Blueprint 中。
 
 ## 驗證
@@ -256,9 +256,12 @@ Build 的 Undo/Redo 會連材料交易一起處理：Undo 在施工區仍與 Bui
 
 ```console
 python3 scripts/validate-datapack.py copy-paste
+python3 scripts/gen-blueprint-matcher.py --check
 python3 scripts/test-copy-paste.py
 python3 scripts/test-datapack-compatibility.py
 ```
+
+`test-copy-paste.py` 會離線模擬 generated matcher，逐一驗證 35,720 個 state 的輸出；`test-copy-paste-runtime.py` 會在官方 26.3 server 上逐一放置這些 state，並比對 matcher 寫出的 `{id, properties}`。
 
 官方 Minecraft 26.3 行為 regression：
 

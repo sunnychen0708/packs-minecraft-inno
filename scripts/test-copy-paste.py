@@ -4,7 +4,7 @@
 Runs without a Minecraft client. CI should run this after validate-datapack.py.
 """
 from __future__ import annotations
-import argparse, json, random, re
+import argparse, itertools, json, random, re
 from pathlib import Path
 
 RE_FUNC = re.compile(r'\bfunction\s+(mcc:[a-z0-9_./-]+)')
@@ -286,6 +286,96 @@ def check_multiplayer_isolation(pack: Path):
 
     return 64
 
+BP_NS='mcc:blueprint/generated'
+BP_PRED=r'(#?[a-z0-9_:/.-]+)(?:\[([a-z0-9_=,]*)\])?'
+BP_SET=r'data modify storage mcc:temp state\.properties\.([a-z0-9_]+) set value "([a-z0-9_]+)"'
+BP_RULES=[
+    ('if_call', re.compile(rf'execute if block ~ ~ ~ {BP_PRED} run return run function ({BP_NS}/[a-z0-9_/]+)$')),
+    ('call', re.compile(rf'return run function ({BP_NS}/[a-z0-9_/]+)$')),
+    ('summon', re.compile(r'return run function mcc:blueprint/summon with storage mcc:temp$')),
+    ('if_ret_set', re.compile(rf'execute if block ~ ~ ~ {BP_PRED} run return run {BP_SET}$')),
+    ('if_set', re.compile(rf'execute if block ~ ~ ~ {BP_PRED} run {BP_SET}$')),
+    ('set_id', re.compile(r'data modify storage mcc:temp state set value \{id:"(minecraft:[a-z0-9_]+)"\}$')),
+    ('set', re.compile(rf'{BP_SET}$')),
+    ('unless_fn', re.compile(rf'execute unless function ({BP_NS}/[a-z0-9_/]+) run return fail$')),
+    ('fail', re.compile(r'return fail$')),
+]
+
+class BlueprintMatcher:
+    """Interprets the generated matcher (the only command forms the generator emits) for one block state."""
+    def __init__(self, pack: Path):
+        fdir=pack/'data/mcc/function/blueprint/generated'
+        self.funcs={}
+        for p in fdir.rglob('*.mcfunction'):
+            prog=[]
+            for line in read(p).splitlines():
+                if not line or line.startswith('#'): continue
+                for kind,rx in BP_RULES:
+                    m=rx.match(line)
+                    if m: prog.append((kind,m.groups())); break
+                else: raise AssertionError(f'{p}: unexpected matcher command {line!r}')
+            self.funcs[BP_NS+'/'+p.relative_to(fdir).with_suffix('').as_posix()]=prog
+        self.tags={'#'+BP_NS+'/'+p.stem:set(json.loads(read(p))['values'])
+                   for p in (pack/'data/mcc/tags/block/blueprint/generated').glob('*.json')}
+
+    def test(self, pred, props, block, state):
+        if not (block in self.tags[pred] if pred.startswith('#') else block==pred): return False
+        return all(state.get(k)==v for k,v in (kv.split('=') for kv in filter(None,(props or '').split(','))))
+
+    def run(self, block, state):
+        """Returns (return value, state passed to summon or None, commands executed)."""
+        self.out=None; self.summoned=None; self.cmds=0
+        return self.call(BP_NS+'/root',block,state), self.summoned, self.cmds
+
+    def call(self, fid, block, state):
+        for kind,g in self.funcs[fid]:
+            self.cmds+=1
+            if kind=='if_call':
+                if self.test(g[0],g[1],block,state): return self.call(g[2],block,state)
+            elif kind=='call': return self.call(g[0],block,state)
+            elif kind=='summon': self.summoned=json.loads(json.dumps(self.out)); return 1
+            elif kind=='if_ret_set':
+                if self.test(g[0],g[1],block,state): self.out.setdefault('properties',{})[g[2]]=g[3]; return 1
+            elif kind=='if_set':
+                if self.test(g[0],g[1],block,state): self.out.setdefault('properties',{})[g[2]]=g[3]
+            elif kind=='set_id': self.out={'id':g[0]}
+            elif kind=='set': self.out.setdefault('properties',{})[g[0]]=g[1]
+            elif kind=='unless_fn':
+                if not self.call(g[0],block,state): return 0
+            elif kind=='fail': return 0
+        raise AssertionError(f'{fid} ended without return')
+
+def blueprint_states(blocks: dict):
+    for block,spec in blocks.items():
+        props=spec.get('properties',{})
+        for combo in itertools.product(*props.values()):
+            yield block,dict(zip(props,combo))
+
+def check_blueprint_matcher(pack: Path):
+    """Issue #49: the ID tree + per-property leaves must reproduce every exact 26.3 block state."""
+    snapshot=Path(__file__).resolve().parent/'data/blocks-26.3.json'
+    blocks=json.loads(read(snapshot))
+    assert len(blocks)==1283 and not {'minecraft:air','minecraft:cave_air','minecraft:void_air'}&set(blocks)
+    m=BlueprintMatcher(pack)
+    states=0; worst=0; cost={}
+    for block,state in blueprint_states(blocks):
+        ret,summoned,cmds=m.run(block,state)
+        want={'id':block,**({'properties':state} if state else {})}
+        assert ret==1 and summoned==want, (block,state,ret,summoned)
+        states+=1; worst=max(worst,cmds); cost.setdefault(block,[]).append(cmds)
+    assert states==35720, states
+    # Unknown blocks (air included) and an unlisted value of a 3+-value property still fail
+    # without reaching summon, like the old exact-state matcher.
+    for block,state in (('minecraft:air',{}),('minecraft:cave_air',{}),('example:modded',{}),
+                        ('minecraft:note_block',{'instrument':'unknown','note':'0','powered':'false'}),
+                        ('minecraft:oak_stairs',{'facing':'up','half':'top','shape':'straight','waterlogged':'false'})):
+        ret,summoned,_=m.run(block,state)
+        assert ret==0 and summoned is None, (block,state)
+    # Hot-path budget (old linear matcher: stone 539, worst 2701 commands per scanned block).
+    avg=lambda b: sum(cost[b])/len(cost[b])
+    assert avg('minecraft:stone')<=6 and avg('minecraft:dirt')<=6 and worst<=80, (avg('minecraft:stone'),worst)
+    return states
+
 def check_v100_semantics(pack: Path):
     load=read(pack/'data/mcc/function/load.mcfunction')
     cleanup=read(pack/'data/mcc/function/admin/cleanup_legacy_triggers.mcfunction')
@@ -417,23 +507,7 @@ def check_v100_semantics(pack: Path):
     assert 'positioned $(tx) $(ty) $(tz)' not in summon
     assert 'block_state set from storage mcc:temp state' in summon
 
-    # Generated exact-state dispatcher: every non-air 26.3 block appears in exactly one group.
-    tag_dir=pack/'data/mcc/tags/block/blueprint/generated'
-    group_dir=pack/'data/mcc/function/blueprint/generated'
-    tags=sorted(tag_dir.glob('g_*.json'))
-    groups=sorted(group_dir.glob('group_*.mcfunction'))
-    assert len(tags)==128 and len(groups)==128
-    block_ids=[]
-    for p in tags:
-        obj=json.loads(read(p))
-        block_ids.extend(obj['values'])
-    assert len(block_ids)==len(set(block_ids))==1283
-    matcher_states=sum(read(p).count('run data modify storage mcc:temp state set value') for p in groups)
-    assert matcher_states==35720, matcher_states
-    root=read(group_dir/'root.mcfunction')
-    for i in range(128):
-        assert f'#mcc:blueprint/generated/g_{i}' in root
-        assert f'function mcc:blueprint/generated/group_{i}' in root
+    matcher_states=check_blueprint_matcher(pack)
 
     # Copy-V stays preview-only; v1.0 construction is a separate, material-gated Build step.
     assert 'mcc_cliptype matches 1 run return run function mcc:blueprint/create' in dispatch
