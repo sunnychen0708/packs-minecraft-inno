@@ -3,6 +3,7 @@ execute unless score @s mcc_tmp matches 1 run return fail
 scoreboard players operation @s mcc_canchor = @s mcc_hasa
 scoreboard players set @s mcc_bpoffx 0
 scoreboard players set @s mcc_bpoffz 0
+scoreboard players set @s mcc_amt 0
 # If an old Blueprint orientation already carries a mirror, rebase it so the
 # mirrored bounding box stays in place for this newly copied selection.
 execute if score @s mcc_canchor matches 0 if score @s mcc_mir matches 1.. run scoreboard players operation @s mcc_amt = @s mcc_mir
