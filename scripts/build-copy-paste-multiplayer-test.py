@@ -181,8 +181,8 @@ for p in P:
             f'scoreboard players set {sel(p)} mcc_hasa 0',
             f'scoreboard players set {sel(p)} mcc_buildconfirm 0']
 setup+=['scoreboard players set #pass mccmp 0','scoreboard players set #fail mccmp 0']
-# Nothing in this test waits for a bot reply, so the whole chain runs at the fastest tick rate.
-step('tick rate 10000',*setup)
+# Nothing in this test waits for a bot reply: the runner runs it at the fastest tick rate.
+step(*setup)
 check('house fixtures ready',
       *[f'{OW} if blocks {box(REF)} {at(P[p]["S"])} all' for p in P],
       *[air_box(P[p]['T']) for p in P],
@@ -382,7 +382,6 @@ check('B second undo restores cut source',*exact_house(P['b']['S']),air_box(P['b
 
 step(
     *[f'tellraw @a[tag={P[p]["tag"]}] [{{"text":"MCCMP DONE pass="}},{{"score":{{"name":"#pass","objective":"mccmp"}}}},{{"text":" fail="}},{{"score":{{"name":"#fail","objective":"mccmp"}}}}]' for p in P],
-    'tick rate 20',
     'execute if score #fail mccmp matches 0 run say MCCMP_RESULT PASS',
     'execute unless score #fail mccmp matches 0 run say MCCMP_RESULT FAIL'
 )
@@ -424,7 +423,7 @@ for i,s in enumerate(steps):
 )
 # Cleanup: stop the chain, take back anything the test gave (count above the
 # player's own baseline), clear the area and the test state.
-cleanup=['tick rate 20']+[f'schedule clear mcc_mp_test:step_{i}' for i in range(len(steps))]
+cleanup=[f'schedule clear mcc_mp_test:step_{i}' for i in range(len(steps))]
 cleanup+=[f'execute as {sel(p)} run trigger previewclear' for p in P]
 cleanup.append('function mcc_mp_test:restore_inventory')
 restore=[]

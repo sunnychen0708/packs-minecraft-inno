@@ -651,6 +651,7 @@ def run_copy_paste_multiplayer_test(client):
         "tag @a remove mcc_mp_b",
         "execute as @a[name=penguin0531,limit=1] run function mcc_mp_test:join_a",
         "execute as @a[name=geena0701,limit=1] run function mcc_mp_test:join_b",
+        "tick rate 10000",
         "execute as @a[name=penguin0531,limit=1] run function mcc_mp_test:start",
     ]
     for command in commands:
@@ -699,7 +700,7 @@ def run_copy_paste_multiplayer_test(client):
 
     current_checks = "\n".join(
         line for line in segment.splitlines()
-        if "MCCMP_CHECK " in line or "MCCMP_DIAG " in line or "MCCMP_RESULT " in line
+        if "MCCMP_CHECK " in line or "MCCMP_DIAG " in line or "MCCMP_DIFF " in line or "MCCMP_RESULT " in line
     )
     if current_checks:
         print(current_checks)
@@ -894,11 +895,23 @@ def run_live_suite(client, suite):
     deadline = time.time() + timeout
     result = segment = ""
     printed = 0
+    speed_done = 0
     while time.time() < deadline:
         log = client.log()
         marker = log.rfind(f"{run_marker} START")
         if marker >= 0:
             segment = log[marker:]
+            # The suite asks for tick-rate changes (functions cannot run /tick).
+            for line in segment.splitlines():
+                parts = line.split(f"{prefix}_SPEED ", 1)
+                if len(parts) == 2:
+                    seq_rate = parts[1].split()
+                    seq, rate = int(seq_rate[0]), int(seq_rate[1])
+                    if seq > speed_done and 1 <= rate <= 10000:
+                        client.command(f"tick rate {rate}")
+                        client.command(f"scoreboard players set #speed htest {seq}")
+                        print(f"tick rate {rate} (request {seq})")
+                        speed_done = seq
             lines = [l for l in segment.splitlines() if f"{prefix}_CHECK " in l or f"{prefix}_DIFF " in l]
             for line in lines[printed:]:
                 print(line)
@@ -907,7 +920,7 @@ def run_live_suite(client, suite):
             if results:
                 result = results[-1]
                 break
-        time.sleep(5)
+        time.sleep(2)
 
     try:
         client.command("tick rate 20")

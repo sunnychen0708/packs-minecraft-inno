@@ -131,6 +131,27 @@ s.step(f'execute {OW} run fill {AREA[0]} {AREA[1]} {AREA[2]} {AREA[3]} {AREA[4]}
        f'execute {OW} run setblock {O[0]} {O[1]-1} {O[2]} minecraft:stone')
 s.check('backup taken', 'data storage wtest:b all{backed:1b}', 'data storage warehouse:chests c00{registered:1b,valid:1b}')
 
+# ---- 1. register / unregister by right-click (real bot) ------------------------
+RX, RY, RZ = O[0] + 6, O[1], O[2] + 4
+s.step(f'execute {OW} run setblock {RX} {RY} {RZ} minecraft:chest[facing=south,type=right]',
+       f'execute {OW} run setblock {RX+1} {RY} {RZ} minecraft:chest[facing=south,type=left]',
+       f'execute as {A} run trigger wh_register set 13')
+s.step(f'execute as {A} run trigger wh_action set 4')
+s.tp('a', RX + .5, RY, RZ + 2.5, 180, 29.2)
+s.bot('a', 'use', RX, RY, RZ)
+s.bot('a', 'close')
+s.wait('c13 registered', [f'data storage warehouse:chests c13{{registered:1b,a_z:{RZ}}}'], tries=40)
+s.check('right-click registration saves the chest', f'data storage warehouse:chests c13{{registered:1b,valid:1b,a_y:{RY},a_z:{RZ}}}')
+s.step(f'execute in minecraft:overworld store success score #fl htest run forceload query {RX} {RZ}')
+s.check('the registered chest chunk is forceloaded (v4.6)', 'score #fl htest matches 1')
+s.step(f'execute as {A} run trigger wh_unreg set 13')
+s.step(f'execute as {A} run trigger wh_unreg_do set 1')
+s.check('unregister clears the registration', 'data storage warehouse:chests c13{registered:0b}')
+s.step('data modify storage warehouse:chests c13 set from storage wtest:b all.chests.c13', 'function warehouse:chunks/refresh')
+
+# Everything after this waits only for the server: run it at the fastest tick rate.
+s.speed(True)
+
 # ---- 1. sorting by the current rules ----------------------------------------
 entry_empty_wait('entry box empty before the sort test')
 s.step(*count('minecraft:cobblestone', '#cob0'))
@@ -220,24 +241,6 @@ s.step(f'item replace entity {A} weapon.mainhand with minecraft:paper[minecraft:
 s.step(f'execute as {A} run trigger wh_rename set 1')
 s.check('rename stores the custom box name', 'data storage warehouse:boxnames c31')
 s.step(f'execute as {A} run trigger wh_rename set 2', f'item replace entity {A} weapon.mainhand with minecraft:air')
-
-# ---- 7. register / unregister by right-click (real bot) ------------------------
-RX, RY, RZ = O[0] + 6, O[1], O[2] + 4
-s.step(f'execute {OW} run setblock {RX} {RY} {RZ} minecraft:chest[facing=south,type=right]',
-       f'execute {OW} run setblock {RX+1} {RY} {RZ} minecraft:chest[facing=south,type=left]',
-       f'execute as {A} run trigger wh_register set 13')
-s.step(f'execute as {A} run trigger wh_action set 4')
-s.tp('a', RX + .5, RY, RZ + 2.5, 180, 29.2)
-s.bot('a', 'use', RX, RY, RZ)
-s.bot('a', 'close')
-s.wait('c13 registered', [f'data storage warehouse:chests c13{{registered:1b,a_z:{RZ}}}'], tries=40)
-s.check('right-click registration saves the chest', f'data storage warehouse:chests c13{{registered:1b,valid:1b,a_y:{RY},a_z:{RZ}}}')
-s.step(f'execute in minecraft:overworld store success score #fl htest run forceload query {RX} {RZ}')
-s.check('the registered chest chunk is forceloaded (v4.6)', 'score #fl htest matches 1')
-s.step(f'execute as {A} run trigger wh_unreg set 13')
-s.step(f'execute as {A} run trigger wh_unreg_do set 1')
-s.check('unregister clears the registration', 'data storage warehouse:chests c13{registered:0b}')
-s.step('data modify storage warehouse:chests c13 set from storage wtest:b all.chests.c13', 'function warehouse:chunks/refresh')
 
 # ---- 8. every real box chunk is forceloaded ---------------------------------
 s.step('scoreboard players set #nofl htest 0', 'function wtest:forceload_all')

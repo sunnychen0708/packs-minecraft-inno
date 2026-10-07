@@ -20,9 +20,10 @@ import json
 import shutil
 
 ALLOWED_BOTS = ('SunnyChen', 'penguin0531', 'geena0701', 'Felicitypeng')
-# Server-only stretches run at the fastest tick rate; anything that waits for a bot (or for
-# chunks to load) runs at the normal 20 tps, because those finish in wall-clock time and a
-# tick-counted wait would otherwise time out before the bot answers.
+# /tick needs permission level 3 and datapack functions run at level 2, so the suite asks the
+# runner (console) to change the tick rate: speed() prints <PREFIX>_SPEED <seq> <rate> and waits
+# until the runner sets #speed htest to <seq>. Only stretches that do not wait for a bot reply
+# may run fast: tick-counted waits would otherwise time out before the bot answers.
 FAST_TICK_RATE = 10000
 
 
@@ -52,6 +53,8 @@ class Suite:
         self.cleanup_cmds: list[str] = []
         self.default_delay = 10
         self.realtime: list[bool] = []
+        self.speed_seq = 0
+        self._fast = False
         self._in_bot = False
 
     # ---- selectors -------------------------------------------------------
@@ -101,6 +104,14 @@ class Suite:
                   fail=[f'score {self.sel(p)} mfack matches {seq + 100000}'], tries=tries)
         self._in_bot = False
 
+    def speed(self, fast: bool) -> None:
+        """Ask the runner to switch the tick rate (fastest or 20) and wait until it has."""
+        self.speed_seq += 1
+        rate = FAST_TICK_RATE if fast else 20
+        self.step(f'say {self.prefix}_SPEED {self.speed_seq} {rate}', delay=1)
+        self.wait(f'tick rate {rate}', [f'score #speed htest matches {self.speed_seq}'], tries=1000000)
+        self._fast = fast
+
     def trigger(self, p: str, objective: str, value: int | None = None) -> None:
         """The bot sends /trigger itself, like a player typing it."""
         args = ['trigger', objective] + (['set', str(value)] if value is not None else [])
@@ -131,9 +142,10 @@ class Suite:
         (out / 'pack.mcmeta').write_text(json.dumps(
             {'pack': {'description': self.description, 'min_format': 121, 'max_format': 121}},
             ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-        self.step('tick rate 20',
-                  f'execute if score #fail htest matches 0 run say {self.prefix}_RESULT PASS',
-                  f'execute unless score #fail htest matches 0 run say {self.prefix}_RESULT FAIL', realtime=True)
+        if self.speed_seq and self._fast:
+            self.speed(False)
+        self.step(f'execute if score #fail htest matches 0 run say {self.prefix}_RESULT PASS',
+                  f'execute unless score #fail htest matches 0 run say {self.prefix}_RESULT FAIL')
         n = len(self.steps)
         for i, s in enumerate(self.steps):
             nxt = f'{self.ns}:step_{i+1}' if i + 1 < n else None
@@ -159,20 +171,17 @@ class Suite:
                           f'execute if score #wait htest matches {tries}.. run scoreboard players set #wait htest 0',
                           f'execute if score #wait htest matches 0 run return run schedule function {nxt} 5t replace',
                           f'schedule function {self.ns}:step_{i} 5t replace']
-            rt = self.realtime[i]
-            if i == 0 or rt != self.realtime[i - 1]:
-                lines.insert(0, 'tick rate 20' if rt else f'tick rate {FAST_TICK_RATE}')
             (fn / f'step_{i}.mcfunction').write_text('\n'.join(lines) + '\n', encoding='utf-8')
         start = ['scoreboard objectives remove htest', 'scoreboard objectives add htest dummy',
                  'scoreboard objectives add mfack trigger',
                  'scoreboard players set #pass htest 0', 'scoreboard players set #fail htest 0',
-                 'scoreboard players set #wait htest 0']
+                 'scoreboard players set #wait htest 0', 'scoreboard players set #speed htest 0']
         for p in self.players:
             start.append(f'execute unless entity {self.sel(p)} run say {self.prefix}_RESULT FAIL missing_player_{self.players[p]}')
             start.append(f'execute unless entity {self.sel(p)} run return fail')
         start.append(f'function {self.ns}:step_0')
         (fn / 'start.mcfunction').write_text('\n'.join(start) + '\n', encoding='utf-8')
-        cleanup = ['tick rate 20'] + [f'schedule clear {self.ns}:step_{i}' for i in range(n)]
+        cleanup = [f'schedule clear {self.ns}:step_{i}' for i in range(n)]
         cleanup += self.cleanup_cmds
         cleanup += ['scoreboard objectives remove mfack', 'scoreboard objectives remove htest',
                     f'say {self.prefix}_CLEANUP DONE']
