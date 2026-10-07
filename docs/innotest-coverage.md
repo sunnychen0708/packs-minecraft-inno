@@ -43,7 +43,7 @@ Copy/Paste 的測試是 `scripts/build-copy-paste-multiplayer-test.py`（`run-co
 | 功能 | innotest 驗法 | 狀態 |
 | --- | --- | --- |
 | 自動分類（入口箱 → 分類箱） | 把已知物品放進 inno 地圖上真的入口箱，依當下的玩家自訂分類（`warehouse:rules overrides`，沒有才用預設）比對每樣物品落在哪一箱；結束把放進去的物品原數收回 | PASS（2026-10-07，[37624017827](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37624017827)＋recheck [37629667234](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37629667234)） |
-| 溢位箱、滿箱保留來源 | 主箱塞滿後放入同類物品，確認進溢位箱；都滿時留在入口箱 | 未驗 |
+| 溢位箱、滿箱保留來源 | 主箱塞滿後放入同類物品，確認進溢位箱；都滿時留在入口箱 | PASS（2026-10-07，targeted release gate [37641685439](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37641685439)） |
 | 箱子註冊、刪除註冊、重設、重複註冊提示 | bot 看著箱子用 trigger 註冊／刪除；結束從備份還原 `warehouse:chests` | PASS（2026-10-07，[37624017827](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37624017827)＋recheck [37629667234](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37629667234)） |
 | 自訂箱名 | bot 改名，比對 `warehouse:boxnames`；結束還原 | PASS（2026-10-07，[37624017827](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37624017827)＋recheck [37629667234](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37629667234)） |
 | 查詢物品（中文、分類名、Minecraft ID、一個字、前 30 筆） | bot 送出查詢，比對結果與庫存狀態 | PASS（2026-10-07，[37624017827](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37624017827)＋recheck [37629667234](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37629667234)） |
@@ -52,11 +52,11 @@ Copy/Paste 的測試是 `scripts/build-copy-paste-multiplayer-test.py`（`run-co
 | Pick（`/trigger pick`、查詢結果「取一組」） | bot 看著方塊 pick，比對拿到的數量與倉庫減少的數量；結束歸還 | PASS（2026-10-07，[37624017827](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37624017827)＋recheck [37629667234](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37629667234)） |
 | 倉庫瀏覽（`wh_view`、分頁） | bot 開各頁，確認收到 Dialog 且沒有錯誤 | PASS（2026-10-07，[37624017827](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37624017827)＋recheck [37629667234](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37629667234)） |
 | 共用 API：`count_item`、`take_item`、`refund_item`、`material_sources`、`highlight`、`resolve_block`、pending refund | 在真的倉庫上呼叫，比對結果與箱子內容；結束還原 | PASS（2026-10-07，[37624017827](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37624017827)＋recheck [37629667234](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37629667234)） |
-| Compact（整理合併堆疊） | 在一箱放不滿的同類堆疊，確認被合併、總數不變 | 部分（`run-warehouse-compact-live-test` 只驗直接呼叫） |
+| Compact（整理合併堆疊） | 在一箱放不滿的同類堆疊，確認被合併、總數不變 | PASS（背景 `warehouse:tick` 自動路徑，40+30 → 64+6，總數不變；2026-10-07 [37641685439](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37641685439)） |
 | 倉庫 chunk 常駐 forceload（v4.6） | 確認 61 箱所在 chunk 都 forceload；別人加的 forceload 不被移除；`chunks/release` 只移除自己的 | PASS（2026-10-07，[37624017827](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37624017827)＋recheck [37629667234](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37629667234)） |
 | 自動整理開關（`system/on|off|toggle`） | 關閉時入口箱不動，打開後恢復 | PASS（2026-10-07，[37624017827](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37624017827)＋recheck [37629667234](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37629667234)） |
 | Migration（v4.0～v4.6）重跑 | 在 inno 地圖資料上載入新版，61 箱註冊、override、箱名、scoreboard 不變；重跑不出錯 | PASS（2026-10-07，[37624017827](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37624017827)＋recheck [37629667234](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37629667234)） |
-| G 主畫面與各 Dialog | bot 開啟主畫面與各子頁，確認收到 Dialog 且沒有錯誤 | 未驗 |
+| G 主畫面與各 Dialog | bot 開啟主畫面與各子頁，確認收到 Dialog 且沒有錯誤 | PASS（release gate 基本導航：主畫面、箱子管理、查看倉庫、分類設定、使用說明及返回；bot 實收 show_dialog；2026-10-07 [37641685439](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37641685439)） |
 
 ## Copy/Paste
 
