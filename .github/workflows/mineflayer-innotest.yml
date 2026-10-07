@@ -10,9 +10,9 @@ on:
   workflow_dispatch:
     inputs:
       duration_ms:
-        description: Keep test bots connected for this many milliseconds (30s-1500s)
+        description: "0 = keep bots online until the runner is stopped; otherwise milliseconds (30s-5.5h)"
         required: true
-        default: "180000"
+        default: "0"
         type: string
       player_mode:
         description: Reserve SunnyChen for the real client by default
@@ -54,7 +54,7 @@ jobs:
 
           run = True
           names = ""
-          duration = 30000
+          duration = 0
 
           if os.environ["EVENT_NAME"] == "workflow_dispatch":
               duration = int(os.environ["INPUT_DURATION_MS"])
@@ -68,25 +68,25 @@ jobs:
                   run = False
               elif op == "test-3-bots":
                   names = "penguin0531,geena0701,Felicitypeng"
-                  duration = int(req.get("duration_ms", 180000))
+                  duration = int(req.get("duration_ms", 0))
               elif op == "test-4-bots":
                   names = "SunnyChen,penguin0531,geena0701,Felicitypeng"
-                  duration = int(req.get("duration_ms", 180000))
+                  duration = int(req.get("duration_ms", 0))
               elif op == "test-3-bots-with-real-client":
                   names = "penguin0531,geena0701,Felicitypeng"
-                  duration = int(req.get("duration_ms", 180000))
+                  duration = int(req.get("duration_ms", 0))
               elif op == "probe-one":
                   player = str(req.get("player") or "")
                   allowed = {"SunnyChen", "penguin0531", "geena0701", "Felicitypeng"}
                   if player not in allowed:
                       raise SystemExit("unsupported probe player")
                   names = player
-                  duration = int(req.get("duration_ms", 180000))
+                  duration = int(req.get("duration_ms", 0))
               else:
                   raise SystemExit("unsupported mineflayer request")
 
-          if run and not 30000 <= duration <= 1500000:
-              raise SystemExit("duration_ms must be 30000..1500000")
+          if run and duration != 0 and not 30000 <= duration <= 19800000:
+              raise SystemExit("duration_ms must be 0 (persistent) or 30000..19800000")
 
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
               f.write(f"run={'true' if run else 'false'}\n")
@@ -102,12 +102,14 @@ jobs:
     needs: request
     if: needs.request.outputs.run == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 35
-    # A new bot session waits for the running one to finish instead of
-    # cancelling it (cancelling disconnects the bots in the middle of a test).
+    # GitHub-hosted runners have a hard lifetime. Within that lifetime the bots
+    # stay online until explicitly replaced/cancelled instead of self-expiring.
+    timeout-minutes: 360
+    # There should be exactly one long-lived bot set. A deliberate new bot
+    # request replaces the previous session; normal datapack tests reuse it.
     concurrency:
       group: mineflayer-innotest
-      cancel-in-progress: false
+      cancel-in-progress: true
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
