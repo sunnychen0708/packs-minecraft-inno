@@ -1,5 +1,6 @@
 {
-  "request_id": 0,
-  "operation": "noop",
-  "duration_ms": 30000
+  "request_id": 20261007172701,
+  "operation": "probe-one",
+  "player": "penguin0531",
+  "duration_ms": 300000
 }
