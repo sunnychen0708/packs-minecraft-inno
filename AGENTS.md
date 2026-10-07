@@ -20,16 +20,12 @@
 
 ## 正式環境（inno）資料相容
 
-`inno` 有真實的玩家與世界資料。已部署到 inno 的 pack（目前是 Warehouse、Utilities），只要改動可能影響存檔資料（storage／scoreboard 格式、migration、箱子註冊、玩家設定與統計、會搬動或改寫物品的程式等），新版裝到 inno 之前必須：
+`inno` 有真實的玩家與世界資料。已部署到 inno 的 pack（目前是 Warehouse、Utilities），只要改動可能影響存檔資料（storage／scoreboard 格式、migration、箱子註冊、玩家設定與統計、會搬動或改寫物品的程式等），新版裝到 inno 之前，先在 innotest（有 inno 的地圖）裝新版，確認既有資料升級正確（有 migration 時也要確認重跑不出錯）；通過後，等使用者明確下指令才可以裝到 inno。
 
-1. 複製目前的 inno 世界到 innotest；
-2. 在上面套用新版本，確認既有資料升級正確（有 migration 時也要確認重跑不出錯）；
-3. 通過後，等使用者明確下指令才可以把新版裝到 inno。
-
-- 只在新生成的空白世界（例如 CI 每次開的世界）測過不算，因為那裡沒有 inno 的舊資料，看不出升級會不會弄壞它。不確定會不會影響資料時，當作會。
+- 不確定會不會影響資料時，當作會。
 - 不要在 inno 上直接實驗；能不改資料格式就不改，優先選不需要 migration 的做法。
 - Copy/Paste 尚未部署到 inno，這條暫時不適用，部署後再套用。
-- review 或實作有風險的改動時，說明：是否改到存檔資料、是否需要 migration、做了哪個 inno 副本測試。
+- review 或實作有風險的改動時，說明：是否改到存檔資料、是否需要 migration、在 innotest 做了哪些測試。
 
 ## Datapack 效能優先順序
 
