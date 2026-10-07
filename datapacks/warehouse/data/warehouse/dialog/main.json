@@ -10,7 +10,7 @@
     {
       "type": "minecraft:plain_message",
       "contents": {
-        "text": "v4.6 - 自動分類、箱子管理、查詢、Highlight、Pick、共用材料 API。\n看著方塊可用 Pick 從 Warehouse 直接拿最多一整組；Copy/Paste 也共用同一份材料與退款後端。"
+        "text": "v4.7 - 自動分類、箱子管理、查詢、Highlight、Pick、共用材料 API。\n看著方塊可用 Pick 從 Warehouse 直接拿最多一整組；Copy/Paste 也共用同一份材料與退款後端。"
       },
       "width": 390
     }
