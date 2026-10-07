@@ -1443,7 +1443,9 @@ def run_warehouse_dimension_checks(client, marker):
     only while this function runs. Refuse occupied fixture cells, preserve existing
     chunk tickets, and remove our fixtures even when a checkpoint fails.
     """
-    ax, bx, y, z = 20120000, 20120002, 250, 20120000
+    # Reuse the established test chunk, one block above the existing fixtures.
+    # Very distant fresh chunks can be outside the server border or unavailable.
+    ax, bx, y, z = -430, -428, 251, 120
     dims = ("minecraft:overworld", "minecraft:the_nether", "minecraft:the_end")
     created = []
     forced = []
