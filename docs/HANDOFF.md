@@ -48,7 +48,7 @@
 
 - Production 世界。
 - 一般 exaroton 操作**不要自動啟動 `inno`**；正常檢查應保持 read-only。
-- **inno 目前實際安裝**（2026-10-07 用 `inno-storage-status` 唯讀讀取）：`world/datapacks` 只有 `Minecraft_Warehouse_26.3_v4.0.zip` 與 `utilities-v3.4.zip`，沒有 Copy/Paste。`warehouse:meta` 升級標記只到 `v40`，所以升到 v4.6 時會在正式世界依序跑 v42～v46 migration；61 個箱位全部已註冊、都在主世界、座標欄位齊全且都是 Int。Utilities storage 版本 `26.3-3.4`，43 個存檔座標都是 Int。升級前務必照 `AGENTS.md` 在 innotest 用 inno 副本測這條升級路徑。
+- **inno 目前實際安裝**（2026-10-07 用 `inno-storage-status` 唯讀讀取）：`world/datapacks` 只有 `Minecraft_Warehouse_26.3_v4.0.zip` 與 `utilities-v3.4.zip`，沒有 Copy/Paste。`warehouse:meta` 升級標記只到 `v40`；61 個箱位全部已註冊、都在主世界、座標欄位齊全且都是 Int。Utilities storage 版本 `26.3-3.4`，43 個存檔座標都是 Int。
 - 唯讀檢查 production 的 Warehouse 註冊與 Utilities 據點：`exaroton innotest control` 手動執行 `inno-storage-status`（只用 GET，不會寫入 inno）。
 - 使用者已明確允許 repo 內的 **offline UUID maintenance** 寫入入口；這是 production write 的特例，不代表可以任意改 production。
 - 特例 workflow：`.github/workflows/exaroton-inno-maintenance.yml` + `scripts/exaroton_inno_uuid_migrate.py`。
