@@ -68,6 +68,7 @@ jobs:
           python3 scripts/build-copy-paste-live-test.py --output /tmp/mcc-live-test
           python3 scripts/build-copy-paste-multiplayer-test.py
           python3 scripts/build-utilities-live-test.py
+          python3 scripts/build-warehouse-live-test.py
           node --check scripts/mineflayer26/keepalive.js
 
   warehouse-runtime-smoke:
