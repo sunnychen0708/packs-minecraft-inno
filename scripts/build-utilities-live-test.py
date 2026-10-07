@@ -202,7 +202,8 @@ s.cmdx('a', ['[座標]', '已關閉'], 'trigger coords')
 s.check('coords off only for A', f'score {A} c26_show matches 0', f'score {B} c26_show matches 1')
 s.cmdx('a', ['[座標]', '已開啟'], 'trigger coords')
 s.check('coords back on', f'score {A} c26_show matches 1')
-s.cmdx('a', ['220', '400', '/'], 'trigger mfack', label='a sees coords action bar')
+# any harmless command: trigger mfack itself would use up the trigger the bot acks with
+s.cmdx('a', ['220', '400', '/'], 'trigger help', label='a sees coords action bar')
 
 # ---- 2. fixed waypoints in three dimensions ---------------------------------
 FIXED = [('home', '家', 'overworld', -410, 220, 390), ('mine', '礦坑', 'the_nether', -60, 200, 60),
@@ -500,7 +501,7 @@ for i, (name, ripe, young, soil) in enumerate(CROPS + [('wheat switched off', 'w
 MARK_PASSED_TO = len(s.steps)
 if RECHECK:
     rc_from = len(s.steps)
-    s.cmdx('a', ['220', '400', '/'], 'trigger mfack', label='a sees coords action bar')
+    s.cmdx('a', ['220', '400', '/'], 'trigger help', label='a sees coords action bar')
     P1 = (-414, 220, 386)
     s.step(f'execute in minecraft:overworld run setblock {P1[0]} {P1[1]-1} {P1[2]} minecraft:stone', 'function utest:nav_clear_custom {key:"a"}')
     s.tp('a', P1[0] + .2, P1[1], P1[2] + .8)
