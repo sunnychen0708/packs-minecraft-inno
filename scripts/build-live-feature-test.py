@@ -6,10 +6,11 @@ aim through tp, and real client actions - sneak, dig, use - requested from the a
 player). Results are judged from server state and printed as
     LIVE_CHECK PASS|FAIL <label>      ...      LIVE_RESULT PASS|FAIL pass=<n> fail=<n>
 
-Players A (SunnyChen) and B (penguin0531) are used; their inventories, the waypoint
-storage, the Warehouse registration/name/rule storage and keep_inventory are saved
-before the run and restored at the end (function livetest:restore, also safe to run
-again by hand). The test area is an empty sky box near the innotest spawn.
+Players A (SunnyChen) and B (penguin0531) are used; their inventories, positions,
+game modes, the waypoint storage, the Warehouse registration/name/rule storage and
+keep_inventory are saved before the run and restored at the end (function
+livetest:restore, also safe to run again by hand; a player who is offline is restored
+the next time it runs). The test area is an empty sky box near the innotest spawn.
 
     /function livetest:start        (run from the console)
 """
@@ -36,6 +37,8 @@ FLOOR = 279
 O = (-400, 280, 160)                     # where the players wait between tests
 INV_A = [(-430, 280, 145), (-429, 280, 145)]
 INV_B = [(-427, 280, 145), (-426, 280, 145)]
+DIMENSIONS = ("overworld", "the_nether", "the_end")
+GAMEMODES = ("survival", "creative", "adventure", "spectator")
 
 steps = []            # each: {"cmds": [...], "wait": None | (condition, label, max_ticks), "gap": ticks}
 labels = []
@@ -118,9 +121,15 @@ step(
     f"execute store result storage livetest:backup ids.a int 1 run scoreboard players get {SA} sunny_id",
     f"execute store result storage livetest:backup ids.b int 1 run scoreboard players get {SB} sunny_id",
     "function livetest:backup with storage livetest:backup ids",
-    # where A and B stood, to put them back there at the end
+    # where A and B stood (dimension too) and their game mode, to put them back at the end
+    "data remove storage livetest:backup home",
+    "data remove storage livetest:backup restored",
     *[f"execute store result storage livetest:backup home.{k}.{a} double 0.001 run data get entity @a[name={n},limit=1] Pos[{i}] 1000"
       for k, n in (("a", A), ("b", B)) for i, a in enumerate("xyz")],
+    *[f'execute in minecraft:{d} if entity @a[name={n},distance=0..] run data modify storage livetest:backup home.{k}.dim set value "minecraft:{d}"'
+      for k, n in (("a", A), ("b", B)) for d in DIMENSIONS],
+    *[f'execute if entity @a[name={n},gamemode={m}] run data modify storage livetest:backup home.{k}.mode set value "{m}"'
+      for k, n in (("a", A), ("b", B)) for m in GAMEMODES],
     "execute store result score #keepinv live run gamerule keep_inventory",
     "gamerule keep_inventory true",
     f"execute {OW} run fill {X0} {FLOOR} {Z0} {X1} {FLOOR} {Z1} minecraft:glass",
@@ -416,7 +425,8 @@ step(f'tellraw @a [{{"text":"LIVE DONE pass="}},{{"score":{{"name":"#pass","obje
 def emit(prefix, chain):
     """Write one chain of step functions: livetest:<prefix>step_<i>, started by livetest:start<suffix>."""
     for i, s in enumerate(chain):
-        body = []
+        # the controller sets #abort when it gives up, so a late step cannot undo its restore
+        body = ["execute if score #abort live matches 1 run return 0"]
         if s["wait"]:
             cond, label, max_ticks = s["wait"]
             body += ["scoreboard players set #wok live 0",
@@ -434,7 +444,14 @@ def emit(prefix, chain):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("\n".join(body) + "\n", encoding="utf-8")
     name = "start" + ("_" + prefix.rstrip("/") if prefix else "")
-    (F / f"{name}.mcfunction").write_text(f"scoreboard objectives add live dummy\nscoreboard players set #wait live 0\nfunction livetest:{prefix}step_0\n", encoding="utf-8")
+    (F / f"{name}.mcfunction").write_text("\n".join([
+        "scoreboard objectives add live dummy",
+        # the previous run's inventories are still parked in the chests: setup would overwrite them
+        "execute if data storage livetest:backup {active:1b} run return run say LIVE_RESULT FAIL previous run not restored; run function livetest:restore with both players online",
+        "scoreboard players set #abort live 0",
+        "scoreboard players set #wait live 0",
+        f"function livetest:{prefix}step_0",
+    ]) + "\n", encoding="utf-8")
 
 
 setup = steps[:marks["utilities"]]
@@ -445,7 +462,8 @@ for k, part in parts.items():          # one section alone: livetest:start_<sect
     emit(k + "/", setup + part + finish)
 (F / "wh").mkdir(exist_ok=True)
 (F / "wh/entry_insert.mcfunction").write_text("$item replace block $(a_x) $(a_y) $(a_z) container.13 with minecraft:cobblestone 40\n", encoding="utf-8")
-(F / "wh/entry_refund.mcfunction").write_text("$item replace block $(a_x) $(a_y) $(a_z) container.13 with minecraft:cobblestone 64\n", encoding="utf-8")
+# the sort test adds 40 and Pick takes 64: putting 24 back leaves the warehouse's cobblestone as it was
+(F / "wh/entry_refund.mcfunction").write_text("$item replace block $(a_x) $(a_y) $(a_z) container.13 with minecraft:cobblestone 24\n", encoding="utf-8")
 (F / "wh/entry_empty.mcfunction").write_text(
     "function livetest:wh/entry_count with storage warehouse:chests c00\nreturn run execute if score #entry live matches 0\n", encoding="utf-8")
 (F / "wh/entry_count.mcfunction").write_text(
@@ -470,31 +488,37 @@ SAVED = [("pa", "sunny_nav:players", "p$(a)"), ("pb", "sunny_nav:players", "p$(b
     + ("$" if "$(" in path else "") + f"execute unless data storage livetest:backup state.{key} run data remove storage {st} {path}\n"
     for key, st, path in SAVED), encoding="utf-8")
 restore = [
-    # only once per run: a second restore would copy the emptied chests back over the players
+    # only while a run is active: a second restore would copy the emptied chests back over the players
     "execute unless data storage livetest:backup {active:1b} run return 0",
+    "execute unless data storage livetest:backup {restored:{world:1b}} run function livetest:restore_world",
+    # a player is restored only while online; their chests are emptied only after that, so an
+    # offline player's inventory stays parked and restore can simply be run again later
+    *[f"execute unless data storage livetest:backup {{restored:{{{k}:1b}}}} as @a[name={n},limit=1] run function livetest:restore_{k}"
+      for k, n in (("a", A), ("b", B))],
+    "execute if data storage livetest:backup {restored:{world:1b,a:1b,b:1b}} run return run data modify storage livetest:backup active set value 0b",
+    "say LIVE_RESTORE_PENDING a test player is offline; their inventory is still in the livetest chests. Run function livetest:restore again once they are online",
+]
+(F / "restore.mcfunction").write_text("\n".join(restore) + "\n", encoding="utf-8")
+(F / "restore_world.mcfunction").write_text("\n".join([
     "function livetest:restore_state with storage livetest:backup ids",
     "execute if score #keepinv live matches 0 run gamerule keep_inventory false",
-]
-for who, chests in ((A, INV_A), (B, INV_B)):
-    sel = f"@a[name={who},limit=1]"
-    c1, c2 = chests
-    restore.append(f"clear {sel}")
-    restore += [f"execute {OW} run item replace entity {sel} container.{n} from block {c1[0]} {c1[1]} {c1[2]} container.{n}" for n in range(27)]
-    restore += [f"execute {OW} run item replace entity {sel} container.{n} from block {c2[0]} {c2[1]} {c2[2]} container.{n - 27}" for n in range(27, 36)]
-    for k, slot in enumerate(("armor.feet", "armor.legs", "armor.chest", "armor.head", "weapon.offhand")):
-        restore.append(f"execute {OW} run item replace entity {sel} {slot} from block {c2[0]} {c2[1]} {c2[2]} container.{9 + k}")
-    restore += [f"effect clear {sel} minecraft:resistance", f"effect clear {sel} minecraft:saturation"]
-    restore += [f"execute {OW} run data modify block {c[0]} {c[1]} {c[2]} Items set value []" for c in chests]
-restore += [
-    "function livetest:go_home_a with storage livetest:backup home.a",
-    "function livetest:go_home_b with storage livetest:backup home.b",
     f"execute {OW} run kill @e[type=!minecraft:player,x={X0},y={FLOOR},z={Z0},dx={X1 - X0},dy={Y1 - FLOOR},dz={Z1 - Z0}]",
-]
-restore += [f"effect clear @a[name={n}] minecraft:levitation" for n in (A, B)]
-restore.append("data modify storage livetest:backup active set value 0b")
-(F / "restore.mcfunction").write_text("\n".join(restore) + "\n", encoding="utf-8")
-for k, n in (("a", A), ("b", B)):
-    (F / f"go_home_{k}.mcfunction").write_text(f"$execute {OW} run tp @a[name={n},limit=1] $(x) $(y) $(z)\n", encoding="utf-8")
+    "data modify storage livetest:backup restored.world set value 1b",
+]) + "\n", encoding="utf-8")
+for k, chests in (("a", INV_A), ("b", INV_B)):
+    c1, c2 = chests
+    body = ["clear @s"]
+    body += [f"execute {OW} run item replace entity @s container.{n} from block {c1[0]} {c1[1]} {c1[2]} container.{n}" for n in range(27)]
+    body += [f"execute {OW} run item replace entity @s container.{n} from block {c2[0]} {c2[1]} {c2[2]} container.{n - 27}" for n in range(27, 36)]
+    for j, slot in enumerate(("armor.feet", "armor.legs", "armor.chest", "armor.head", "weapon.offhand")):
+        body.append(f"execute {OW} run item replace entity @s {slot} from block {c2[0]} {c2[1]} {c2[2]} container.{9 + j}")
+    body += [f"execute {OW} run data modify block {c[0]} {c[1]} {c[2]} Items set value []" for c in chests]
+    body += [f"effect clear @s minecraft:{e}" for e in ("resistance", "saturation", "levitation")]
+    body += [f'execute if data storage livetest:backup home.{k}{{mode:"{m}"}} run gamemode {m} @s' for m in GAMEMODES]
+    body += [f"function livetest:go_home with storage livetest:backup home.{k}",
+             f"data modify storage livetest:backup restored.{k} set value 1b"]
+    (F / f"restore_{k}.mcfunction").write_text("\n".join(body) + "\n", encoding="utf-8")
+(F / "go_home.mcfunction").write_text("$execute in $(dim) run tp @s $(x) $(y) $(z)\n", encoding="utf-8")
 # Clearing the area is separate so the controller can run it after restore; the inventory chests
 # are emptied by restore first, so no item is lost.
 (F / "clear_area.mcfunction").write_text("\n".join(

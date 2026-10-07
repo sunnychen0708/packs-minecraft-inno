@@ -119,9 +119,13 @@ block, respawn) is asked of the bot with `tellraw <player> "LIVEBOT <id> <action
 `scripts/mineflayer26/agent.js` performs it and answers `/trigger livebot_ack set <id>`.
 
 Before the run the harness saves both players' inventories into two chests and their
-positions, game mode and `keepInventory`; `function livetest:restore` (also called at the end
-and by the controller on timeout) puts all of it back, and `function livetest:clear_area`
-empties the area (refused while a run still holds saved inventories).
+positions (with dimension), game mode and `keepInventory`; `function livetest:restore` (also
+called at the end, and by the controller on a timeout or any error after the harness is
+deployed) puts all of it back, and `function livetest:clear_area` empties the area (refused
+while a run still holds saved inventories). A player is restored only while online and their
+chests are emptied only after that: if a bot dropped out, restore says `LIVE_RESTORE_PENDING`,
+keeps the inventory in the chests, and must be run again by hand once that player is back.
+A new run refuses to start (`LIVE_RESULT FAIL previous run not restored`) until then.
 
 1. Start the bots: `Mineflayer 26.3 innotest` workflow, `client=agent`,
    `duration_ms` up to `3600000` (or `ops/mineflayer-request.json` with `"operation": "agent-4-bots"`).

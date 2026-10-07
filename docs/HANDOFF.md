@@ -139,7 +139,7 @@ Copy/Paste runtime 失敗時會印 `MCCST_DIAG_DROP_<步驟>` / `MCCST_DIAG_DIFF
 2. 等 `READY 4/4 ... (agent)`。
 3. `exaroton innotest control`：`run-live-feature-test`，`pack` 選 `all` / `utilities` / `warehouse` / `copy-paste`。
 4. 要看到 `LIVE_FEATURE_TEST=PASS`（全部 `LIVE_CHECK PASS`、`LIVE_RESULT PASS`、session 內沒有 `/ERROR]:`）。
-5. 跑完取消 bots run。harness 開始前會把兩位玩家背包存進箱子並記住位置／模式／keepInventory，結束（或逾時）時 `livetest:restore` 全部還原，`livetest:clear_area` 清空測試區。
+5. 跑完取消 bots run。harness 開始前會把兩位玩家背包存進箱子並記住位置／模式／keepInventory，結束、逾時或中途出錯時 `livetest:restore` 全部還原，`livetest:clear_area` 清空測試區，controller 一定會移除 harness。玩家不在線時不會還原、箱子也不清空（印 `LIVE_RESTORE_PENDING`）；等那位玩家上線後手動再跑一次 `/function livetest:restore`，在那之前新的 run 會拒絕開始。
 
 細節見 `docs/exaroton-operations.md` 的 Live feature test。
 

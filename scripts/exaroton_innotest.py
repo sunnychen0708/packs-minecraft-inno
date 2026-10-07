@@ -640,76 +640,74 @@ def run_live_feature_test(client, section="all"):
     payload = zip_tree(ROOT / "dist" / "live-feature-test")
     world = level_name(client.read_file("server.properties"))
     remote_harness = f"{world}/datapacks/live-feature-test.zip"
-    client.write_file(remote_harness, payload)
-    print(f"deployed live feature harness -> {remote_harness} ({len(payload)} bytes)")
-    client.command("reload")
-    time.sleep(8)
 
     def session_log():
         log = client.log()
         at = log.rfind(f"{session_marker} START")
         return log[at:] if at >= 0 else ""
 
-    def remove_harness():
+    def best_effort(command, pause):
         try:
-            client.delete_file(remote_harness)
-        finally:
-            try:
-                client.command("reload")
-            except Error:
-                pass
-
-    # The exaroton log endpoint lags ~30 s while players are online: wait until a marker sent
-    # after the reload shows up, so every load error of this session is in the segment.
-    client.command(f"say {session_marker} PREFLIGHT")
-    pre, wait_until = "", time.time() + 240
-    while time.time() < wait_until:
-        pre = session_log()
-        if f"{session_marker} PREFLIGHT" in pre:
-            break
-        time.sleep(5)
-    else:
-        remove_harness()
-        raise Error("live feature preflight marker not found in server log")
-    pre_errors = [line for line in pre.splitlines() if "/ERROR]:" in line]
-    if pre_errors:
-        remove_harness()
-        raise Error("live feature preflight found current-session server errors:\n" + "\n".join(pre_errors[:12]))
-
-    server = wait_players(client, 4, 300)
-    print(f"live feature test{LIVE_SECTIONS[section] or ' (all sections)'} starting with player count={player_count(server)}")
-    client.command(f"function livetest:start{LIVE_SECTIONS[section]}")
-
-    # The whole run is ~15 minutes on innotest; leave plenty of room for a slow server.
-    deadline = time.time() + 50 * 60
-    segment, result, printed = "", "", 0
-    while time.time() < deadline:
-        segment = session_log()
-        lines = [line for line in segment.splitlines() if "LIVE_CHECK " in line or "LIVE_RESULT " in line]
-        for line in lines[printed:]:
-            print(line, flush=True)
-        printed = len(lines)
-        found = [line for line in lines if "LIVE_RESULT " in line]
-        if found:
-            result = found[-1]
-            break
-        time.sleep(10)
-
-    if not result:
-        # Timed out mid-run: put the players, gamerules and the test area back first.
-        for command in ["function livetest:restore", "function livetest:clear_area"]:
-            try:
-                client.command(command)
-            except Error:
-                pass
-            time.sleep(5)
-    else:
-        try:
-            client.command("function livetest:clear_area")
+            client.command(command)
         except Error:
             pass
-        time.sleep(10)
-    remove_harness()
+        time.sleep(pause)
+
+    segment, result, started = "", "", False
+    try:
+        client.write_file(remote_harness, payload)
+        print(f"deployed live feature harness -> {remote_harness} ({len(payload)} bytes)")
+        client.command("reload")
+        time.sleep(8)
+
+        # The exaroton log endpoint lags ~30 s while players are online: wait until a marker sent
+        # after the reload shows up, so every load error of this session is in the segment.
+        client.command(f"say {session_marker} PREFLIGHT")
+        pre, wait_until = "", time.time() + 240
+        while time.time() < wait_until:
+            pre = session_log()
+            if f"{session_marker} PREFLIGHT" in pre:
+                break
+            time.sleep(5)
+        else:
+            raise Error("live feature preflight marker not found in server log")
+        pre_errors = [line for line in pre.splitlines() if "/ERROR]:" in line]
+        if pre_errors:
+            raise Error("live feature preflight found current-session server errors:\n" + "\n".join(pre_errors[:12]))
+
+        server = wait_players(client, 4, 300)
+        print(f"live feature test{LIVE_SECTIONS[section] or ' (all sections)'} starting with player count={player_count(server)}")
+        started = True
+        client.command(f"function livetest:start{LIVE_SECTIONS[section]}")
+
+        # The whole run is ~15 minutes on innotest; leave plenty of room for a slow server.
+        deadline = time.time() + 50 * 60
+        printed = 0
+        while time.time() < deadline:
+            segment = session_log()
+            lines = [line for line in segment.splitlines() if "LIVE_CHECK " in line or "LIVE_RESULT " in line]
+            for line in lines[printed:]:
+                print(line, flush=True)
+            printed = len(lines)
+            found = [line for line in lines if "LIVE_RESULT " in line]
+            if found:
+                result = found[-1]
+                break
+            time.sleep(10)
+    finally:
+        # Runs on a timeout and on any error after the harness was written, so the harness never
+        # stays installed and parked inventories are put back. restore only empties a player's
+        # chests after giving the items back, so an offline player keeps them (LIVE_RESTORE_PENDING).
+        if started and not result:
+            best_effort("scoreboard players set #abort live 1", 2)
+            best_effort("function livetest:restore", 5)
+        if started:
+            best_effort("function livetest:clear_area", 10)
+        try:
+            client.delete_file(remote_harness)
+        except Error as e:
+            print(f"could not remove {remote_harness}: {e}", flush=True)
+        best_effort("reload", 0)
 
     errors = [line for line in segment.splitlines() if "/ERROR]:" in line]
     fails = [line for line in segment.splitlines() if "LIVE_CHECK FAIL" in line]
