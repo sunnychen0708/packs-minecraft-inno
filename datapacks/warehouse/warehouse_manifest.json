@@ -226,7 +226,8 @@
     "v4.5_dialog_layout_back_navigation",
     "v4.5_view_page_fix",
     "v4.6_search_stock_unloaded_boxes",
-    "v4.6_keep_box_chunks_loaded"
+    "v4.6_keep_box_chunks_loaded",
+    "v4.6_compact_direct_dispatch"
   ],
   "release": "stable",
   "search_index_terms": 32352,
