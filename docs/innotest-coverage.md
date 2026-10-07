@@ -8,9 +8,9 @@
 - **已寫未跑**：innotest 測試已寫好，還沒在 innotest 跑過。
 - **PASS（日期、run）**：在 innotest 跑過且通過，附 workflow run。
 
-Utilities 的測試是 `scripts/build-utilities-live-test.py`，用 `exaroton innotest control` 的 `run-live-suite`（pack 選 `utilities`）跑，需要四個 bot 在線。
+Utilities 的測試是 `scripts/build-utilities-live-test.py`，用 `exaroton innotest control` 的 `run-live-suite`（pack 選 `utilities`）跑；實際只需要 `penguin0531`、`geena0701`，Mineflayer workflow 預設讓三個非 SunnyChen bot 在線。
 
-驗法欄裡的「bot」指 Mineflayer 測試玩家（`SunnyChen`、`penguin0531`、`geena0701`、`Felicitypeng`）。bot 由測試 datapack 用 `tellraw` 下指令，自己送出 `/trigger`、挖方塊、蹲下（`scripts/mineflayer26/keepalive.js` 的 driver），不是用 `execute as` 代替玩家。測試動到的玩家背包、經驗、遊戲模式、手上物品、世界方塊與 Warehouse 庫存，結束時都要還原。
+驗法欄裡的「bot」預設指 `penguin0531`、`geena0701`、`Felicitypeng`；`SunnyChen` 保留給真人登入監督或 Computer Use，只有確實需要第 4 位玩家時才由 bot 使用。bot 由測試 datapack 用 `tellraw` 下指令，自己送出 `/trigger`、挖方塊、蹲下（`scripts/mineflayer26/keepalive.js` 的 driver），不是用 `execute as` 代替玩家。測試動到的玩家背包、經驗、遊戲模式、手上物品、世界方塊與 Warehouse 庫存，結束時都要還原。
 
 ## Utilities
 
