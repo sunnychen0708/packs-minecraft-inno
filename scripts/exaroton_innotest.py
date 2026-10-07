@@ -526,15 +526,34 @@ def level_name(raw):
     remote_path(result)
     return result
 
+def pack_version(name):
+    meta = json.loads((ROOT / "datapacks" / name / "pack.mcmeta").read_text(encoding="utf-8"))
+    description = str(meta.get("pack", {}).get("description", ""))
+    match = re.search(r"v(\d+\.\d+)(?!\.\d)", description)
+    if not match:
+        raise Error(f"cannot determine version for datapack {name!r} from pack.mcmeta")
+    return match.group(1)
+
 def deploy(client, which, *, reload_server=True):
     names = PACKS if which == "all" else (which,)
     if any(n not in PACKS for n in names): raise Error(f"unsupported datapack: {which}")
     world = level_name(client.read_file("server.properties"))
+    info = client.file_info(f"{world}/datapacks")
+    children = [str(x.get("name") or "") for x in (info.get("children") or []) if isinstance(x, dict)]
     for name in names:
+        version = pack_version(name)
+        filename = f"{name}-v{version}.zip"
+        # Keep exactly one visible ZIP per pack so the server file list shows
+        # the deployed version and a later reload cannot load duplicates.
+        for old_name in children:
+            if old_name == f"{name}.zip" or re.fullmatch(rf"{re.escape(name)}-v\d+\.\d+\.zip", old_name):
+                if old_name != filename:
+                    client.delete_file(f"{world}/datapacks/{old_name}")
+                    print(f"removed old {name} datapack -> {old_name}")
         payload = pack_zip(name)
-        dst = f"{world}/datapacks/{name}.zip"
+        dst = f"{world}/datapacks/{filename}"
         client.write_file(dst, payload)
-        print(f"deployed {name} -> {dst} ({len(payload)} bytes)")
+        print(f"deployed {name} v{version} -> {dst} ({len(payload)} bytes)")
     if not reload_server:
         print("reload skipped by request")
         return
