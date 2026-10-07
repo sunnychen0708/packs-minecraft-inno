@@ -26,6 +26,7 @@ on:
           - command
           - deploy-datapack
           - run-copy-paste-multiplayer-test
+          - run-blueprint-matcher-live-test
           - run-warehouse-compact-live-test
           - set-online-mode-false
       command:

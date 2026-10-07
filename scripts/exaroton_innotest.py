@@ -617,6 +617,86 @@ def run_copy_paste_multiplayer_test(client):
         f"current-run result={result or '<missing>'}"
     )
 
+def run_blueprint_matcher_live_test(client):
+    """Issue #49: every exact 26.3 block state through the Blueprint matcher on innotest."""
+    current = client.target()
+    if int(current.get("status", -1)) != 1:
+        raise Error("innotest must be ONLINE before Blueprint matcher live testing")
+
+    session_marker = f"MCCBP_SESSION_{int(time.time() * 1000)}"
+    client.command(f"say {session_marker} START")
+    time.sleep(1)
+
+    # Deploy the exact Copy/Paste source from the checked-out commit.
+    deploy(client, "copy-paste")
+    time.sleep(5)
+
+    import subprocess
+    subprocess.check_call([sys.executable, str(ROOT / "scripts" / "build-blueprint-matcher-live-test.py")])
+    payload = zip_tree(ROOT / "dist" / "mcc-bp-matcher-live-test")
+    world = level_name(client.read_file("server.properties"))
+    remote_harness = f"{world}/datapacks/mcc-bp-matcher-live-test.zip"
+    client.write_file(remote_harness, payload)
+    print(f"deployed Blueprint matcher harness -> {remote_harness} ({len(payload)} bytes)")
+    client.command("reload")
+    time.sleep(6)
+
+    result = ""
+    segment = ""
+    try:
+        log = client.log()
+        session_at = log.rfind(f"{session_marker} START")
+        if session_at < 0:
+            raise Error("Blueprint matcher preflight marker not found in server log")
+        preflight_errors = [line for line in log[session_at:].splitlines() if "/ERROR]:" in line]
+        if preflight_errors:
+            raise Error("Blueprint matcher preflight found current-session server errors:\n"
+                        + "\n".join(preflight_errors[:12]))
+
+        run_marker = f"MCCBP_RUN_{int(time.time() * 1000)}"
+        client.command(f"say {run_marker} START")
+        time.sleep(1)
+        client.command("function mcc_bp_live:start")
+
+        deadline = time.time() + 300
+        while time.time() < deadline:
+            log = client.log()
+            marker = log.rfind(f"{run_marker} START")
+            if marker >= 0:
+                segment = log[marker:]
+                hits = [line for line in segment.splitlines() if "MCCBP_RESULT " in line]
+                if hits:
+                    result = hits[-1]
+                    break
+            time.sleep(3)
+    finally:
+        for command in ("scoreboard objectives remove mccbp",
+                        "data remove storage mcc_bp_live:t",
+                        "execute in minecraft:overworld run forceload remove -440 120"):
+            try:
+                client.command(command)
+            except Error:
+                pass
+        try:
+            client.delete_file(remote_harness)
+        finally:
+            try:
+                client.command("reload")
+            except Error:
+                pass
+
+    report = "\n".join(line for line in segment.splitlines() if "MCCBP_" in line)
+    if report:
+        print(report)
+    errors = [line for line in segment.splitlines() if "/ERROR]:" in line]
+    if errors:
+        raise Error("Blueprint matcher live test produced current-run server errors:\n"
+                    + "\n".join(errors[:12]))
+    if "MCCBP_RESULT PASS" in result:
+        print("BLUEPRINT_MATCHER_LIVE_TEST=PASS")
+        return
+    raise Error(f"Blueprint matcher live test did not pass; current-run result={result or '<missing>'}")
+
 def wait_status(client, wanted, timeout=180):
     deadline = time.time() + timeout
     while time.time() < deadline:
@@ -1322,6 +1402,7 @@ def run(path):
     elif op == "command": client.command(str(r.get("command") or "")); print(f"command sent to {TARGET}")
     elif op == "deploy-datapack": deploy(client, str(r.get("pack") or ""))
     elif op == "run-copy-paste-multiplayer-test": run_copy_paste_multiplayer_test(client)
+    elif op == "run-blueprint-matcher-live-test": run_blueprint_matcher_live_test(client)
     elif op == "run-warehouse-compact-live-test": run_warehouse_compact_live_test(client)
     elif op == "run-utilities-bfs-live-test": run_utilities_bfs_live_test(client)
     elif op == "set-online-mode-false": set_offline_mode(client)
