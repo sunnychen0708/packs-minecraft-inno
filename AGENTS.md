@@ -39,6 +39,26 @@ A newly generated or clean test world is useful for isolated functional tests, b
 - If a change requires a migration, test both upgrade correctness and idempotency on the production-world copy.
 - If there is uncertainty about whether a change can affect existing data, treat it as data-affecting and use the production-world-copy test path.
 
+## Datapack performance priority
+
+For datapack implementation, optimization, and code review, optimize for **server tick cost first**.
+
+The default priority is:
+
+1. **Time complexity and hot-path cost**, especially work that runs every tick or at high frequency.
+2. **Commands executed per tick / per hot-path invocation**, including failed conditional checks, selector scans, repeated dispatch chains, and unnecessary function calls.
+3. **Server-side runtime memory / space complexity** only when the added state is large, grows with input size, is unbounded, creates many entities, or materially increases persistent storage.
+
+In this project, a small fixed amount of extra scoreboard/storage state is normally an acceptable trade for a meaningful reduction in recurring tick work. Do not reject a faster design merely because it uses a small constant or bounded amount of additional server RAM.
+
+Conversely, do not trade unbounded or very large persistent/runtime state for a negligible tick-time improvement.
+
+When comparing or proposing datapack algorithms, workers must report the relevant **before/after hot-path command count or command-count model**, **time complexity**, and **additional server-side runtime/persistent space cost** when those values materially differ. For code that runs in `#minecraft:tick`, scheduled loops, or other background paths, treat recurring command cost as more important than one-time load/reload/build cost unless profiling shows otherwise.
+
+For this repository, “runtime memory” means memory used by the Minecraft **server process** (and therefore by the exaroton server instance when hosted there), not client/player RAM.
+
+Prefer profiling or runtime measurement when practical; theoretical Big-O alone is not sufficient if a supposedly better algorithm performs more expensive Minecraft commands in practice.
+
 ## Current project-specific caution
 
 - **Warehouse:** production data is sensitive. Registration, routing, compacting, overrides, names, refunds, migration state, and stored chest coordinates must be treated as existing user data.
