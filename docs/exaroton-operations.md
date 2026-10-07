@@ -107,7 +107,9 @@ The regression covers:
 - A-only Undo/Redo not modifying B;
 - B independent Undo.
 
-The final assertion sequence on 2026-10-07 produced `MCCMP_RESULT PASS` with every check above passing while four bot players were online, and the final four-bot hold completed the full five-minute session. However, the same persistent server log also contains earlier failed attempts from that debugging session. The controller now places a unique session marker before deployment/reload and rejects any current-session `/ERROR]:` line before accepting PASS. A fresh run through this stricter gate is still required before calling the live validation a clean-log pass.
+The final assertion sequence on 2026-10-07 produced `MCCMP_RESULT PASS` with every check above passing while four bot players were online, and the final four-bot hold completed the full five-minute session. The controller places a unique session marker before deployment/reload and rejects any current-session `/ERROR]:` line before accepting PASS. A fresh run on a newly started innotest session passed that gate on 2026-10-07 ([run 37561053135](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37561053135)): all 18 checks passed, `COPY_PASTE_MULTIPLAYER_LIVE_TEST=PASS`, zero `ERROR` lines in the session log, and the four clients held the full five minutes and disconnected normally. This is a clean-log live validation.
+
+Keep only the controller's fixed file names (`utilities.zip`, `warehouse.zip`, `copy-paste.zip`) in innotest's `world/datapacks`. A second copy of the same pack under another name (for example `copy-paste-v1.5.zip`) is loaded alongside it and contaminates the run; that happened once and was cleaned up before the clean run.
 
 ## Live feature test (all three packs, played by bots)
 
@@ -141,17 +143,17 @@ A new run refuses to start (`LIVE_RESULT FAIL previous run not restored`) until 
 For a multiplayer-sensitive Copy/Paste change:
 
 1. Let normal GitHub validation finish first.
-2. Start `innotest` only if it is currently OFFLINE.
+2. Make sure `innotest` is ONLINE; start it only if it is not.
 3. Start a four-player Mineflayer request (30000–3600000 ms; 300000 ms is enough here).
 4. Wait until the Mineflayer log shows `READY 4/4`.
 5. Run `run-copy-paste-multiplayer-test` through the innotest controller.
 6. Require `COPY_PASTE_MULTIPLAYER_LIVE_TEST=PASS` / `MCCMP_RESULT PASS`.
 7. Let the temporary harness clean itself up.
-8. Stop `innotest` when testing is finished.
-9. Verify a final read-only status of `OFFLINE` and `0/10`.
+8. Leave `innotest` ONLINE. Do not stop it as routine cleanup; clean up test state only (see `AGENTS.md`).
+9. Verify a final read-only status of `ONLINE` and `0/10`.
 10. Return all three ops request files to `noop`.
 
-The last completed sequence ended with `innotest` OFFLINE, `0/10`, Vanilla 26.3.
+`innotest` stays ONLINE after testing: repeated stop/start costs more exaroton credits than idling. Restart it only when an installation cannot be completed without a restart, and leave it ONLINE afterwards. Stop it only when the user explicitly asks.
 
 ## Production UUID maintenance
 

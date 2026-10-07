@@ -20,6 +20,7 @@ on:
           - whitelist-status
           - identity-status
           - inno-identity-status
+          - inno-storage-status
           - start
           - stop
           - restart
