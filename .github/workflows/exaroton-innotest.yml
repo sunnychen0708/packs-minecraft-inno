@@ -30,6 +30,7 @@ on:
           - run-copy-paste-multiplayer-test
           - run-blueprint-matcher-live-test
           - run-warehouse-compact-live-test
+          - recover-warehouse-compact-live-test
           - set-online-mode-false
       command:
         description: Console command (only used by command)
@@ -51,7 +52,7 @@ permissions:
 
 concurrency:
   group: exaroton-innotest-control
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   control:
