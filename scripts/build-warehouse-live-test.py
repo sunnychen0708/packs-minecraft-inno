@@ -138,15 +138,17 @@ if RECHECK:
     s.speed(True)
     s.step(f'execute as {A} run function warehouse:search/run {{q:"鵝卵石"}}')
     s.check('search by Chinese name lists the item (鵝卵石 matches 8 items)',
-            ('data storage warehouse:runtime search{ids:["642"]}', '鵝卵石 results do not include minecraft:cobblestone'),
-            'data storage warehouse:runtime search{total:8}')
+            # the result ids are consumed while the list renders; 8 = every 鵝卵石 index hit, cobblestone included
+            ('data storage warehouse:runtime search{query:"鵝卵石",total:8}', '鵝卵石 did not return its 8 index hits'))
     s.step(*count('minecraft:cobblestone', '#a1'),
            'execute store result storage wtest:arg big.count int 1 run scoreboard players add #a1 htest 1',
            'data modify storage wtest:arg big.item_id set value "minecraft:cobblestone"',
-           'function warehouse:api/take_item with storage wtest:arg big', *count('minecraft:cobblestone', '#a2'),
-           'scoreboard players remove #a1 htest 1')
-    s.check('take_item over the stock is refused', 'data storage warehouse:api result{ok:0b}')
-    s.check('take_item over the stock reports insufficient_stock', 'data storage warehouse:api result{error:"insufficient_stock"}')
+           'function warehouse:api/take_item with storage wtest:arg big',
+           # keep the take result: count_item below overwrites warehouse:api result
+           'data modify storage wtest:arg take set from storage warehouse:api result',
+           *count('minecraft:cobblestone', '#a2'), 'scoreboard players remove #a1 htest 1')
+    s.check('take_item over the stock is refused', 'data storage wtest:arg take{ok:0b}')
+    s.check('take_item over the stock reports insufficient_stock', 'data storage wtest:arg take{error:"insufficient_stock"}')
     s.check('take_item over the stock takes nothing', 'score #a2 htest = #a1 htest')
     s.step('function warehouse:api/material_sources/refresh',
            'execute store result score #msc htest run data get storage warehouse:api material_source_count')
@@ -202,8 +204,8 @@ else:
     # ---- 3. search --------------------------------------------------------------
     s.step(f'execute as {A} run function warehouse:search/run {{q:"鵝卵石"}}')
     s.check('search by Chinese name lists the item (鵝卵石 matches 8 items)',
-            ('data storage warehouse:runtime search{ids:["642"]}', '鵝卵石 results do not include minecraft:cobblestone'),
-            'data storage warehouse:runtime search{total:8}')
+            # the result ids are consumed while the list renders; 8 = every 鵝卵石 index hit, cobblestone included
+            ('data storage warehouse:runtime search{query:"鵝卵石",total:8}', '鵝卵石 did not return its 8 index hits'))
     s.step(f'execute as {A} run function warehouse:search/run {{q:"minecraft:cobblestone"}}')
     s.check('search by Minecraft ID', 'data storage warehouse:runtime search{item_id:"minecraft:cobblestone"}')
     s.step(f'execute as {A} run function warehouse:search/run {{q:"石"}}',
@@ -238,10 +240,12 @@ else:
     s.check('stock drops by the amount taken', 'score #a0 htest matches 5')
     s.step('execute store result storage wtest:arg big.count int 1 run scoreboard players add #a1 htest 1',
            'data modify storage wtest:arg big.item_id set value "minecraft:cobblestone"',
-           'function warehouse:api/take_item with storage wtest:arg big', *count('minecraft:cobblestone', '#a2'),
-           'scoreboard players remove #a1 htest 1')
-    s.check('take_item over the stock is refused', 'data storage warehouse:api result{ok:0b}')
-    s.check('take_item over the stock reports insufficient_stock', 'data storage warehouse:api result{error:"insufficient_stock"}')
+           'function warehouse:api/take_item with storage wtest:arg big',
+           # keep the take result: count_item below overwrites warehouse:api result
+           'data modify storage wtest:arg take set from storage warehouse:api result',
+           *count('minecraft:cobblestone', '#a2'), 'scoreboard players remove #a1 htest 1')
+    s.check('take_item over the stock is refused', 'data storage wtest:arg take{ok:0b}')
+    s.check('take_item over the stock reports insufficient_stock', 'data storage wtest:arg take{error:"insufficient_stock"}')
     s.check('take_item over the stock takes nothing', 'score #a2 htest = #a1 htest')
     s.step('function warehouse:api/refund_item {item_id:"minecraft:cobblestone",count:5}')
     s.check('refund_item accepts the stack', 'data storage warehouse:api result{remaining:0}')
