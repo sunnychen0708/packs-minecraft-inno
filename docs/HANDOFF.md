@@ -15,8 +15,9 @@
 - 發布：在 `main` 推 `<pack>-v<版本>` tag，`.github/workflows/release-pack.yml` 會驗證、打包、建 Release。**打 tag 前要先問使用者。**
 - 2026-10-06 曾改寫 `main` 的最後一段歷史，拿掉 AI 工具署名並刪除舊分支。改寫前完整備份在使用者電腦 `C:\Users\sunny\repo-backups\packs-minecraft-inno-before-rewrite-20261006.git`。
 - **最新 CI 狀態**：Utilities、Warehouse、Copy/Paste 專用 26.3 runtime 與三包 together compatibility 都通過。
-- **最新多人實機狀態**：2026-10-07 最後一輪 Copy/Paste assertions 在四個 Mineflayer 玩家在線時全部 PASS，最後 `MCCMP_RESULT PASS`；但同一份持久化 server log 也保留前面數次失敗（harness parser error、bot invalid move、Undo/Redo FAIL）。controller 已新增 current-session `/ERROR]:` gate；在 fresh run 再通過前，不要稱為 clean live validation。
-- **最新伺服器狀態**：`innotest.exaroton.me` 已關機，最後讀到 `OFFLINE`、`0/10`、Vanilla 26.3。
+- **最新多人實機狀態**：2026-10-07 在**新開機的 innotest session** 重跑，通過 current-session `/ERROR]:` gate：18 項 `MCCMP_CHECK` 全部 PASS、`MCCMP_RESULT PASS`、`COPY_PASTE_MULTIPLAYER_LIVE_TEST=PASS`（[run 37561053135](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37561053135)），整個 session server log 0 行 `ERROR`；四個 Mineflayer 玩家完整 hold 5 分鐘後正常離線，沒有 `Invalid move`。這是 clean live validation。
+- 重跑前發現 innotest `world/datapacks` 同時有 controller 的 `utilities.zip`／`warehouse.zip`／`copy-paste.zip` 與手動放的 `*-v3.6.zip`／`*-v4.5.zip`／`*-v1.5.zip`，同一 pack 被載入兩份；已刪掉版本號檔名那三個。之後 innotest 只放 controller 的固定檔名，不要再手動放其他檔名的同一 pack。
+- **最新伺服器狀態**：`innotest.exaroton.me` 測完後保持開機（使用者表示頻繁開關比待機更耗 credits），0/10 玩家。
 - exaroton / bot / production maintenance 的操作細節集中在 [`docs/exaroton-operations.md`](exaroton-operations.md)。
 
 ## 2. 和使用者合作
@@ -144,7 +145,7 @@ Copy/Paste runtime 失敗時會印 `MCCST_DIAG_DROP_<步驟>` / `MCCST_DIAG_DIFF
 6. 測完關 `innotest`，再讀 status 確認 `OFFLINE` / `0/10`。
 7. 三個 ops request 全部 reset 成 `noop`。
 
-2026-10-07 最後一輪 assertions 全部 PASS，涵蓋：independent selection、clipboard、unique `mcc_id`、Blueprint、Move、work/undo lane、Undo/Redo、Rotate、Cut/Paste、A/B isolated Undo/Redo。不過同一 server log 有前面失敗的歷史紀錄；新的 current-session server-error gate 尚未在 fresh innotest session 重跑，所以目前只能稱為 final assertion pass，不是 clean live validation。
+2026-10-07 在新開機的 innotest session 通過 current-session server-error gate：assertions 全部 PASS，涵蓋 independent selection、clipboard、unique `mcc_id`、Blueprint、Move、work/undo lane、Undo/Redo、Rotate、Cut/Paste、A/B isolated Undo/Redo，session log 沒有任何 `/ERROR]:`。這是 clean live validation。
 
 ## 9. 真人 client 工具（`scripts/real-client/`，Windows）
 
