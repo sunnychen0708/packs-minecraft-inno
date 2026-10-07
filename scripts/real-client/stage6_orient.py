@@ -13,18 +13,33 @@ def face(direction):
     cmd(f'tp @s ~ ~ ~ {YAW[direction]} 30', 0.6)
 
 def apply_steps(src, pivot, target, steps):
-    """steps: ('turn', k) quarter turns clockwise, or ('mirror', 'x'|'z'), in the order given."""
-    out = {}
-    for (x, y, z), s in src.items():
-        dx, dz, st = x - pivot[0], z - pivot[2], s
-        for kind, v in steps:
-            if kind == 'turn':
-                dx, dz = xform.rot_off(dx, dz, v); st = xform.rotate_state(st, v)
-            else:
-                if v == 'x': dx = -dx
-                else: dz = -dz
-                st = xform.mirror_state(st, v)
-        out[(target[0] + dx, target[1] + (y - pivot[1]), target[2] + dz)] = st
+    """Player-visible Blueprint transforms, applied one requested step at a time.
+
+    Turns use the Pos1/Anchor destination as pivot. Default-anchor Flip mirrors
+    the current axis-aligned Blueprint bounds in place, matching direct Flip.
+    """
+    out = {
+        (target[0] + (x - pivot[0]), target[1] + (y - pivot[1]), target[2] + (z - pivot[2])): s
+        for (x, y, z), s in src.items()
+    }
+    for kind, v in steps:
+        nxt = {}
+        if kind == 'turn':
+            for (x, y, z), st in out.items():
+                dx, dz = x - target[0], z - target[2]
+                dx, dz = xform.rot_off(dx, dz, v)
+                nxt[(target[0] + dx, y, target[2] + dz)] = xform.rotate_state(st, v)
+        else:
+            xs = [p[0] for p in out]
+            zs = [p[2] for p in out]
+            lo, hi = (min(xs), max(xs)) if v == 'x' else (min(zs), max(zs))
+            for (x, y, z), st in out.items():
+                if v == 'x':
+                    x = lo + hi - x
+                else:
+                    z = lo + hi - z
+                nxt[(x, y, z)] = xform.mirror_state(st, v)
+        out = nxt
     return out
 
 def displays_match(w, exp, label):
