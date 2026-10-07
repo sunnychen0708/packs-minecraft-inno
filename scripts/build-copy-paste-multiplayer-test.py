@@ -438,7 +438,7 @@ for p in P:
 (F/'restore_inventory.mcfunction').write_text('\n'.join(restore)+'\n',encoding='utf-8')
 cleanup+=[f'execute {OW} run fill {x1} {y1} {z1} {x2} {y2} {z2} air',
           f'execute {OW} run kill @e[type=minecraft:item,x={x1},y={y1},z={z1},dx={x2-x1},dy={y2-y1},dz={z2-z1}]',
-          'data remove storage mcc_mp_test:tmp',
+          'data remove storage mcc_mp_test:tmp n','data remove storage mcc_mp_test:tmp item',
           'tag @a remove mcc_mp_a','tag @a remove mcc_mp_b',
           'scoreboard objectives remove mccmp',
           'say MCCMP_CLEANUP DONE']
