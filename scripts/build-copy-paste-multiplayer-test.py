@@ -386,6 +386,102 @@ check('simultaneous flip front back exact states',*[c for p in P for c in house_
 both_trigger('undo')
 check('flip front back undo exact',*[c for p in P for c in exact_house(P[p]['S'])],no_items())
 
+# ---- Blueprint turn / nudge / reset on the full 3D house ----------------------
+def blueprint_presence(p,origin,transform=None):
+    out=[]
+    for x,y,z,state in house.BLOCKS:
+        if transform in ('r90','r180','r270'):
+            k={'r90':1,'r180':2,'r270':3}[transform]
+            dx,dz=xform.rot_off(x,z,k)
+        elif transform=='mx':
+            dx,dz=SX-1-x,z
+        elif transform=='mz':
+            dx,dz=x,SZ-1-z
+        else:
+            dx,dz=x,z
+        wx,wy,wz=origin[0]+dx,origin[1]+y,origin[2]+dz
+        out.append((f'{OW} positioned {wx}.0 {wy}.0 {wz}.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.01]',
+                    f'player {p.upper()} blueprint missing at {wx} {wy} {wz} after {transform or "identity"}'))
+    return out
+
+both_trigger('c')
+step(*[aim_down(p,P[p]['T'][0],Y-1,P[p]['T'][2]) for p in P])
+both_trigger('v')
+wait('transform blueprints ready',[c for p in P for c in (
+    f'score {sel(p)} mcc_bpready matches 1',
+    f'score {sel(p)} mcc_bpscan matches 0',
+    f'score {sel(p)} mcc_bpover_scan matches 0')])
+check('transform blueprints start exact',
+      *[c for p in P for c in blueprint_presence(p,P[p]['T'])],
+      *[f'score {sel(p)} mcc_rot matches 0' for p in P],
+      *[f'score {sel(p)} mcc_mir matches 0' for p in P])
+
+for trig,opp,(dx,dy,dz) in (
+    ('bpleft','bpright',(1,0,0)),
+    ('bpright','bpleft',(-1,0,0)),
+    ('bpforward','bpbackward',(0,0,1)),
+    ('bpbackward','bpforward',(0,0,-1)),
+    ('bpup','bpdown',(0,1,0)),
+    ('bpdown','bpup',(0,-1,0)),
+):
+    both_trigger(f'{trig} set 1')
+    wait(f'{trig} recount done',[f'score {sel(p)} mcc_bpover_scan matches 0' for p in P])
+    check(f'blueprint {trig} exact',
+          *[c for p in P for c in blueprint_presence(p,(P[p]['T'][0]+dx,Y+dy,P[p]['T'][2]+dz))],
+          *[f'score {sel(p)} mcc_bptx0 matches {P[p]["T"][0]+dx}' for p in P],
+          *[f'score {sel(p)} mcc_bpty0 matches {Y+dy}' for p in P],
+          *[f'score {sel(p)} mcc_bptz0 matches {P[p]["T"][2]+dz}' for p in P])
+    both_trigger(f'{opp} set 1')
+    wait(f'{trig} restored',[f'score {sel(p)} mcc_bpover_scan matches 0' for p in P])
+    check(f'blueprint {trig} inverse restores',
+          *[c for p in P for c in blueprint_presence(p,P[p]['T'])])
+
+both_trigger('bpturnright')
+wait('bpturnright ready',[c for p in P for c in (f'score {sel(p)} mcc_bpready matches 1',f'score {sel(p)} mcc_bpscan matches 0')])
+check('blueprint turn right exact',
+      *[c for p in P for c in blueprint_presence(p,P[p]['T'],'r90')],
+      *[f'score {sel(p)} mcc_rot matches 1' for p in P])
+both_trigger('bpturnleft')
+wait('bpturnright inverse ready',[c for p in P for c in (f'score {sel(p)} mcc_bpready matches 1',f'score {sel(p)} mcc_bpscan matches 0')])
+check('blueprint turn right inverse restores',
+      *[c for p in P for c in blueprint_presence(p,P[p]['T'])],
+      *[f'score {sel(p)} mcc_rot matches 0' for p in P])
+
+both_trigger('bpturnleft')
+wait('bpturnleft ready',[c for p in P for c in (f'score {sel(p)} mcc_bpready matches 1',f'score {sel(p)} mcc_bpscan matches 0')])
+check('blueprint turn left exact',
+      *[c for p in P for c in blueprint_presence(p,P[p]['T'],'r270')],
+      *[f'score {sel(p)} mcc_rot matches 3' for p in P])
+both_trigger('bpreset')
+wait('bpreset after left ready',[c for p in P for c in (f'score {sel(p)} mcc_bpready matches 1',f'score {sel(p)} mcc_bpscan matches 0')])
+check('blueprint reset restores orientation',
+      *[c for p in P for c in blueprint_presence(p,P[p]['T'])],
+      *[f'score {sel(p)} mcc_rot matches 0' for p in P],
+      *[f'score {sel(p)} mcc_mir matches 0' for p in P])
+
+both_trigger('bpturnright')
+wait('bpturnright first 180 ready',[c for p in P for c in (f'score {sel(p)} mcc_bpready matches 1',f'score {sel(p)} mcc_bpscan matches 0')])
+both_trigger('bpturnright')
+wait('bpturnright second 180 ready',[c for p in P for c in (f'score {sel(p)} mcc_bpready matches 1',f'score {sel(p)} mcc_bpscan matches 0')])
+check('blueprint turn 180 exact',
+      *[c for p in P for c in blueprint_presence(p,P[p]['T'],'r180')],
+      *[f'score {sel(p)} mcc_rot matches 2' for p in P])
+both_trigger('bpreset')
+wait('bpreset after 180 ready',[c for p in P for c in (f'score {sel(p)} mcc_bpready matches 1',f'score {sel(p)} mcc_bpscan matches 0')])
+
+both_trigger('bpflipfb')
+wait('bpflipfb ready',[c for p in P for c in (f'score {sel(p)} mcc_bpready matches 1',f'score {sel(p)} mcc_bpscan matches 0')])
+check('blueprint flip front back exact',
+      *[c for p in P for c in blueprint_presence(p,P[p]['T'],'mz')],
+      *[f'score {sel(p)} mcc_mir matches 2' for p in P])
+both_trigger('bpreset')
+wait('final bpreset ready',[c for p in P for c in (f'score {sel(p)} mcc_bpready matches 1',f'score {sel(p)} mcc_bpscan matches 0')])
+check('blueprint final reset exact',
+      *[c for p in P for c in blueprint_presence(p,P[p]['T'])],
+      *[f'score {sel(p)} mcc_rot matches 0' for p in P],
+      *[f'score {sel(p)} mcc_mir matches 0' for p in P])
+both_trigger('previewclear')
+
 # ---- Undo guard: block-state changes are ignored, block-ID / block-entity changes block Undo ----
 both_trigger('up set 1')
 sa,sb=P['a']['S'],P['b']['S']
