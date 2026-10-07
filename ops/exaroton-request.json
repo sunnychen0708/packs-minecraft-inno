@@ -1,6 +1,6 @@
 {
-  "request_id": 202610071442,
-  "operation": "deploy-datapack",
+  "request_id": 202610071443,
+  "operation": "start",
   "command": "",
-  "pack": "utilities"
+  "pack": ""
 }
