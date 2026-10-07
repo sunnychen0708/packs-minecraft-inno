@@ -32,7 +32,7 @@ The current Java 26.3 source has passed:
 - all-datapacks Java 26.3 compatibility runtime;
 - an `innotest` live multiplayer Copy/Paste regression with four Mineflayer player connections online, including independent selection/clipboard state, Blueprint, simultaneous Move, Undo/Redo, Rotate, Cut/Paste, and per-player history isolation.
 
-The latest live multiplayer run ended with `MCCMP_RESULT PASS`. After testing, `innotest.exaroton.me` was stopped and verified `OFFLINE`, `0/10`.
+The final assertion sequence of the latest live multiplayer session ended with `MCCMP_RESULT PASS`, but the same persistent server log also contains earlier failed attempts from that debugging session. A stricter current-session server-error gate has since been added; until a fresh run passes that gate, do not describe the live validation as a clean-log pass. After testing, `innotest.exaroton.me` was stopped and verified `OFFLINE`, `0/10`.
 
 This does **not** replace the Windows real-client stages for UI clicks, G-key flow, Dialog behavior, or crosshair raycasts. See [`docs/datapack-validation.md`](docs/datapack-validation.md) for the validation layers and [`docs/HANDOFF.md`](docs/HANDOFF.md) for the current handoff state.
 

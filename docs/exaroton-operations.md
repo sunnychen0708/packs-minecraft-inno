@@ -107,7 +107,7 @@ The regression covers:
 - A-only Undo/Redo not modifying B;
 - B independent Undo.
 
-The final 2026-10-07 run produced `MCCMP_RESULT PASS` with every check above passing while four bot players were online. The final four-bot hold also completed successfully for the full five-minute session.
+The final assertion sequence on 2026-10-07 produced `MCCMP_RESULT PASS` with every check above passing while four bot players were online, and the final four-bot hold completed the full five-minute session. However, the same persistent server log also contains earlier failed attempts from that debugging session. The controller now places a unique session marker before deployment/reload and rejects any current-session `/ERROR]:` line before accepting PASS. A fresh run through this stricter gate is still required before calling the live validation a clean-log pass.
 
 ## Recommended live-test sequence
 

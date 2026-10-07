@@ -15,7 +15,7 @@
 - 發布：在 `main` 推 `<pack>-v<版本>` tag，`.github/workflows/release-pack.yml` 會驗證、打包、建 Release。**打 tag 前要先問使用者。**
 - 2026-10-06 曾改寫 `main` 的最後一段歷史，拿掉 AI 工具署名並刪除舊分支。改寫前完整備份在使用者電腦 `C:\Users\sunny\repo-backups\packs-minecraft-inno-before-rewrite-20261006.git`。
 - **最新 CI 狀態**：Utilities、Warehouse、Copy/Paste 專用 26.3 runtime 與三包 together compatibility 都通過。
-- **最新多人實機狀態**：`innotest` 四個 Mineflayer 玩家同時在線時，Copy/Paste multiplayer regression 全部 PASS；最後 `MCCMP_RESULT PASS`。
+- **最新多人實機狀態**：2026-10-07 最後一輪 Copy/Paste assertions 在四個 Mineflayer 玩家在線時全部 PASS，最後 `MCCMP_RESULT PASS`；但同一份持久化 server log 也保留前面數次失敗（harness parser error、bot invalid move、Undo/Redo FAIL）。controller 已新增 current-session `/ERROR]:` gate；在 fresh run 再通過前，不要稱為 clean live validation。
 - **最新伺服器狀態**：`innotest.exaroton.me` 已關機，最後讀到 `OFFLINE`、`0/10`、Vanilla 26.3。
 - exaroton / bot / production maintenance 的操作細節集中在 [`docs/exaroton-operations.md`](exaroton-operations.md)。
 
@@ -144,7 +144,7 @@ Copy/Paste runtime 失敗時會印 `MCCST_DIAG_DROP_<步驟>` / `MCCST_DIAG_DIFF
 6. 測完關 `innotest`，再讀 status 確認 `OFFLINE` / `0/10`。
 7. 三個 ops request 全部 reset 成 `noop`。
 
-2026-10-07 最後一輪 live regression 全部 PASS，涵蓋：independent selection、clipboard、unique `mcc_id`、Blueprint、Move、work/undo lane、Undo/Redo、Rotate、Cut/Paste、A/B isolated Undo/Redo。
+2026-10-07 最後一輪 assertions 全部 PASS，涵蓋：independent selection、clipboard、unique `mcc_id`、Blueprint、Move、work/undo lane、Undo/Redo、Rotate、Cut/Paste、A/B isolated Undo/Redo。不過同一 server log 有前面失敗的歷史紀錄；新的 current-session server-error gate 尚未在 fresh innotest session 重跑，所以目前只能稱為 final assertion pass，不是 clean live validation。
 
 ## 9. 真人 client 工具（`scripts/real-client/`，Windows）
 
