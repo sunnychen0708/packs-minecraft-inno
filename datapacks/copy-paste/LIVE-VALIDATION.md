@@ -1,5 +1,7 @@
 # Copy/Paste 驗證狀態（v1.7）
 
+**2026-10-07 v1.7 最新驗證：** innotest 全 state 35,724 次比對零失敗、SunnyChen 真人 client + 三 Bot 的多人回歸 18/18，以及 G → 選點 / Copy / Paste → 樓梯預覽旋轉 / 清除皆通過。測試層級、限制與 workflow 連結見 [Issue #49 驗證](../../docs/issue-49-validation.md)。下方 v1.3 真人紀錄是歷史證據，不代表此次重跑。
+
 目前版本 **v1.7**：Blueprint 方塊狀態比對改成先找方塊 ID、再逐一判斷屬性，結果不變、速度較快。v1.6 不再自動刪除全域舊 trigger objective；需要清理 v1.3 殘留時，由管理員確認無其他 datapack 使用同名 objective 後手動執行 cleanup。v1.5 清除或重建 Blueprint 時會取消還在跑的覆蓋檢查。v1.4 拿掉載入與第一次使用時的聊天訊息，並移除舊的轉向／翻面指令。目標 Minecraft Java 26.3（Data Pack 121.0）。
 
 這份文件把「官方 server headless regression」和「真人 client 驗證」分開寫。兩者不能互相冒充。

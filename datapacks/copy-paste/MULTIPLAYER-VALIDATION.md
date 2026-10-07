@@ -1,5 +1,7 @@
 # Copy/Paste v1.7 多人隔離與驗證
 
+2026-10-07：SunnyChen 使用 Windows 官方 client，另外三人使用 Bot；innotest 同 tick regression **18 PASS / 0 FAIL**，通過 current-session server ERROR gate。[完整證據與限制](../../docs/issue-49-validation.md)。這不是兩個真人同時點 UI 的驗證。
+
 目標：多位玩家可在同一個伺服器使用 Copy/Paste、Blueprint、Move/Rotate/Flip、Undo/Redo，而不把彼此的 Clipboard、歷史紀錄或材料工作狀態混在一起。Warehouse 庫存則刻意是全服共用資產。
 
 ## Per-player 狀態
