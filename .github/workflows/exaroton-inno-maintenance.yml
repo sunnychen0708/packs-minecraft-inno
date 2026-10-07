@@ -34,16 +34,21 @@ jobs:
 
           op = request.get("operation")
           if op == "noop":
-              mode = "noop"
+              mode, scope = "noop", "none"
           elif op == "uuid-migrate-dry-run":
-              mode = "dry-run"
+              mode, scope = "dry-run", "all"
           elif op == "uuid-migrate-apply":
-              mode = "apply"
+              mode, scope = "apply", "all"
+          elif op == "uuid-stats-dry-run":
+              mode, scope = "dry-run", "stats"
+          elif op == "uuid-stats-apply":
+              mode, scope = "apply", "stats"
           else:
               raise SystemExit(f"unsupported maintenance operation: {op!r}")
 
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
               output.write(f"mode={mode}\n")
+              output.write(f"scope={scope}\n")
           PY
 
       - name: No-op request
@@ -61,13 +66,18 @@ jobs:
           EXAROTON_API_TOKEN: ${{ secrets.EXAROTON_API_TOKEN }}
         run: |
           set -euo pipefail
-          PYTHONPATH=scripts python3 - "${{ steps.request.outputs.mode }}" <<'PY'
+          PYTHONPATH=scripts python3 - "${{ steps.request.outputs.mode }}" "${{ steps.request.outputs.scope }}" <<'PY'
           import sys
           import exaroton_inno_uuid_migrate as migration
 
-          mode = sys.argv[1]
+          mode, scope = sys.argv[1], sys.argv[2]
           original_remote_path = migration.remote_path
           migration.remote_path = lambda p: original_remote_path(str(p).lstrip("/"))
+
+          if scope == "stats":
+              import exaroton_inno_stats_merge as stats_merge
+              stats_merge.plan_or_apply(mode)
+              raise SystemExit(0)
 
           # Exaroton's binary file endpoint must be called without the trailing
           # slash used by ordinary text/config reads. A zero-byte .mca response
