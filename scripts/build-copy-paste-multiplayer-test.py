@@ -174,8 +174,13 @@ check('simultaneous redo',
 both_trigger('undo')
 
 # Same-tick direct real Rotate and independent Undo.
+# Occupied transformed targets must be replaced by the selected blocks, not swallow them.
+step(
+    'execute in minecraft:overworld run setblock -300 250 92 stone',
+    'execute in minecraft:overworld run setblock -300 250 122 deepslate'
+)
 both_trigger('turnright')
-check('simultaneous real rotate',
+check('simultaneous real rotate overwrites occupied targets',
       'in minecraft:overworld if block -300 250 90 gold_block',
       'in minecraft:overworld if block -300 250 92 diamond_block',
       'in minecraft:overworld if block -300 250 120 copper_block',
@@ -184,8 +189,10 @@ both_trigger('undo')
 check('rotate undo isolated',
       'in minecraft:overworld if block -300 250 90 gold_block',
       'in minecraft:overworld if block -298 250 90 diamond_block',
+      'in minecraft:overworld if block -300 250 92 stone',
       'in minecraft:overworld if block -300 250 120 copper_block',
-      'in minecraft:overworld if block -298 250 120 lapis_block')
+      'in minecraft:overworld if block -298 250 120 lapis_block',
+      'in minecraft:overworld if block -300 250 122 deepslate')
 
 # Direct Flip already uses the selection center; keep it paired with Blueprint Flip.
 both_trigger('flip')

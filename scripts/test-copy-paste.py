@@ -477,9 +477,16 @@ def check_v100_semantics(pack: Path):
     assert 'function mcc:work/snapshot_selection' in rotate
     assert 'function mcc:undo/backup_from_' in rotate
     assert 'function mcc:cut/clear_' in rotate
-    assert 'function mcc:rotate_edit/place_' in rotate
-    assert rotate.index('function mcc:work/snapshot_selection') < rotate.index('function mcc:cut/clear_')
+    assert 'function mcc:rotate_edit/stage_work' in rotate
+    assert 'function mcc:work/to_overworld_replace' in rotate
+    assert 'function mcc:work/to_nether_replace' in rotate
+    assert 'function mcc:work/to_end_replace' in rotate
+    assert rotate.index('function mcc:work/snapshot_selection') < rotate.index('function mcc:rotate_edit/stage_work')
+    assert rotate.index('function mcc:rotate_edit/stage_work') < rotate.index('function mcc:cut/clear_')
     assert rotate.index('function mcc:undo/backup_from_') < rotate.index('function mcc:cut/clear_')
+    stage_work=read(pack/'data/mcc/function/rotate_edit/stage_work.mcfunction')
+    assert 'fill $(wbx) 0 20000500 $(old_wbx2) $(wby2) $(old_wbz2) minecraft:air strict' in stage_work
+    assert 'place template mcc:work_$(id)' in stage_work
     for name in ('r90.mcfunction','r180.mcfunction','r270.mcfunction'):
         assert (pack/'data/mcc/function/rotate_edit'/name).is_file()
 
