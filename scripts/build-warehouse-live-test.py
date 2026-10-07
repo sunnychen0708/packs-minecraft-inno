@@ -177,8 +177,9 @@ s.step('function wtest:remove_tagged_entry with storage warehouse:chests c00')
 
 # ---- 3. search --------------------------------------------------------------
 s.step(f'execute as {A} run function warehouse:search/run {{q:"鵝卵石"}}')
-s.check('search by Chinese name finds the item and its stock',
-        'data storage warehouse:runtime search{item_id:"minecraft:cobblestone",stock:"有庫存"}')
+s.check('search by Chinese name lists the item (鵝卵石 matches 8 items)',
+        ('data storage warehouse:runtime search{ids:["642"]}', '鵝卵石 results do not include minecraft:cobblestone'),
+        'data storage warehouse:runtime search{total:8}')
 s.step(f'execute as {A} run function warehouse:search/run {{q:"minecraft:cobblestone"}}')
 s.check('search by Minecraft ID', 'data storage warehouse:runtime search{item_id:"minecraft:cobblestone"}')
 s.step(f'execute as {A} run function warehouse:search/run {{q:"石"}}',
@@ -215,15 +216,19 @@ s.step('execute store result storage wtest:arg big.count int 1 run scoreboard pl
        'data modify storage wtest:arg big.item_id set value "minecraft:cobblestone"',
        'function warehouse:api/take_item with storage wtest:arg big', *count('minecraft:cobblestone', '#a2'),
        'scoreboard players remove #a1 htest 1')
-s.check('take_item is all-or-nothing', 'data storage warehouse:api result{error:"insufficient_stock"}', 'score #a2 htest = #a1 htest')
+s.check('take_item over the stock is refused', 'data storage warehouse:api result{ok:0b}')
+s.check('take_item over the stock reports insufficient_stock', 'data storage warehouse:api result{error:"insufficient_stock"}')
+s.check('take_item over the stock takes nothing', 'score #a2 htest = #a1 htest')
 s.step('function warehouse:api/refund_item {item_id:"minecraft:cobblestone",count:5}')
 s.check('refund_item accepts the stack', 'data storage warehouse:api result{remaining:0}')
 entry_empty_wait('refund sorted')
 s.step(*count('minecraft:cobblestone', '#a3'), 'scoreboard players operation #a3 htest -= #a1 htest')
 s.check('stock is back after the refund', 'score #a3 htest matches 5')
-s.step('function warehouse:api/material_sources/refresh')
+s.step('function warehouse:api/material_sources/refresh',
+       'execute store result score #msc htest run data get storage warehouse:api material_source_count')
 s.check('material sources list the registered boxes within the 64 limit',
-        'data storage warehouse:api {material_source_limit:64}', 'data storage warehouse:api material_sources[0]')
+        'data storage warehouse:api meta{material_source_limit:64}', 'data storage warehouse:api material_sources[0]',
+        'score #msc htest matches 1..64')
 s.step(f'execute {OW} run setblock {PX} {PY} {PZ} minecraft:oak_stairs', f'execute {OW} positioned {PX} {PY} {PZ} run function warehouse:api/resolve_block')
 s.check('resolve_block gives the survival item and stack size',
         'data storage warehouse:api result{ok:1b,item_id:"minecraft:oak_stairs",max_stack:64}')

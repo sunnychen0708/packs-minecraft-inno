@@ -651,7 +651,6 @@ def run_copy_paste_multiplayer_test(client):
         "tag @a remove mcc_mp_b",
         "execute as @a[name=penguin0531,limit=1] run function mcc_mp_test:join_a",
         "execute as @a[name=geena0701,limit=1] run function mcc_mp_test:join_b",
-        "tick rate 10000",
         "execute as @a[name=penguin0531,limit=1] run function mcc_mp_test:start",
     ]
     for command in commands:
