@@ -1,6 +1,6 @@
 {
-  "request_id": 20261007204001,
-  "operation": "noop",
-  "command": "",
-  "pack": ""
+  "request_id": 20261007220001,
+  "operation": "run-copy-paste-multiplayer-test",
+  "command": "recheck",
+  "pack": "all"
 }
