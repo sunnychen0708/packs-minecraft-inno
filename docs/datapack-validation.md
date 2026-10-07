@@ -146,7 +146,7 @@ The server-side controller operation is:
 run-copy-paste-multiplayer-test
 ```
 
-A normal run uses four Mineflayer 26.3 player connections. Two named players perform the regression while the other two stay online, so the test occurs in a real four-player server session rather than an armor-stand-only harness.
+Normal automation keeps the three non-SunnyChen Mineflayer 26.3 bots available persistently and reserves SunnyChen for the owner/real client. Each harness declares the player names it actually needs; use all four identities only when a test genuinely needs SunnyChen too.
 
 The regression checks:
 
@@ -204,8 +204,8 @@ For datapacks:
 5. Utilities, Warehouse, and Copy/Paste releases must also pass their dedicated 26.3 runtime harnesses.
 6. For multiplayer-sensitive Copy/Paste state changes, run the innotest live multiplayer regression before calling the change multiplayer-validated.
 7. Do not describe a pack as real-client validated if only CI or Mineflayer testing was run.
-8. Do not create a release from a known failing validation run.
+8. The normal release path is gated. If the owner explicitly requests a direct/no-gate release, that exception may skip validation, but the release must be documented as unvalidated for the skipped layer; never turn a skipped or failing run into a PASS claim.
 
 GitHub Actions runs generic validation, pack-specific regressions, cross-pack static compatibility, dedicated Utilities/Warehouse/Copy-Paste runtime jobs, and the all-datapacks 26.3 compatibility job on relevant `main` pushes and pull requests.
 
-The release workflow verifies the tag version against `pack.mcmeta`, reruns the combined all-datapacks runtime gate for every datapack tag, reruns the dedicated Utilities, Warehouse or Copy/Paste runtime gate when applicable, then builds and publishes the ZIP. Publishing is idempotent: runs for the same tag are serialized, and when the release already exists the ZIP is uploaded to it instead of failing. A release can also be started manually (`workflow_dispatch` on `main` with a `tag` input such as `utilities-v3.7`): the same gates run first, and only then does the workflow create the annotated tag on that `main` commit; it refuses a tag that already points at another commit. Generated release notes start at the same pack's previous release tag (e.g. `copy-paste-v1.5` for `copy-paste-v1.6`), not at whichever pack was tagged last.
+The release workflow verifies the tag version against `pack.mcmeta`, reruns the combined all-datapacks runtime gate for every datapack tag, reruns the dedicated Utilities, Warehouse or Copy/Paste runtime gate when applicable, then builds and publishes the ZIP. Publishing is idempotent: runs for the same tag are serialized, and when the release already exists the ZIP is uploaded to it instead of failing. A release can also be started manually (`workflow_dispatch` on `main` with a `tag` input such as `utilities-v3.8`): the same gates run first, and only then does the workflow create the annotated tag on that `main` commit; it refuses a tag that already points at another commit. Generated release notes start at the same pack's previous release tag (e.g. `copy-paste-v1.5` for `copy-paste-v1.6`), not at whichever pack was tagged last.
