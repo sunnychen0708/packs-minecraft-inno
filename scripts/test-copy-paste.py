@@ -70,14 +70,20 @@ def check_trigger_lifecycle(pack: Path):
 
 def check_upgrade_and_mode(pack: Path):
     tick=read(pack/'data/mcc/function/tick.mcfunction')
+    upgrade=read(pack/'data/mcc/function/player_upgrade.mcfunction')
+    call='execute as @a unless score @s mcc_stver matches 1 run function mcc:player_upgrade'
+    assert call in tick, 'tick must run the one-time player upgrade'
+    assert tick.index(call)<tick.index('scores={copypaste='), 'migrate before dispatch'
+    assert 'execute as @a unless score @s mcc_rot' not in tick, 'per-player upgrades must not scan @a every tick'
+    assert upgrade.rstrip().endswith('scoreboard players set @s mcc_stver 1'), 'upgrade must mark the player done'
+    load=read(pack/'data/mcc/function/load.mcfunction')
+    assert 'scoreboard objectives add mcc_stver dummy' in load, 'fresh worlds must create the upgrade version objective'
     for objective,valid in [('mcc_rot','0..3'),('mcc_mir','0..2'),('mcc_usel','0..1'),('mcc_cliptype','0..2'),('mcc_redo','0..1'),('mcc_ucnt','0..5'),('mcc_uhead','0..5'),('mcc_rcnt','0..5'),('mcc_rhead','0..5'),('mcc_bpscan','0..1'),('mcc_bpactive','0..1'),('mcc_bpready','0..1'),('mcc_bpbad','0..1'),('mcc_matphase','0..2'),('mcc_matleft','0..'),('mcc_bpover','0..'),('mcc_buildconfirm','0..1'),('mcc_bpover_scan','0..1'),('mcc_bpoindex','0..'),('mcc_canchor','0..1')]:
-        migration=f'execute as @a unless score @s {objective} matches {valid} run scoreboard players set @s {objective} 0'
-        assert migration in tick, f'missing non-destructive upgrade for {objective}'
-        assert tick.index(migration)<tick.index('scores={copypaste='), 'migrate before dispatch'
+        migration=f'execute unless score @s {objective} matches {valid} run scoreboard players set @s {objective} 0'
+        assert migration in upgrade, f'missing non-destructive upgrade for {objective}'
     for objective in ('mcc_bpoffx','mcc_bpoffz'):
-        migration=f'execute as @a unless score @s {objective} = @s {objective} run scoreboard players set @s {objective} 0'
-        assert migration in tick, f'missing non-destructive upgrade for {objective}'
-        assert tick.index(migration)<tick.index('scores={copypaste='), 'migrate before dispatch'
+        migration=f'execute unless score @s {objective} = @s {objective} run scoreboard players set @s {objective} 0'
+        assert migration in upgrade, f'missing non-destructive upgrade for {objective}'
     mode=read(pack/'data/mcc/function/mode_toggle.mcfunction').splitlines()
     assert mode == [
         'execute if score @s mcc_mask matches 0 run return run function mcc:mode/to_masked',
