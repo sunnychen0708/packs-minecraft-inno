@@ -102,8 +102,15 @@ function attachDriver (bot, username) {
   bot.on('actionBar', msg => bot.emit('mfbot_text', msg && msg.toString ? msg.toString() : String(msg)))
   // 26.3 action bars arrive as set_action_bar_text or as system_chat with overlay=true; read the raw packets too.
   const rawText = packet => { try { return JSON.stringify(packet, (k, v) => typeof v === 'bigint' ? v.toString() : v) } catch (err) { return String(err) } }
-  bot._client.on('set_action_bar_text', packet => bot.emit('mfbot_text', rawText(packet)))
-  bot._client.on('system_chat', packet => { if (packet && (packet.isActionBar || packet.overlay)) bot.emit('mfbot_text', rawText(packet)) })
+  // The packet name differs between protocol versions, so match any action-bar/title/overlay packet by name.
+  const seenNames = new Set()
+  bot._client.on('packet', (packet, meta) => {
+    const name = meta && meta.name ? meta.name : ''
+    const overlay = name === 'system_chat' && packet && (packet.isActionBar || packet.overlay)
+    if (!overlay && !/action_bar|title/.test(name)) return
+    if (!seenNames.has(name)) { seenNames.add(name); console.log(`MFBOT_OVERLAY_PACKET ${username} ${name} ${rawText(packet).slice(0, 300)}`) }
+    bot.emit('mfbot_text', rawText(packet))
+  })
   bot._client.on('show_dialog', packet => {
     let text = ''
     try { text = JSON.stringify(packet, (k, v) => typeof v === 'bigint' ? v.toString() : v) } catch (err) { text = String(err) }
