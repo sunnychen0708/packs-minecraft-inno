@@ -1157,7 +1157,8 @@ def run(path):
     elif op in {"start", "stop", "restart"}: client.action(op); print(f"{op} requested for {TARGET}")
     elif op == "command": client.command(str(r.get("command") or "")); print(f"command sent to {TARGET}")
     elif op == "deploy-datapack": deploy(client, str(r.get("pack") or ""))
-    elif op == "run-copy-paste-multiplayer-test": run_copy_paste_multiplayer_test(client)\n    elif op == "run-utilities-bfs-live-test": run_utilities_bfs_live_test(client)
+    elif op == "run-copy-paste-multiplayer-test": run_copy_paste_multiplayer_test(client)
+    elif op == "run-utilities-bfs-live-test": run_utilities_bfs_live_test(client)
     elif op == "set-online-mode-false": set_offline_mode(client)
     elif op == "online-mode-status":
         options = client.get_config("server.properties")
