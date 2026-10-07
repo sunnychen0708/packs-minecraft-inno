@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - claude/innotest-house-regression
     paths:
       - "ops/exaroton-request.json"
   workflow_dispatch:
