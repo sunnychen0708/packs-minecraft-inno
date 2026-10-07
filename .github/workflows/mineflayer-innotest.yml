@@ -9,10 +9,18 @@ on:
   workflow_dispatch:
     inputs:
       duration_ms:
-        description: Keep four bots connected for this many milliseconds (30s-1500s)
+        description: Keep test bots connected for this many milliseconds (30s-1500s)
         required: true
         default: "180000"
         type: string
+      player_mode:
+        description: Reserve SunnyChen for the real client by default
+        required: true
+        default: three-bots-with-real-client
+        type: choice
+        options:
+          - three-bots-with-real-client
+          - four-bots
 
 permissions:
   contents: read
@@ -34,6 +42,7 @@ jobs:
         shell: bash
         env:
           INPUT_DURATION_MS: ${{ inputs.duration_ms }}
+          INPUT_PLAYER_MODE: ${{ inputs.player_mode }}
           EVENT_NAME: ${{ github.event_name }}
         run: |
           python3 - <<'PY'
@@ -46,12 +55,17 @@ jobs:
 
           if os.environ["EVENT_NAME"] == "workflow_dispatch":
               duration = int(os.environ["INPUT_DURATION_MS"])
-              names = "SunnyChen,penguin0531,geena0701,Felicitypeng"
+              names = "penguin0531,geena0701,Felicitypeng"
+              if os.environ["INPUT_PLAYER_MODE"] == "four-bots":
+                  names = "SunnyChen,penguin0531,geena0701,Felicitypeng"
           else:
               req = json.loads(Path("ops/mineflayer-request.json").read_text())
               op = req.get("operation")
               if op == "noop":
                   run = False
+              elif op == "test-3-bots":
+                  names = "penguin0531,geena0701,Felicitypeng"
+                  duration = int(req.get("duration_ms", 180000))
               elif op == "test-4-bots":
                   names = "SunnyChen,penguin0531,geena0701,Felicitypeng"
                   duration = int(req.get("duration_ms", 180000))
