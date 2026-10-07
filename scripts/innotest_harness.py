@@ -99,6 +99,11 @@ class Suite:
         assert all(' ' not in t for t in tokens)
         self.bot(p, 'cmdx', len(tokens), *tokens, command, label=label or f'{p} {command} sees {"+".join(tokens)}')
 
+    def dialog(self, p: str, command: str, label: str | None = None) -> None:
+        """Have the bot send a trigger/function command and require a real show_dialog packet."""
+        assert command.startswith(('trigger ', 'function '))
+        self.bot(p, 'dialog', *command.split(), label=label or f'{p} {command} receives Dialog')
+
     def tp(self, p: str, x: float, y: float, z: float, yaw: float = 0, pitch: float = 0, dim: str = 'overworld') -> None:
         self.step(f'execute in minecraft:{dim} run tp {self.sel(p)} {x} {y} {z} {yaw} {pitch}', delay=5)
 
