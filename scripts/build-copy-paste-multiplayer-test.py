@@ -354,7 +354,7 @@ for i,commands in enumerate(steps):
 # before the first teleport; wait for them before placing any test blocks.
 chunk_setup=[]
 chunk_cleanup=[]
-for cx in range(-305//16, -270//16+1):
+for cx in range(-305//16, -245//16+1):
     for cz in range(85//16, 130//16+1):
         holder=f'#chunk_{cx}_{cz}'
         pos=f'{cx*16} {cz*16}'
