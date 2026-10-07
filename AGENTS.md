@@ -30,6 +30,16 @@ For the changes above:
 
 A newly generated or clean test world is useful for isolated functional tests, but **it is not sufficient evidence for backward compatibility**. Clean-world CI/runtime tests are supplementary and must not replace the `inno`-copy-on-`innotest` upgrade test when existing production data could be affected.
 
+### innotest server lifecycle and credit usage
+
+The default post-test state for `innotest` is **ONLINE**.
+
+- Do **not** stop `innotest` merely because validation or testing is finished. Leave it running unless the user explicitly asks for it to be shut down.
+- Avoid unnecessary stop/start and restart cycles. In this project, repeated server lifecycle changes can consume more exaroton credits than simply leaving the test server running.
+- A worker may stop or restart `innotest` without separate user approval **only when installing or applying something that cannot be completed correctly without a server restart**.
+- When a restart is required for installation or deployment, perform only the minimum necessary stop/restart cycle, then leave `innotest` **ONLINE** after the installation and validation are complete unless the user explicitly requested that it remain off.
+- Do not treat shutdown as routine cleanup. Cleaning test blocks, temporary files, scoreboards, forceloads, bots, or other test state does **not** imply stopping the server.
+
 ### Safety constraints
 
 - Do not modify or experiment on the live `inno` world merely to test a change.
