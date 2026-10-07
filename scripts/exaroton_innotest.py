@@ -540,9 +540,9 @@ def run_copy_paste_multiplayer_test(client):
     commands = [
         "tag @a remove mcc_mp_a",
         "tag @a remove mcc_mp_b",
-        "execute as @a[name=SunnyChen,limit=1] run function mcc_mp_test:join_a",
-        "execute as @a[name=penguin0531,limit=1] run function mcc_mp_test:join_b",
-        "execute as @a[name=SunnyChen,limit=1] run function mcc_mp_test:start",
+        "execute as @a[name=penguin0531,limit=1] run function mcc_mp_test:join_a",
+        "execute as @a[name=geena0701,limit=1] run function mcc_mp_test:join_b",
+        "execute as @a[name=penguin0531,limit=1] run function mcc_mp_test:start",
     ]
     for command in commands:
         client.command(command)
