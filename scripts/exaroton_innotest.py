@@ -526,7 +526,7 @@ def level_name(raw):
     remote_path(result)
     return result
 
-def deploy(client, which):
+def deploy(client, which, *, reload_server=True):
     names = PACKS if which == "all" else (which,)
     if any(n not in PACKS for n in names): raise Error(f"unsupported datapack: {which}")
     world = level_name(client.read_file("server.properties"))
@@ -535,6 +535,9 @@ def deploy(client, which):
         dst = f"{world}/datapacks/{name}.zip"
         client.write_file(dst, payload)
         print(f"deployed {name} -> {dst} ({len(payload)} bytes)")
+    if not reload_server:
+        print("reload skipped by request")
+        return
     current = client.target()
     if int(current.get("status", -1)) == 1:
         client.command("reload"); print("server online: reload issued")
@@ -1515,6 +1518,7 @@ def run(path):
     elif op in {"start", "stop", "restart"}: client.action(op); print(f"{op} requested for {TARGET}")
     elif op == "command": client.command(str(r.get("command") or "")); print(f"command sent to {TARGET}")
     elif op == "deploy-datapack": deploy(client, str(r.get("pack") or ""))
+    elif op == "deploy-datapack-no-reload": deploy(client, str(r.get("pack") or ""), reload_server=False)
     elif op == "run-copy-paste-multiplayer-test": run_copy_paste_multiplayer_test(client)
     elif op == "run-blueprint-matcher-live-test": run_blueprint_matcher_live_test(client)
     elif op == "run-warehouse-compact-live-test": run_warehouse_compact_live_test(client)
