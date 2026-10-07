@@ -65,6 +65,9 @@ jobs:
               elif op == "test-4-bots":
                   names = "SunnyChen,penguin0531,geena0701,Felicitypeng"
                   duration = int(req.get("duration_ms", 180000))
+              elif op == "test-3-bots-with-real-client":
+                  names = "penguin0531,geena0701,Felicitypeng"
+                  duration = int(req.get("duration_ms", 180000))
               elif op == "probe-one":
                   player = str(req.get("player") or "")
                   allowed = {"SunnyChen", "penguin0531", "geena0701", "Felicitypeng"}
