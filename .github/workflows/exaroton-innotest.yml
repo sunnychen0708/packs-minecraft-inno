@@ -26,6 +26,7 @@ on:
           - restart
           - command
           - deploy-datapack
+          - deploy-datapack-no-reload
           - run-copy-paste-multiplayer-test
           - run-blueprint-matcher-live-test
           - run-warehouse-compact-live-test
@@ -50,7 +51,7 @@ permissions:
 
 concurrency:
   group: exaroton-innotest-control
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   control:
