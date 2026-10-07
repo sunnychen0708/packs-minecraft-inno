@@ -94,6 +94,7 @@ ops/inno-maintenance-request.json
 - 箱子詳細頁返回原本清單頁，依 `wh_back` / `ui/back_from_code` 邏輯返回。
 - 頁面寬度維持 ≤ 390；三欄按鈕 120 寬。
 - Warehouse 是 Copy/Paste 與 Pick 共用的 shared storage backend。
+- v4.6 起已註冊箱子的 chunk 常駐 forceload（`warehouse:chunks/ensure|refresh|release`，自己加的記在 `warehouse:forceload chunks`，別人加的不碰；每 10 秒補回）。Copy/Paste 的 `place_buffer` 會無條件 `forceload remove` 施工區，所以靠定期補回。移除 Warehouse 前先 `/function warehouse:chunks/release`。
 - 玩家可能自訂分類；任何測試都不能假定物品一定在預設箱位。
 
 ## 7. Minecraft 26.3 的坑

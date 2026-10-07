@@ -33,6 +33,7 @@ def main() -> None:
     )
     seen: dict[str, set[str]] = {code: set() for code in CODES}
     unexpected: list[str] = []
+    refreshes = 0
 
     for raw in text.splitlines():
         line = raw.strip()
@@ -47,9 +48,14 @@ def main() -> None:
             continue
         if line == "dialog show @s warehouse:admin_reset":
             continue
+        # v4.6: releasing the pack's own box-chunk force-loads is part of a reset.
+        if line == "function warehouse:chunks/refresh":
+            refreshes += 1
+            continue
         unexpected.append(line)
 
     assert not unexpected, f"reset function has unrelated commands: {unexpected}"
+    assert refreshes == 1, "reset must release the box-chunk force-loads exactly once"
     missing = {
         code: sorted({"registered", "valid"} - fields)
         for code, fields in seen.items()
