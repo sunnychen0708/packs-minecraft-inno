@@ -1,0 +1,40 @@
+name: Warehouse regression
+
+on:
+  pull_request:
+    paths:
+      - "datapacks/warehouse/**"
+      - "scripts/test-warehouse*.py"
+      - ".github/workflows/warehouse-regression.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  warehouse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Validate Warehouse source and dimension contracts
+        run: |
+          python3 scripts/validate-datapack.py warehouse
+          python3 scripts/test-warehouse.py
+      - name: Set up Minecraft 26.3 runtime
+        uses: ./.github/actions/setup-minecraft-runtime
+      - name: Warehouse runtime regression
+        run: |
+          python3 scripts/test-warehouse-runtime.py --java "$(command -v java)" --server-jar "$PWD/server.jar" --accept-eula
+      - name: All-pack compatibility
+        run: |
+          python3 scripts/test-datapack-compatibility.py --java "$(command -v java)" --server-jar "$PWD/server.jar" --accept-eula
+      - name: Upload runtime evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: warehouse-regression-${{ github.run_id }}
+          path: |
+            dist/warehouse-runtime-*
+            dist/all-datapacks-runtime-*
+          if-no-files-found: ignore
+          retention-days: 14

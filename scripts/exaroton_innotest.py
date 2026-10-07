@@ -1284,6 +1284,8 @@ def run_warehouse_compact_live_test(client):
         "scoreboard players operation #whc_old_enabled wh_sys = #enabled wh_sys",
         "scoreboard players operation #whc_old_code wh_tmp = #compact_code wh_tmp",
         "scoreboard players operation #whc_old_slot wh_tmp = #compact_slot wh_tmp",
+        "scoreboard players operation #whc_old_chunk wh_sys = #chunk_tick wh_sys",
+        "scoreboard players set #chunk_tick wh_sys -2147483648",
         "scoreboard players set #enabled wh_sys 0",
         "execute store success score #whc_had wh_tmp run data get storage warehouse:chests c69",
         "data remove storage warehouse:runtime compact_live_backup",
@@ -1401,6 +1403,7 @@ def run_warehouse_compact_live_test(client):
         print("  A global/local slot mapping and merge: PASS")
         print("  B global 30 -> local slot 3 mapping and merge: PASS")
         print("  54-slot cursor wrap to code 0 / slot 0: PASS")
+        run_warehouse_dimension_checks(client, marker)
     finally:
         cleanup = [
             f"setblock {ax} {ay} {az} minecraft:air",
@@ -1419,6 +1422,8 @@ def run_warehouse_compact_live_test(client):
             "scoreboard players operation #compact_code wh_tmp = #whc_old_code wh_tmp",
             "scoreboard players operation #compact_slot wh_tmp = #whc_old_slot wh_tmp",
             "scoreboard players operation #enabled wh_sys = #whc_old_enabled wh_sys",
+            "scoreboard players operation #chunk_tick wh_sys = #whc_old_chunk wh_sys",
+            "scoreboard players reset #whc_old_chunk wh_sys",
             "scoreboard players reset #whc_had wh_tmp",
             "scoreboard players reset #whc_old_code wh_tmp",
             "scoreboard players reset #whc_old_slot wh_tmp",
@@ -1429,6 +1434,128 @@ def run_warehouse_compact_live_test(client):
                 client.command(command)
             except Error:
                 pass
+
+
+def run_warehouse_dimension_checks(client, marker):
+    """Exercise real compact/transport readers against conflicting dimension data.
+
+    The caller has paused sorting and backed up c69/cursors. Reuse that registration
+    only while this function runs. Refuse occupied fixture cells, preserve existing
+    chunk tickets, and remove our fixtures even when a checkpoint fails.
+    """
+    # Reuse the established test chunk, one block above the existing fixtures.
+    # Very distant fresh chunks can be outside the server border or unavailable.
+    ax, bx, y, z = -430, -428, 251, 120
+    dims = ("minecraft:overworld", "minecraft:the_nether", "minecraft:the_end")
+    created = []
+    forced = []
+    required = []
+
+    def commands(lines):
+        for line in lines:
+            client.command(line)
+
+    def items(dim, x, value):
+        client.command(f"execute in {dim} run data modify block {x} {y} {z} Items set value {value}")
+
+    def check(dim, x, slot, count, label):
+        required.append(label)
+        client.command(
+            f"execute in {dim} if data block {x} {y} {z} "
+            f'Items[{{Slot:{slot}b,id:"minecraft:diamond",count:{count}}}] '
+            f"run say {marker} {label}"
+        )
+
+    try:
+        for i, dim in enumerate(dims):
+            commands([
+                f"execute in {dim} store success score #whd_force{i} wh_tmp run forceload query {ax} {z}",
+                f"execute if score #whd_force{i} wh_tmp matches 0 in {dim} run forceload add {ax} {z}",
+            ])
+            forced.append((i, dim))
+            label = f"DIM_{i}_EMPTY"
+            client.command(f"execute in {dim} if block {ax} {y} {z} air if block {bx} {y} {z} air run say {marker} {label}")
+            deadline = time.monotonic() + 30
+            while f"{marker} {label}" not in client.log():
+                if time.monotonic() >= deadline:
+                    break
+                time.sleep(2)
+            else:
+                deadline = None
+            if deadline is not None:
+                raise Error(f"Warehouse dimension fixture is occupied or unavailable: {dim}")
+            for x in (ax, bx):
+                created.append((dim, x))
+                client.command(f"execute in {dim} run setblock {x} {y} {z} chest")
+
+        for i, dim in enumerate(dims):
+            # Main-world decoys differ from the actual 10+10+7 inventory.
+            if i:
+                items(dims[0], ax, '[{Slot:0b,id:"minecraft:diamond",count:1},{Slot:5b,id:"minecraft:diamond",count:2}]')
+                items(dims[0], bx, '[{Slot:3b,id:"minecraft:diamond",count:3}]')
+            items(dim, ax, '[{Slot:0b,id:"minecraft:diamond",count:10},{Slot:5b,id:"minecraft:diamond",count:10}]')
+            items(dim, bx, '[{Slot:3b,id:"minecraft:diamond",count:7}]')
+            commands([
+                'data modify storage warehouse:chests c69 set value '
+                f'{{registered:1b,valid:1b,dimension:"{dim}",a_x:{ax},a_y:{y},a_z:{z},b_x:{bx},b_y:{y},b_z:{z}}}',
+                "scoreboard players set #compact_code wh_tmp 60",
+                "scoreboard players set #compact_slot wh_tmp 5",
+                "function warehouse:compact/step",
+            ])
+            check(dim, ax, 0, 20, f"DIM_{i}_A_PASS")
+            commands(["scoreboard players set #compact_slot wh_tmp 30", "function warehouse:compact/step"])
+            check(dim, ax, 0, 27, f"DIM_{i}_B_TO_A_PASS")
+            label = f"DIM_{i}_SOURCES_EMPTY"
+            required.append(label)
+            client.command(f"execute in {dim} unless data block {ax} {y} {z} Items[{{Slot:5b}}] unless data block {bx} {y} {z} Items[{{Slot:3b}}] run say {marker} {label}")
+            # Also exercise a B-half destination, which has a separate reader.
+            items(dim, ax, '[]')
+            items(dim, bx, '[{Slot:0b,id:"minecraft:diamond",count:10},{Slot:3b,id:"minecraft:diamond",count:7}]')
+            commands(["scoreboard players set #compact_slot wh_tmp 30", "function warehouse:compact/step"])
+            check(dim, bx, 0, 17, f"DIM_{i}_B_TO_B_PASS")
+            label = f"DIM_{i}_B_SOURCE_EMPTY"
+            required.append(label)
+            client.command(f"execute in {dim} unless data block {bx} {y} {z} Items[{{Slot:3b}}] run say {marker} {label}")
+            # Overflow may be in a different dimension from the main category.
+            # Test both destination readers with an intentionally different main dimension.
+            for half, x in (("a", ax), ("b", bx)):
+                items(dim, x, '[{Slot:0b,id:"minecraft:diamond",count:10}]')
+                main_dim = dims[(i + 1) % len(dims)]
+                commands([
+                    'data modify storage warehouse:runtime move set value '
+                    f'{{dest_dimension:"{main_dim}",ov_dimension:"{dim}",'
+                    f'ov_a_x:{ax},ov_a_y:{y},ov_a_z:{z},ov_b_x:{bx},ov_b_y:{y},ov_b_z:{z},'
+                    'item_id:"minecraft:diamond",components:{},stack:{id:"minecraft:diamond",count:7,components:{}}}',
+                    "scoreboard players set #api_plain wh_tmp 0",
+                    "scoreboard players set #max wh_tmp 64",
+                    "scoreboard players set #remaining wh_tmp 7",
+                    "scoreboard players set #moved wh_tmp 0",
+                    f"function warehouse:sort/transport/merge_o{half}_00 with storage warehouse:runtime move",
+                ])
+                check(dim, x, 0, 17, f"DIM_{i}_OVERFLOW_{half.upper()}_PASS")
+            if i:
+                check(dims[0], ax, 0, 1, f"DIM_{i}_DECOY_A0_PASS")
+                check(dims[0], ax, 5, 2, f"DIM_{i}_DECOY_A5_PASS")
+                check(dims[0], bx, 3, 3, f"DIM_{i}_DECOY_B_PASS")
+
+        deadline = time.monotonic() + 30
+        while True:
+            log = client.log()
+            segment = log[log.rfind(f"{marker} START"):]
+            missing = [label for label in required if f"{marker} {label}" not in segment]
+            if not missing or time.monotonic() >= deadline:
+                break
+            time.sleep(2)
+        errors = [line for line in segment.splitlines() if any(s in line for s in ("/ERROR]:", "Unknown function", "Unknown or incomplete command", "<--[HERE]"))]
+        if missing or errors:
+            raise Error(f"Warehouse dimension regression failed: {missing}; errors: {errors[:10]}")
+        print(f"WAREHOUSE_DIMENSION_LIVE_TEST=PASS ({len(required)} checkpoints)")
+    finally:
+        for dim, x in created:
+            client.command(f"execute in {dim} run setblock {x} {y} {z} air")
+        for i, dim in forced:
+            client.command(f"execute if score #whd_force{i} wh_tmp matches 0 in {dim} run forceload remove {ax} {z}")
+            client.command(f"scoreboard players reset #whd_force{i} wh_tmp")
 
 
 def run_utilities_bfs_live_test(client):
