@@ -636,8 +636,16 @@ def run_live_feature_test(client, section="all"):
             except Error:
                 pass
 
-    pre = session_log()
-    if not pre:
+    # The exaroton log endpoint lags ~30 s while players are online: wait until a marker sent
+    # after the reload shows up, so every load error of this session is in the segment.
+    client.command(f"say {session_marker} PREFLIGHT")
+    pre, wait_until = "", time.time() + 240
+    while time.time() < wait_until:
+        pre = session_log()
+        if f"{session_marker} PREFLIGHT" in pre:
+            break
+        time.sleep(5)
+    else:
         remove_harness()
         raise Error("live feature preflight marker not found in server log")
     pre_errors = [line for line in pre.splitlines() if "/ERROR]:" in line]
