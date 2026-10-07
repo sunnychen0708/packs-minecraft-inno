@@ -461,7 +461,7 @@ def warehouse_registration_report(contents):
         "dimensions": sorted({box["dimension"] for box in boxes.values() if box["registered"] and box["dimension"]}),
         "meta_flags": sorted(str(key) for key in meta),
         "forceload_records": len(forceload.get("chunks") or []),
-        "boxes": boxes,
+        "boxes": {code: box for code, box in boxes.items() if box["registered"] and (box["missing"] or box["coordinate_types"] != ["Int"])},
     }
 
 
@@ -484,7 +484,8 @@ def utilities_waypoint_report(contents):
 
     for storage in ("players", "shared"):
         walk(contents.get(storage) or {}, storage)
-    return {"locations": locations, "non_int_locations": odd}
+    meta = contents.get("meta") or {}
+    return {"version": str(meta["version"]) if "version" in meta else None, "locations": locations, "non_int_locations": odd}
 
 
 def inno_storage_status(token):
@@ -497,6 +498,8 @@ def inno_storage_status(token):
         raise Error("inno server.properties not found")
     world = level_name(properties)
     result = {"world": world, "server_status": STATUS.get(int(server.get("status", -1)), "UNKNOWN")}
+    packs = client.file_info_optional(sid, f"{world}/datapacks") or {}
+    result["datapacks"] = sorted(str(child.get("name")) for child in (packs.get("children") or []) if isinstance(child, dict))
     for name, report in (("warehouse", warehouse_registration_report), ("sunny_nav", utilities_waypoint_report)):
         path = f"{world}/data/{name}/command_storage.dat"
         raw = client.read_binary_file_optional(sid, path)

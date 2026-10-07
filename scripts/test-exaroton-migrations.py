@@ -248,14 +248,17 @@ def test_inno_storage_reports():
     assert report["registered_missing_fields"] == ["c10"]
     assert report["boxes"]["c10"]["missing"] == ["dimension", "b_x", "b_y", "b_z"]
     assert report["meta_flags"] == ["v46"]
+    assert list(report["boxes"]) == ["c10"]
 
     point = lambda x: Compound({"x": x, "y": Int(64), "z": Int(-3), "set": Byte(1)})
     raw = storage_dat({
         "players": Compound({"p1": Compound({"back": point(Int(5)), "custom": Compound({"s1": point(Double(5.5))})})}),
         "shared": Compound({"s1": point(Int(1))}),
+        "meta": Compound({"version": String("26.3-3.8")}),
     })
     report = innotest.utilities_waypoint_report(innotest.command_storage_contents(raw))
     assert report["locations"] == 3
+    assert report["version"] == "26.3-3.8"
     assert report["non_int_locations"] == [{"path": "players.p1.custom.s1", "types": {"x": "Double", "y": "Int", "z": "Int"}}]
 
 
