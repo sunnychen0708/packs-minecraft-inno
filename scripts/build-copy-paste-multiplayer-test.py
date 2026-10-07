@@ -151,8 +151,9 @@ check_display_block('blueprint flip A diamond', -280, 250, 90, 'diamond_block')
 check_display_block('blueprint flip B copper', -278, 250, 120, 'copper_block')
 check_display_block('blueprint flip B lapis', -280, 250, 120, 'lapis_block')
 
-# Dump the actual A-side display states so live failures distinguish a bad transform
-# from a stale/incorrect assertion. The macro function prints the exact saved NBT.
+# Dump every A-side display with its real position/state. This catches coordinate
+# offsets that exact-position selectors cannot see.
+step('execute in minecraft:overworld positioned -279 250 90 as @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..5] run function mcc_mp_test:diag_entity')
 for dx in range(3):
     x = -280 + dx
     step(
@@ -350,6 +351,14 @@ for i,commands in enumerate(steps):
     (F/f'step_{i}.mcfunction').write_text('\n'.join(commands)+'\n',encoding='utf-8')
 
 (F/'diag.mcfunction').write_text('$say MCCMP_DIAG display_state=$(state)\n',encoding='utf-8')
+(F/'diag_entity.mcfunction').write_text(
+    'data modify storage mcc_mp_test:diag pos set from entity @s Pos\n'
+    'data modify storage mcc_mp_test:diag state set from entity @s block_state\n'
+    'function mcc_mp_test:diag_entity_print with storage mcc_mp_test:diag\n',
+    encoding='utf-8')
+(F/'diag_entity_print.mcfunction').write_text(
+    '$say MCCMP_DIAG display pos=$(pos) state=$(state)\n',
+    encoding='utf-8')
 (F/'join_a.mcfunction').write_text('tag @s remove mcc_mp_b\ntag @s add mcc_mp_a\ntellraw @s "MCCMP: registered as player A"\n',encoding='utf-8')
 (F/'join_b.mcfunction').write_text('tag @s remove mcc_mp_a\ntag @s add mcc_mp_b\ntellraw @s "MCCMP: registered as player B"\n',encoding='utf-8')
 # The fixture is far from spawn. A real client does not keep these chunks loaded
