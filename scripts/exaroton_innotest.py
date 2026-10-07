@@ -1205,7 +1205,7 @@ def run_warehouse_compact_live_test(client):
             "scoreboard players reset #whc_had wh_tmp",
             "scoreboard players reset #whc_old_code wh_tmp",
             "scoreboard players reset #whc_old_slot wh_tmp",
-            "scoreboard players reset #whc_old_enabled wh_tmp",
+            "scoreboard players reset #whc_old_enabled wh_sys",
         ]
         for command in cleanup:
             try:
