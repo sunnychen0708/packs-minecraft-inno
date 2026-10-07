@@ -1,0 +1,62 @@
+name: Release request
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "ops/release-request.json"
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: release-request
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Resolve request
+        id: request
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          import re
+          from pathlib import Path
+
+          req = json.loads(Path("ops/release-request.json").read_text(encoding="utf-8"))
+          op = str(req.get("operation") or "")
+          if op == "noop":
+              print("run=false")
+              print("tag=")
+              raise SystemExit(0)
+          if op != "release":
+              raise SystemExit(f"unsupported release request operation: {op!r}")
+
+          tag = str(req.get("tag") or "")
+          if not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*-v\d+\.\d+", tag):
+              raise SystemExit(f"invalid release tag: {tag!r}")
+
+          print("run=true")
+          print(f"tag={tag}")
+          PY
+
+      - name: No-op request
+        if: steps.request.outputs.run != 'true'
+        run: echo "Release request is idle (noop)."
+
+      - name: Dispatch release workflow
+        if: steps.request.outputs.run == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.request.outputs.tag }}
+        shell: bash
+        run: gh workflow run release-pack.yml --ref main -f tag="$TAG"
