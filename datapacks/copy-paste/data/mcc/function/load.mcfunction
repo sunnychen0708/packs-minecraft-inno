@@ -86,6 +86,9 @@ scoreboard objectives add mcc_lim dummy
 scoreboard objectives add mcc_offx dummy
 scoreboard objectives add mcc_offy dummy
 scoreboard objectives add mcc_offz dummy
+scoreboard objectives add mcc_bpoffx dummy
+scoreboard objectives add mcc_bpoffz dummy
+scoreboard objectives add mcc_canchor dummy
 scoreboard objectives add mcc_cbx dummy
 scoreboard objectives add mcc_cbx2 dummy
 scoreboard objectives add mcc_cbz2 dummy
