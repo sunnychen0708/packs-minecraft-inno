@@ -47,8 +47,7 @@ execute unless score @s mcc_ok matches 1 run tellraw @s [{"text":"[Copy/Paste] R
 execute unless score @s mcc_ok matches 1 run return fail
 
 function mcc:history/check_redo_guard
-execute unless score @s mcc_ok matches 1 run tellraw @s [{"text":"[Copy/Paste] Undo 後的世界已被修改；為避免資源複製，未執行 Redo。","color":"red"}]
-execute unless score @s mcc_ok matches 1 run return fail
+execute unless score @s mcc_ok matches 1 run return run function mcc:history/redo_guard_fail
 
 scoreboard players operation @s mcc_udim = @s mcc_rdim
 scoreboard players operation @s mcc_ux = @s mcc_rx

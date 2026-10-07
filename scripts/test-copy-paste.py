@@ -476,6 +476,27 @@ def check_v100_semantics(pack: Path):
     load_text=read(pack/'data/mcc/function/load.mcfunction')
     assert 'scoreboard objectives add mcc_cmpmode dummy' in load_text
     assert 'scoreboard objectives add mcc_cmpaxis dummy' in load_text
+    assert 'scoreboard objectives add mcc_cmpdiag dummy' in load_text
+    assert 'scoreboard objectives add mcc_diagcount dummy' in load_text
+    assert 'mcc_cmpmode matches 2' in read(pack/'data/mcc/function/blueprint/summon.mcfunction')
+    assert 'function mcc:history/undo_guard_fail' in undo_hist
+    assert 'function mcc:history/redo_guard_fail' in redo_apply
+    assert 'function mcc:history/diag_record' in read(pack/'data/mcc/function/history/compare_block.mcfunction')
+    for name in (
+        'diagnose_guard.mcfunction','diag_record.mcfunction','diag_add_need.mcfunction',
+        'diag_resolve_materials.mcfunction','diag_resolve_materials_loop.mcfunction',
+        'diag_resolve_material_one.mcfunction','diag_add_material.mcfunction',
+        'diag_current_id_callback.mcfunction','undo_guard_fail.mcfunction','redo_guard_fail.mcfunction',
+        'diag_report.mcfunction','diag_report_need_init.mcfunction','diag_report_need_loop.mcfunction',
+        'diag_report_need_prepare.mcfunction','diag_report_need_one.mcfunction',
+        'diag_report_coord_init.mcfunction','diag_report_coord_loop.mcfunction',
+        'diag_report_coord_prepare.mcfunction','diag_report_coord_one.mcfunction',
+        'diag_report_coord_replace.mcfunction','diag_report_coord_remove.mcfunction',
+        'diag_report_coord_content.mcfunction',
+    ):
+        assert (pack/'data/mcc/function/history'/name).is_file()
+    diag_report=read(pack/'data/mcc/function/history/diag_report.mcfunction')
+    assert '需要補回' in diag_report and '異常位置' in diag_report
 
     for p in (
         pack/'data/mcc/function/move/run.mcfunction',
