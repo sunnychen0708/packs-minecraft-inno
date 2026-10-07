@@ -12,7 +12,7 @@ Latest published release: `warehouse-v4.7.zip`
 
 ## v4.7 修正
 
-修正背景堆疊與共用搬運合併的箱子 NBT 讀取維度：來源依 `dimension`、目的依 `dest_dimension`，避免地獄／終界倉庫誤讀主世界同座標箱子的庫存。既有註冊、分類與物品格式不變，不需要 migration。
+修正背景堆疊與共用搬運合併的箱子 NBT 讀取維度：來源依 `dimension`、主箱目的依 `dest_dimension`、溢位目的依 `ov_dimension`，避免地獄／終界倉庫誤讀主世界同座標箱子的庫存。既有註冊、分類與物品格式不變，不需要 migration。
 
 ## 玩家說明
 

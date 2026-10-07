@@ -1508,6 +1508,23 @@ def run_warehouse_dimension_checks(client, marker):
             label = f"DIM_{i}_B_SOURCE_EMPTY"
             required.append(label)
             client.command(f"execute in {dim} unless data block {bx} {y} {z} Items[{{Slot:3b}}] run say {marker} {label}")
+            # Overflow may be in a different dimension from the main category.
+            # Test both destination readers with an intentionally different main dimension.
+            for half, x in (("a", ax), ("b", bx)):
+                items(dim, x, '[{Slot:0b,id:"minecraft:diamond",count:10}]')
+                main_dim = dims[(i + 1) % len(dims)]
+                commands([
+                    'data modify storage warehouse:runtime move set value '
+                    f'{{dest_dimension:"{main_dim}",ov_dimension:"{dim}",'
+                    f'ov_a_x:{ax},ov_a_y:{y},ov_a_z:{z},ov_b_x:{bx},ov_b_y:{y},ov_b_z:{z},'
+                    'item_id:"minecraft:diamond",components:{},stack:{id:"minecraft:diamond",count:7,components:{}}}',
+                    "scoreboard players set #api_plain wh_tmp 0",
+                    "scoreboard players set #max wh_tmp 64",
+                    "scoreboard players set #remaining wh_tmp 7",
+                    "scoreboard players set #moved wh_tmp 0",
+                    f"function warehouse:sort/transport/merge_o{half}_00 with storage warehouse:runtime move",
+                ])
+                check(dim, x, 0, 17, f"DIM_{i}_OVERFLOW_{half.upper()}_PASS")
             if i:
                 check(dims[0], ax, 0, 1, f"DIM_{i}_DECOY_A0_PASS")
                 check(dims[0], ax, 5, 2, f"DIM_{i}_DECOY_A5_PASS")

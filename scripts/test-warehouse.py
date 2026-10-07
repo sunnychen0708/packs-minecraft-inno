@@ -170,7 +170,8 @@ def main() -> None:
     for path in merge_readers:
         for line in path.read_text(encoding="utf-8").splitlines():
             if "move.candidate set from block" in line:
-                assert line.startswith("$execute in $(dest_dimension) run "), path
+                dimension = "ov_dimension" if path.name.startswith("merge_o") else "dest_dimension"
+                assert line.startswith(f"$execute in $({dimension}) run "), path
                 dimension_reads += 1
     assert dimension_reads == 108
     compact_dir = PACK / "data/warehouse/function/compact"
