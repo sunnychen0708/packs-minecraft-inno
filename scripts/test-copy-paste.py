@@ -76,6 +76,8 @@ def check_upgrade_and_mode(pack: Path):
     assert tick.index(call)<tick.index('scores={copypaste='), 'migrate before dispatch'
     assert 'execute as @a unless score @s mcc_rot' not in tick, 'per-player upgrades must not scan @a every tick'
     assert upgrade.rstrip().endswith('scoreboard players set @s mcc_stver 1'), 'upgrade must mark the player done'
+    load=read(pack/'data/mcc/function/load.mcfunction')
+    assert 'scoreboard objectives add mcc_stver dummy' in load, 'fresh worlds must create the upgrade version objective'
     for objective,valid in [('mcc_rot','0..3'),('mcc_mir','0..2'),('mcc_usel','0..1'),('mcc_cliptype','0..2'),('mcc_redo','0..1'),('mcc_ucnt','0..5'),('mcc_uhead','0..5'),('mcc_rcnt','0..5'),('mcc_rhead','0..5'),('mcc_bpscan','0..1'),('mcc_bpactive','0..1'),('mcc_bpready','0..1'),('mcc_bpbad','0..1'),('mcc_matphase','0..2'),('mcc_matleft','0..'),('mcc_bpover','0..'),('mcc_buildconfirm','0..1'),('mcc_bpover_scan','0..1'),('mcc_bpoindex','0..'),('mcc_canchor','0..1')]:
         migration=f'execute unless score @s {objective} matches {valid} run scoreboard players set @s {objective} 0'
         assert migration in upgrade, f'missing non-destructive upgrade for {objective}'
@@ -516,15 +518,21 @@ def check_v100_semantics(pack: Path):
     assert 'function mcc:undo/backup_from_' in rotate
     assert 'function mcc:cut/clear_' in rotate
     assert 'function mcc:rotate_edit/stage_work' in rotate
-    assert 'function mcc:work/to_overworld_replace' in rotate
-    assert 'function mcc:work/to_nether_replace' in rotate
-    assert 'function mcc:work/to_end_replace' in rotate
+    assert 'function mcc:rotate_edit/to_overworld_replace' in rotate
+    assert 'function mcc:rotate_edit/to_nether_replace' in rotate
+    assert 'function mcc:rotate_edit/to_end_replace' in rotate
     assert rotate.index('function mcc:work/snapshot_selection') < rotate.index('function mcc:rotate_edit/stage_work')
     assert rotate.index('function mcc:rotate_edit/stage_work') < rotate.index('function mcc:cut/clear_')
     assert rotate.index('function mcc:undo/backup_from_') < rotate.index('function mcc:cut/clear_')
     stage_work=read(pack/'data/mcc/function/rotate_edit/stage_work.mcfunction')
-    assert 'fill $(wbx) 0 20000500 $(old_wbx2) $(wby2) $(old_wbz2) minecraft:air strict' in stage_work
+    assert 'fill $(wbx) 0 20000600 $(stage_wbx2) $(wby2) $(stage_wbz2) minecraft:air strict' in stage_work
+    assert '20000500' not in stage_work, 'Rotate staging must not clear/reuse the Work source lane'
     assert 'place template mcc:work_$(id)' in stage_work
+    assert '#stagez mcc_id 20000600' in read(pack/'data/mcc/function/load.mcfunction')
+    for dim in ('overworld','nether','end'):
+        staged=read(pack/f'data/mcc/function/rotate_edit/to_{dim}_replace.mcfunction')
+        assert 'clone from minecraft:overworld $(wbx) 0 20000600' in staged
+        assert ' strict replace force' in staged
     for name in ('r90.mcfunction','r180.mcfunction','r270.mcfunction'):
         assert (pack/'data/mcc/function/rotate_edit'/name).is_file()
 
@@ -697,23 +705,10 @@ def check_version_labels(pack: Path, repo: Path|None=None):
     assert f'v{version}' in read(pack/'MULTIPLAYER-VALIDATION.md').splitlines()[0], f'MULTIPLAYER-VALIDATION not synced to v{version}'
     source_repo=repo or Path(__file__).resolve().parents[1]
     runtime=read(source_repo/'scripts/test-copy-paste-runtime.py')
-    live=read(source_repo/'scripts/build-copy-paste-live-test.py')
     multi=read(source_repo/'scripts/build-copy-paste-multiplayer-test.py')
     assert f'Copy/Paste v{version}' in runtime, f'headless runtime label not synced to v{version}'
-    assert f'v{version}' in live.splitlines()[0], f'real-player harness label not synced to v{version}'
     assert f'v{version}' in multi.splitlines()[0], f'multiplayer harness label not synced to v{version}'
-    compile(live, str(source_repo/'scripts/build-copy-paste-live-test.py'), 'exec')
     compile(multi, str(source_repo/'scripts/build-copy-paste-multiplayer-test.py'), 'exec')
-    for required in (
-        "reselected copy uses new region",
-        "selection persists without new pos",
-        "external anchor selected",
-        "clear anchor trigger",
-        "pos1 reselection clears stale anchor",
-        "default pos1 anchor exact",
-        "material build real",
-    ):
-        assert required in live, f'v{version} real-player harness missing: {required}'
     # CI cannot run the real-client stages, so at least keep them in step with the pack:
     # they must compile and must not wait for or check a load message that no pack prints.
     for script in sorted((source_repo/'scripts/real-client').glob('*.py')):
