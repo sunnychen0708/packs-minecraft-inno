@@ -1,89 +1,35 @@
-# Worker Instructions
+# 工作規則
 
-These instructions apply to the entire repository. Every contributor, coding agent, automation worker, and reviewer must follow them.
+適用整個 repo，所有貢獻者、agent、自動化流程與 reviewer 都要遵守。
 
-## 測試直接在 innotest 跑（使用者規定）
+## 測試
 
-> 「測試直接在 innotest 跑，不要浪費時間在我不知道的鬼地方測試。」
+- 一律直接在 `innotest` 測（`exaroton innotest control` workflow；需要玩家時用 Mineflayer bots）。
+- 不要在本機、暫存資料夾、另建的世界或 MCC-Test 測，除非使用者指定。
+- CI 照常跑，但只有 innotest 的結果才算驗過；回報時附上跑了什麼、workflow run 與結果。
 
-- 驗證任何改動，一律直接在 **`innotest`** 上跑（`exaroton innotest control` workflow：`deploy-datapack`、`run-*-test`、`command`，需要玩家時用 Mineflayer bots）。
-- **不要**自己在別的地方另外測：不要在本機或暫存資料夾開 Minecraft server、不要另建測試世界、不要用 `dist/` 裡的 server.jar 自己跑、不要拿 MCC-Test 或其他世界代替。使用者明確指定某個地方時才可以。
-- GitHub Actions CI 會自動跑，照常讓它跑，但 CI 綠燈不等於驗過；回報「已驗證」必須是 innotest 的結果。
-- 回報時寫清楚在 innotest 跑了什麼、哪個 workflow run、結果是什麼。
+## innotest 保持開機
 
-Test every change directly on `innotest`. Do not spin up local servers, scratch worlds or temporary directories, or use any other world to test, unless the user explicitly asks for that place. CI runs on its own but is not the verification; only an innotest result counts as "verified".
+- 測完不關機；清測試狀態不等於關機。
+- 只有安裝必須重啟時才重啟，完成後保持開機。使用者要求才關機。
 
-## Production-world compatibility is mandatory
+## 正式環境（inno）資料相容
 
-The `inno` Minecraft server contains real, persistent player and world data. Treat compatibility with that existing data as a release requirement, not as an optional regression check.
+`inno` 有真實的玩家與世界資料。已部署到 inno 的 pack（目前是 Warehouse、Utilities），只要改動可能影響存檔資料（storage／scoreboard 格式、migration、箱子註冊、玩家設定與統計、會搬動或改寫物品的程式等），上線前必須：
 
-For any datapack that has already been deployed to `inno` — currently including **Warehouse** and **Utilities** — any change that can affect saved world/player state must be validated against a copy of the real production world data before production rollout.
+1. 複製目前的 inno 世界到 innotest；
+2. 在上面套用新版本，確認既有資料升級正確（有 migration 時也要確認重跑不出錯）；
+3. 通過後才可以上線。
 
-This includes, but is not limited to:
+- 乾淨世界的測試不能代替這一步。不確定會不會影響資料時，當作會。
+- 不要在 inno 上直接實驗；能不改資料格式就不改，優先選不需要 migration 的做法。
+- Copy/Paste 尚未部署到 inno，這條暫時不適用，部署後再套用。
+- review 或實作有風險的改動時，說明：是否改到存檔資料、是否需要 migration、做了哪個 inno 副本測試。
 
-- storage or scoreboard schema changes;
-- migrations or version-upgrade logic;
-- chest/position registrations;
-- player settings, statistics, rules, names, queues, or other persistent state;
-- changes that reinterpret existing stored values;
-- changes to code that moves, rewrites, deletes, refunds, compacts, or otherwise mutates existing inventory/world data;
-- refactors where an incorrect mapping could act on a different registered chest, slot, player, dimension, or stored record.
+## Datapack 效能優先順序
 
-### Required validation path
+1. 每 tick／高頻路徑的時間複雜度與成本最優先。
+2. 其次是每次執行的指令數（含失敗的條件判斷、selector 掃描、多餘的 function 呼叫）。
+3. server 記憶體只有在狀態很大、會無限成長或產生大量實體時才優先考慮；少量固定的 scoreboard／storage 換到明顯較少的 tick 成本是可以接受的。
 
-For the changes above:
-
-1. Make or obtain a **copy of the current `inno` world data**.
-2. Load that copy on **`innotest`**.
-3. Apply the candidate datapack/update to that copied world.
-4. Verify the upgrade using the copied production data, including the relevant existing registrations, player state, inventories, storage, and migration markers.
-5. Only consider production rollout after this upgrade-path test passes.
-
-A newly generated or clean test world is useful for isolated functional tests, but **it is not sufficient evidence for backward compatibility**. Clean-world CI/runtime tests are supplementary and must not replace the `inno`-copy-on-`innotest` upgrade test when existing production data could be affected.
-
-### innotest server lifecycle and credit usage
-
-The default post-test state for `innotest` is **ONLINE**.
-
-- Do **not** stop `innotest` merely because validation or testing is finished. Leave it running unless the user explicitly asks for it to be shut down.
-- Avoid unnecessary stop/start and restart cycles. In this project, repeated server lifecycle changes can consume more exaroton credits than simply leaving the test server running.
-- A worker may stop or restart `innotest` without separate user approval **only when installing or applying something that cannot be completed correctly without a server restart**.
-- When a restart is required for installation or deployment, perform only the minimum necessary stop/restart cycle, then leave `innotest` **ONLINE** after the installation and validation are complete unless the user explicitly requested that it remain off.
-- Do not treat shutdown as routine cleanup. Cleaning test blocks, temporary files, scoreboards, forceloads, bots, or other test state does **not** imply stopping the server.
-
-### Safety constraints
-
-- Do not modify or experiment on the live `inno` world merely to test a change.
-- Do not reset, rebuild, or migrate production data just because a clean-world test passes.
-- Preserve existing persistent-data formats whenever an implementation-only refactor can achieve the same goal.
-- Prefer implementation-path changes with no migration over schema changes for Warehouse and Utilities.
-- If a change requires a migration, test both upgrade correctness and idempotency on the production-world copy.
-- If there is uncertainty about whether a change can affect existing data, treat it as data-affecting and use the production-world-copy test path.
-
-## Datapack performance priority
-
-For datapack implementation, optimization, and code review, optimize for **server tick cost first**.
-
-The default priority is:
-
-1. **Time complexity and hot-path cost**, especially work that runs every tick or at high frequency.
-2. **Commands executed per tick / per hot-path invocation**, including failed conditional checks, selector scans, repeated dispatch chains, and unnecessary function calls.
-3. **Server-side runtime memory / space complexity** only when the added state is large, grows with input size, is unbounded, creates many entities, or materially increases persistent storage.
-
-In this project, a small fixed amount of extra scoreboard/storage state is normally an acceptable trade for a meaningful reduction in recurring tick work. Do not reject a faster design merely because it uses a small constant or bounded amount of additional server RAM.
-
-Conversely, do not trade unbounded or very large persistent/runtime state for a negligible tick-time improvement.
-
-When comparing or proposing datapack algorithms, workers must report the relevant **before/after hot-path command count or command-count model**, **time complexity**, and **additional server-side runtime/persistent space cost** when those values materially differ. For code that runs in `#minecraft:tick`, scheduled loops, or other background paths, treat recurring command cost as more important than one-time load/reload/build cost unless profiling shows otherwise.
-
-For this repository, “runtime memory” means memory used by the Minecraft **server process** (and therefore by the exaroton server instance when hosted there), not client/player RAM.
-
-Prefer profiling or runtime measurement when practical; theoretical Big-O alone is not sufficient if a supposedly better algorithm performs more expensive Minecraft commands in practice.
-
-## Current project-specific caution
-
-- **Warehouse:** production data is sensitive. Registration, routing, compacting, overrides, names, refunds, migration state, and stored chest coordinates must be treated as existing user data.
-- **Utilities:** preserve existing player toggles, statistics, waypoints/shared data used by the combined pack, and other persistent state across upgrades.
-- **Copy/Paste:** it has not yet been installed on the `inno` production server as of this instruction, so production backward-compatibility constraints are currently less strict. Re-evaluate this once it is deployed.
-
-When reviewing or implementing a risky change, explicitly state whether it changes persistent data, whether a migration is required, and what production-copy regression was performed.
+比較或提出演算法時，列出前後的熱路徑指令數、時間複雜度與額外空間；能實測就實測。
