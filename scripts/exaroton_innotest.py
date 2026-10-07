@@ -572,10 +572,7 @@ def run_copy_paste_multiplayer_test(client):
     # Clean the temporary harness and its reserved test state only after the
     # current run has produced a result (or timed out).
     cleanup = [
-        "fill -305 248 85 -270 255 130 air",
-        "tag @a remove mcc_mp_a",
-        "tag @a remove mcc_mp_b",
-        "scoreboard objectives remove mccmp",
+        "function mcc_mp_test:cleanup",
     ]
     for command in cleanup:
         try:

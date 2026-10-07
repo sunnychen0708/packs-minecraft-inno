@@ -204,6 +204,26 @@ for i,commands in enumerate(steps):
 
 (F/'join_a.mcfunction').write_text('tag @s remove mcc_mp_b\ntag @s add mcc_mp_a\ntellraw @s "MCCMP: registered as player A"\n',encoding='utf-8')
 (F/'join_b.mcfunction').write_text('tag @s remove mcc_mp_a\ntag @s add mcc_mp_b\ntellraw @s "MCCMP: registered as player B"\n',encoding='utf-8')
+# The fixture is far from spawn. A real client does not keep these chunks loaded
+# before the first teleport; wait for them before placing any test blocks.
+chunk_setup=[]
+chunk_cleanup=[]
+for cx in range(-305//16, -270//16+1):
+    for cz in range(85//16, 130//16+1):
+        holder=f'#chunk_{cx}_{cz}'
+        pos=f'{cx*16} {cz*16}'
+        chunk_setup += [
+            f'execute in minecraft:overworld store success score {holder} mccmp run forceload query {pos}',
+            f'execute if score {holder} mccmp matches 0 in minecraft:overworld run forceload add {pos}',
+        ]
+        chunk_cleanup.append(f'execute if score {holder} mccmp matches 0 in minecraft:overworld run forceload remove {pos}')
+(F/'cleanup.mcfunction').write_text('\n'.join([
+    'execute in minecraft:overworld run fill -305 248 85 -270 255 130 air strict',
+    *chunk_cleanup,
+    'tag @a remove mcc_mp_a',
+    'tag @a remove mcc_mp_b',
+    'scoreboard objectives remove mccmp',
+])+'\n',encoding='utf-8')
 (F/'start.mcfunction').write_text(
     'execute unless entity @a[tag=mcc_mp_a,limit=1] run tellraw @s "MCCMP: player A missing"\n'
     'execute unless entity @a[tag=mcc_mp_a,limit=1] run return fail\n'
@@ -212,7 +232,8 @@ for i,commands in enumerate(steps):
     'scoreboard objectives add mccmp dummy\n'
     'scoreboard players set #pass mccmp 0\n'
     'scoreboard players set #fail mccmp 0\n'
-    'function mcc_mp_test:step_0\n',
+    + '\n'.join(chunk_setup) + '\n'
+    'schedule function mcc_mp_test:step_0 20t replace\n',
     encoding='utf-8'
 )
 print(f'Built {len(steps)} v1.7 two-player steps at {OUT}')
