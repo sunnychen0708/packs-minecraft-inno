@@ -48,4 +48,6 @@ execute if score @s mcc_rhasa matches 1 run scoreboard players operation @s mcc_
 scoreboard players operation @s mcc_offx -= @s mcc_rx
 scoreboard players operation @s mcc_offy -= @s mcc_ry
 scoreboard players operation @s mcc_offz -= @s mcc_rz
+scoreboard players operation @s mcc_canchor = @s mcc_rhasa
+function mcc:state/bp_offset_init
 return 1
