@@ -58,7 +58,7 @@ def region(area):
 
 
 def at_center(p, dim, x, y, z):
-    return (f'in minecraft:{dim} positioned {x}.5 {y} {z}.5 if entity @a[name={PLAYERS[p]},distance=..0.01]',
+    return (f'in minecraft:{dim} positioned {x + .5} {y} {z + .5} if entity @a[name={PLAYERS[p]},distance=..0.01]',
             f'{PLAYERS[p]} not at the centre of {dim} {x} {y} {z}')
 
 
@@ -95,10 +95,12 @@ for p in PLAYERS:
         f'data modify storage utest:b all.{p}_rot set from entity {sp} Rotation',
         f'data modify storage utest:b all.{p}_dim set from entity {sp} Dimension',
     ]
+    backup.append(f'execute store result storage utest:b all.{p}_bbs double 0.001 run attribute {sp} minecraft:block_break_speed base get 1000')
     for obj in ('su_tree', 'su_vein', 'su_plant', 'c26_show'):
         backup.append(f'execute store result storage utest:b all.{p}_{obj} int 1 run scoreboard players get {sp} {obj}')
     for gm in ('survival', 'creative', 'adventure', 'spectator'):
         backup.append(f'execute if entity @a[name={PLAYERS[p]},gamemode={gm}] run data modify storage utest:b all.{p}_gm set value "{gm}"')
+        online = f'execute if entity {sp}'
     restore_players += [
         f'data modify storage utest:arg v set value {{key:"{p}"}}',
         f'data modify storage utest:arg v.id set from storage utest:b all.{p}_id',
@@ -107,24 +109,31 @@ for p in PLAYERS:
         'execute if data storage utest:b all.{0}_id run function utest:nav_verify with storage utest:arg v'.format(p),
         *[f'execute store result score #{p}_{obj} htest run data get storage utest:b all.{p}_{obj}'
           for obj in ('su_tree', 'su_vein', 'su_plant', 'c26_show')],
-        *[f'execute if data storage utest:b all.{p}_{obj} store result score {sp} {obj} run data get storage utest:b all.{p}_{obj}'
+        # Scores can be set by name even while the player is offline.
+        *[f'execute if data storage utest:b all.{p}_{obj} store result score {PLAYERS[p]} {obj} run data get storage utest:b all.{p}_{obj}'
           for obj in ('su_tree', 'su_vein', 'su_plant', 'c26_show')],
-        *[f'execute if data storage utest:b all{{{p}_gm:"{gm}"}} run gamemode {gm} {sp}'
+        # Game mode, attribute, main hand and position need the player online; until then the backup stays.
+        f'execute unless entity {sp} run say UTEST_RESTORE waiting for {PLAYERS[p]} to come back online',
+        *[f'{online} if data storage utest:b all{{{p}_gm:"{gm}"}} run gamemode {gm} {sp}'
           for gm in ('survival', 'creative', 'adventure', 'spectator')],
+        f'{online} if data storage utest:b all.{p}_bbs run function utest:restore_bbs {{p:"{p}",name:"{PLAYERS[p]}"}}',
+        *([f'{online} in minecraft:overworld if block {BACKUP_CHEST[0]} {BACKUP_CHEST[1]} {BACKUP_CHEST[2]} minecraft:chest run item replace entity {sp} weapon.mainhand from block {BACKUP_CHEST[0]} {BACKUP_CHEST[1]} {BACKUP_CHEST[2]} container.0'] if p == 'a' else []),
+        f'{online} if data storage utest:b all.{p}_dim run function utest:return_player {{p:"{p}",name:"{PLAYERS[p]}"}}',
+        f'{online} run data modify storage utest:b all.{p}_done set value 1b',
     ]
 backup.append('data modify storage utest:b all.backed set value 1b')
 restore = [
     'scoreboard players set #sniff htest 0',
     'schedule clear utest:sniff',
     'execute unless data storage utest:b all.backed run return run say UTEST_RESTORE nothing to restore',
-    f'execute in minecraft:overworld if block {BACKUP_CHEST[0]} {BACKUP_CHEST[1]} {BACKUP_CHEST[2]} minecraft:chest run item replace entity {A} weapon.mainhand from block {BACKUP_CHEST[0]} {BACKUP_CHEST[1]} {BACKUP_CHEST[2]} container.0',
     *restore_players,
     'execute if data storage utest:b all{ki:0} run gamerule minecraft:keep_inventory false',
     'execute if data storage utest:b all{ki:1} run gamerule minecraft:keep_inventory true',
     *[f'data remove storage sunny_nav:shared s{k}' for k in range(1, 9)],
     *[f'execute if data storage utest:b all.shared.s{k} run data modify storage sunny_nav:shared s{k} set from storage utest:b all.shared.s{k}' for k in range(1, 9)],
     *verify,
-    *[f'execute if data storage utest:b all.{p}_dim run function utest:return_player {{p:"{p}",name:"{PLAYERS[p]}"}}' for p in PLAYERS],
+    # Keep the backup (and the chest holding A's main-hand item) until every player has been restored.
+    *[f'execute unless data storage utest:b all.{p}_done run return run say UTEST_RESTORE partial: run function utest:restore again when {PLAYERS[p]} is online' for p in PLAYERS],
     fill(OW_AREA, 'air'), fill(TALL_AREA, 'air'), fill(NE_AREA, 'air', 'the_nether'), fill(END_AREA, 'air', 'the_end'),
     f'execute in minecraft:overworld run kill @e[type=minecraft:item,{region(OW_AREA)}]',
     f'execute in minecraft:overworld run kill @e[type=minecraft:experience_orb,{region(OW_AREA)}]',
@@ -295,7 +304,10 @@ s.check('deathloc returns to the death block centre', at_center('a', 'the_nether
 s.tp('a', *HUBC)
 
 # ---- 6. survival utilities: A holds tools and sneaks --------------------------
-s.step(*reset_counts, 'scoreboard players set #sniff htest 1', 'function utest:sniff')
+# The bot hangs in the air (no physics), so vanilla mines 5x slower; a higher block_break_speed
+# keeps the slowest cases (wrong-tier ancient debris) short. Restored with the rest.
+s.step(*reset_counts, 'scoreboard players set #sniff htest 1', 'function utest:sniff',
+       f'attribute {A} minecraft:block_break_speed base set 20')
 s.bot('a', 'sneak', 1)
 
 
@@ -364,7 +376,8 @@ s.cmdx('a', ['連鎖砍樹：關閉'], 'trigger treecap')
 s.check('treecap switch only for A', f'score {A} su_tree matches 0', f'score {B} su_tree matches 1')
 tree_case('tree felling switched off', -410, 408, 'oak_log', 'oak_leaves', chained=False)
 s.cmdx('a', ['連鎖砍樹：開啟'], 'trigger treecap')
-tree_case('log pillar without leaves is not felled', -406, 408, 'oak_log', '', chained=False)
+# Far from every other fixture's leaves (the foliage search reaches 5 blocks sideways).
+tree_case('log pillar without leaves is not felled', -388, 416, 'oak_log', '', chained=False)
 tree_case('tree felling stops at 64 logs', -386, 404, 'oak_log', 'oak_leaves', height=70, cap=64)
 
 # Vein mining. Vanilla drops and XP per ore (no Fortune); three ores in a line, A digs the first.
@@ -510,6 +523,12 @@ s.extra_function(OUT, 'return_player', [
     '$data modify storage utest:arg r.pitch set from storage utest:b all.$(p)_rot[1]',
     'function utest:tp_back with storage utest:arg r',
 ])
+s.extra_function(OUT, 'restore_bbs', [
+    '$data modify storage utest:arg q set value {name:"$(name)"}',
+    '$data modify storage utest:arg q.v set from storage utest:b all.$(p)_bbs',
+    'function utest:set_bbs with storage utest:arg q',
+])
+s.extra_function(OUT, 'set_bbs', ['$attribute @a[name=$(name),limit=1] minecraft:block_break_speed base set $(v)'])
 s.extra_function(OUT, 'tp_back', ['$execute in $(dim) run tp @a[name=$(name),limit=1] $(x) $(y) $(z) $(yaw) $(pitch)'])
 (OUT / 'suite.json').write_text(json.dumps({
     'ns': NS, 'prefix': 'UTEST', 'players': PLAYERS, 'timeout_s': 1500,

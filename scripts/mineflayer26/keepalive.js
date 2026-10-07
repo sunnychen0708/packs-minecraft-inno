@@ -79,7 +79,7 @@ function createBot (username) {
 // (tellraw, which needs OP) are read, and only a small fixed action set:
 //   cmd trigger ...|function ...   send that command as this player
 //   cmdx <n> <tok1..tokn> <command> send the command, then succeed only if one
-//                                  chat/system/action-bar message within 6 s
+//                                  chat/system/action-bar message or Dialog within 6 s
 //                                  contains every token
 //   dialog <command>               send trigger/function command and succeed only
 //                                  after a clientbound show_dialog packet arrives
@@ -89,8 +89,23 @@ function createBot (username) {
 //   use x y z                      right-click a block (e.g. open a chest)
 //   close                          close the open container window
 const COMMAND_PREFIXES = ['trigger ', 'function ']
+function withTimeout (promise, ms, message) {
+  let timer
+  return Promise.race([promise, new Promise((resolve, reject) => { timer = setTimeout(() => reject(new Error(message)), ms) })])
+    .finally(() => clearTimeout(timer))
+}
 function attachDriver (bot, username) {
   let queue = Promise.resolve()
+  // Everything the player is shown (chat, system, action bar and Dialog
+  // screens) as plain text, for cmdx token matching.
+  bot.on('messagestr', text => bot.emit('mfbot_text', String(text)))
+  bot.on('actionBar', msg => bot.emit('mfbot_text', msg && msg.toString ? msg.toString() : String(msg)))
+  bot._client.on('show_dialog', packet => {
+    let text = ''
+    try { text = JSON.stringify(packet, (k, v) => typeof v === 'bigint' ? v.toString() : v) } catch (err) { text = String(err) }
+    console.log(`MFBOT_DIALOG ${username} ${text.slice(0, 300)}`)
+    bot.emit('mfbot_text', text)
+  })
   const ack = (seq, ok) => {
     try { bot.chat(`/trigger mfack set ${ok ? seq : seq + 100000}`) } catch (err) { console.log(`MFBOT_ACK_ERROR ${username} ${seq} ${err}`) }
   }
@@ -122,13 +137,13 @@ function attachDriver (bot, username) {
         const t = String(text)
         if (!seen && !t.startsWith('MFBOT ') && tokens.every(tok => t.includes(tok))) seen = t
       }
-      bot.on('messagestr', listener)
+      bot.on('mfbot_text', listener)
       try {
         bot.chat(`/${command}`)
         const until = Date.now() + 6000
         while (!seen && Date.now() < until) await delay(100)
       } finally {
-        bot.removeListener('messagestr', listener)
+        bot.removeListener('mfbot_text', listener)
       }
       if (!seen) throw new Error(`no message containing ${JSON.stringify(tokens)}`)
       console.log(`MFBOT_SEEN ${username}: ${seen}`)
@@ -156,7 +171,18 @@ function attachDriver (bot, username) {
       const block = bot.blockAt(pos)
       if (!block) throw new Error(`block not loaded at ${pos}`)
       if (block.name === 'air') throw new Error(`nothing to dig at ${pos}`)
-      await bot.dig(block, 'ignore')
+      // Let the server time the break: send start and finish at once; vanilla
+      // then completes the break itself (delayed destroy) as soon as the
+      // player's real tool, effects and on-ground state allow. The client's
+      // own estimate is wrong for a bot without physics (it is never on ground).
+      const realDigTime = bot.digTime
+      bot.digTime = () => 0
+      try {
+        await withTimeout(bot.dig(block, 'ignore'), 90000, `dig ${pos} did not finish`)
+      } finally {
+        bot.digTime = realDigTime
+        try { bot.stopDigging() } catch (_) {}
+      }
     } else if (action === 'sneak') {
       setSneak(args[0] === '1')
       await delay(150)
