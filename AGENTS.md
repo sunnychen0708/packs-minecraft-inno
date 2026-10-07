@@ -2,6 +2,11 @@
 
 適用整個 repo，所有貢獻者、agent、自動化流程與 reviewer 都要遵守。
 
+## inno 寫入
+
+- 任何寫入 inno 的動作都要使用者明確下指令才可以做，包括安裝或更新 datapack、改檔案、執行指令、啟動／關閉／重啟、UUID maintenance 的 apply。每次都要，之前的同意不能沿用。
+- 讀取 inno 不用問，直接讀。
+
 ## 測試
 
 - 一律直接在 `innotest` 測（`exaroton innotest control` workflow；需要玩家時用 Mineflayer bots）。
@@ -19,7 +24,7 @@
 
 1. 複製目前的 inno 世界到 innotest；
 2. 在上面套用新版本，確認既有資料升級正確（有 migration 時也要確認重跑不出錯）；
-3. 通過後才可以把新版裝到 inno。
+3. 通過後，等使用者明確下指令才可以把新版裝到 inno。
 
 - 乾淨世界的測試不能代替這一步。不確定會不會影響資料時，當作會。
 - 不要在 inno 上直接實驗；能不改資料格式就不改，優先選不需要 migration 的做法。
