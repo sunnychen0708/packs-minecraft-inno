@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Isolated vanilla 26.3 behavioral regression for Copy/Paste v1.6.
+"""Isolated vanilla 26.3 behavioral regression for Copy/Paste v1.7.
 
 Uses a non-player armor stand test actor to exercise internal datapack functions.
 This complements (not replaces) the opt-in real-player trigger/client harnesses.
 """
 from __future__ import annotations
 import argparse
+import itertools
 import json
 from pathlib import Path
 import subprocess
@@ -31,14 +32,12 @@ def integration(java: Path, server: Path):
     packs=work/'world/datapacks'
     packs.mkdir(parents=True)
 
-    # Build the current real-player harness into the same official-server world.
+    # Build the innotest 3D-house harness into the same official-server world.
     # It is not executed headlessly, but every generated mcfunction is parsed by
-    # vanilla 26.3 so stale/invalid Trigger harness commands fail CI.
-    subprocess.run([
-        sys.executable,
-        str(ROOT/'scripts/build-copy-paste-live-test.py'),
-        '--output', str(packs/'mcc-live-test'),
-    ], check=True)
+    # vanilla 26.3 so stale/invalid harness commands fail CI before innotest.
+    subprocess.run([sys.executable, str(ROOT/'scripts/build-copy-paste-multiplayer-test.py')], check=True)
+    import shutil as _shutil
+    _shutil.copytree(ROOT/'dist/mcc-multiplayer-test', packs/'mcc-multiplayer-test')
 
     with zipfile.ZipFile(packs/'copy-paste.zip','w',zipfile.ZIP_DEFLATED) as z:
         for p in PACK.rglob('*'):
@@ -206,6 +205,16 @@ def integration(java: Path, server: Path):
     scan()
     check(f'positioned 12.0 80.0 12.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={{block_state:"minecraft:iron_block"}},limit=1] if score {actor} mcc_bptx0 matches 10 if score {actor} mcc_bptz0 matches 11','default_anchor_pos1_blueprint_origin')
     check('positioned 10.0 80.0 11.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]','default_anchor_pos1_blueprint_offset')
+
+    # Default-anchor Blueprint Flip mirrors inside the current bounds, matching direct Flip.
+    run_as('mcc:state/bp_flip_lr')
+    scan()
+    check(f'if score {actor} mcc_bptx0 matches 10 if score {actor} mcc_bptz0 matches 11 if score {actor} mcc_bpoffx matches -2','default_blueprint_flip_keeps_bounds')
+    check('positioned 12.0 80.0 11.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1] positioned 10.0 80.0 12.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:iron_block"},limit=1]','default_blueprint_flip_mirrors_in_place')
+    run_as('mcc:state/bp_flip_lr')
+    scan()
+    check(f'if score {actor} mcc_bptx0 matches 10 if score {actor} mcc_bptz0 matches 11 if score {actor} mcc_bpoffx matches 0','default_blueprint_flip_twice_restores_offset')
+    check('positioned 10.0 80.0 11.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1] positioned 12.0 80.0 12.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:iron_block"},limit=1]','default_blueprint_flip_twice_restores_preview')
     run_as('mcc:blueprint/clear_internal')
 
     # 0a. Custom Anchor must land exactly on the V target, not merely near it.
@@ -1129,6 +1138,42 @@ def integration(java: Path, server: Path):
     for t in legacy+('rotate180','bpturnright'):
         lines.append(f'execute store success score #after_{t} mccst run scoreboard players set #probe {t} 0')
     check(' '.join(f'if score #after_{t} mccst matches 0' for t in legacy)+' if score #after_rotate180 mccst matches 1 if score #after_bpturnright mccst matches 1','legacy_trigger_objectives_removed_by_explicit_cleanup')
+
+    # Issue #49: every exact 26.3 block state, placed without block updates, must make the generated
+    # matcher write exactly {id, properties} and reach summon (run as the server, so summon itself
+    # creates nothing). Repeats cover a state that is already in storage; air must still fail.
+    blocks=json.loads((ROOT/'scripts/data/blocks-26.3.json').read_text(encoding='utf-8'))
+    states=[]
+    for block,spec in blocks.items():
+        props=spec.get('properties',{})
+        for combo in itertools.product(*props.values()):
+            states.append((block,dict(zip(props,combo))))
+    states+=[s for s in states if s[0] in ('minecraft:stone','minecraft:oak_planks')]
+    states+=[('minecraft:oak_stairs',blocks['minecraft:oak_stairs']['default'])]*2
+    bp_lines=['scoreboard players set #bpstates mccst 0','scoreboard players set #bpfail mccst 0',
+              'data merge storage mcc:temp {tx:0,ty:0,tz:0,id:0}']
+    for block,props in states:
+        pred=block+('['+','.join(f'{k}={v}' for k,v in props.items())+']' if props else '')
+        snbt='{id:"%s"%s}'%(block,(',properties:{'+','.join(f'{k}:"{v}"' for k,v in props.items())+'}') if props else '')
+        bp_lines+=[f'setblock -8 100 -8 {pred} strict',
+                   f'data modify storage mcc_server_test:bp want set value {snbt}',
+                   'function mcc_server_test:bp_check']
+    bp_lines+=['setblock -8 100 -8 minecraft:air strict','data remove storage mcc:temp state',
+               'execute store result score #bpair mccst positioned -8 100 -8 run function mcc:blueprint/generated/root']
+    (funcs/'bp_states.mcfunction').write_text('\n'.join(bp_lines)+'\n',encoding='utf-8')
+    (funcs/'bp_check.mcfunction').write_text('\n'.join([
+        'scoreboard players add #bpstates mccst 1',
+        'data remove storage mcc:temp state',
+        'execute store result score #bpret mccst positioned -8 100 -8 run function mcc:blueprint/generated/root',
+        'execute unless score #bpret mccst matches 1 run return run function mcc_server_test:bp_fail with storage mcc_server_test:bp',
+        'execute unless data storage mcc:temp state run return run function mcc_server_test:bp_fail with storage mcc_server_test:bp',
+        'data modify storage mcc_server_test:bp cmp set from storage mcc_server_test:bp want',
+        'execute store success score #bpchg mccst run data modify storage mcc_server_test:bp cmp set from storage mcc:temp state',
+        'execute unless score #bpchg mccst matches 0 run return run function mcc_server_test:bp_fail with storage mcc_server_test:bp',
+    ])+'\n',encoding='utf-8')
+    (funcs/'bp_fail.mcfunction').write_text('scoreboard players add #bpfail mccst 1\n$say MCCST_DIAG_BP_STATE_FAIL $(want)\n',encoding='utf-8')
+    lines.append('function mcc_server_test:bp_states')
+    check(f'if score #bpstates mccst matches {len(states)} if score #bpfail mccst matches 0 if score #bpair mccst matches 0 unless data storage mcc:temp state','blueprint_matcher_all_exact_states')
 
     lines.extend([
         f'execute if score #pass mccst matches {len(assertions)} if score #fail mccst matches 0 run say MCCST_REGRESSION_SUCCESS',

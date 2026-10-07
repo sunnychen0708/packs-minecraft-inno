@@ -1,0 +1,20 @@
+{
+  "values": [
+    "minecraft:red_glazed_terracotta",
+    "minecraft:red_terracotta",
+    "minecraft:red_wool",
+    "minecraft:spruce_door",
+    "minecraft:spruce_trapdoor",
+    "minecraft:warped_door",
+    "minecraft:warped_trapdoor",
+    "minecraft:waxed_copper_door",
+    "minecraft:waxed_copper_trapdoor",
+    "minecraft:waxed_exposed_copper_door",
+    "minecraft:waxed_exposed_copper_trapdoor",
+    "minecraft:waxed_oxidized_copper_door",
+    "minecraft:waxed_oxidized_copper_trapdoor",
+    "minecraft:waxed_weathered_copper_door",
+    "minecraft:waxed_weathered_copper_trapdoor",
+    "minecraft:weathered_copper_door"
+  ]
+}

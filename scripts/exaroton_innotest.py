@@ -234,6 +234,18 @@ class InnoReadOnlyClient:
                 return None
             raise
 
+    def read_binary_file_optional(self, sid, path):
+        """Binary-safe read (no trailing slash), like APIClient.read_binary_file_optional."""
+        sid_q = urllib.parse.quote(str(sid), safe="")
+        try:
+            return self.get_raw(
+                f"/servers/{sid_q}/files/data/{remote_path(str(path).lstrip('/'))}"
+            )
+        except Error as e:
+            if "HTTP 404" in str(e):
+                return None
+            raise
+
     def file_info_optional(self, sid, path):
         sid_q = urllib.parse.quote(str(sid), safe="")
         try:
@@ -399,6 +411,102 @@ def inno_world_layout_status(token):
     return result
 
 
+WAREHOUSE_BOX_FIELDS = ("dimension", "a_x", "a_y", "a_z", "b_x", "b_y", "b_z")
+
+
+def command_storage_contents(raw):
+    """Parse a 26.3 data/<namespace>/command_storage.dat into its storage contents."""
+    import gzip
+    import nbtlib
+
+    data = gzip.decompress(raw) if raw[:2] == b"\x1f\x8b" else raw
+    root = nbtlib.File.parse(io.BytesIO(data))
+    if "data" not in root and "" in root:
+        root = root[""]
+    return root["data"]["contents"]
+
+
+def _tag_type(value):
+    return type(value).__name__
+
+
+def warehouse_registration_report(contents):
+    """Summarize warehouse:chests without dumping the stored values."""
+    chests = contents.get("chests") or {}
+    boxes, incomplete = {}, []
+    for code in sorted(key for key in chests if key[:1] == "c" and key[1:].isdigit()):
+        box = chests[code]
+        registered = int(box.get("registered", 0)) == 1
+        missing = [field for field in WAREHOUSE_BOX_FIELDS if field not in box]
+        types = sorted({_tag_type(box[field]) for field in WAREHOUSE_BOX_FIELDS[1:] if field in box})
+        boxes[code] = {
+            "registered": registered,
+            "valid": int(box.get("valid", 0)) == 1,
+            "missing": missing,
+            "coordinate_types": types,
+            "dimension": str(box["dimension"]) if "dimension" in box else None,
+        }
+        if registered and missing:
+            incomplete.append(code)
+    meta = contents.get("meta") or {}
+    forceload = contents.get("forceload") or {}
+    return {
+        "box_entries": len(boxes),
+        "registered": sum(1 for box in boxes.values() if box["registered"]),
+        "registered_missing_fields": incomplete,
+        "registered_non_int_coordinates": [
+            code for code, box in boxes.items()
+            if box["registered"] and any(t != "Int" for t in box["coordinate_types"])
+        ],
+        "dimensions": sorted({box["dimension"] for box in boxes.values() if box["registered"] and box["dimension"]}),
+        "meta_flags": sorted(str(key) for key in meta),
+        "forceload_records": len(forceload.get("chunks") or []),
+        "boxes": {code: box for code, box in boxes.items() if box["registered"] and (box["missing"] or box["coordinate_types"] != ["Int"])},
+    }
+
+
+def utilities_waypoint_report(contents):
+    """Count saved Utilities locations and flag any whose x/y/z is not an Int tag."""
+    locations, odd = 0, []
+
+    def walk(value, path):
+        nonlocal locations
+        if not hasattr(value, "items"):
+            return
+        if all(axis in value for axis in ("x", "y", "z")):
+            locations += 1
+            types = {axis: _tag_type(value[axis]) for axis in ("x", "y", "z")}
+            if any(t != "Int" for t in types.values()):
+                odd.append({"path": path, "types": types})
+            return
+        for key, child in value.items():
+            walk(child, f"{path}.{key}" if path else str(key))
+
+    for storage in ("players", "shared"):
+        walk(contents.get(storage) or {}, storage)
+    meta = contents.get("meta") or {}
+    return {"version": str(meta["version"]) if "version" in meta else None, "locations": locations, "non_int_locations": odd}
+
+
+def inno_storage_status(token):
+    """Read-only: summarize production Warehouse registrations and Utilities waypoint coordinate types."""
+    client = InnoReadOnlyClient(token)
+    server = client.target()
+    sid = server["id"]
+    properties = client.read_file_optional(sid, "server.properties")
+    if properties is None:
+        raise Error("inno server.properties not found")
+    world = level_name(properties)
+    result = {"world": world, "server_status": STATUS.get(int(server.get("status", -1)), "UNKNOWN")}
+    packs = client.file_info_optional(sid, f"{world}/datapacks") or {}
+    result["datapacks"] = sorted(str(child.get("name")) for child in (packs.get("children") or []) if isinstance(child, dict))
+    for name, report in (("warehouse", warehouse_registration_report), ("sunny_nav", utilities_waypoint_report)):
+        path = f"{world}/data/{name}/command_storage.dat"
+        raw = client.read_binary_file_optional(sid, path)
+        result[name] = {"path": path, "missing": True} if raw is None else {"path": path, **report(command_storage_contents(raw))}
+    return result
+
+
 def pack_zip(name):
     if name not in PACKS: raise Error(f"unsupported datapack: {name}")
     base = ROOT / "datapacks" / name
@@ -461,7 +569,7 @@ def player_count(server):
             return len(listing)
     return -1
 
-def wait_players(client, minimum=4, timeout=180):
+def wait_players(client, minimum=3, timeout=180):
     deadline = time.time() + timeout
     last = -1
     while time.time() < deadline:
@@ -527,13 +635,11 @@ def run_copy_paste_multiplayer_test(client):
             + preview
         )
 
-    # The automated test reserves SunnyChen for a real client / Computer Use. The
-    # regression itself only needs penguin0531 + geena0701; Felicitypeng may stay
-    # connected as the third default bot, but SunnyChen must not be required.
-    server = wait_named_players(client, ("penguin0531", "geena0701"), 180)
-    print(f"live multiplayer test starting with required non-SunnyChen bots online; player count={player_count(server)}")
+    server = wait_players(client, 3, 180)
+    print(f"live multiplayer test starting with player count={player_count(server)}")
 
-    # Use two named real-player entities; SunnyChen is intentionally not required.
+    # Reserve SunnyChen for supervision / real-client control. Use two of the
+    # three non-SunnyChen test players while the third remains connected.
     # Mark this run in the server log so stale results from previous attempts
     # can never be mistaken for the current test.
     run_marker = f"MCCMP_RUN_{int(time.time() * 1000)}"
@@ -554,7 +660,7 @@ def run_copy_paste_multiplayer_test(client):
     # The exaroton test server can fall behind under the full datapack load.
     # Wait for the scheduled regression chain itself to finish instead of
     # assuming a fixed wall-clock duration.
-    deadline = time.time() + 240
+    deadline = time.time() + 180
     result = ""
     segment = ""
     log = ""
@@ -573,15 +679,15 @@ def run_copy_paste_multiplayer_test(client):
         time.sleep(3)
 
     # Clean the temporary harness and its reserved test state only after the
-    # current run has produced a result (or timed out). The harness's own
-    # cleanup stops the chain, takes back the house materials it gave the two
-    # players (only the count above each player's baseline), clears the test
-    # area and removes its tags and objective.
-    try:
-        client.command("function mcc_mp_test:cleanup")
-        time.sleep(2)
-    except Error:
-        pass
+    # current run has produced a result (or timed out).
+    cleanup = [
+        "function mcc_mp_test:cleanup",
+    ]
+    for command in cleanup:
+        try:
+            client.command(command)
+        except Error:
+            pass
     try:
         client.delete_file(remote_harness)
     finally:
@@ -592,8 +698,7 @@ def run_copy_paste_multiplayer_test(client):
 
     current_checks = "\n".join(
         line for line in segment.splitlines()
-        if "MCCMP_CHECK " in line or "MCCMP_DIFF " in line
-        or "MCCMP_RESULT " in line
+        if "MCCMP_CHECK " in line or "MCCMP_DIAG " in line or "MCCMP_RESULT " in line
     )
     if current_checks:
         print(current_checks)
@@ -617,6 +722,94 @@ def run_copy_paste_multiplayer_test(client):
         f"live multiplayer test did not pass; "
         f"current-run result={result or '<missing>'}"
     )
+
+def run_blueprint_matcher_live_test(client):
+    """Issue #49: every exact 26.3 block state through the Blueprint matcher on innotest."""
+    current = client.target()
+    if int(current.get("status", -1)) != 1:
+        raise Error("innotest must be ONLINE before Blueprint matcher live testing")
+
+    session_marker = f"MCCBP_SESSION_{int(time.time() * 1000)}"
+    client.command(f"say {session_marker} START")
+    time.sleep(1)
+
+    # Deploy the exact Copy/Paste source from the checked-out commit.
+    deploy(client, "copy-paste")
+    time.sleep(5)
+
+    import subprocess
+    subprocess.check_call([sys.executable, str(ROOT / "scripts" / "build-blueprint-matcher-live-test.py")])
+    payload = zip_tree(ROOT / "dist" / "mcc-bp-matcher-live-test")
+    world = level_name(client.read_file("server.properties"))
+    remote_harness = f"{world}/datapacks/mcc-bp-matcher-live-test.zip"
+    client.write_file(remote_harness, payload)
+    print(f"deployed Blueprint matcher harness -> {remote_harness} ({len(payload)} bytes)")
+    client.command("reload")
+    time.sleep(6)
+
+    result = ""
+    segment = ""
+    try:
+        log = client.log()
+        session_at = log.rfind(f"{session_marker} START")
+        if session_at < 0:
+            raise Error("Blueprint matcher preflight marker not found in server log")
+        preflight_errors = [line for line in log[session_at:].splitlines() if "/ERROR]:" in line]
+        if preflight_errors:
+            raise Error("Blueprint matcher preflight found current-session server errors:\n"
+                        + "\n".join(preflight_errors[:12]))
+
+        run_marker = f"MCCBP_RUN_{int(time.time() * 1000)}"
+        client.command(f"say {run_marker} START")
+        time.sleep(1)
+        client.command("function mcc_bp_live:start")
+        # Read-only progress probes; never cancel the pending first batch here.
+        time.sleep(10)
+        for command in ("tick query",
+                        "scoreboard players get #states mccbp",
+                        "data get storage mcc_bp_live:t want"):
+            client.command(command)
+            time.sleep(1)
+
+        deadline = time.time() + 300
+        while time.time() < deadline:
+            log = client.log()
+            marker = log.rfind(f"{run_marker} START")
+            if marker >= 0:
+                segment = log[marker:]
+                hits = [line for line in segment.splitlines() if "MCCBP_RESULT " in line]
+                if hits:
+                    result = hits[-1]
+                    break
+            time.sleep(3)
+    finally:
+        for command in ("scoreboard objectives remove mccbp",
+                        "data remove storage mcc_bp_live:t want",
+                        "execute in minecraft:overworld run setblock -440 250 120 minecraft:air strict",
+                        "execute in minecraft:overworld run forceload remove -440 120"):
+            try:
+                client.command(command)
+            except Error:
+                pass
+        try:
+            client.delete_file(remote_harness)
+        finally:
+            try:
+                client.command("reload")
+            except Error:
+                pass
+
+    report = "\n".join(line for line in segment.splitlines() if "MCCBP_" in line)
+    if report:
+        print(report)
+    errors = [line for line in segment.splitlines() if "/ERROR]:" in line]
+    if errors:
+        raise Error("Blueprint matcher live test produced current-run server errors:\n"
+                    + "\n".join(errors[:12]))
+    if "MCCBP_RESULT PASS" in result:
+        print("BLUEPRINT_MATCHER_LIVE_TEST=PASS")
+        return
+    raise Error(f"Blueprint matcher live test did not pass; current-run result={result or '<missing>'}")
 
 LIVE_SUITES = {
     "utilities": ("build-utilities-live-test.py", "utilities-live-test"),
@@ -1442,6 +1635,7 @@ def run(path):
     elif op == "command": client.command(str(r.get("command") or "")); print(f"command sent to {TARGET}")
     elif op == "deploy-datapack": deploy(client, str(r.get("pack") or ""))
     elif op == "run-copy-paste-multiplayer-test": run_copy_paste_multiplayer_test(client)
+    elif op == "run-blueprint-matcher-live-test": run_blueprint_matcher_live_test(client)
     elif op == "run-warehouse-compact-live-test": run_warehouse_compact_live_test(client)
     elif op == "run-live-suite": run_live_suite(client, str(r.get("pack") or ""))
     elif op == "run-utilities-bfs-live-test": run_utilities_bfs_live_test(client)
@@ -1487,6 +1681,8 @@ def run(path):
         print("\n".join(selected[-200:]))
     elif op == "inno-identity-status":
         print(json.dumps(inno_identity_status(os.environ.get("EXAROTON_API_TOKEN", "")), ensure_ascii=False, indent=2))
+    elif op == "inno-storage-status":
+        print(json.dumps(inno_storage_status(os.environ.get("EXAROTON_API_TOKEN", "")), ensure_ascii=False, indent=2))
     elif op == "inno-world-layout-status":
         print(json.dumps(inno_world_layout_status(os.environ.get("EXAROTON_API_TOKEN", "")), ensure_ascii=False, indent=2))
     elif op in {"inno-uuid-migrate-dry-run", "inno-uuid-migrate-apply"}:

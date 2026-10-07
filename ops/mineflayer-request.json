@@ -1,5 +1,5 @@
 {
-  "request_id": 20261007193401,
-  "operation": "test-3-bots",
-  "duration_ms": 1500000
+  "request_id": 0,
+  "operation": "noop",
+  "duration_ms": 30000
 }

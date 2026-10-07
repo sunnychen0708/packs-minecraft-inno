@@ -1,10 +1,14 @@
-# Minecraft Copy/Paste Datapack v1.6
+# Minecraft Copy/Paste Datapack v1.7
 
-> Release: **copy-paste-v1.6** · Download: **copy-paste-v1.6.zip**
+> Source: **v1.7（尚未發布）** · Latest release: **copy-paste-v1.6** · Download: **copy-paste-v1.6.zip**
 
 適用：Minecraft Java Edition 26.3（Data Pack 121.0）
 
 純 Vanilla datapack。操作使用 Trigger 或 Dialog。施工材料先從玩家背包（含副手）拿，不夠再從同 repo 的 Warehouse datapack 共用材料來源拿。
+
+## v1.7
+
+- Blueprint 讀取方塊狀態變快：原本把 26.3 的 35,720 個方塊狀態逐一完整比對（一般方塊約 500 個指令），現在先用依常見程度排序的方塊標籤樹找出方塊 ID，再逐一判斷每個屬性（石頭、泥土 6 個指令，所有狀態平均約 24 個、最多 78 個）。複製出來的 Blueprint 內容和舊版完全相同；不改世界資料，不需要 migration。
 
 ## v1.6
 
@@ -28,7 +32,8 @@
 - **材料清單顯示物品名稱**：缺料清單與材料檢查使用遊戲翻譯鍵，玩家看到自己語言的名稱（例如「橡木門」），滑鼠移上去顯示 item ID。
 - `/trigger cphelp` 教學改成 1～5 步驟：選範圍 → 複製 → 放預覽 → 調預覽 → 蓋出來，另列「直接改原本的建築」。
 
-- **防複製修正**：所有真實世界編輯（Cut、Move、Flip、Rotate、貼上、Build）的 Undo/Redo 都會先比對「操作完成後的世界快照」；只要該區域之後被改過（包含箱子內容物），就拒絕 Undo/Redo，避免把已拿走的物品還原回來。
+- **防複製修正**：所有真實世界編輯（Cut、Move、Flip、Rotate、貼上、Build）的 Undo/Redo 都會先比對「操作完成後的世界快照」。同一個 block ID 的 block state 變化一律忽略（例如門開關、樓梯方向、waterlogged）；方塊種類被換掉或 Block Entity 內容（例如箱子物品）被改過仍會拒絕 Undo/Redo，避免資源複製。
+- **Undo／Redo 被安全檢查擋下時會直接列差異**：顯示需要補回的材料／方塊數量、需要移除的多餘方塊、Block Entity／容器內容異常，以及實際世界座標（一次最多 20 筆；修好後重試會繼續列下一批）。
 - **Cut → Undo 會作廢目前的 Cut Clipboard**：來源被還原後，不能再用 `/trigger v` 把同一批方塊或箱子內容物貼第二次。
 - **Cut → Undo → Redo 會重新建立原本的 Cut Clipboard**：即使 Undo 後做過別的 Copy，Redo 也會恢復當初 Cut 的內容，可再用 `/trigger v` 搬移。
 - 修正 Rotate／Mirror 後的 Masked 貼上會退回 Replace：來源是空氣的格子不再覆蓋目標既有方塊。
@@ -110,7 +115,7 @@ Warehouse API 會從已註冊且有效的 Warehouse 容器建立最多 64 個材
 
 `v` 只建立或重定位 Blueprint，不會直接生成真實方塊。
 
-Blueprint 建立完成後可以先調整方向（只動預覽，不動原本建築；左右前後以你面對的方向為準）：
+Blueprint 建立完成後可以先調整方向（只動預覽，不動原本建築；左右前後以你面對的方向為準）。**沒有自訂 Anchor 時，Flip 會以目前 Blueprint 外框中心原地鏡射，不會把整個預覽推到另一側；有自訂 Anchor 時才以 Anchor 為鏡射基準。**
 
 ```mcfunction
 /trigger bpturnright   # 預覽向右轉 90°（順時針）
@@ -200,7 +205,7 @@ Cut 是搬移，不需要材料箱。來源先被真正移除，下一次 `v` �
 
 ## 直接移動 / 轉向 / 翻面
 
-直接修改真實選取（左右前後以你面對的方向為準）：
+直接修改真實選取（左右前後以你面對的方向為準）。**沒有自訂 Anchor 時，Flip 以目前選區外框中心原地鏡射；有自訂 Anchor 時才以 Anchor 為鏡射基準。**
 
 ```mcfunction
 /trigger right set <1..128>
@@ -247,7 +252,7 @@ Build 的 Undo/Redo 會連材料交易一起處理：Undo 在施工區仍與 Bui
 - Rotate / Mirror Structure Template：每軸 ≤ 48；有自訂 Anchor 的 Flip X/Z 也走這條路徑，同樣每軸 ≤ 48。
 - Move / 直接 Rotate 的 Undo 範圍（來源加目的地）每軸 ≤ 256。
 - Warehouse 共用材料來源上限為 64；Copy/Paste 不再有自己的材料箱上限或註冊資料。
-- Blueprint exact-state matcher覆蓋 Java 26.3 的 1,283 種非空氣 block IDs、35,720 個 block states。
+- Blueprint exact-state matcher覆蓋 Java 26.3 的 1,283 種非空氣 block IDs、35,720 個 block states。它由 `scripts/gen-blueprint-matcher.py` 依官方 block report 產生：先用依出現頻率加權的 block-tag 樹找出 block ID，再逐一判斷每個 property（2 值 property 先寫預設值、再判斷一次），不再逐一列舉完整 state（#49）。
 - 實體不包含在 Copy/Cut/Blueprint 中。
 
 ## 驗證
@@ -256,9 +261,12 @@ Build 的 Undo/Redo 會連材料交易一起處理：Undo 在施工區仍與 Bui
 
 ```console
 python3 scripts/validate-datapack.py copy-paste
+python3 scripts/gen-blueprint-matcher.py --check
 python3 scripts/test-copy-paste.py
 python3 scripts/test-datapack-compatibility.py
 ```
+
+`test-copy-paste.py` 會離線模擬 generated matcher，逐一驗證 35,720 個 state 的輸出；`test-copy-paste-runtime.py` 會在官方 26.3 server 上逐一放置這些 state，並比對 matcher 寫出的 `{id, properties}`。
 
 官方 Minecraft 26.3 行為 regression：
 

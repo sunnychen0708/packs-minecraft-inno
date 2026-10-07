@@ -107,23 +107,24 @@ Each player works on their own copy of the 3D test house from `scripts/mcc_house
 - A-only Undo/Redo not modifying B, and B independent Undo twice restoring the cut source.
 
 Runs before 2026-10-07's house rewrite used a 2x2 layer of full blocks and only spot-checked one or two cells; they do not count as Copy/Paste validation. The 3D house version has not run on innotest yet.
+Keep only the controller's fixed file names (`utilities.zip`, `warehouse.zip`, `copy-paste.zip`) in innotest's `world/datapacks`. A second copy of the same pack under another name (for example `copy-paste-v1.5.zip`) is loaded alongside it and contaminates the run; that happened once and was cleaned up before the clean run.
 
 ## Recommended live-test sequence
 
 For a multiplayer-sensitive Copy/Paste change:
 
 1. Let normal GitHub validation finish first.
-2. Start `innotest` only if it is currently OFFLINE.
+2. Make sure `innotest` is ONLINE; start it only if it is not.
 3. Start a four-player Mineflayer request for 300000 ms.
 4. Wait until the Mineflayer log shows `READY 4/4`.
 5. Run `run-copy-paste-multiplayer-test` through the innotest controller.
 6. Require `COPY_PASTE_MULTIPLAYER_LIVE_TEST=PASS` / `MCCMP_RESULT PASS`.
 7. Let the temporary harness clean itself up.
-8. Stop `innotest` when testing is finished.
-9. Verify a final read-only status of `OFFLINE` and `0/10`.
+8. Leave `innotest` ONLINE. Do not stop it as routine cleanup; clean up test state only (see `AGENTS.md`).
+9. Verify a final read-only status of `ONLINE` and `0/10`.
 10. Return all three ops request files to `noop`.
 
-The last completed sequence ended with `innotest` OFFLINE, `0/10`, Vanilla 26.3.
+`innotest` stays ONLINE after testing: repeated stop/start costs more exaroton credits than idling. Restart it only when an installation cannot be completed without a restart, and leave it ONLINE afterwards. Stop it only when the user explicitly asks.
 
 ## Production UUID maintenance
 

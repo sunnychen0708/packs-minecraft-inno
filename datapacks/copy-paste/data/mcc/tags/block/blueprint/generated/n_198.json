@@ -1,0 +1,20 @@
+{
+  "values": [
+    "minecraft:sunflower",
+    "minecraft:suspicious_gravel",
+    "minecraft:suspicious_sand",
+    "minecraft:sweet_berry_bush",
+    "minecraft:tall_dry_grass",
+    "minecraft:tall_seagrass",
+    "minecraft:target",
+    "minecraft:terracotta",
+    "minecraft:test_block",
+    "minecraft:test_instance_block",
+    "minecraft:tinted_glass",
+    "minecraft:tnt",
+    "minecraft:torchflower",
+    "minecraft:torchflower_crop",
+    "minecraft:trapped_chest",
+    "minecraft:trial_spawner"
+  ]
+}

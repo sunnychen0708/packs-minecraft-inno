@@ -1,0 +1,20 @@
+{
+  "values": [
+    "minecraft:warped_roots",
+    "minecraft:warped_shelf",
+    "minecraft:warped_sign",
+    "minecraft:warped_wall_hanging_sign",
+    "minecraft:warped_wall_sign",
+    "minecraft:warped_wart_block",
+    "minecraft:water_cauldron",
+    "minecraft:waxed_chiseled_copper",
+    "minecraft:waxed_copper_bars",
+    "minecraft:waxed_copper_block",
+    "minecraft:waxed_copper_bulb",
+    "minecraft:waxed_copper_chain",
+    "minecraft:waxed_copper_chest",
+    "minecraft:waxed_copper_golem_statue",
+    "minecraft:waxed_copper_grate",
+    "minecraft:waxed_copper_lantern"
+  ]
+}

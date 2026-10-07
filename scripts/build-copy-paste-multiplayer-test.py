@@ -1,4 +1,4 @@
-"""Build an opt-in two-player v1.6 Copy/Paste regression datapack that works on the 3D test house.
+"""Build an opt-in two-player v1.7 Copy/Paste regression datapack that works on the 3D test house.
 
 Player A: /function mcc_mp_test:join_a
 Player B: /function mcc_mp_test:join_b
@@ -34,7 +34,7 @@ if OUT.exists(): shutil.rmtree(OUT)
 F=OUT/'data/mcc_mp_test/function'
 F.mkdir(parents=True,exist_ok=True)
 (OUT/'pack.mcmeta').write_text(json.dumps({
-    'pack':{'description':'Opt-in CopyPaste v1.6 two-player 3D house regression','min_format':121,'max_format':121}
+    'pack':{'description':'Opt-in CopyPaste v1.7 two-player 3D house regression','min_format':121,'max_format':121}
 },ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 
 OW='in minecraft:overworld'
@@ -375,4 +375,4 @@ cleanup+=[f'execute {OW} run fill {x1} {y1} {z1} {x2} {y2} {z2} air',
           'say MCCMP_CLEANUP DONE']
 (F/'cleanup.mcfunction').write_text('\n'.join(cleanup)+'\n',encoding='utf-8')
 (F/'clear_n.mcfunction').write_text('$clear @s $(item) $(n)\n',encoding='utf-8')
-print(f'Built {len(steps)} v1.6 two-player 3D house steps at {OUT}')
+print(f'Built {len(steps)} v1.7 two-player 3D house steps at {OUT}')

@@ -21,12 +21,14 @@ on:
           - whitelist-status
           - identity-status
           - inno-identity-status
+          - inno-storage-status
           - start
           - stop
           - restart
           - command
           - deploy-datapack
           - run-copy-paste-multiplayer-test
+          - run-blueprint-matcher-live-test
           - run-warehouse-compact-live-test
           - run-live-suite
           - set-online-mode-false

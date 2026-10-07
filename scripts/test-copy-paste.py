@@ -4,7 +4,7 @@
 Runs without a Minecraft client. CI should run this after validate-datapack.py.
 """
 from __future__ import annotations
-import argparse, json, random, re
+import argparse, itertools, json, random, re
 from pathlib import Path
 
 RE_FUNC = re.compile(r'\bfunction\s+(mcc:[a-z0-9_./-]+)')
@@ -70,8 +70,12 @@ def check_trigger_lifecycle(pack: Path):
 
 def check_upgrade_and_mode(pack: Path):
     tick=read(pack/'data/mcc/function/tick.mcfunction')
-    for objective,valid in [('mcc_rot','0..3'),('mcc_mir','0..2'),('mcc_usel','0..1'),('mcc_cliptype','0..2'),('mcc_redo','0..1'),('mcc_ucnt','0..5'),('mcc_uhead','0..5'),('mcc_rcnt','0..5'),('mcc_rhead','0..5'),('mcc_bpscan','0..1'),('mcc_bpactive','0..1'),('mcc_bpready','0..1'),('mcc_bpbad','0..1'),('mcc_matphase','0..2'),('mcc_matleft','0..'),('mcc_bpover','0..'),('mcc_buildconfirm','0..1'),('mcc_bpover_scan','0..1'),('mcc_bpoindex','0..')]:
+    for objective,valid in [('mcc_rot','0..3'),('mcc_mir','0..2'),('mcc_usel','0..1'),('mcc_cliptype','0..2'),('mcc_redo','0..1'),('mcc_ucnt','0..5'),('mcc_uhead','0..5'),('mcc_rcnt','0..5'),('mcc_rhead','0..5'),('mcc_bpscan','0..1'),('mcc_bpactive','0..1'),('mcc_bpready','0..1'),('mcc_bpbad','0..1'),('mcc_matphase','0..2'),('mcc_matleft','0..'),('mcc_bpover','0..'),('mcc_buildconfirm','0..1'),('mcc_bpover_scan','0..1'),('mcc_bpoindex','0..'),('mcc_canchor','0..1')]:
         migration=f'execute as @a unless score @s {objective} matches {valid} run scoreboard players set @s {objective} 0'
+        assert migration in tick, f'missing non-destructive upgrade for {objective}'
+        assert tick.index(migration)<tick.index('scores={copypaste='), 'migrate before dispatch'
+    for objective in ('mcc_bpoffx','mcc_bpoffz'):
+        migration=f'execute as @a unless score @s {objective} = @s {objective} run scoreboard players set @s {objective} 0'
         assert migration in tick, f'missing non-destructive upgrade for {objective}'
         assert tick.index(migration)<tick.index('scores={copypaste='), 'migrate before dispatch'
     mode=read(pack/'data/mcc/function/mode_toggle.mcfunction').splitlines()
@@ -175,9 +179,8 @@ def check_flip_anchor_formula(pack: Path):
     transform=read(pack/'data/mcc/function/rotate_edit/run.mcfunction')
     place=read(pack/'data/mcc/function/rotate_edit/place_overworld.mcfunction')
 
-    # No custom Anchor keeps the existing in-place bounding-box Flip behavior.
-    # With a custom Anchor, route through the fixed-pivot transform engine instead
-    # of mirroring/moving the Anchor itself.
+    # Direct Flip without a custom Anchor is an in-place bounding-box mirror.
+    # Blueprint Flip must match it; a custom Anchor keeps fixed-pivot behavior.
     assert 'mcc_hasa matches 1 run return run function mcc:flip/x_anchor' in x
     assert 'mcc_hasa matches 1 run return run function mcc:flip/z_anchor' in z
     assert 'mcc_anx = @s mcc_tmp' not in x
@@ -186,6 +189,15 @@ def check_flip_anchor_formula(pack: Path):
     assert 'mcc_erot 0' in za and 'mcc_emir 2' in za and 'left_right' in za
     assert 'prepare_r0_m1' in transform and 'prepare_r0_m2' in transform
     assert '$(erot) $(emir)' in place
+    bpflip=read(pack/'data/mcc/function/state/bp_flip_axis.mcfunction')
+    assert 'mcc_bpoffx' in bpflip and 'mcc_bpoffz' in bpflip
+    assert 'function mcc:paste/prepare_transform' in bpflip
+    copyrun=read(pack/'data/mcc/function/copy/run.mcfunction')
+    assert 'mcc_canchor = @s mcc_hasa' in copyrun
+    direct=read(pack/'data/mcc/function/blueprint/init_direct.mcfunction')
+    transformed=read(pack/'data/mcc/function/blueprint/init_transformed.mcfunction')
+    assert 'mcc_bptx0 += @s mcc_bpoffx' in direct and 'mcc_bptz0 += @s mcc_bpoffz' in direct
+    assert 'mcc_dstx += @s mcc_bpoffx' in transformed and 'mcc_dstz += @s mcc_bpoffz' in transformed
 
     rng=random.Random(401)
     for _ in range(2000):
@@ -286,6 +298,96 @@ def check_multiplayer_isolation(pack: Path):
 
     return 64
 
+BP_NS='mcc:blueprint/generated'
+BP_PRED=r'(#?[a-z0-9_:/.-]+)(?:\[([a-z0-9_=,]*)\])?'
+BP_SET=r'data modify storage mcc:temp state\.properties\.([a-z0-9_]+) set value "([a-z0-9_]+)"'
+BP_RULES=[
+    ('if_call', re.compile(rf'execute if block ~ ~ ~ {BP_PRED} run return run function ({BP_NS}/[a-z0-9_/]+)$')),
+    ('call', re.compile(rf'return run function ({BP_NS}/[a-z0-9_/]+)$')),
+    ('summon', re.compile(r'return run function mcc:blueprint/summon with storage mcc:temp$')),
+    ('if_ret_set', re.compile(rf'execute if block ~ ~ ~ {BP_PRED} run return run {BP_SET}$')),
+    ('if_set', re.compile(rf'execute if block ~ ~ ~ {BP_PRED} run {BP_SET}$')),
+    ('set_id', re.compile(r'data modify storage mcc:temp state set value \{id:"(minecraft:[a-z0-9_]+)"\}$')),
+    ('set', re.compile(rf'{BP_SET}$')),
+    ('unless_fn', re.compile(rf'execute unless function ({BP_NS}/[a-z0-9_/]+) run return fail$')),
+    ('fail', re.compile(r'return fail$')),
+]
+
+class BlueprintMatcher:
+    """Interprets the generated matcher (the only command forms the generator emits) for one block state."""
+    def __init__(self, pack: Path):
+        fdir=pack/'data/mcc/function/blueprint/generated'
+        self.funcs={}
+        for p in fdir.rglob('*.mcfunction'):
+            prog=[]
+            for line in read(p).splitlines():
+                if not line or line.startswith('#'): continue
+                for kind,rx in BP_RULES:
+                    m=rx.match(line)
+                    if m: prog.append((kind,m.groups())); break
+                else: raise AssertionError(f'{p}: unexpected matcher command {line!r}')
+            self.funcs[BP_NS+'/'+p.relative_to(fdir).with_suffix('').as_posix()]=prog
+        self.tags={'#'+BP_NS+'/'+p.stem:set(json.loads(read(p))['values'])
+                   for p in (pack/'data/mcc/tags/block/blueprint/generated').glob('*.json')}
+
+    def test(self, pred, props, block, state):
+        if not (block in self.tags[pred] if pred.startswith('#') else block==pred): return False
+        return all(state.get(k)==v for k,v in (kv.split('=') for kv in filter(None,(props or '').split(','))))
+
+    def run(self, block, state):
+        """Returns (return value, state passed to summon or None, commands executed)."""
+        self.out=None; self.summoned=None; self.cmds=0
+        return self.call(BP_NS+'/root',block,state), self.summoned, self.cmds
+
+    def call(self, fid, block, state):
+        for kind,g in self.funcs[fid]:
+            self.cmds+=1
+            if kind=='if_call':
+                if self.test(g[0],g[1],block,state): return self.call(g[2],block,state)
+            elif kind=='call': return self.call(g[0],block,state)
+            elif kind=='summon': self.summoned=json.loads(json.dumps(self.out)); return 1
+            elif kind=='if_ret_set':
+                if self.test(g[0],g[1],block,state): self.out.setdefault('properties',{})[g[2]]=g[3]; return 1
+            elif kind=='if_set':
+                if self.test(g[0],g[1],block,state): self.out.setdefault('properties',{})[g[2]]=g[3]
+            elif kind=='set_id': self.out={'id':g[0]}
+            elif kind=='set': self.out.setdefault('properties',{})[g[0]]=g[1]
+            elif kind=='unless_fn':
+                if not self.call(g[0],block,state): return 0
+            elif kind=='fail': return 0
+        raise AssertionError(f'{fid} ended without return')
+
+def blueprint_states(blocks: dict):
+    for block,spec in blocks.items():
+        props=spec.get('properties',{})
+        for combo in itertools.product(*props.values()):
+            yield block,dict(zip(props,combo))
+
+def check_blueprint_matcher(pack: Path):
+    """Issue #49: the ID tree + per-property leaves must reproduce every exact 26.3 block state."""
+    snapshot=Path(__file__).resolve().parent/'data/blocks-26.3.json'
+    blocks=json.loads(read(snapshot))
+    assert len(blocks)==1283 and not {'minecraft:air','minecraft:cave_air','minecraft:void_air'}&set(blocks)
+    m=BlueprintMatcher(pack)
+    states=0; worst=0; cost={}
+    for block,state in blueprint_states(blocks):
+        ret,summoned,cmds=m.run(block,state)
+        want={'id':block,**({'properties':state} if state else {})}
+        assert ret==1 and summoned==want, (block,state,ret,summoned)
+        states+=1; worst=max(worst,cmds); cost.setdefault(block,[]).append(cmds)
+    assert states==35720, states
+    # Unknown blocks (air included) and an unlisted value of a 3+-value property still fail
+    # without reaching summon, like the old exact-state matcher.
+    for block,state in (('minecraft:air',{}),('minecraft:cave_air',{}),('example:modded',{}),
+                        ('minecraft:note_block',{'instrument':'unknown','note':'0','powered':'false'}),
+                        ('minecraft:oak_stairs',{'facing':'up','half':'top','shape':'straight','waterlogged':'false'})):
+        ret,summoned,_=m.run(block,state)
+        assert ret==0 and summoned is None, (block,state)
+    # Hot-path budget (old linear matcher: stone 539, worst 2701 commands per scanned block).
+    avg=lambda b: sum(cost[b])/len(cost[b])
+    assert avg('minecraft:stone')<=6 and avg('minecraft:dirt')<=6 and worst<=80, (avg('minecraft:stone'),worst)
+    return states
+
 def check_v100_semantics(pack: Path):
     load=read(pack/'data/mcc/function/load.mcfunction')
     cleanup=read(pack/'data/mcc/function/admin/cleanup_legacy_triggers.mcfunction')
@@ -361,6 +463,40 @@ def check_v100_semantics(pack: Path):
     assert 'function mcc:materials/redo_start' in redo_hist
     assert 'function mcc:history/copy_redo_snapshot_to_material_guard' in redo_apply
     assert (pack/'data/mcc/function/history/compare_hidden.mcfunction').is_file()
+    compare_hidden=read(pack/'data/mcc/function/history/compare_hidden.mcfunction')
+    assert 'function mcc:history/compare_hidden_state' in compare_hidden
+    assert 'mcc_cmpmode matches 1' in read(pack/'data/mcc/function/blueprint/summon.mcfunction')
+    for name in (
+        'compare_hidden_state.mcfunction','compare_hidden_x_loop.mcfunction',
+        'compare_hidden_y_loop.mcfunction','compare_hidden_z_loop.mcfunction',
+        'compare_chunk.mcfunction','compare_line.mcfunction','compare_block.mcfunction',
+        'compare_block_id_callback.mcfunction','compare_block_id.mcfunction',
+    ):
+        assert (pack/'data/mcc/function/history'/name).is_file()
+    load_text=read(pack/'data/mcc/function/load.mcfunction')
+    assert 'scoreboard objectives add mcc_cmpmode dummy' in load_text
+    assert 'scoreboard objectives add mcc_cmpaxis dummy' in load_text
+    assert 'scoreboard objectives add mcc_cmpdiag dummy' in load_text
+    assert 'scoreboard objectives add mcc_diagcount dummy' in load_text
+    assert 'mcc_cmpmode matches 2' in read(pack/'data/mcc/function/blueprint/summon.mcfunction')
+    assert 'function mcc:history/undo_guard_fail' in undo_hist
+    assert 'function mcc:history/redo_guard_fail' in redo_apply
+    assert 'function mcc:history/diag_record' in read(pack/'data/mcc/function/history/compare_block.mcfunction')
+    for name in (
+        'diagnose_guard.mcfunction','diag_record.mcfunction','diag_add_need.mcfunction',
+        'diag_resolve_materials.mcfunction','diag_resolve_materials_loop.mcfunction',
+        'diag_resolve_material_one.mcfunction','diag_add_material.mcfunction',
+        'diag_current_id_callback.mcfunction','undo_guard_fail.mcfunction','redo_guard_fail.mcfunction',
+        'diag_report.mcfunction','diag_report_need_init.mcfunction','diag_report_need_loop.mcfunction',
+        'diag_report_need_prepare.mcfunction','diag_report_need_one.mcfunction',
+        'diag_report_coord_init.mcfunction','diag_report_coord_loop.mcfunction',
+        'diag_report_coord_prepare.mcfunction','diag_report_coord_one.mcfunction',
+        'diag_report_coord_replace.mcfunction','diag_report_coord_remove.mcfunction',
+        'diag_report_coord_content.mcfunction',
+    ):
+        assert (pack/'data/mcc/function/history'/name).is_file()
+    diag_report=read(pack/'data/mcc/function/history/diag_report.mcfunction')
+    assert '需要補回' in diag_report and '異常位置' in diag_report
 
     for p in (
         pack/'data/mcc/function/move/run.mcfunction',
@@ -375,9 +511,16 @@ def check_v100_semantics(pack: Path):
     assert 'function mcc:work/snapshot_selection' in rotate
     assert 'function mcc:undo/backup_from_' in rotate
     assert 'function mcc:cut/clear_' in rotate
-    assert 'function mcc:rotate_edit/place_' in rotate
-    assert rotate.index('function mcc:work/snapshot_selection') < rotate.index('function mcc:cut/clear_')
+    assert 'function mcc:rotate_edit/stage_work' in rotate
+    assert 'function mcc:work/to_overworld_replace' in rotate
+    assert 'function mcc:work/to_nether_replace' in rotate
+    assert 'function mcc:work/to_end_replace' in rotate
+    assert rotate.index('function mcc:work/snapshot_selection') < rotate.index('function mcc:rotate_edit/stage_work')
+    assert rotate.index('function mcc:rotate_edit/stage_work') < rotate.index('function mcc:cut/clear_')
     assert rotate.index('function mcc:undo/backup_from_') < rotate.index('function mcc:cut/clear_')
+    stage_work=read(pack/'data/mcc/function/rotate_edit/stage_work.mcfunction')
+    assert 'fill $(wbx) 0 20000500 $(old_wbx2) $(wby2) $(old_wbz2) minecraft:air strict' in stage_work
+    assert 'place template mcc:work_$(id)' in stage_work
     for name in ('r90.mcfunction','r180.mcfunction','r270.mcfunction'):
         assert (pack/'data/mcc/function/rotate_edit'/name).is_file()
 
@@ -417,23 +560,7 @@ def check_v100_semantics(pack: Path):
     assert 'positioned $(tx) $(ty) $(tz)' not in summon
     assert 'block_state set from storage mcc:temp state' in summon
 
-    # Generated exact-state dispatcher: every non-air 26.3 block appears in exactly one group.
-    tag_dir=pack/'data/mcc/tags/block/blueprint/generated'
-    group_dir=pack/'data/mcc/function/blueprint/generated'
-    tags=sorted(tag_dir.glob('g_*.json'))
-    groups=sorted(group_dir.glob('group_*.mcfunction'))
-    assert len(tags)==128 and len(groups)==128
-    block_ids=[]
-    for p in tags:
-        obj=json.loads(read(p))
-        block_ids.extend(obj['values'])
-    assert len(block_ids)==len(set(block_ids))==1283
-    matcher_states=sum(read(p).count('run data modify storage mcc:temp state set value') for p in groups)
-    assert matcher_states==35720, matcher_states
-    root=read(group_dir/'root.mcfunction')
-    for i in range(128):
-        assert f'#mcc:blueprint/generated/g_{i}' in root
-        assert f'function mcc:blueprint/generated/group_{i}' in root
+    matcher_states=check_blueprint_matcher(pack)
 
     # Copy-V stays preview-only; v1.0 construction is a separate, material-gated Build step.
     assert 'mcc_cliptype matches 1 run return run function mcc:blueprint/create' in dispatch
@@ -566,23 +693,10 @@ def check_version_labels(pack: Path, repo: Path|None=None):
     assert f'v{version}' in read(pack/'MULTIPLAYER-VALIDATION.md').splitlines()[0], f'MULTIPLAYER-VALIDATION not synced to v{version}'
     source_repo=repo or Path(__file__).resolve().parents[1]
     runtime=read(source_repo/'scripts/test-copy-paste-runtime.py')
-    live=read(source_repo/'scripts/build-copy-paste-live-test.py')
     multi=read(source_repo/'scripts/build-copy-paste-multiplayer-test.py')
     assert f'Copy/Paste v{version}' in runtime, f'headless runtime label not synced to v{version}'
-    assert f'v{version}' in live.splitlines()[0], f'real-player harness label not synced to v{version}'
     assert f'v{version}' in multi.splitlines()[0], f'multiplayer harness label not synced to v{version}'
-    compile(live, str(source_repo/'scripts/build-copy-paste-live-test.py'), 'exec')
     compile(multi, str(source_repo/'scripts/build-copy-paste-multiplayer-test.py'), 'exec')
-    for required in (
-        "reselected copy uses new region",
-        "selection persists without new pos",
-        "external anchor selected",
-        "clear anchor trigger",
-        "pos1 reselection clears stale anchor",
-        "default pos1 anchor exact",
-        "material build real",
-    ):
-        assert required in live, f'v{version} real-player harness missing: {required}'
     # CI cannot run the real-client stages, so at least keep them in step with the pack:
     # they must compile and must not wait for or check a load message that no pack prints.
     for script in sorted((source_repo/'scripts/real-client').glob('*.py')):
