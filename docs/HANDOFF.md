@@ -193,3 +193,11 @@ Copy/Paste runtime 失敗時會印 `MCCST_DIAG_DROP_<步驟>` / `MCCST_DIAG_DIFF
 - Utilities v3.7 工具等級檢查與部分 Copy/Paste legacy trigger cleanup 主要由 headless runtime 覆蓋；若改玩家可見行為要補真人 client 驗證。
 - 舊的 2×2 Trigger harness 已刪除；Copy/Paste 實機驗證只使用 `build-copy-paste-multiplayer-test.py` 的 3D 房子 + innotest live runner。
 - 真實世界 paste 的 clone 仍會產生正常 block update，這是為了讓柵欄、紅石等邊界連接正確。
+
+## Persistent innotest bots
+
+- Keep the three non-SunnyChen Mineflayer test players (`penguin0531`, `geena0701`, `Felicitypeng`) online and reuse them across suites. Do not start a short-lived bot session for each test.
+- `ops/mineflayer-request.json` uses `duration_ms: 0` for the normal three-bot session. This means the bot process stays connected until its runner is explicitly replaced/cancelled; unexpected disconnects reconnect automatically.
+- Reserve `SunnyChen` for the real player unless a test explicitly requires all four bot identities.
+- Do not deliberately stop the persistent bot session after a test. A deliberate new bot request may replace it when player composition actually needs to change.
+- GitHub-hosted runners themselves are not permanent infrastructure and have a hard job lifetime; if truly 24/7 bots are required, move this same keepalive process to an always-on host rather than reintroducing short per-test durations.
