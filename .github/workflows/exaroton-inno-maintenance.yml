@@ -21,26 +21,90 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
+      - name: Resolve maintenance request
+        id: request
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+
+          with open("ops/inno-maintenance-request.json", encoding="utf-8") as handle:
+              request = json.load(handle)
+
+          op = request.get("operation")
+          if op == "noop":
+              mode, scope = "noop", "none"
+          elif op == "uuid-migrate-dry-run":
+              mode, scope = "dry-run", "all"
+          elif op == "uuid-migrate-apply":
+              mode, scope = "apply", "all"
+          elif op == "uuid-stats-dry-run":
+              mode, scope = "dry-run", "stats"
+          elif op == "uuid-stats-apply":
+              mode, scope = "apply", "stats"
+          else:
+              raise SystemExit(f"unsupported maintenance operation: {op!r}")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"mode={mode}\n")
+              output.write(f"scope={scope}\n")
+          PY
+
+      - name: No-op request
+        if: steps.request.outputs.mode == 'noop'
+        run: echo "Production maintenance request is idle (noop)."
+
       - name: Install NBT parser
+        if: steps.request.outputs.mode != 'noop'
         run: python3 -m pip install "nbtlib==1.12.1"
 
       - name: Run requested offline maintenance
+        if: steps.request.outputs.mode != 'noop'
         shell: bash
         env:
           EXAROTON_API_TOKEN: ${{ secrets.EXAROTON_API_TOKEN }}
         run: |
           set -euo pipefail
-          mode="$(python3 - <<'PY'
-          import json
-          with open("ops/inno-maintenance-request.json", encoding="utf-8") as handle:
-              request = json.load(handle)
-          op = request.get("operation")
-          if op == "uuid-migrate-dry-run":
-              print("dry-run")
-          elif op == "uuid-migrate-apply":
-              print("apply")
-          else:
-              raise SystemExit(f"unsupported maintenance operation: {op!r}")
+          PYTHONPATH=scripts python3 - "${{ steps.request.outputs.mode }}" "${{ steps.request.outputs.scope }}" <<'PY'
+          import sys
+          import exaroton_inno_uuid_migrate as migration
+
+          mode, scope = sys.argv[1], sys.argv[2]
+          original_remote_path = migration.remote_path
+          migration.remote_path = lambda p: original_remote_path(str(p).lstrip("/"))
+
+          if scope == "stats":
+              import exaroton_inno_stats_merge as stats_merge
+              stats_merge.plan_or_apply(mode)
+              raise SystemExit(0)
+
+          # Exaroton's binary file endpoint must be called without the trailing
+          # slash used by ordinary text/config reads. A zero-byte .mca response
+          # is only accepted when file metadata also reports size=0.
+          def _read_file_optional(self, path):
+              try:
+                  data = self.req(
+                      "GET",
+                      f"/servers/{self._sidq()}/files/data/{migration.remote_path(path)}",
+                      raw_response=True,
+                  )
+                  if data == b"" and str(path).endswith(".mca"):
+                      info = self.info_optional(path)
+                      size = int((info or {}).get("size") or 0)
+                      if size == 0:
+                          print(f"skipping empty region file: {path}")
+                          return None
+                      raise migration.Error(
+                          f"binary region download returned 0 bytes for {path} "
+                          f"but exaroton reports size={size}"
+                      )
+                  return data
+              except migration.Error as exc:
+                  if "HTTP 404" in str(exc):
+                      return None
+                  raise
+
+          migration.Client.read_file_optional = _read_file_optional
+          migration.plan_or_apply(mode)
           PY
-          )"
-          python3 scripts/exaroton_inno_uuid_migrate.py "$mode"

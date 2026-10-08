@@ -9,18 +9,23 @@ on:
   workflow_dispatch:
     inputs:
       operation:
-        description: Operation to run on innotest.exaroton.me
+        description: Operation to run through the innotest controller
         required: true
         type: choice
         default: status
         options:
           - status
           - log
+          - online-mode-status
+          - whitelist-status
+          - identity-status
+          - inno-identity-status
           - start
           - stop
           - restart
           - command
           - deploy-datapack
+          - run-copy-paste-multiplayer-test
           - set-online-mode-false
       command:
         description: Console command (only used by command)

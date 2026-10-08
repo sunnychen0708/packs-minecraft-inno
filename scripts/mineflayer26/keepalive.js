@@ -38,6 +38,22 @@ function createBot (username) {
   states.set(username, state)
   const bot = mineflayer.createBot({ host, port, username, auth: 'offline', version: '26.3', physicsEnabled: false })
   bot.physicsEnabled = false
+
+  // Idle test clients never need to originate movement. The current 26.3
+  // protocol patch can emit an invalid move after a server-side teleport,
+  // so suppress only movement packets while keeping teleport_confirm,
+  // keepalive and all other protocol traffic intact.
+  const rawWrite = bot._client.write.bind(bot._client)
+  const movementPackets = new Set(['position', 'position_look', 'look', 'flying'])
+  bot._client.write = (packet, data) => {
+    const name = String(packet)
+    if (movementPackets.has(name) || name.startsWith('move_player')) {
+      state.suppressedMoves = (state.suppressedMoves || 0) + 1
+      return
+    }
+    return rawWrite(packet, data)
+  }
+
   bots.push(bot)
   bot.once('spawn', () => {
     state.spawned = true

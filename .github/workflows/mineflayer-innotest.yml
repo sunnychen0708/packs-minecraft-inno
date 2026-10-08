@@ -22,21 +22,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  four-bots:
+  bots:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - name: Check out repository
         uses: actions/checkout@v7
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: "22"
-
-      - name: Build pinned Mineflayer 26.3 stack
-        shell: bash
-        run: python3 scripts/mineflayer26/bootstrap.py
 
       - name: Resolve request
         id: request
@@ -48,31 +39,58 @@ jobs:
           python3 - <<'PY'
           import json, os
           from pathlib import Path
+
+          run = True
+          names = ""
+          duration = 30000
+
           if os.environ["EVENT_NAME"] == "workflow_dispatch":
               duration = int(os.environ["INPUT_DURATION_MS"])
               names = "SunnyChen,penguin0531,geena0701,Felicitypeng"
           else:
               req = json.loads(Path("ops/mineflayer-request.json").read_text())
               op = req.get("operation")
-              if op == "test-4-bots":
+              if op == "noop":
+                  run = False
+              elif op == "test-4-bots":
                   names = "SunnyChen,penguin0531,geena0701,Felicitypeng"
+                  duration = int(req.get("duration_ms", 180000))
               elif op == "probe-one":
                   player = str(req.get("player") or "")
                   allowed = {"SunnyChen", "penguin0531", "geena0701", "Felicitypeng"}
                   if player not in allowed:
                       raise SystemExit("unsupported probe player")
                   names = player
+                  duration = int(req.get("duration_ms", 180000))
               else:
                   raise SystemExit("unsupported mineflayer request")
-              duration = int(req.get("duration_ms", 180000))
-          if not 30000 <= duration <= 300000:
+
+          if run and not 30000 <= duration <= 300000:
               raise SystemExit("duration_ms must be 30000..300000")
+
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+              f.write(f"run={'true' if run else 'false'}\n")
               f.write(f"duration_ms={duration}\n")
               f.write(f"names={names}\n")
           PY
 
-      - name: Keep four test bots online
+      - name: No-op request
+        if: steps.request.outputs.run != 'true'
+        run: echo "Mineflayer request is idle (noop)."
+
+      - name: Set up Node.js
+        if: steps.request.outputs.run == 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Build pinned Mineflayer 26.3 stack
+        if: steps.request.outputs.run == 'true'
+        shell: bash
+        run: python3 scripts/mineflayer26/bootstrap.py
+
+      - name: Keep requested test bots online
+        if: steps.request.outputs.run == 'true'
         shell: bash
         env:
           MF26_HOST: innotest.exaroton.me
