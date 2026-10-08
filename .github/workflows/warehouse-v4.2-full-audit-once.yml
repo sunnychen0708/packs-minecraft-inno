@@ -1,0 +1,65 @@
+name: Warehouse v4.2 full audit once
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/warehouse-v4.2-full-audit-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out audit harness
+        uses: actions/checkout@v4
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Download released Warehouse v4.2 ZIP
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p audit-release
+          gh release download warehouse-v4.2 --pattern warehouse-v4.2.zip --dir audit-release
+          echo "69ddb29608b4c7e7e69b7b3df88ac7f2560c2f2a1daf59f9f9febc57512e73ba  audit-release/warehouse-v4.2.zip" | sha256sum --check -
+
+      - name: Download official Minecraft 26.3 server
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 \
+            https://piston-data.mojang.com/v1/objects/33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c/server.jar \
+            --output server.jar
+          echo "33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c  server.jar" | sha1sum --check -
+
+      - name: Run comprehensive release audit full-final
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          export TMPDIR="$PWD/dist"
+          python3 scripts/test-warehouse-v4.2-full-audit.py \
+            --pack-zip "$PWD/audit-release/warehouse-v4.2.zip" \
+            --java "$(command -v java)" \
+            --server-jar "$PWD/server.jar" \
+            --phase full
+
+      - name: Upload audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: warehouse-v4.2-full-audit-${{ github.run_id }}
+          path: |
+            dist/warehouse-full-audit-*/console.log
+          if-no-files-found: ignore
+          retention-days: 14
