@@ -1,6 +1,6 @@
 {
-  "request_id": 23,
-  "operation": "inno-uuid-migrate-dry-run",
-  "command": "",
+  "request_id": 29,
+  "operation": "inno-uuid-migrate-verify",
+  "command": "uuid-migration-1791312983.json",
   "pack": ""
 }
