@@ -108,6 +108,21 @@ class APIClient:
                 return None
             raise
 
+    def read_binary_file_optional(self, path):
+        """Read binary world files through exaroton's non-directory data endpoint."""
+        server = self.target()
+        sid = urllib.parse.quote(str(server["id"]), safe="")
+        try:
+            return self.req(
+                "GET",
+                f"/servers/{sid}/files/data/{remote_path(str(path).lstrip('/'))}",
+                raw_response=True,
+            )
+        except Error as e:
+            if "HTTP 404" in str(e):
+                return None
+            raise
+
     def write_file(self, path, content):
         server = self.target(); server = self.verify(server["id"])
         sid = urllib.parse.quote(str(server["id"]), safe="")
@@ -122,6 +137,14 @@ class APIClient:
         server = self.target()
         sid = urllib.parse.quote(str(server["id"]), safe="")
         return self.req("GET", f"/servers/{sid}/files/info/{remote_path(path)}/")
+
+    def info_optional(self, path):
+        try:
+            return self.file_info(str(path).lstrip("/"))
+        except Error as e:
+            if "HTTP 404" in str(e):
+                return None
+            raise
 
     def get_config(self, path):
         server = self.target()
@@ -457,6 +480,12 @@ def run_copy_paste_multiplayer_test(client):
     if int(current.get("status", -1)) != 1:
         raise Error("innotest must be ONLINE before live multiplayer testing")
 
+    # Mark the whole deployment/test session before any reload so parser/load
+    # errors from this attempt cannot be hidden by a later PASS line.
+    session_marker = f"MCCMP_SESSION_{int(time.time() * 1000)}"
+    client.command(f"say {session_marker} START")
+    time.sleep(1)
+
     # Deploy the exact datapacks from the checked-out main commit first.
     deploy(client, "all")
     time.sleep(5)
@@ -471,6 +500,32 @@ def run_copy_paste_multiplayer_test(client):
     print(f"deployed live multiplayer harness -> {remote_harness} ({len(payload)} bytes)")
     client.command("reload")
     time.sleep(6)
+
+    # Preflight only the current session. Historical errors earlier in the
+    # persistent exaroton log are irrelevant, but any new server ERROR after
+    # this session marker makes the live regression invalid.
+    preflight_log = client.log()
+    session_at = preflight_log.rfind(f"{session_marker} START")
+    if session_at < 0:
+        raise Error("live multiplayer preflight marker not found in server log")
+    preflight_segment = preflight_log[session_at:]
+    preflight_errors = [
+        line for line in preflight_segment.splitlines()
+        if "/ERROR]:" in line
+    ]
+    if preflight_errors:
+        try:
+            client.delete_file(remote_harness)
+        finally:
+            try:
+                client.command("reload")
+            except Error:
+                pass
+        preview = "\n".join(preflight_errors[:12])
+        raise Error(
+            "live multiplayer preflight found current-session server errors:\n"
+            + preview
+        )
 
     server = wait_players(client, 4, 180)
     print(f"live multiplayer test starting with player count={player_count(server)}")
@@ -542,6 +597,17 @@ def run_copy_paste_multiplayer_test(client):
     if current_checks:
         print(current_checks)
 
+    current_errors = [
+        line for line in segment.splitlines()
+        if "/ERROR]:" in line
+    ]
+    if current_errors:
+        preview = "\n".join(current_errors[:12])
+        raise Error(
+            "live multiplayer test produced current-run server errors even "
+            "though a result line was present:\n" + preview
+        )
+
     if "MCCMP_RESULT PASS" in result:
         print("COPY_PASTE_MULTIPLAYER_LIVE_TEST=PASS")
         return
@@ -585,6 +651,82 @@ def offline_uuid(name):
     digest[6] = (digest[6] & 0x0F) | 0x30
     digest[8] = (digest[8] & 0x3F) | 0x80
     return str(uuid.UUID(bytes=bytes(digest)))
+
+def rewrite_innotest_entity_uuid_refs(client, world, uuid_pairs, stamp):
+    """Rewrite production online UUID references in innotest entity region files."""
+    try:
+        import exaroton_inno_uuid_migrate as migration
+        int_mapping, str_mapping = migration.uuid_mappings(uuid_pairs)
+        region_files = migration.list_region_files(client, world)
+    except Exception as e:
+        raise Error(f"cannot prepare innotest entity UUID rewrite: {e}") from e
+
+    changes = []
+    total_refs = 0
+    for path in region_files:
+        path = str(path).lstrip("/")
+        raw = client.read_binary_file_optional(path)
+        if raw is None:
+            continue
+        if raw == b"":
+            info = client.info_optional(path)
+            size = int((info or {}).get("size") or 0)
+            if size == 0:
+                continue
+            raise Error(
+                f"binary region download returned 0 bytes for {path} "
+                f"but exaroton reports size={size}"
+            )
+        try:
+            transformed, stats = migration.transform_region(
+                raw,
+                int_mapping=int_mapping,
+                str_mapping=str_mapping,
+            )
+        except Exception as e:
+            raise Error(f"cannot rewrite entity UUIDs in {path}: {e}") from e
+        if transformed == raw:
+            continue
+
+        backup = f"{path}.pre-inno-online-copy-{stamp}.backup"
+        client.write_file(backup, raw)
+        client.write_file(path, transformed)
+
+        verified = client.read_binary_file_optional(path)
+        if verified is None:
+            raise Error(f"rewritten entity region disappeared during verification: {path}")
+        if hashlib.sha256(verified).digest() != hashlib.sha256(transformed).digest():
+            raise Error(f"verification failed after rewriting entity region {path}")
+        try:
+            verify_again, remaining = migration.transform_region(
+                verified,
+                int_mapping=int_mapping,
+                str_mapping=str_mapping,
+            )
+        except Exception as e:
+            raise Error(f"cannot verify entity UUID rewrite in {path}: {e}") from e
+        remaining_refs = int(remaining.get("int_array", 0)) + int(remaining.get("string", 0))
+        if verify_again != verified or remaining_refs:
+            raise Error(
+                f"entity UUID rewrite verification found {remaining_refs} remaining refs in {path}"
+            )
+
+        count = int(stats.get("int_array", 0)) + int(stats.get("string", 0))
+        total_refs += count
+        changes.append({
+            "path": path,
+            "backup": backup,
+            "changed_chunks": int(stats.get("changed_chunks", 0)),
+            "uuid_references_rewritten": count,
+        })
+
+    return {
+        "region_files_scanned": len(region_files),
+        "region_files_changed": len(changes),
+        "uuid_references_rewritten": total_refs,
+        "changes": changes,
+    }
+
 
 def migrate_bot_identities(client):
     current = client.target()
@@ -758,6 +900,17 @@ def migrate_inno_online_to_innotest_offline(client, token):
         wait_status(client, 0)
 
     target_world = level_name(client.read_file("server.properties"))
+    stamp = int(time.time())
+    try:
+        import exaroton_inno_uuid_migrate as migration
+        uuid_pairs = [
+            (source_by_name[name.lower()]["uuid"], offline_uuid(name))
+            for name in BOT_PLAYERS
+        ]
+        int_mapping, str_mapping = migration.uuid_mappings(uuid_pairs)
+    except Exception as e:
+        raise Error(f"cannot prepare online-to-offline UUID mapping: {e}") from e
+
     whitelist_raw = client.read_file("whitelist.json")
     whitelist = json.loads(whitelist_raw.decode("utf-8"))
     if not isinstance(whitelist, list):
@@ -778,7 +931,10 @@ def migrate_inno_online_to_innotest_offline(client, token):
     ops_raw = client.read_file_optional("ops.json")
     ops = json.loads(ops_raw.decode("utf-8")) if ops_raw else []
 
-    stamp = int(time.time())
+    entity_rewrite = rewrite_innotest_entity_uuid_refs(
+        client, target_world, uuid_pairs, stamp
+    )
+
     client.write_file(
         f"whitelist.pre-inno-online-copy-{stamp}.json",
         whitelist_raw,
@@ -813,16 +969,29 @@ def migrate_inno_online_to_innotest_offline(client, token):
                 missing.append(f"{folder}{suffix}")
                 continue
 
+            payload = source_data
+            nbt_uuid_rewrites = 0
+            if folder == "players/data":
+                try:
+                    payload, nbt_meta = migration.transform_player_nbt(
+                        source_data,
+                        int_mapping=int_mapping,
+                        str_mapping=str_mapping,
+                    )
+                except Exception as e:
+                    raise Error(f"cannot rewrite UUID references in {source_path}: {e}") from e
+                nbt_uuid_rewrites = int(nbt_meta.get("int_array", 0)) + int(nbt_meta.get("string", 0))
+
             existing = client.read_file_optional(target_path)
-            if existing is not None and existing != source_data:
+            if existing is not None and existing != payload:
                 client.write_file(
                     target_path + f".pre-inno-online-copy-{stamp}.backup",
                     existing,
                 )
 
-            client.write_file(target_path, source_data)
+            client.write_file(target_path, payload)
             verified = client.read_file(target_path)
-            if hashlib.sha256(verified).digest() != hashlib.sha256(source_data).digest():
+            if hashlib.sha256(verified).digest() != hashlib.sha256(payload).digest():
                 raise Error(f"verification failed after writing {target_path}")
 
             copied.append(
@@ -830,7 +999,8 @@ def migrate_inno_online_to_innotest_offline(client, token):
                     "kind": f"{folder}{suffix}",
                     "source_online_uuid": source_uuid,
                     "target_offline_uuid": target_uuid,
-                    "bytes": len(source_data),
+                    "bytes": len(payload),
+                    "internal_uuid_references_rewritten": nbt_uuid_rewrites,
                 }
             )
 
@@ -866,7 +1036,10 @@ def migrate_inno_online_to_innotest_offline(client, token):
         )
 
     print("copied production inno online UUID data into innotest offline UUIDs:")
-    print(json.dumps(result, ensure_ascii=False, indent=2))
+    print(json.dumps({
+        "players": result,
+        "entity_uuid_rewrite": entity_rewrite,
+    }, ensure_ascii=False, indent=2))
 
     if restart_after:
         client.action("start")
