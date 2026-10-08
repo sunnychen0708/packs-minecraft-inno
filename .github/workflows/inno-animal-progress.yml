@@ -1,14 +1,14 @@
 name: inno animal collection (read only)
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - .github/workflows/inno-animal-progress.yml
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: inno-animal-progress-discord
+  cancel-in-progress: false
 
 jobs:
   report:
@@ -17,6 +17,16 @@ jobs:
     steps:
       - name: Check out repo
         uses: actions/checkout@v4
+
+      - name: Verify Discord webhook is configured
+        shell: bash
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [[ -z "$DISCORD_WEBHOOK_URL" ]]; then
+            echo "::error::Configure the DISCORD_WEBHOOK_URL repository Actions Secret first."
+            exit 1
+          fi
 
       - name: Read inno player advancements (no server control or writes)
         shell: bash
@@ -133,16 +143,27 @@ jobs:
                   "wolves": result(data, "minecraft:husbandry/whole_pack", WOLVES),
               }
 
-          print("INNO_ANIMAL_PROGRESS_START")
-          print(json.dumps({
+          report = {
               "server": TARGET,
               "server_status_code": server.get("status"),
               "world": world,
               "read_only": True,
               "source": "saved player advancement files (not live entities)",
               "players": reports,
-          }, ensure_ascii=False, indent=2))
-          print("INNO_ANIMAL_PROGRESS_END")
+          }
           if any("error" in p for p in reports.values()):
               raise SystemExit("ERROR: one or more player advancement files unavailable")
+          print("INNO_ANIMAL_PROGRESS_START")
+          print(json.dumps(report, ensure_ascii=False, indent=2))
+          print("INNO_ANIMAL_PROGRESS_END")
+          Path("inno-animal-progress.json").write_text(
+              json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+          )
           PY
+
+      - name: Create or update one Discord dashboard message
+        shell: bash
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/discord_animal_progress.py
