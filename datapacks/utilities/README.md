@@ -1,6 +1,6 @@
 # Utilities v3.2
 
-> Original package name: **整合_v3.2**
+> Original package name: **整合_v3.2**. Release and ZIP name: **utilities-v3.2**.
 
 Minecraft Java 26.3 data pack combining survival utilities, teleport/home and custom waypoints, and coordinate display.
 
@@ -34,6 +34,8 @@ The actual pack source lives directly in this directory. Keep `pack.mcmeta` and 
 
 ## Release naming
 
-Use `utilities-v<version>` for future release tags.
+Use `utilities-v<version>` for release tags and `utilities-v<version>.zip` for downloads.
+
+[Utilities v3.2](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/utilities-v3.2) replaces the former `vanilla-utilities-v3.2` release name. This naming-only re-release preserves v3.2 gameplay and saved data; the original Git tag remains as a historical alias. Replace the old ZIP rather than loading both copies.
 
 Example: `utilities-v3.3`
