@@ -18,7 +18,7 @@ import xform
 from innotest_harness import Suite
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--case", choices=("external", "modes", "dimensions", "history"), required=True)
+ap.add_argument("--case", choices=("external", "modes", "dimensions", "history", "materials"), required=True)
 CASE = ap.parse_args().case
 
 OUT = ROOT / "dist" / "copy-paste-gap-live-test"
@@ -162,6 +162,127 @@ elif CASE == "history":
             f"score {WHO} mcc_ucnt matches 0",
             f"score {WHO} mcc_rcnt matches 5")
 
+elif CASE == "materials":
+    dim = "overworld"
+    # Isolate the Warehouse registrations for this short test; restore all 61
+    # records and the three-bot player's complete inventory even if assertions fail.
+    # Do not edit the real warehouse blocks or player SunnyChen.
+    s.step('data modify storage cpg:save material_wh set from storage warehouse:chests',
+           'execute store success score #force5 htest run forceload query -318 90',
+           'execute store success score #force6 htest run forceload query -318 104',
+           'execute unless score #force5 htest matches 1 in minecraft:overworld run forceload add -318 90',
+           'execute unless score #force6 htest matches 1 in minecraft:overworld run forceload add -318 104')
+    s.wait("material fixture chunks loaded",
+           ["in minecraft:overworld if loaded -318 250 90",
+            "in minecraft:overworld if loaded -318 250 104"], tries=150)
+    inv1, inv2 = (-318, 250, 90), (-318, 250, 92)
+    entry = (-318, 250, 103)
+    source = (-318, 250, 100)
+    fmt = lambda p: f"{p[0]} {p[1]} {p[2]}"
+    # Stash 0..35 and offhand (not only the held item).
+    s.step(run_dim(dim, f"setblock {fmt(inv1)} chest"),
+           run_dim(dim, f"setblock {fmt(inv2)} chest"),
+           *[run_dim(dim, f"item replace block {fmt(inv1)} container.{i} from entity {WHO} container.{i}") for i in range(27)],
+           *[run_dim(dim, f"item replace block {fmt(inv2)} container.{i-27} from entity {WHO} container.{i}") for i in range(27, 36)],
+           run_dim(dim, f"item replace block {fmt(inv2)} container.9 from entity {WHO} weapon.offhand"),
+           *[f"item replace entity {WHO} container.{i} with air" for i in range(36)],
+           f"item replace entity {WHO} weapon.offhand with air")
+    for code in ['00'] + [f"{row}{col}" for row in range(1, 7) for col in range(10)]:
+        s.step(f"data modify storage warehouse:chests c{code}.registered set value 0b", delay=1)
+    s.step(run_dim(dim, f"setblock {fmt(entry)} chest"),
+           run_dim(dim, f"setblock {fmt(source)} chest"),
+           'data modify storage warehouse:chests c00 set value {registered:1b,valid:1b,dimension:"minecraft:overworld",a_x:-318,a_y:250,a_z:103,b_x:-318,b_y:250,b_z:103}',
+           'data modify storage warehouse:chests c11 set value {registered:1b,valid:1b,dimension:"minecraft:overworld",a_x:-318,a_y:250,a_z:100,b_x:-318,b_y:250,b_z:100}',
+           'function warehouse:chunks/refresh',
+           'function warehouse:api/material_sources/refresh')
+    s.step(f"give {WHO} minecraft:oak_planks 26",
+           f"give {WHO} minecraft:oak_slab 12")
+    warehouse_items = list(house.BOM.items())[2:]
+    for i, (item, count) in enumerate(warehouse_items):
+        if item == "minecraft:lantern":  # deliberate shortage first
+            continue
+        s.step(run_dim(dim, f"item replace block {fmt(source)} container.{i} with {item} {count}"), delay=1)
+    prepare(dim, S, T)
+    source_select(dim, S)
+    s.trigger("a", "c")
+    s.tp("a", T[0]+.5, T[1]+5, T[2]+.5, 0, 90, dim)
+    s.trigger("a", "v")
+    s.wait("material blueprint ready",
+           [f"score {WHO} mcc_bpready matches 1",
+            f"score {WHO} mcc_bpscan matches 0",
+            f"score {WHO} mcc_bpover_scan matches 0"], tries=300)
+    air_target = {(T[0]+x,T[1]+y,T[2]+z):EMPTY for y in range(SIZE[1]) for x in range(SIZE[0]) for z in range(SIZE[2])}
+    s.trigger("a", "materials")
+    s.wait("read-only material report finished", [f"score {WHO} mcc_matphase matches 0"], tries=240)
+    s.check("materials is read only even with shortage",
+            *state_conditions(dim, S),
+            *state_conditions(dim, T, exceptions=air_target),
+            f"score {WHO} mcc_bpactive matches 1")
+    s.trigger("a", "build")
+    s.wait("shortage build phase finished", [f"score {WHO} mcc_matphase matches 0"], tries=240)
+    s.check("missing Warehouse material forbids whole 3D build",
+            *state_conditions(dim, T, exceptions=air_target),
+            f"score {WHO} mcc_bpactive matches 1")
+    lantern_slot = next(i for i, (item, _) in enumerate(warehouse_items) if item == "minecraft:lantern")
+    s.step(run_dim(dim, f"item replace block {fmt(source)} container.{lantern_slot} with minecraft:lantern 2"))
+    s.trigger("a", "build")
+    s.wait("full mixed inventory Warehouse build settled",
+           [f"score {WHO} mcc_matphase matches 0", f"score {WHO} mcc_bpactive matches 0"], tries=320)
+    s.check("mixed inventory Warehouse builds exact 3D house",
+            *state_conditions(dim, T), *state_conditions(dim, S))
+    s.step(f"execute store result score #left_planks htest run clear {WHO} minecraft:oak_planks 0",
+           f"execute store result score #left_slabs htest run clear {WHO} minecraft:oak_slab 0")
+    s.check("inventory contribution fully consumed",
+            "score #left_planks htest matches 0", "score #left_slabs htest matches 0")
+    s.trigger("a", "undo")
+    s.wait("material Undo refund complete", [f"score {WHO} mcc_matphase matches 0"], tries=320)
+    s.check("material Undo restores target to air", *state_conditions(dim, T, exceptions=air_target))
+    s.step(f"execute store result score #returned_planks htest run clear {WHO} minecraft:oak_planks 0",
+           f"execute store result score #returned_slabs htest run clear {WHO} minecraft:oak_slab 0")
+    s.check("material Undo returns inventory contribution",
+            "score #returned_planks htest matches 26",
+            "score #returned_slabs htest matches 12")
+    # Set an occupied target for the overlap protection. First Build warns
+    # without taking inventory or warehouse stock; confirmation can build.
+    s.step(run_dim(dim, f"setblock {T[0]+2} {T[1]} {T[2]+2} stone"))
+    s.tp("a", T[0]+.5, T[1]+5, T[2]+.5, 0, 90, dim)
+    s.trigger("a", "v")
+    s.wait("overlap scan finished", [f"score {WHO} mcc_bpover_scan matches 0",
+                                   f"score {WHO} mcc_bpready matches 1"], tries=250)
+    s.check("overlap found", f"score {WHO} mcc_bpover matches 1..")
+    s.trigger("a", "build")
+    s.check("first overlapping build only warns",
+            f"in minecraft:overworld if block {T[0]+2} {T[1]} {T[2]+2} stone",
+            f"score {WHO} mcc_bpactive matches 1",
+            f"score {WHO} mcc_buildconfirm matches 1")
+    s.trigger("a", "build")
+    s.wait("confirmed overlap build settled",
+           [f"score {WHO} mcc_matphase matches 0",
+            f"score {WHO} mcc_bpactive matches 0"], tries=320)
+    s.check("confirmed overlapping build exact", *state_conditions(dim, T))
+    s.trigger("a", "undo")
+    s.wait("overlap undo settled", [f"score {WHO} mcc_matphase matches 0"], tries=320)
+    s.check("overlap Undo restores original solid target",
+            f"in minecraft:overworld if block {T[0]+2} {T[1]} {T[2]+2} stone")
+    s.cleanup("function cpg:material_restore")
+    # Write the rescue procedure even if the test fails midway.
+    def material_restore_cmds():
+        cmd = ["execute unless data storage cpg:save material_wh run return run say CPG_RESTORE no_backup"]
+        for code in ['00'] + [f"{row}{col}" for row in range(1, 7) for col in range(10)]:
+            cmd += [f"data remove storage warehouse:chests c{code}",
+                    f"execute if data storage cpg:save material_wh.c{code} run data modify storage warehouse:chests c{code} set from storage cpg:save material_wh.c{code}"]
+        cmd += ["function warehouse:chunks/refresh",
+                "function warehouse:api/material_sources/refresh"]
+        cmd += [run_dim(dim, f"item replace entity {WHO} container.{i} from block {fmt(inv1)} container.{i}") for i in range(27)]
+        cmd += [run_dim(dim, f"item replace entity {WHO} container.{i} from block {fmt(inv2)} container.{i-27}") for i in range(27, 36)]
+        cmd += [run_dim(dim, f"item replace entity {WHO} weapon.offhand from block {fmt(inv2)} container.9")]
+        cmd += [run_dim(dim, f"setblock {fmt(p)} air") for p in (inv1, inv2, entry, source)]
+        cmd += ["execute if score #force5 htest matches 0 in minecraft:overworld run forceload remove -318 90",
+                "execute if score #force6 htest matches 0 in minecraft:overworld run forceload remove -318 104",
+                "data remove storage cpg:save material_wh",
+                "say CPG_RESTORE warehouse and inventory done"]
+        return cmd
+
 elif CASE == "dimensions":
     for dim in DIMS:
         src = (S[0], 220, S[2])
@@ -200,6 +321,8 @@ s.cleanup("execute if data storage cpg:save a run function cpg:restore with stor
           f"scoreboard players set {WHO} mcc_mask 0",
           f"scoreboard players set {WHO} mcc_hasa 0")
 steps = s.write(OUT)
+if CASE == "materials":
+    s.extra_function(OUT, "material_restore", material_restore_cmds())
 s.extra_function(OUT, "restore", [
     "$execute in $(dim) run tp @a[name=penguin0531,limit=1] $(x) $(y) $(z) $(yaw) $(pitch)"
 ])
