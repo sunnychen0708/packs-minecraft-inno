@@ -59,6 +59,6 @@ execute if score @s mcc_dstd matches 3 if score @s mcc_mask matches 0 run functi
 execute if score @s mcc_dstd matches 3 if score @s mcc_mask matches 1 run function mcc:paste/to_end_masked with storage mcc:temp
 execute unless score @s mcc_ok matches 1 run tellraw @s [{"text":"[Copy/Paste] 貼上失敗。請確認目標區域已載入、沒有超出該維度高度限制。","color":"red"}]
 execute unless score @s mcc_ok matches 1 run return fail
-scoreboard players set @s mcc_redo 0
+function mcc:history/commit_edit
 tellraw @s [{"text":"[Copy/Paste] 貼上完成，可用 /trigger undo Undo。","color":"green"}]
 return 1

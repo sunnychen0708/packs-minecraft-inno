@@ -1,0 +1,19 @@
+$data modify storage mcc:history r_p$(id)_s$(slot) set value {}
+$execute store result storage mcc:history r_p$(id)_s$(slot).dim int 1 run scoreboard players get @s mcc_rdim
+$execute store result storage mcc:history r_p$(id)_s$(slot).x int 1 run scoreboard players get @s mcc_rx
+$execute store result storage mcc:history r_p$(id)_s$(slot).y int 1 run scoreboard players get @s mcc_ry
+$execute store result storage mcc:history r_p$(id)_s$(slot).z int 1 run scoreboard players get @s mcc_rz
+$execute store result storage mcc:history r_p$(id)_s$(slot).x2 int 1 run scoreboard players get @s mcc_rx2
+$execute store result storage mcc:history r_p$(id)_s$(slot).y2 int 1 run scoreboard players get @s mcc_ry2
+$execute store result storage mcc:history r_p$(id)_s$(slot).z2 int 1 run scoreboard players get @s mcc_rz2
+$execute store result storage mcc:history r_p$(id)_s$(slot).sel int 1 run scoreboard players get @s mcc_rsel
+$execute store result storage mcc:history r_p$(id)_s$(slot).p1x int 1 run scoreboard players get @s mcc_rp1x
+$execute store result storage mcc:history r_p$(id)_s$(slot).p1y int 1 run scoreboard players get @s mcc_rp1y
+$execute store result storage mcc:history r_p$(id)_s$(slot).p1z int 1 run scoreboard players get @s mcc_rp1z
+$execute store result storage mcc:history r_p$(id)_s$(slot).p2x int 1 run scoreboard players get @s mcc_rp2x
+$execute store result storage mcc:history r_p$(id)_s$(slot).p2y int 1 run scoreboard players get @s mcc_rp2y
+$execute store result storage mcc:history r_p$(id)_s$(slot).p2z int 1 run scoreboard players get @s mcc_rp2z
+$execute store result storage mcc:history r_p$(id)_s$(slot).anx int 1 run scoreboard players get @s mcc_ranx
+$execute store result storage mcc:history r_p$(id)_s$(slot).any int 1 run scoreboard players get @s mcc_rany
+$execute store result storage mcc:history r_p$(id)_s$(slot).anz int 1 run scoreboard players get @s mcc_ranz
+$execute store result storage mcc:history r_p$(id)_s$(slot).hasa int 1 run scoreboard players get @s mcc_rhasa

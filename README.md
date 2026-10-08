@@ -17,8 +17,8 @@
 
 Each pack is stored as unpacked source. Release ZIPs are generated artifacts rather than development source.
 
-Copy/Paste source is currently **v0.5.0** (the release link above is the last published v0.2).
-Copy/Paste v0.5.0 adds non-destructive shared Blueprints, Cut-once semantics, direct real-block rotation, and one-step Undo/Redo. See its [live validation report](datapacks/copy-paste/LIVE-VALIDATION.md) and [multiplayer validation notes](datapacks/copy-paste/MULTIPLAYER-VALIDATION.md).
+Copy/Paste source is currently **v0.6.0** (the release link above is the last published v0.2).
+Copy/Paste v0.6.0 keeps the shared Blueprint / Cut-once workflow and upgrades Undo/Redo to independent five-level per-player history. See its [live validation report](datapacks/copy-paste/LIVE-VALIDATION.md) and [multiplayer validation notes](datapacks/copy-paste/MULTIPLAYER-VALIDATION.md).
 
 ## Installation
 
@@ -91,7 +91,7 @@ Generated ZIP files go to `dist/`, which is ignored by Git.
 ```bash
 ./scripts/build-pack.sh utilities v3.4
 ./scripts/build-pack.sh warehouse v4.0
-./scripts/build-pack.sh copy-paste v0.5.0
+./scripts/build-pack.sh copy-paste v0.6.0
 ./scripts/build-pack.sh cat-door-sounds v1.0
 ```
 

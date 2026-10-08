@@ -34,7 +34,7 @@ def check_json(pack: Path):
         json.loads(read(p)); count+=1
     meta=json.loads(read(pack/'pack.mcmeta'))
     assert meta['pack']['min_format']==121 and meta['pack']['max_format']==121
-    assert 'v0.5.0' in meta['pack']['description']
+    assert 'v0.6.0' in meta['pack']['description']
     return count
 
 def check_refs(pack: Path):
@@ -69,7 +69,7 @@ def check_trigger_lifecycle(pack: Path):
 
 def check_upgrade_and_mode(pack: Path):
     tick=read(pack/'data/mcc/function/tick.mcfunction')
-    for objective,valid in [('mcc_rot','0..3'),('mcc_mir','0..2'),('mcc_usel','0..1'),('mcc_cliptype','0..2'),('mcc_redo','0..1'),('mcc_bpscan','0..1')]:
+    for objective,valid in [('mcc_rot','0..3'),('mcc_mir','0..2'),('mcc_usel','0..1'),('mcc_cliptype','0..2'),('mcc_redo','0..1'),('mcc_ucnt','0..5'),('mcc_uhead','0..5'),('mcc_rcnt','0..5'),('mcc_rhead','0..5'),('mcc_bpscan','0..1')]:
         migration=f'execute as @a unless score @s {objective} matches {valid} run scoreboard players set @s {objective} 0'
         assert migration in tick, f'missing non-destructive upgrade for {objective}'
         assert tick.index(migration)<tick.index('scores={copypaste='), 'migrate before dispatch'
@@ -127,7 +127,8 @@ def check_rollback(pack: Path):
     for op in ('move','flip'):
         restore=read(pack/f'data/mcc/function/{op}/restore_failed.mcfunction')
         assert 'execute unless score @s mcc_ok matches 1 run return fail' in restore
-        assert 'execute if score @s mcc_ok matches 1 run scoreboard players set @s mcc_undo 0' in restore
+        assert 'execute if score @s mcc_ok matches 1 run function mcc:history/sync_flags' in restore
+        assert 'execute unless score @s mcc_ok matches 1 run function mcc:history/commit_edit' in restore
         fail_files=['fail_clear.mcfunction']
         fail_files += ['fail_paste.mcfunction'] if op=='move' else ['fail_place_x.mcfunction','fail_place_z.mcfunction']
         for fn in fail_files:
@@ -137,7 +138,7 @@ def check_rollback(pack: Path):
             assert '已完整還原到操作前狀態' in text
     for op in ('move','flip'):
         text=read(pack/f'data/mcc/function/{op}/fail_backup.mcfunction')
-        assert 'scoreboard players set @s mcc_undo 0' in text
+        assert 'function mcc:history/sync_flags' in text
 
 def check_selection_math(pack: Path):
     prep=read(pack/'data/mcc/function/selection/prepare.mcfunction')
@@ -191,8 +192,20 @@ def check_multiplayer_isolation(pack: Path):
     workz=constant('workz')
     redoz=constant('redoz')
     bpz=constant('bpz')
+    uhistz=constant('uhistz')
+    rhistz=constant('rhistz')
+    hgap=constant('hgap')
     assert slot >= 256, f'player X slot too small: {slot}'
-    assert len({cbz,ubz,workz,redoz,bpz}) == 5
+    assert len({cbz,ubz,workz,redoz,bpz,uhistz,rhistz}) == 7
+    assert hgap >= 256 and hgap % 16 == 0
+    undo_hist=[uhistz+i*hgap for i in range(5)]
+    redo_hist=[rhistz+i*hgap for i in range(5)]
+    hist_ranges=[(z,z+255) for z in undo_hist+redo_hist]
+    for i,a in enumerate(hist_ranges):
+        for b in hist_ranges[i+1:]:
+            assert a[1] < b[0] or b[1] < a[0], f'history Z collision: {a} vs {b}'
+    for z0,z1 in hist_ranges:
+        assert not (z0 <= bpz+127 and bpz <= z1), f'history overlaps blueprint lane: {(z0,z1)}'
 
     rects=[]
     for player_id in range(1,65):
@@ -234,7 +247,7 @@ def check_multiplayer_isolation(pack: Path):
 
     return 64
 
-def check_v050_semantics(pack: Path):
+def check_v060_semantics(pack: Path):
     load=read(pack/'data/mcc/function/load.mcfunction')
     tick=read(pack/'data/mcc/function/tick.mcfunction')
     assert 'scoreboard objectives add x trigger' in load
@@ -261,17 +274,29 @@ def check_v050_semantics(pack: Path):
     assert 'scoreboard players set @s mcc_cliptype 0' in cut_paste
     assert 'mcc_sx = @s mcc_selx' in snapshot
 
-    # Undo must first capture post-edit state into Redo; Redo must rebuild Undo.
+    # v0.6: five-level per-player Undo/Redo ring history, with legacy one-step fallback.
     undo=read(pack/'data/mcc/function/undo/run.mcfunction')
     redo=read(pack/'data/mcc/function/redo/run.mcfunction')
-    assert 'function mcc:redo/setup_buffer' in undo
-    assert 'function mcc:redo/backup_from_' in undo
-    assert 'scoreboard players set @s mcc_redo 1' in undo
-    assert 'function mcc:undo/setup_buffer' in redo
-    assert 'function mcc:undo/backup_from_' in redo
-    assert 'function mcc:redo/restore_' in redo
-    assert 'scoreboard players set @s mcc_undo 1' in redo
-    assert 'scoreboard players set @s mcc_redo 0' in redo
+    hundo=read(pack/'data/mcc/function/history/undo.mcfunction')
+    hredo=read(pack/'data/mcc/function/history/redo.mcfunction')
+    commit=read(pack/'data/mcc/function/history/commit_edit.mcfunction')
+    assert 'mcc_ucnt matches 1..' in undo and 'function mcc:history/undo' in undo
+    assert 'mcc_undo matches 1 run return run function mcc:undo/legacy_run' in undo
+    assert 'mcc_rcnt matches 1..' in redo and 'function mcc:history/redo' in redo
+    assert 'mcc_redo matches 1 run return run function mcc:redo/legacy_run' in redo
+    assert 'scoreboard players set @s mcc_rcnt 0' in commit
+    assert 'scoreboard players set @s mcc_rhead 0' in commit
+    assert 'mcc_hslot matches 6..' in commit
+    assert 'mcc_ucnt matches ..4 run scoreboard players add @s mcc_ucnt 1' in commit
+    assert 'function mcc:history/save_undo_meta' in commit
+    assert 'function mcc:history/load_undo_meta' in hundo
+    assert 'function mcc:history/save_redo_meta' in hundo
+    assert 'scoreboard players remove @s mcc_ucnt 1' in hundo
+    assert 'function mcc:history/load_redo_meta' in hredo
+    assert 'function mcc:history/save_undo_meta' in hredo
+    assert 'scoreboard players remove @s mcc_rcnt 1' in hredo
+    for name,key in [('save_undo_meta.mcfunction','u_p$(id)_s$(slot)'),('load_undo_meta.mcfunction','u_p$(id)_s$(slot)'),('save_redo_meta.mcfunction','r_p$(id)_s$(slot)'),('load_redo_meta.mcfunction','r_p$(id)_s$(slot)')]:
+        assert key in read(pack/'data/mcc/function/history'/name)
 
     for p in (
         pack/'data/mcc/function/move/run.mcfunction',
@@ -280,7 +305,7 @@ def check_v050_semantics(pack: Path):
         pack/'data/mcc/function/cut/run.mcfunction',
         pack/'data/mcc/function/rotate_edit/run.mcfunction',
     ):
-        assert 'scoreboard players set @s mcc_redo 0' in read(p), f'new world edit must invalidate Redo: {p}'
+        assert 'function mcc:history/commit_edit' in read(p), f'new world edit must commit Undo and invalidate Redo: {p}'
 
     rotate=read(pack/'data/mcc/function/rotate_edit/run.mcfunction')
     assert 'function mcc:work/snapshot_selection' in rotate
@@ -302,6 +327,15 @@ def check_v050_semantics(pack: Path):
     assert 'function mcc:blueprint/init_transformed' in create
     assert 'function mcc:blueprint/copy_direct_buffer' in direct
     assert 'clone from minecraft:overworld' in read(bp/'copy_direct_buffer.mcfunction')
+    # Plain Blueprint placement must start exactly at the aimed adjacent cell.
+    for axis in 'xyz':
+        target = {'x':'mcc_dstx','y':'mcc_dsty','z':'mcc_dstz'}[axis]
+        preview = {'x':'mcc_bptx0','y':'mcc_bpty0','z':'mcc_bptz0'}[axis]
+        offset = {'x':'mcc_offx','y':'mcc_offy','z':'mcc_offz'}[axis]
+        assert f'{preview} = @s {target}' in direct
+        assert f'{preview} -= @s {offset}' not in direct
+    # Anchor math remains active only for rotated/mirrored Blueprint placement.
+    assert 'function mcc:paste/prepare_transform' in transformed
     assert 'function mcc:paste/save_template' in transformed
     assert 'execute in minecraft:overworld run function mcc:paste/do_place' in transformed
     assert 'summon minecraft:block_display' in summon
@@ -328,6 +362,18 @@ def check_v050_semantics(pack: Path):
     # Blueprint generation may create temporary hidden buffer blocks, but Copy-V never routes to real Paste.
     assert 'mcc_cliptype matches 1 run return run function mcc:blueprint/create' in dispatch
     return matcher_states
+
+def check_version_labels(pack: Path):
+    meta=json.loads(read(pack/'pack.mcmeta'))
+    desc=meta['pack']['description']
+    m=re.search(r'v(\d+\.\d+\.\d+)',desc)
+    assert m, f'pack description has no semantic version: {desc}'
+    version=m.group(1)
+    load=read(pack/'data/mcc/function/load.mcfunction')
+    panel=read(pack/'data/mcc/function/panel.mcfunction')
+    assert f'v{version} 已載入' in load, f'load message not synced to v{version}'
+    assert f'Copy/Paste v{version}' in panel, f'panel title not synced to v{version}'
+    return version
 
 def check_tellraw_json(pack: Path):
     checked=0
@@ -365,8 +411,9 @@ def main():
     check_flip_anchor_formula(pack)
     check_move_model()
     mp=check_multiplayer_isolation(pack)
-    states=check_v050_semantics(pack)
+    states=check_v060_semantics(pack)
+    version=check_version_labels(pack)
     tj=check_tellraw_json(pack)
-    print(f'PASS copy-paste regression: {j} JSON, {f} functions, {o} objectives, {t} triggers, {tj} tellraw JSON, {mp}-player buffer isolation, {states} exact blueprint states, copy-v blueprint semantics, undo/redo, real rotate, clipboard isolation, rollback, move/flip properties')
+    print(f'PASS copy-paste regression v{version}: {j} JSON, {f} functions, {o} objectives, {t} triggers, {tj} tellraw JSON, {mp}-player buffer isolation, {states} exact blueprint states, copy-v blueprint semantics, five-level undo/redo, real rotate, clipboard isolation, rollback, move/flip properties')
 
 if __name__=='__main__': main()

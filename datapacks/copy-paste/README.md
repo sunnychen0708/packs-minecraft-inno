@@ -1,4 +1,4 @@
-# Minecraft Copy/Paste Datapack v0.5.0
+# Minecraft Copy/Paste Datapack v0.6.0
 
 適用：Minecraft Java Edition 26.3（Data Pack 121.0）
 
@@ -41,6 +41,8 @@ Pos1 / Pos2 / Anchor 都以準星看向的方塊設定。未自訂 Anchor 時使
 ```
 
 `c` 保存當下選取內容；`v` 看向目標方塊旁邊的位置後建立 Blueprint。
+
+未套用 `rotate / mirror` 時，準星指到的「目標方塊旁邊那一格」就是 Blueprint 的起始格（選取範圍最小 X/Y/Z），不再套用 Anchor 位移。只有使用 `rotate / mirror` 時，才以 Copy 時保存的 Anchor 作為旋轉／鏡像定位基準。
 
 Blueprint：
 
@@ -128,24 +130,32 @@ Flip 在原地修改真實方塊。自訂 Anchor 會跟著對稱變換。
 /trigger redo
 ```
 
-目前是一層歷史：
+v0.6.0 起每位玩家各自保留 **最近 5 次**成功的真實世界修改，Undo 與 Redo 都是 5 層歷史：
 
-1. 真實世界修改成功後建立 Undo
-2. Undo 前會把「修改後」狀態保存到 Redo Buffer
-3. Redo 前又會把「Undo 後」狀態重新保存回 Undo Buffer
+1. Move / Flip / Rotate / Cut / 真實 Paste 成功後，操作前狀態推入 Undo 歷史。
+2. 每次 Undo 會把目前狀態推入 Redo，再還原上一層 Undo。
+3. 可以連續 Undo 最多 5 次，再依序 Redo 回去，行為接近 Ctrl+Z / Ctrl+Y。
+4. 超過 5 次時會自動捨棄最舊的一筆。
+5. Undo 後只要做新的真實世界修改，Redo 分支就會清空。
 
-因此可以像單層 Ctrl+Z / Ctrl+Y 一樣反覆：
+例如：
 
 ```text
-修改 → undo → redo → undo → redo
+修改 A → 修改 B → 修改 C
+                     ↓ undo
+                  回到 B
+                     ↓ undo
+                  回到 A
+                     ↓ redo
+                  回到 B
 ```
 
-只要做了新的真實世界修改，舊 Redo 就失效。Copy、建立/清除 Blueprint 不修改世界，因此不會清除 Redo。
+Copy、建立/清除 Blueprint 不修改世界，因此不會消耗 Undo，也不會清除 Redo。
 
 ## 多人
 
 - 每位玩家有獨立 `mcc_id`
-- Clipboard / Undo / Redo / Work / Blueprint Buffer 都依玩家分離
+- Clipboard / 5 層 Undo / 5 層 Redo / Work / Blueprint Buffer 都依玩家分離
 - Clipboard 與 Undo 不會互相串到其他玩家
 - Blueprint display 是共享可見，所有玩家都能一起看建築預覽
 - 若兩個玩家刻意同時修改相同的真實世界方塊，最後結果仍依伺服器命令執行順序決定；目前不做區域鎖

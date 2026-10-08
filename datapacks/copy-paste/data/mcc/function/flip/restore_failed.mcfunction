@@ -9,7 +9,8 @@ scoreboard players set @s mcc_ok 0
 execute if score @s mcc_p1d matches 1 run function mcc:undo/restore_overworld with storage mcc:temp
 execute if score @s mcc_p1d matches 2 run function mcc:undo/restore_nether with storage mcc:temp
 execute if score @s mcc_p1d matches 3 run function mcc:undo/restore_end with storage mcc:temp
-execute if score @s mcc_ok matches 1 run scoreboard players set @s mcc_undo 0
+execute if score @s mcc_ok matches 1 run function mcc:history/sync_flags
 execute if score @s mcc_ok matches 1 run scoreboard players set @s mcc_usel 0
+execute unless score @s mcc_ok matches 1 run function mcc:history/commit_edit
 execute unless score @s mcc_ok matches 1 run return fail
 return 1

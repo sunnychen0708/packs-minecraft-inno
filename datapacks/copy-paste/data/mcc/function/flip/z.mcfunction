@@ -16,6 +16,6 @@ execute if score @s mcc_hasa matches 1 run scoreboard players operation @s mcc_t
 execute if score @s mcc_hasa matches 1 run scoreboard players operation @s mcc_tmp += @s mcc_maxz
 execute if score @s mcc_hasa matches 1 run scoreboard players operation @s mcc_tmp -= @s mcc_anz
 execute if score @s mcc_hasa matches 1 run scoreboard players operation @s mcc_anz = @s mcc_tmp
-scoreboard players set @s mcc_redo 0
+function mcc:history/commit_edit
 tellraw @s [{"text":"[Copy/Paste] Flip Z 完成，可用 /trigger undo。","color":"green"}]
 return 1

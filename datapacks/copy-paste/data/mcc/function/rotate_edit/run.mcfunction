@@ -148,6 +148,6 @@ execute if score @s mcc_hasa matches 0 if score @s mcc_erot matches 1 run functi
 execute if score @s mcc_hasa matches 0 if score @s mcc_erot matches 2 run function mcc:rotate_edit/update_default_r180
 execute if score @s mcc_hasa matches 0 if score @s mcc_erot matches 3 run function mcc:rotate_edit/update_default_r270
 
-scoreboard players set @s mcc_redo 0
+function mcc:history/commit_edit
 tellraw @s [{"text":"[Copy/Paste] 已直接旋轉真實選取區域，可用 /trigger undo，Undo 後可 /trigger redo。","color":"green"}]
 return 1

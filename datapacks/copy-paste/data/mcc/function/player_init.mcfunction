@@ -10,6 +10,10 @@ scoreboard players set @s mcc_rot 0
 scoreboard players set @s mcc_mir 0
 scoreboard players set @s mcc_undo 0
 scoreboard players set @s mcc_redo 0
+scoreboard players set @s mcc_ucnt 0
+scoreboard players set @s mcc_uhead 0
+scoreboard players set @s mcc_rcnt 0
+scoreboard players set @s mcc_rhead 0
 scoreboard players set @s mcc_bpscan 0
 scoreboard players set @s mcc_usel 0
 tellraw @s [{"text":"[Copy/Paste] ","color":"gold"},{"text":"已建立你的個人 Clipboard。輸入 ","color":"gray"},{"text":"/trigger copypaste","color":"yellow"},{"text":" 查看控制面板。","color":"gray"}]

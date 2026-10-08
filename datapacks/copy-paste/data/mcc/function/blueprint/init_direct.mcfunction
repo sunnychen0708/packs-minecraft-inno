@@ -27,12 +27,10 @@ function mcc:blueprint/copy_direct_buffer with storage mcc:temp
 execute unless score @s mcc_ok matches 1 run tellraw @s [{"text":"[Copy/Paste] Blueprint 快照建立失敗。","color":"red"}]
 execute unless score @s mcc_ok matches 1 run return fail
 
-# Target minimum = aimed anchor - stored Copy anchor offset.
+# Untransformed Blueprint placement is intentionally anchor-free:
+# the aimed adjacent cell is the preview's minimum X/Y/Z corner.
 scoreboard players operation @s mcc_bptx0 = @s mcc_dstx
-scoreboard players operation @s mcc_bptx0 -= @s mcc_offx
 scoreboard players operation @s mcc_bpty0 = @s mcc_dsty
-scoreboard players operation @s mcc_bpty0 -= @s mcc_offy
 scoreboard players operation @s mcc_bptz0 = @s mcc_dstz
-scoreboard players operation @s mcc_bptz0 -= @s mcc_offz
 scoreboard players set @s mcc_bpkind 1
 return run function mcc:blueprint/start_scan_loaded

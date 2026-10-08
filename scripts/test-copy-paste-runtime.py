@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Isolated vanilla 26.3 behavioral regression for Copy/Paste v0.5.
+"""Isolated vanilla 26.3 behavioral regression for Copy/Paste v0.6.
 
 Uses a non-player armor stand test actor to exercise internal datapack functions.
 This complements (not replaces) the opt-in real-player trigger/client harnesses.
@@ -30,7 +30,7 @@ def integration(java: Path, server: Path):
     harness=packs/'regression'
     funcs=harness/'data/mcc_server_test/function'
     funcs.mkdir(parents=True)
-    (harness/'pack.mcmeta').write_text(json.dumps({'pack':{'min_format':121,'max_format':121,'description':'CopyPaste v0.5 server regression'}}),encoding='utf-8')
+    (harness/'pack.mcmeta').write_text(json.dumps({'pack':{'min_format':121,'max_format':121,'description':'CopyPaste v0.6 server regression'}}),encoding='utf-8')
 
     actor='@e[type=minecraft:armor_stand,tag=mcc_server_actor,limit=1]'
     lines=[
@@ -45,7 +45,12 @@ def integration(java: Path, server: Path):
         f'scoreboard players set {actor} mcc_rot 0',
         f'scoreboard players set {actor} mcc_mir 0',
         f'scoreboard players set {actor} mcc_hasa 0',
+        f'scoreboard players set {actor} mcc_undo 0',
         f'scoreboard players set {actor} mcc_redo 0',
+        f'scoreboard players set {actor} mcc_ucnt 0',
+        f'scoreboard players set {actor} mcc_uhead 0',
+        f'scoreboard players set {actor} mcc_rcnt 0',
+        f'scoreboard players set {actor} mcc_rhead 0',
         'fill 0 78 0 40 90 30 air',
     ]
     assertions=[]
@@ -167,6 +172,37 @@ def integration(java: Path, server: Path):
     check('positioned 20 80 17 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..4,limit=1]','rotated_blueprint_display')
     run_as('mcc:blueprint/clear_internal')
     lines.append(f'scoreboard players set {actor} mcc_rot 0')
+
+    # 7. Five real edits can be undone and redone in order.
+    lines.extend([
+        f'scoreboard players set {actor} mcc_ucnt 0',
+        f'scoreboard players set {actor} mcc_uhead 0',
+        f'scoreboard players set {actor} mcc_rcnt 0',
+        f'scoreboard players set {actor} mcc_rhead 0',
+        f'scoreboard players set {actor} mcc_undo 0',
+        f'scoreboard players set {actor} mcc_redo 0',
+        'setblock 30 80 25 emerald_block',
+        f'scoreboard players set {actor} mcc_has1 1',
+        f'scoreboard players set {actor} mcc_has2 1',
+        f'scoreboard players set {actor} mcc_hasa 0',
+        f'scoreboard players set {actor} mcc_p1x 30',
+        f'scoreboard players set {actor} mcc_p1y 80',
+        f'scoreboard players set {actor} mcc_p1z 25',
+        f'scoreboard players set {actor} mcc_p1d 1',
+        f'scoreboard players set {actor} mcc_p2x 30',
+        f'scoreboard players set {actor} mcc_p2y 80',
+        f'scoreboard players set {actor} mcc_p2z 25',
+        f'scoreboard players set {actor} mcc_p2d 1',
+        f'scoreboard players set {actor} mcc_dx 1',
+        f'scoreboard players set {actor} mcc_dy 0',
+        f'scoreboard players set {actor} mcc_dz 0',
+    ])
+    for _ in range(5): run_as('mcc:move/run')
+    check(f'if block 35 80 25 emerald_block if score {actor} mcc_ucnt matches 5','history_five_edits')
+    for _ in range(5): run_as('mcc:undo/run')
+    check(f'if block 30 80 25 emerald_block if score {actor} mcc_ucnt matches 0 if score {actor} mcc_rcnt matches 5','history_five_undo')
+    for _ in range(5): run_as('mcc:redo/run')
+    check(f'if block 35 80 25 emerald_block if score {actor} mcc_ucnt matches 5 if score {actor} mcc_rcnt matches 0','history_five_redo')
 
     lines.extend([
         f'execute if score #pass mccst matches {len(assertions)} if score #fail mccst matches 0 run say MCCST_REGRESSION_SUCCESS',
