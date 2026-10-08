@@ -1,0 +1,50 @@
+{
+  "entity.cat.ambient": {
+    "replace": true,
+    "sounds": [
+      { "name": "minecraft:custom/cat_meow" }
+    ]
+  },
+  "entity.cat.stray_ambient": {
+    "replace": true,
+    "sounds": [
+      { "name": "minecraft:custom/cat_meow" }
+    ]
+  },
+  "entity.cat_royal.ambient": {
+    "replace": true,
+    "sounds": [
+      { "name": "minecraft:custom/cat_meow" }
+    ]
+  },
+  "entity.cat_royal.stray_ambient": {
+    "replace": true,
+    "sounds": [
+      { "name": "minecraft:custom/cat_meow" }
+    ]
+  },
+  "block.wooden_door.open": {
+    "replace": false,
+    "sounds": [
+      { "name": "minecraft:custom/door_open", "volume": 1.0, "pitch": 1.0 }
+    ]
+  },
+  "block.cherry_wood_door.open": {
+    "replace": false,
+    "sounds": [
+      { "name": "minecraft:custom/door_open", "volume": 1.0, "pitch": 1.0 }
+    ]
+  },
+  "block.bamboo_wood_door.open": {
+    "replace": false,
+    "sounds": [
+      { "name": "minecraft:custom/door_open", "volume": 1.0, "pitch": 1.0 }
+    ]
+  },
+  "block.nether_wood_door.open": {
+    "replace": false,
+    "sounds": [
+      { "name": "minecraft:custom/door_open", "volume": 1.0, "pitch": 1.0 }
+    ]
+  }
+}

@@ -9,3 +9,7 @@ The actual pack source lives directly in this directory. Keep `pack.mcmeta` and 
 Repository tag: `warehouse-v4.0`
 
 Release ZIP: `warehouse-v4.0.zip`
+
+## Version history
+
+See [CHANGELOG.md](CHANGELOG.md) for the Warehouse version history and known issues.
