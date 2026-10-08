@@ -28,6 +28,9 @@ execute as @a unless score @s mcc_bpover matches 0.. run scoreboard players set 
 execute as @a unless score @s mcc_buildconfirm matches 0..1 run scoreboard players set @s mcc_buildconfirm 0
 execute as @a unless score @s mcc_bpover_scan matches 0..1 run scoreboard players set @s mcc_bpover_scan 0
 execute as @a unless score @s mcc_bpoindex matches 0.. run scoreboard players set @s mcc_bpoindex 0
+execute as @a unless score @s mcc_bpoffx = @s mcc_bpoffx run scoreboard players set @s mcc_bpoffx 0
+execute as @a unless score @s mcc_bpoffz = @s mcc_bpoffz run scoreboard players set @s mcc_bpoffz 0
+execute as @a unless score @s mcc_canchor matches 0..1 run scoreboard players set @s mcc_canchor 0
 execute as @a[scores={copypaste=1}] run function mcc:ui/open
 execute as @a[scores={copypaste=2}] run function mcc:ui/adjust
 execute as @a[scores={copypaste=3}] run function mcc:ui/more

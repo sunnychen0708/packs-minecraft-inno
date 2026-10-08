@@ -11,12 +11,13 @@
 | Copy/Paste | v1.7 | `copy-paste-v1.6` |
 | cat-door-sounds | v1.0 | `cat-door-sounds-v1.0` |
 
-- Utilities v3.8（傳送落點置中修正）與 Warehouse v4.6（倉庫區塊常駐載入、查詢讀取未載入箱子的庫存）只有原始碼，尚未發布；其他原始碼版本都已發布。
+- Utilities v3.8（傳送落點置中、樹葉檢查由近到遠提早結束）與 Warehouse v4.6（倉庫區塊常駐載入、查詢讀取未載入箱子的庫存、背景堆疊直接分派）只有原始碼，尚未發布；其他原始碼版本都已發布。`main` 上 Utilities／Warehouse 相對 v3.7／v4.5 的所有改動都歸在 v3.8／v4.6，下一個改動這兩包的 PR 繼續加在同一版，直到發布。
 - 發布：`.github/workflows/release-pack.yml` 會驗證、打包、建 Release。兩種觸發方式：在 `main` 推 `<pack>-v<版本>` tag；或手動執行這個 workflow（`workflow_dispatch`，ref 選 `main`，輸入 `tag` 例如 `utilities-v3.7`），全部 gate 通過後由 workflow 在該 `main` commit 建 annotated tag 再建 Release。雲端 session 不能推 tag，要用手動執行。**發布前要先問使用者。**
 - 2026-10-06 曾改寫 `main` 的最後一段歷史，拿掉 AI 工具署名並刪除舊分支。改寫前完整備份在使用者電腦 `C:\Users\sunny\repo-backups\packs-minecraft-inno-before-rewrite-20261006.git`。
 - **最新 CI 狀態**：Utilities、Warehouse、Copy/Paste 專用 26.3 runtime 與三包 together compatibility 都通過。
-- **最新多人實機狀態**：2026-10-07 最後一輪 Copy/Paste assertions 在四個 Mineflayer 玩家在線時全部 PASS，最後 `MCCMP_RESULT PASS`；但同一份持久化 server log 也保留前面數次失敗（harness parser error、bot invalid move、Undo/Redo FAIL）。controller 已新增 current-session `/ERROR]:` gate；在 fresh run 再通過前，不要稱為 clean live validation。
-- **最新伺服器狀態**：`innotest.exaroton.me` 已關機，最後讀到 `OFFLINE`、`0/10`、Vanilla 26.3。
+- **最新多人實機狀態**：2026-10-07 在**新開機的 innotest session** 重跑，通過 current-session `/ERROR]:` gate：18 項 `MCCMP_CHECK` 全部 PASS、`MCCMP_RESULT PASS`、`COPY_PASTE_MULTIPLAYER_LIVE_TEST=PASS`（[run 37561053135](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37561053135)），整個 session server log 0 行 `ERROR`；四個 Mineflayer 玩家完整 hold 5 分鐘後正常離線，沒有 `Invalid move`。這是 clean live validation。
+- 重跑前發現 innotest `world/datapacks` 同時有 controller 的 `utilities.zip`／`warehouse.zip`／`copy-paste.zip` 與手動放的 `*-v3.6.zip`／`*-v4.5.zip`／`*-v1.5.zip`，同一 pack 被載入兩份；已刪掉版本號檔名那三個。之後 innotest 只放 controller 的固定檔名，不要再手動放其他檔名的同一 pack。
+- **innotest 一律保持開機（ONLINE）**：測完不關機，只清測試狀態（見 `AGENTS.md`；頻繁開關比待機更耗 exaroton credits）。只有安裝／部署必須重啟時才重啟，結束後仍保持 ONLINE；使用者明確要求才關機。
 - exaroton / bot / production maintenance 的操作細節集中在 [`docs/exaroton-operations.md`](exaroton-operations.md)。
 
 ## 2. 和使用者合作
@@ -47,9 +48,12 @@
 
 - Production 世界。
 - **任何寫入 inno 都要使用者明確下指令**（裝 datapack、改檔、執行指令、開關機、UUID maintenance apply），每次都要；讀取不用問（見 `AGENTS.md`）。
+- **inno 目前實際安裝**（2026-10-07 用 `inno-storage-status` 唯讀讀取）：`world/datapacks` 只有 `Minecraft_Warehouse_26.3_v4.0.zip` 與 `utilities-v3.4.zip`，沒有 Copy/Paste。`warehouse:meta` 升級標記只到 `v40`；61 個箱位全部已註冊、都在主世界、座標欄位齊全且都是 Int。Utilities storage 版本 `26.3-3.4`，43 個存檔座標都是 Int。
+- 唯讀檢查 production 的 Warehouse 註冊與 Utilities 據點：`exaroton innotest control` 手動執行 `inno-storage-status`（只用 GET，不會寫入 inno）。
 - repo 內的 **offline UUID maintenance** 是寫入 inno 的入口，同樣要使用者明確下指令才能 apply；dry-run 只讀取。
 - 特例 workflow：`.github/workflows/exaroton-inno-maintenance.yml` + `scripts/exaroton_inno_uuid_migrate.py`。
-- Production maintenance 必須要求 `inno` 已經 OFFLINE，而且 maintenance 自己**不得啟動** production server。先 dry-run，再 apply。\n- Production offline/online stats 現在採 **sum-per-counter** 真正累加；`uuid-migration-stats-sum-state.json` 防止重跑時把同一份 offline 歷史再加一次。若偵測到舊 max-per-counter migration backup，會用 backup 還原 baseline，再保留之後新增的 online progress。
+- Production maintenance 必須要求 `inno` 已經 OFFLINE，而且 maintenance 自己**不得啟動** production server。先 dry-run，再 apply。
+- Production offline/online stats 現在採 **sum-per-counter** 真正累加；`uuid-migration-stats-sum-state.json` 防止重跑時把同一份 offline 歷史再加一次。若偵測到舊 max-per-counter migration backup，會用 backup 還原 baseline，再保留之後新增的 online progress。
 - Secret 只存在 GitHub Actions `EXAROTON_API_TOKEN`，不要寫進 repo、request JSON 或 log。
 
 ### ops baseline
@@ -137,15 +141,15 @@ Copy/Paste runtime 失敗時會印 `MCCST_DIAG_DROP_<步驟>` / `MCCST_DIAG_DIFF
 
 當 Copy/Paste 有多人 state / trigger / Undo / clipboard / Blueprint 相關改動時，除了 CI 還要跑：
 
-1. 確認 / 啟動 `innotest`。
+1. 確認 `innotest` 是 ONLINE（只有不是 ONLINE 時才啟動）。
 2. `ops/mineflayer-request.json` 觸發四 bot 300000 ms。
 3. 等 `READY 4/4`。
 4. `ops/exaroton-request.json` 觸發 `run-copy-paste-multiplayer-test`。
 5. 要看到 `COPY_PASTE_MULTIPLAYER_LIVE_TEST=PASS` 與 `MCCMP_RESULT PASS`。
-6. 測完關 `innotest`，再讀 status 確認 `OFFLINE` / `0/10`。
+6. 測完**不要關** `innotest`，保持 ONLINE；只清測試狀態，再讀 status 確認 `ONLINE` / `0/10`。
 7. 三個 ops request 全部 reset 成 `noop`。
 
-2026-10-07 最後一輪 assertions 全部 PASS，涵蓋：independent selection、clipboard、unique `mcc_id`、Blueprint、Move、work/undo lane、Undo/Redo、Rotate、Cut/Paste、A/B isolated Undo/Redo。不過同一 server log 有前面失敗的歷史紀錄；新的 current-session server-error gate 尚未在 fresh innotest session 重跑，所以目前只能稱為 final assertion pass，不是 clean live validation。
+2026-10-07 在新開機的 innotest session 通過 current-session server-error gate：assertions 全部 PASS，涵蓋 independent selection、clipboard、unique `mcc_id`、Blueprint、Move、work/undo lane、Undo/Redo、Rotate、Cut/Paste、A/B isolated Undo/Redo，session log 沒有任何 `/ERROR]:`。這是 clean live validation。
 
 ## 9. 真人 client 工具（`scripts/real-client/`，Windows）
 

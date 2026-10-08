@@ -52,7 +52,7 @@ def check(label,*conditions):
 
 # Two visually distinct source fixtures and two target areas.
 step(
-    'execute in minecraft:overworld run fill -305 248 85 -270 255 130 air',
+    'execute in minecraft:overworld run fill -305 248 85 -245 255 130 air',
     'execute in minecraft:overworld run setblock -300 250 90 gold_block',
     'execute in minecraft:overworld run setblock -298 250 90 diamond_block',
     'execute in minecraft:overworld run setblock -300 250 91 emerald_block',
@@ -105,6 +105,33 @@ check('copy V keeps world untouched',
 check('both blueprints visible',
       'in minecraft:overworld positioned -280 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..5,limit=1]',
       'in minecraft:overworld positioned -280 250 120 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..5,limit=1]')
+
+# Default-anchor Blueprint Flip mirrors inside the same bounding box.
+both_trigger('bpflip')
+check('blueprint flip keeps bounds',
+      'score @a[tag=mcc_mp_a,limit=1] mcc_bptx0 matches -280',
+      'score @a[tag=mcc_mp_b,limit=1] mcc_bptx0 matches -280',
+      'score @a[tag=mcc_mp_a,limit=1] mcc_bptz0 matches 90',
+      'score @a[tag=mcc_mp_b,limit=1] mcc_bptz0 matches 120')
+check('blueprint flip offset',
+      'score @a[tag=mcc_mp_a,limit=1] mcc_bpoffx matches 2',
+      'score @a[tag=mcc_mp_b,limit=1] mcc_bpoffx matches 2',
+      'score @a[tag=mcc_mp_a,limit=1] mcc_bpoffz matches 0',
+      'score @a[tag=mcc_mp_b,limit=1] mcc_bpoffz matches 0')
+check('blueprint flip content',
+      'in minecraft:overworld positioned -278 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]',
+      'in minecraft:overworld positioned -280 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:diamond_block"},limit=1]',
+      'in minecraft:overworld positioned -278 250 120 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:copper_block"},limit=1]',
+      'in minecraft:overworld positioned -280 250 120 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:lapis_block"},limit=1]')
+both_trigger('bpflip')
+check('blueprint flip twice restores offset',
+      'score @a[tag=mcc_mp_a,limit=1] mcc_bpoffx matches 0',
+      'score @a[tag=mcc_mp_b,limit=1] mcc_bpoffx matches 0',
+      'score @a[tag=mcc_mp_a,limit=1] mcc_bpoffz matches 0',
+      'score @a[tag=mcc_mp_b,limit=1] mcc_bpoffz matches 0')
+check('blueprint flip twice restores content',
+      'in minecraft:overworld positioned -280 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]',
+      'in minecraft:overworld positioned -280 250 120 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:copper_block"},limit=1]')
 both_trigger('previewclear')
 check('both blueprints clear','in minecraft:overworld unless entity @e[type=minecraft:block_display,tag=mcc_blueprint]')
 
@@ -160,6 +187,20 @@ check('rotate undo isolated',
       'in minecraft:overworld if block -300 250 120 copper_block',
       'in minecraft:overworld if block -298 250 120 lapis_block')
 
+# Direct Flip already uses the selection center; keep it paired with Blueprint Flip.
+both_trigger('flip')
+check('direct flip mirrors in place',
+      'in minecraft:overworld if block -298 250 90 gold_block',
+      'in minecraft:overworld if block -300 250 90 diamond_block',
+      'in minecraft:overworld if block -298 250 120 copper_block',
+      'in minecraft:overworld if block -300 250 120 lapis_block')
+both_trigger('undo')
+check('direct flip undo isolated',
+      'in minecraft:overworld if block -300 250 90 gold_block',
+      'in minecraft:overworld if block -298 250 90 diamond_block',
+      'in minecraft:overworld if block -300 250 120 copper_block',
+      'in minecraft:overworld if block -298 250 120 lapis_block')
+
 # X replaces Cut. Both players cut and paste their own material in the same ticks.
 both_trigger('x')
 check('simultaneous x',
@@ -192,6 +233,59 @@ check('B independent undo',
       'in minecraft:overworld if block -280 250 90 gold_block',
       'in minecraft:overworld if block -280 250 120 air')
 
+# Undo guard ignores block-state-only changes while preserving block-ID / Block Entity safety.
+step(
+    'execute in minecraft:overworld run setblock -260 250 90 oak_door[half=lower,facing=north,hinge=left,open=false,powered=false]',
+    'execute in minecraft:overworld run setblock -260 251 90 oak_door[half=upper,facing=north,hinge=left,open=false,powered=false]'
+)
+aim('mcc_mp_a',-260,90,250); step('execute as @a[tag=mcc_mp_a,limit=1] run trigger pos1')
+aim('mcc_mp_a',-260,90,251); step('execute as @a[tag=mcc_mp_a,limit=1] run trigger pos2')
+step('execute as @a[tag=mcc_mp_a,limit=1] run trigger up set 3')
+check('state guard door moved',
+      'in minecraft:overworld if block -260 253 90 oak_door[half=lower,open=false]',
+      'in minecraft:overworld if block -260 254 90 oak_door[half=upper,open=false]')
+step(
+    'execute in minecraft:overworld run setblock -260 253 90 oak_door[half=lower,facing=north,hinge=left,open=true,powered=false]',
+    'execute in minecraft:overworld run setblock -260 254 90 oak_door[half=upper,facing=north,hinge=left,open=true,powered=false]',
+    'execute as @a[tag=mcc_mp_a,limit=1] run trigger undo'
+)
+check('undo ignores block state',
+      'in minecraft:overworld if block -260 250 90 oak_door[half=lower,open=false]',
+      'in minecraft:overworld if block -260 251 90 oak_door[half=upper,open=false]',
+      'in minecraft:overworld if block -260 253 90 air',
+      'score @a[tag=mcc_mp_a,limit=1] mcc_redo matches 1')
+
+step('execute as @a[tag=mcc_mp_a,limit=1] run trigger redo')
+check('state guard redo restored move',
+      'in minecraft:overworld if block -260 253 90 oak_door[half=lower]',
+      'score @a[tag=mcc_mp_a,limit=1] mcc_undo matches 1')
+step(
+    'execute in minecraft:overworld run setblock -260 253 90 stone',
+    'execute as @a[tag=mcc_mp_a,limit=1] run trigger undo'
+)
+check('undo still rejects block id change',
+      'in minecraft:overworld if block -260 253 90 stone',
+      'score @a[tag=mcc_mp_a,limit=1] mcc_undo matches 1')
+
+step(
+    'execute in minecraft:overworld run fill -255 248 85 -245 255 95 air strict',
+    'execute in minecraft:overworld run setblock -250 250 90 chest[facing=north]',
+    'execute in minecraft:overworld run item replace block -250 250 90 container.0 with minecraft:diamond 1'
+)
+aim('mcc_mp_a',-250,90,250); step('execute as @a[tag=mcc_mp_a,limit=1] run trigger pos1')
+aim('mcc_mp_a',-250,90,250); step('execute as @a[tag=mcc_mp_a,limit=1] run trigger pos2')
+step('execute as @a[tag=mcc_mp_a,limit=1] run trigger up set 3')
+check('block entity guard chest moved',
+      'in minecraft:overworld if block -250 253 90 chest')
+step(
+    'execute in minecraft:overworld run item replace block -250 253 90 container.0 with minecraft:emerald 1',
+    'execute as @a[tag=mcc_mp_a,limit=1] run trigger undo'
+)
+check('undo still rejects block entity change',
+      'in minecraft:overworld if block -250 253 90 chest',
+      'in minecraft:overworld if block -250 250 90 air',
+      'score @a[tag=mcc_mp_a,limit=1] mcc_undo matches 1')
+
 step(
     'tellraw @a[tag=mcc_mp_a] [{"text":"MCCMP DONE pass="},{"score":{"name":"#pass","objective":"mccmp"}},{"text":" fail="},{"score":{"name":"#fail","objective":"mccmp"}}]',
     'tellraw @a[tag=mcc_mp_b] [{"text":"MCCMP DONE pass="},{"score":{"name":"#pass","objective":"mccmp"}},{"text":" fail="},{"score":{"name":"#fail","objective":"mccmp"}}]',
@@ -218,7 +312,7 @@ for cx in range(-305//16, -270//16+1):
         ]
         chunk_cleanup.append(f'execute if score {holder} mccmp matches 0 in minecraft:overworld run forceload remove {pos}')
 (F/'cleanup.mcfunction').write_text('\n'.join([
-    'execute in minecraft:overworld run fill -305 248 85 -270 255 130 air strict',
+    'execute in minecraft:overworld run fill -305 248 85 -245 255 130 air strict',
     *chunk_cleanup,
     'tag @a remove mcc_mp_a',
     'tag @a remove mcc_mp_b',

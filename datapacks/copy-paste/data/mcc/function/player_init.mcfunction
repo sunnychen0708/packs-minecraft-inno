@@ -8,6 +8,9 @@ scoreboard players set @s mcc_cliptype 0
 scoreboard players set @s mcc_mask 0
 scoreboard players set @s mcc_rot 0
 scoreboard players set @s mcc_mir 0
+scoreboard players set @s mcc_bpoffx 0
+scoreboard players set @s mcc_bpoffz 0
+scoreboard players set @s mcc_canchor 0
 scoreboard players set @s mcc_undo 0
 scoreboard players set @s mcc_redo 0
 scoreboard players set @s mcc_ucnt 0
