@@ -23,9 +23,6 @@ scoreboard objectives add flipx trigger
 scoreboard objectives add flipz trigger
 scoreboard objectives add previewclear trigger
 scoreboard objectives add build trigger
-scoreboard objectives add matbox trigger
-scoreboard objectives add matremove trigger
-scoreboard objectives add matlist trigger
 scoreboard objectives add mcc_id dummy
 scoreboard objectives add mcc_has1 dummy
 scoreboard objectives add mcc_has2 dummy
@@ -209,6 +206,7 @@ scoreboard objectives add mcc_matleft dummy
 scoreboard objectives add mcc_matmiss dummy
 scoreboard objectives add mcc_matkind dummy
 scoreboard objectives add mcc_mattotal dummy
+scoreboard objectives add mcc_materr dummy
 scoreboard objectives add mcc_histmat dummy
 scoreboard objectives add mcc_umat dummy
 scoreboard objectives add mcc_rmat dummy

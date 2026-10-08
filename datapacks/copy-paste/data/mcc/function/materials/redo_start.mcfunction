@@ -6,9 +6,10 @@ execute store result storage mcc:temp tx.id int 1 run scoreboard players get @s 
 execute store result storage mcc:temp tx.slot int 1 run scoreboard players get @s mcc_txslot
 function mcc:materials/load_redo_transaction with storage mcc:temp tx
 function mcc:materials/reset_have_start
+scoreboard players set @s mcc_materr 0
 scoreboard players set @s mcc_matjob 1
 scoreboard players set @s mcc_matphase 1
-function mcc:materials/queue_boxes
+function mcc:materials/queue_items
 tellraw @s [{"text":"[Copy/Paste] Redo：正在重新檢查施工材料…","color":"aqua"}]
 execute if score @s mcc_matleft matches 0 run return run function mcc:materials/count_done
 return 1

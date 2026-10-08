@@ -5,6 +5,7 @@ $execute if score #api_aforced wh_tmp matches 0 in $(dimension) run forceload ad
 $execute in $(dimension) store success score #api_bforced wh_tmp run forceload query $(b_x) $(b_z)
 $execute if score #api_bforced wh_tmp matches 0 in $(dimension) run forceload add $(b_x) $(b_z)
 
+scoreboard players set #api_plain wh_tmp 0
 scoreboard players set #api_sourceok wh_tmp 1
 $execute in $(dimension) unless loaded $(a_x) $(a_y) $(a_z) run scoreboard players set #api_sourceok wh_tmp 0
 $execute in $(dimension) unless loaded $(b_x) $(b_y) $(b_z) run scoreboard players set #api_sourceok wh_tmp 0
@@ -32,7 +33,10 @@ scoreboard players set #moved wh_tmp 0
 scoreboard players set #main_ok wh_tmp 0
 scoreboard players set #compact wh_tmp 0
 scoreboard players operation #max wh_tmp = #api_max wh_tmp
+# Strict mode prevents a plain refund from merging into a custom-component stack.
+scoreboard players set #api_plain wh_tmp 1
 function warehouse:sort/transport/main with storage warehouse:runtime move
+scoreboard players set #api_plain wh_tmp 0
 
 execute store result storage warehouse:api result.inserted int 1 run scoreboard players get #moved wh_tmp
 execute store result storage warehouse:api result.remaining int 1 run scoreboard players get #remaining wh_tmp

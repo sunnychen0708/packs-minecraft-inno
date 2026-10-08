@@ -68,13 +68,17 @@ def main() -> None:
 
     api_refresh = (PACK / "data/warehouse/function/api/material_sources/refresh.mcfunction").read_text(encoding="utf-8")
     api_append = (PACK / "data/warehouse/function/api/material_sources/append.mcfunction").read_text(encoding="utf-8")
+    api_append_unique = (PACK / "data/warehouse/function/api/material_sources/append_unique.mcfunction").read_text(encoding="utf-8")
     exported_codes = re.findall(r'append \{code:"(\d{2})"\}', api_refresh)
     assert exported_codes == CODES, "material source API must enumerate the canonical 61 Warehouse slots"
     assert "material_source_limit:64" in api_refresh
     assert "matches ..63" in api_refresh
     assert "{registered:1b,valid:1b}" in api_refresh
     assert "material_source_count" in api_refresh
-    assert "material_sources append from storage warehouse:chests c$(code)" in api_append
+    assert "candidate_source set from storage warehouse:chests c$(code)" in api_append
+    assert "append_unique" in api_append
+    assert "material_sources append from storage warehouse:api work.candidate_source" in api_append_unique
+    assert "a_x:$(b_x)" in api_append_unique and "b_x:$(a_x)" in api_append_unique
 
     api_count = (PACK / "data/warehouse/function/api/count_item.mcfunction").read_text(encoding="utf-8")
     api_count_source = (PACK / "data/warehouse/function/api/internal/count_source.mcfunction").read_text(encoding="utf-8")
@@ -89,17 +93,21 @@ def main() -> None:
     assert "forceload query" in api_count_source
     assert "forceload add" in api_count_source
     assert "forceload remove" in api_count_source
-    assert 'id:"$(item_id)",components:{}' in api_count_stack
+    assert 'id:"$(item_id)"' in api_count_stack
+    assert "data get storage warehouse:api work.stack.components" in api_count_stack
     assert "result.available" in api_count
     assert "result.stale_sources" in api_count
-    assert "function warehouse:api/material_sources/refresh" in api_take
+    assert "function warehouse:api/count_item" in api_take
     assert "insufficient_stock" in api_take
-    assert 'components:{}' in api_take_stack
+    assert "function warehouse:api/count_item" in api_take
+    assert "source_unavailable" in api_take
+    assert "data get storage warehouse:api work.stack.components" in api_take_stack
     assert "container.$(api_slot)" in api_take_stack
     assert "warehouse:chests c00" in api_refund
     assert "function warehouse:sort/transport/main" in api_refund_entry
     assert "probe_max_stack" in api_refund_entry
     assert "entry_full" in api_refund_entry
+    assert "scoreboard players set #api_plain wh_tmp 1" in api_refund_entry
 
     print("PASS warehouse regression: reset/search are bounded; shared count/take/refund API is present and component-safe")
 

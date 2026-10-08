@@ -23,6 +23,7 @@ scoreboard players set @s mcc_matleft 0
 scoreboard players set @s mcc_matmiss 0
 scoreboard players set @s mcc_matkind 0
 scoreboard players set @s mcc_mattotal 0
+scoreboard players set @s mcc_materr 0
 scoreboard players set @s mcc_histmat 0
 scoreboard players set @s mcc_umat 0
 scoreboard players set @s mcc_rmat 0
