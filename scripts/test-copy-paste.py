@@ -11,9 +11,10 @@ RE_FUNC = re.compile(r'\bfunction\s+(mcc:[a-z0-9_./-]+)')
 RE_OBJ = re.compile(r'^scoreboard objectives add (\S+) (\S+)', re.M)
 RE_TRIGGER = re.compile(r'^scoreboard objectives add (\S+) trigger$', re.M)
 USER_TRIGGERS = {
-    'copypaste','cphelp','pos1','pos2','anchor','c','x','v','undo','redo','mode','rotate','mirror',
-    'right','left','up','down','forward','backward','flipx','flipz',
-    'rotate90','rotate180','rotate270','previewclear','build','materials','bpleft','bpright','bpforward','bpbackward','bpup','bpdown'
+    'copypaste','cphelp','pos1','pos2','anchor','c','x','v','undo','redo','mode',
+    'right','left','up','down','forward','backward',
+    'rotate180','previewclear','build','materials','bpleft','bpright','bpforward','bpbackward','bpup','bpdown',
+    'bpturnright','bpturnleft','bpflip','bpflipfb','bpreset','turnright','turnleft','flip','flipfb'
 }
 
 def read(p: Path) -> str:
@@ -291,9 +292,9 @@ def check_v100_semantics(pack: Path):
     assert 'scoreboard objectives add x trigger' in load
     assert 'scoreboard objectives add cut trigger' not in load
     assert 'scoreboard objectives add redo trigger' in load
-    assert 'scoreboard objectives add rotate90 trigger' in load
     assert 'scoreboard objectives add rotate180 trigger' in load
-    assert 'scoreboard objectives add rotate270 trigger' in load
+    for legacy in ('rotate','mirror','rotate90','rotate270','flipx','flipz'):
+        assert f'scoreboard objectives add {legacy} trigger' not in load, f'legacy trigger {legacy} must stay removed'
     assert 'scoreboard objectives add previewclear trigger' in load
     assert 'scoreboard objectives add build trigger' in load
     assert 'scores={x=1..}' in tick and 'function mcc:cut/run' in tick
@@ -405,6 +406,10 @@ def check_v100_semantics(pack: Path):
     assert 'function mcc:paste/save_template' in transformed
     assert 'execute in minecraft:overworld run function mcc:paste/do_place' in transformed
     assert 'summon minecraft:block_display' in summon
+    # Integer summon/positioned coordinates are centred (+0.5 X/Z); a block_display
+    # renders from its origin corner, so it must be summoned on the exact block corner.
+    assert 'summon minecraft:block_display $(tx).0 $(ty).0 $(tz).0' in summon
+    assert 'positioned $(tx) $(ty) $(tz)' not in summon
     assert 'block_state set from storage mcc:temp state' in summon
 
     # Generated exact-state dispatcher: every non-air 26.3 block appears in exactly one group.
@@ -446,8 +451,20 @@ def check_v100_semantics(pack: Path):
     assert 'mcc:materials/warehouse_take_one' in process_next
     refund_taken=read(pack/'data/mcc/function/materials/refund_taken_one.mcfunction')
     refund_undo=read(pack/'data/mcc/function/history/refund_undo_materials_one.mcfunction')
-    assert 'warehouse:api/refund_item' in refund_taken
-    assert 'warehouse:api/refund_item' in refund_undo
+    # Refunds split: what came from the player goes back to the player as far as it fits,
+    # the rest (and everything taken from Warehouse) goes to Warehouse.
+    split=read(pack/'data/mcc/function/materials/refund_split.mcfunction')
+    assert 'function mcc:materials/refund_split' in refund_taken and 'function mcc:materials/refund_split' in refund_undo
+    assert 'warehouse:api/refund_item' in split and 'mcc:history/refund_give' in split and 'mcc:materials/inv_fit' in split
+    assert 'mcc:temp mat.inv' in refund_taken and 'mcc:temp txitem.inv' in refund_undo
+    assert 'function mcc:materials/inv_take_one' in take_one and take_one.index('inv_take_one')<take_one.index('warehouse:api/take_item')
+    assert 'function mcc:materials/inv_count_one' in count_one
+    for f in ('inv_take_slot','inv_take_offhand'):
+        text=read(pack/f'data/mcc/function/materials/{f}.mcfunction')
+        # 26.3 inline item modifiers are keyed by "type"; "function" fails to parse silently in a macro.
+        assert '"type":"minecraft:set_count"' in text and '"function":' not in text and 'store success score #invok' in text, f
+    names=read(pack/'data/mcc/function/names/load.mcfunction')
+    assert 'data modify storage mcc:names max set value {' in names and '"minecraft:oak_sign":16' in names and '"minecraft:white_bed":1' in names
     assert 'mcc:temp mat.taken' in refund_taken
     assert 'mcc:temp txitem.taken' in refund_undo
     refund_tx_entry=read(pack/'data/mcc/function/history/refund_undo_materials.mcfunction')
@@ -464,16 +481,20 @@ def check_v100_semantics(pack: Path):
     assert (pack/'data/mcc/function/blueprint/nudge/run.mcfunction').is_file()
     assert 'function mcc:blueprint/recount_start' in read(pack/'data/mcc/function/blueprint/nudge/run.mcfunction')
     assert 'mcc_bpover_scan' in read(pack/'data/mcc/function/tick.mcfunction')
-    assert (pack/'data/mcc/dialog/tutorial.json').is_file()
-    # /trigger copypaste builds status strings, then shows ui/show (macro Dialog).
-    main_dialog=read(pack/'data/mcc/function/ui/show.mcfunction')+read(pack/'data/mcc/dialog/nudge.json')+read(pack/'data/mcc/dialog/edit.json')
-    tutorial_dialog=read(pack/'data/mcc/dialog/tutorial.json')
-    assert 'function mcc:ui/show with storage mcc:ui' in read(pack/'data/mcc/function/ui/open.mcfunction')
+    # The command tutorial is chat-only (clickable tellraw, Utilities style), not a Dialog.
+    assert not (pack/'data/mcc/dialog/tutorial.json').exists()
+    # /trigger copypaste shows a small main Dialog with no status body; sub-pages are function-built.
+    assert '"body"' not in read(pack/'data/mcc/function/ui/show.mcfunction')
+    main_dialog=''.join(read(pack/f'data/mcc/function/ui/{n}.mcfunction') for n in ('show','adjust','more_show','edit'))
+    assert main_dialog.count('"label"', 0, len(read(pack/'data/mcc/function/ui/show.mcfunction'))) <= 10, 'main Dialog must stay small'
+    tutorial_dialog=read(pack/'data/mcc/function/ui/tutorial.mcfunction')
+    assert 'function mcc:ui/show' in read(pack/'data/mcc/function/ui/open.mcfunction')
+    assert 'function mcc:ui/more_show with storage mcc:ui' in read(pack/'data/mcc/function/ui/more.mcfunction')
     for command in (
         'trigger pos1','trigger pos2','trigger anchor','trigger anchor set 2','trigger c','trigger x','trigger v',
-        'trigger rotate','trigger mirror','trigger mode','trigger build','trigger materials','trigger previewclear',
-        'trigger undo','trigger redo','trigger cphelp','trigger wh_nav set 1','trigger copypaste',
-        'trigger bpleft set 1','trigger bpdown set 5','trigger left set 1','trigger flipx','trigger rotate90',
+        'trigger bpturnright','trigger bpturnleft','trigger bpflip','trigger bpflipfb','trigger bpreset','trigger mode set 2','trigger build','trigger materials','trigger previewclear',
+        'trigger undo','trigger redo','trigger cphelp','trigger wh_nav set 1','trigger copypaste set 1','trigger copypaste set 2','trigger copypaste set 3','trigger copypaste set 4',
+        'trigger bpleft set 1','trigger bpdown set 1','trigger left set 1','trigger turnright','trigger turnleft','trigger flip','trigger flipfb',
     ):
         assert f'"command":"{command}"' in main_dialog.replace('": "','":"'), f'active Dialog missing core action: {command}'
     assert '/trigger pos1' in tutorial_dialog and '/trigger pos2' in tutorial_dialog
@@ -481,7 +502,17 @@ def check_v100_semantics(pack: Path):
     assert '/trigger build' in tutorial_dialog and '/trigger undo' in tutorial_dialog and '/trigger redo' in tutorial_dialog
     assert '自訂 Anchor 可在選區外' in tutorial_dialog
     assert (pack/'data/mcc/function/ui/tutorial.mcfunction').is_file()
-    assert read(pack/'data/mcc/function/ui/tutorial.mcfunction').strip() == 'dialog show @s mcc:tutorial'
+    assert 'dialog' not in tutorial_dialog
+    assert all(line.startswith('tellraw @s ') for line in tutorial_dialog.splitlines() if line.strip())
+    assert '"action":"suggest_command","command":"/trigger build"' in tutorial_dialog
+    # Material lists show item names through translation keys (each player's language).
+    names=read(pack/'data/mcc/function/names/load.mcfunction')
+    assert names.count('":"block.minecraft.')+names.count('":"item.minecraft.')>=1500
+    assert '"minecraft:oak_door":"block.minecraft.oak_door"' in names and '"minecraft:redstone":"item.minecraft.redstone"' in names
+    assert 'function mcc:names/load' in read(pack/'data/mcc/function/load.mcfunction')
+    for f in ('report_one','report_all_one'):
+        text=read(pack/f'data/mcc/function/materials/{f}.mcfunction')
+        assert '"translate":"$(key)","fallback":"$(id)"' in text and '"text":"  $(id)' not in text, f
     assert 'scoreboard players set @s mcc_histmat 1' in place
     assert (pack/'data/mcc/tags/block/material_unsupported.json').is_file()
     return matcher_states
@@ -524,7 +555,7 @@ def check_version_labels(pack: Path, repo: Path|None=None):
     assert m, f'pack description has no semantic version: {desc}'
     version=m.group(1)
     load=read(pack/'data/mcc/function/load.mcfunction')
-    assert f'v{version} 已載入' in load, f'load message not synced to v{version}'
+    assert '已載入' not in load and 'tellraw @a' not in load, 'Copy/Paste must not announce itself on load'
     assert f'v{version}' in read(pack/'README.md').splitlines()[0], f'pack README not synced to v{version}'
     assert f'v{version}' in read(pack/'LIVE-VALIDATION.md').splitlines()[0], f'LIVE-VALIDATION not synced to v{version}'
     assert f'v{version}' in read(pack/'MULTIPLAYER-VALIDATION.md').splitlines()[0], f'MULTIPLAYER-VALIDATION not synced to v{version}'

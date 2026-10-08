@@ -1,123 +1,82 @@
-# Copy/Paste 驗證狀態（v1.3 source / 2026-10-05）
+# Copy/Paste 驗證狀態（v1.4）
 
-目前原始碼為 **v1.3（尚未發布）**；最新已發布 ZIP 仍是 **v1.2**。目標 Minecraft Java 26.3（Data Pack 121.0）。
+目前版本 **v1.4**：拿掉載入與第一次使用時的聊天訊息，並移除舊的轉向／翻面指令。目標 Minecraft Java 26.3（Data Pack 121.0）。
 
-這份文件刻意把「官方 server headless regression」和「真人玩家 Trigger / Dialog 驗證」分開。兩者不能互相冒充。
+這份文件把「官方 server headless regression」和「真人 client 驗證」分開寫。兩者不能互相冒充。
 
-## 目前驗證鏈
+## 驗證鏈
 
-| 層級 | 指令 / CI | 能證明什麼 |
+| 層級 | 指令 | 能證明什麼 |
 | --- | --- | --- |
-| Generic static | `python3 scripts/validate-datapack.py copy-paste` | JSON、function/tag 引用、macro、Trigger 盤點、ZIP 結構 |
-| Pack regression | `python3 scripts/test-copy-paste.py` | 座標公式、Trigger lifecycle、buffer 隔離、Undo/Redo、active Dialog 必要操作、版本同步 |
-| Vanilla smoke | `validate-datapack.py ... --server-jar ...` | 官方 26.3 server 能啟動、reload，沒有被掃到的 parser/load error |
-| Behavioral runtime | `python3 scripts/test-copy-paste-runtime.py ...` | 在官方 26.3 server 以非玩家 actor 驗真實方塊、display、storage、scoreboard、Warehouse 材料交易 |
+| Generic static | `python3 scripts/validate-datapack.py copy-paste` | JSON、function／tag 引用、macro、Dialog 結構、Trigger 盤點、ZIP 結構 |
+| Pack regression | `python3 scripts/test-copy-paste.py` | 座標公式、Trigger lifecycle、buffer 隔離、Undo/Redo、Dialog 必要按鈕、名稱表、版本同步 |
+| Behavioral runtime | `python3 scripts/test-copy-paste-runtime.py ...` | 在官方 26.3 server 以 armor stand actor 驗真實方塊、display、storage、scoreboard、材料交易 |
 | Cross-pack runtime | `python3 scripts/test-datapack-compatibility.py ...` | Utilities + Warehouse + Copy/Paste 同時載入與共用 API 共存 |
-| Real-player harness | `python3 scripts/build-copy-paste-live-test.py` | 需要真人登入後，才會真正走 `/trigger` → tick dispatch → player raycast 的操作路徑 |
-| Two-player harness | `python3 scripts/build-copy-paste-multiplayer-test.py` | 需要兩位真人登入後，才能驗兩 client 同時操作 |
+| **真人 client** | `scripts/real-client/`（Windows） | 用作業系統層級的鍵盤／滑鼠真的操作遊戲，**讀世界存檔逐格判定** |
+| 雙人 harness | `python3 scripts/build-copy-paste-multiplayer-test.py` | 兩位真人同時操作（尚未執行過） |
 
-## Headless behavioral runtime 的實際範圍
+## Headless behavioral runtime
 
-`scripts/test-copy-paste-runtime.py` 是 v1.3 source 的官方-server regression，目前為 **133 個動態 assertions**，涵蓋：
+`scripts/test-copy-paste-runtime.py` 目前 **187 個動態 assertions**，涵蓋：
 
-- Pos1 / Pos2 / Anchor / V 的 raycast function。
-- 沒有自訂 Anchor 時，Pos1 為預設 Anchor，即使 Pos1 不是選區最小角也要精確對位。
-- 自訂 Anchor 精確對位與 12 種 Rotate/Mirror 組合。
-- 選區重新設定會清掉舊自訂 Anchor。
-- 選區外 Anchor 的連續大半徑 Rotate 與 Undo。
-- Copy → Blueprint 不改真實世界。
-- Blueprint 六方向微調與覆蓋重算。
-- 材料唯讀報表、缺料 all-or-nothing、足料 Build。
-- Warehouse 扣料、Undo 退款、Redo 重新扣料、防複製 guard。
-- Cut + V、Move、Flip X/Z、Rotate 90/180/270。
-- 五層 Undo/Redo。
-- 每種世界編輯的 Undo/Redo 防複製快照：操作後區域（含容器內容物）被改過時拒絕 Undo/Redo。
-- Cut → Undo 作廢 Cut Clipboard、Cut → Undo → Redo 重建原本的 Cut Clipboard（中間做過別的 Copy 也一樣）。
-- Rotate 後的 Masked Cut 貼上保留目標既有方塊。
-- 自訂（外部）Anchor 的 Flip X/Z：Anchor 固定、結構繞 Anchor 平面鏡像。
-- 來源加目的地 Z 跨度超過 200 格的長距離 Move 與 Undo（內部暫存區不互相覆蓋）。
-- 材料工作進行中被擋下的指令會觸發提示。
+- Pos1／Pos2／Anchor／V 的 raycast；沒有自訂 Anchor 時以 Pos1 為基準（Pos1 不是最小角也精確對位）。
+- 自訂 Anchor（含選區外）的 12 種 Rotate/Mirror 組合與連續大半徑 Rotate、Undo。
+- Copy → Blueprint 不改真實世界；Blueprint 預覽落在方塊角；六方向微調與覆蓋重算。
+- 材料唯讀報表（材料齊全時也不扣料、不施工）、缺料 all-or-nothing、足料 Build。
+- 先從持有者背包／副手扣料（實際從副手扣掉），再用 Warehouse；Undo 退料、Redo 再扣、防複製 guard。
+- Cut + V、Move、Flip、Rotate 90/180/270、五層 Undo/Redo、每種編輯的防複製快照。
+- Cut → Undo 作廢 Cut Clipboard、Redo 重建；Rotate 後 Masked 貼上；外部 Anchor Flip；長距離 Move。
+- 材料工作進行中被擋下的指令會提示；名稱表與貼上模式標籤已載入；所有 Dialog 頁面能被官方 server 解析。
 
-**限制：這個 runtime 使用 armor stand actor，並直接呼叫多數內部 `mcc:...` functions。**  
-因此它不能證明以下玩家路徑：
+**限制：** runtime 使用 armor stand，直接呼叫多數 `mcc:...` function，所以不能證明玩家 `/trigger` 的 tick dispatch、Dialog 實際可點與版面、準星手感、雙人時序。這些由下一節的真人 client 驗證負責。
 
-- 玩家輸入 `/trigger ...` 後是否由 `tick.mcfunction` 正確 dispatch。
-- Dialog 按鈕是否真的可點、命令是否正確、版面是否可用。
-- 真人準星、滑鼠、鍵盤的實際手感。
-- 兩位真人玩家同時操作的 client/server 時序。
+## 真人 client 驗證（v1.3，2026-10-06）
 
-所以「headless runtime PASS」不能再被描述成「玩家實機全部驗過」。
+在官方 26.3 client 的可丟棄 `MCC-Test` 超平坦世界，用 `scripts/real-client/` 真的打指令、點 Dialog、對箱子按使用鍵，結果一律讀 `.mca` region／entities／`command_storage.dat`／playerdata 判定，不看 datapack 自己印的 PASS。最後一輪在 v1.3 最終程式上重跑，151 項中 149 項通過；兩項失敗是殭屍日出燃燒掉落的腐肉（與建築無關，檢查已改為只計建築相關物品）。
 
-## v1.3 真人 Trigger harness
+| 腳本 | 驗證內容 |
+| --- | --- |
+| `stage1_chests` / `stage2_register` | 61 個真實大箱子；透過 Warehouse Dialog ＋實際點擊註冊 |
+| `stage3_house` | 自訂分類、2 倍材料分類入庫、Blueprint 預覽 86/86 對齊、Build／Undo／Redo、旋轉 90/180/270 與鏡像施工、Cut→V（含箱子內容物）、Move、Flip、直接 Rotate、Pick |
+| `stage4_shortage` | 缺料拒絕施工、補料後成功、Undo 全額退回 |
+| `stage5_multisource` | 同一材料分散 2～6 箱時跨箱扣料；Undo 退料經入口箱分類回各自分類箱 |
+| `stage6_orient` | 以玩家面向（北、東、西）組合的 `bpturnright`／`bpturnleft`／`bpflip`／`bpflipfb`／`bpreset`，以及直接 `turnright`／`turnleft`／`flip`／`flipfb` |
+| `stage7_menu` | 四個 Dialog 頁面、貼上模式切換（從存檔確認） |
+| `stage8_names` | 材料檢查與缺料清單顯示 zh_tw 物品名稱 |
+| `stage9_checkonly` | 材料齊全時「材料檢查」不扣料、不施工 |
+| `stage10_inventory` | 背包／副手優先扣料、改名物品不使用、Undo 退回背包、背包滿時其餘退 Warehouse 且 0 掉落、Redo 同樣先扣背包 |
+| `stage12_all_packs` | Utilities + Warehouse + Copy/Paste 一起安裝：三包載入無錯誤、沒有載入訊息、G 開 Warehouse 主畫面、Utilities 設家／回家／返回／說明正常；同時重跑 `stage5`、`stage10`、`stage9` 全數通過 |
 
-`scripts/build-copy-paste-live-test.py` 已更新到 v1.3。它會產生 opt-in 測試 datapack，使用**真人玩家本人的 trigger objective**，每一步交給正常 Minecraft tick dispatch 處理。
+**尚未驗證：** 兩位真人 client 同時操作。
 
-目前生成案例包含：
+2026-10-06 晚間三包一起重跑時，一度出現「材料表是空的、施工沒扣料」：原因是測試用小屋在 18:08 被手動 Cut 搬走，測試等於在複製空氣，並不是 pack 的問題。`stage3_house.snapshot()` 現在發現小屋不完整就直接停止。
 
-- Pos1 / Pos2 真人 raycast。
-- 選區外自訂 Anchor。
-- `/trigger anchor set 2` 清 Anchor。
-- 重新設定 Pos1 後舊 Anchor 必須失效。
-- Pos1 非最小角時的預設 Anchor Blueprint 精確位置。
-- Copy / Blueprint。
-- Warehouse 材料支援的 Build。
-- Cut → Undo 作廢 Cut Clipboard、Redo 重建 Cut Clipboard。
-- Cut + V。
-- Move / Flip / Rotate 與 Undo/Redo。
-- 跨維度 Copy / Cut。
+## 舊的 Trigger harness
 
-Harness 開始時會 forceload 主世界與地獄的測試區（x=-210..-160、z=80..120），並在每次佈置後先檢查「fixture ready / target ready」。佈置失敗會被回報為佈置失敗，不會被誤判成功能失敗；結束時會解除 forceload。
+`scripts/build-copy-paste-live-test.py` 產生 `mcc_test:start` 測試 datapack，走真人玩家的 trigger dispatch。它的 **Warehouse 段落不可信**：用兩個 `setblock chest` 單箱並直接寫 `warehouse:chests`，沒有走玩家註冊流程。CI 只檢查它能產生；正式驗證以上一節的真人 client 工具為準。
 
-執行方式：
+`tests/evidence/copy-paste-live-20260930.txt` 是 v0.4.2 時期的真人 evidence，只代表當時版本。
 
-```console
-python3 scripts/build-copy-paste-live-test.py
-```
+## Dialog
 
-把 `dist/mcc-live-test` 放進**已備份、可丟棄的真人測試世界**後，由實際登入玩家執行：
+`/trigger copypaste` 的介面全部由 function 產生 inline Dialog，`/reload` 就會更新：
 
-```mcfunction
-/function mcc_test:start
-```
+- `ui/show`：主畫面 9 顆（Pos1、Pos2、Copy、Cut、Paste、Build、Undo、調整預覽…、更多…）。
+- `ui/adjust`（`copypaste set 2`）：轉向、翻面、回原方向、清除預覽、移動預覽、材料檢查、Build。
+- `ui/more` → `ui/more_show`（`set 3`）：Anchor、清除 Anchor、貼上模式（顯示目前模式）、直接改原本建築…、Redo、指令教學。
+- `ui/edit`（`set 4`）：直接移動／轉向／翻面原本建築。
 
-目前 repo **尚未提交一份 v1.3 真人 harness 全 PASS 的 client evidence**。在那之前，只能說 v1.3 source 已通過官方 server headless regression，不能說真人 Trigger / Dialog 已完整驗證。
+`test-copy-paste.py` 檢查這些頁面包含所有必要指令、主畫面維持精簡；runtime 會把每一頁交給官方 server 解析。
 
-## Dialog 檢查
-
-`/trigger copypaste` 的 active UI 是 `data/mcc/dialog/main.json`，不是舊的 `panel.mcfunction`。
-
-v1.3 active Dialog 必須至少包含：
-
-- Pos1 / Pos2 / Anchor / 清 Anchor。
-- Copy / Cut / Blueprint。
-- Build / Materials / Clear Blueprint。
-- Undo / Redo。
-- 指令教學。
-
-CI 現在直接檢查 active Dialog，不再拿沒有被 `/trigger copypaste` 呼叫的 legacy `panel.mcfunction` 當成玩家 UI 正確的證據。
-
-## 歷史真人 evidence
-
-`tests/evidence/copy-paste-live-20260930.txt` 是 2026-09-30 的真人 client evidence，當時修的是 v0.4.1 → v0.4.2 的 Mode 與舊玩家 migration 問題。
-
-那份 evidence 只能證明當時版本的真人路徑曾跑過，**不能替代 v1.3 的 Blueprint / Build / external Anchor / Dialog 驗證**。
-
-## 重跑自動驗證
+## 重跑驗證
 
 ```console
 python3 scripts/validate-datapack.py copy-paste
 python3 scripts/test-copy-paste.py
 python3 scripts/test-datapack-compatibility.py
 
-python3 scripts/test-copy-paste-runtime.py \
-  --java /path/to/java \
-  --server-jar /path/to/server.jar \
-  --accept-eula
-
-python3 scripts/test-datapack-compatibility.py \
-  --java /path/to/java \
-  --server-jar /path/to/server.jar \
-  --accept-eula
+python3 scripts/test-copy-paste-runtime.py --java /path/to/java --server-jar /path/to/server.jar --accept-eula
+python3 scripts/test-datapack-compatibility.py --java /path/to/java --server-jar /path/to/server.jar --accept-eula
 ```
 
-發布規則仍是：static、pack regression、三包 compatibility、Copy/Paste 專用官方 26.3 runtime 全部必須通過；真人 client-only 項目若沒有 evidence，就必須明確標成未驗，而不是用 headless PASS 代替。
+真人 client 工具的用法與注意事項見 [`docs/HANDOFF.md`](../../docs/HANDOFF.md)。

@@ -1,8 +1,8 @@
-# Utilities v3.4
+# Utilities v3.5
 
-> Release: **utilities-v3.4** · Download: **utilities-v3.4.zip** · Previous package name: **整合_v3.2**.
+> Release: **utilities-v3.5** · Download: **utilities-v3.5.zip** · Previous package name: **整合_v3.2**.
 
-Minecraft Java 26.3 data pack combining survival utilities, teleport/home and custom waypoints, and coordinate display.
+遊戲內名稱「屁眼派對」：Minecraft Java 26.3 資料包，整合生存便利三合一、回家與自訂據點、座標顯示。
 
 The actual pack source lives directly in this directory. Keep `pack.mcmeta` and `data/` here so Git can track individual changes.
 
@@ -15,6 +15,24 @@ The actual pack source lives directly in this directory. Keep `pack.mcmeta` and 
 - 自訂據點命名與覆蓋位置
 - `/trigger back`：返回上次傳送位置
 - `/trigger deathloc`：返回最近死亡地點
+
+## 指令
+
+輸入 `/trigger help` 查看所有功能。
+
+- 個人：/trigger plist；/trigger pset set 1；/trigger pgo set 1（slot 1～8）
+- 共用：/trigger slist；/trigger sset set 1；/trigger sgo set 1（slot 1～8）
+- 返回上次位置：/trigger back
+- 最近死亡地點：/trigger deathloc
+
+管理員／function API：
+
+- /function nav:set_personal {slot:1,name:"名稱"}
+- /function nav:set_shared {slot:1,name:"名稱"}
+- /function nav:rename_personal {slot:1,name:"新名稱"}
+- /function nav:rename_shared {slot:1,name:"新名稱"}
+- /function nav:back
+- /function nav:death
 
 ## 版本歷史
 
@@ -32,15 +50,28 @@ The actual pack source lives directly in this directory. Keep `pack.mcmeta` and 
 | **3.1** | 共用據點恢復 8 格；`[改位置]` 改回 `[覆蓋]`；第一次設定據點可**同時命名＋儲存位置**；重新加入可點擊、自動填入的「指令教學」；保留 Back／死亡地點 |
 | **3.2** | 正式刪除共用據點 9～16 的相關資料與功能；help 改為**指令教學在上、操作按鈕在下**；固定據點取消直接按鈕；Dialog 按鈕改白色；**Esc／取消不再送出任何指令**，只有確認設定／儲存才會修改資料 |
 | **3.3** | 補齊 Poplar 原木挖掘事件及重置，修復三色 Poplar 連鎖砍樹；修正砍樹／挖礦共用耐久扣除、Unbreaking／Unbreakable 與工具耗盡停止；完成 26.3 相容性審核與官方伺服器回歸測試。 |
+| **3.5** | 拿掉載入時與玩家第一次加入時的聊天訊息（「[屁眼派對] 已載入」「[傳送系統] 已啟用」「自動補種、連鎖砍樹、礦脈挖掘已預設開啟」）；功能說明仍可用 `/trigger help` 查看。 |
 | **3.4** | 依使用者要求撤回 v3.3 的砍樹／挖礦耐久修正，完整恢復 v3.2 的工具耐久處理；保留 Poplar 挖掘事件與 26.3 相容性修正。v3.2、v3.3 release 保持不變。 |
 
 ## 安裝與更新
 
-下載 [utilities-v3.4.zip](https://github.com/sunnychen0708/packs-minecraft-inno/releases/download/utilities-v3.4/utilities-v3.4.zip)，移除世界 `datapacks/` 中的舊 Utilities ZIP，再放入新版並執行 `/reload`。不要同時載入兩份。既有據點、名稱、座標及功能開關沿用。
+下載 [utilities-v3.5.zip](https://github.com/sunnychen0708/packs-minecraft-inno/releases/download/utilities-v3.5/utilities-v3.5.zip)，移除世界 `datapacks/` 中的舊 Utilities ZIP（utilities-v3.4.zip、utilities-v3.3.zip、utilities-v3.2.zip、整合_v3.2.zip 或 vanilla-utilities-v3.2.zip），ZIP 不用解壓直接放入，再執行 `/reload`。不要同時載入兩份。
 
 蹲下並持斧頭挖掉 Poplar 原木即可觸發；紅／橙／黃葉皆支援。單次最多連鎖 64 根，仍需附近有樹葉；無葉倒木及建築木材不會因這次更新取消保護。
 
 工具耐久處理已恢復為 v3.2 行為；v3.3 新增的逐塊扣耐久與耗盡停止邏輯已撤回。
+
+## 舊資料相容
+
+- 家、礦坑、村莊、傳送門、臨時點、個人據點 1～8、共用據點 1～8、名稱、功能開關全部沿用。
+- storage ID 與既有 scoreboard objective 名稱不更動。
+
+## 注意
+
+- 名稱輸入視窗送出時仍由 Vanilla dynamic/run_command 呼叫 function；若伺服器限制一般玩家執行 function，可能受權限規則影響。
+- Esc／取消不會執行該 dynamic/run_command。
+- back／死亡地點與原傳送系統支援主世界、地獄、終界。
+- Data Pack 格式：121.0（Minecraft Java 26.3）。
 
 詳見 [26.3 相容性審核與測試](COMPATIBILITY-26.3.md)。
 
@@ -50,4 +81,4 @@ Use `utilities-v<version>` for release tags and `utilities-v<version>.zip` for d
 
 [Utilities v3.2](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/utilities-v3.2) replaces the former `vanilla-utilities-v3.2` release name. This naming-only re-release preserves v3.2 gameplay and saved data; the original Git tag remains as a historical alias. Replace the old ZIP rather than loading both copies.
 
-Example: `utilities-v3.4`
+Example: `utilities-v3.5`

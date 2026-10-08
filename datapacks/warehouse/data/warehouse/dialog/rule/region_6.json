@@ -23,7 +23,7 @@
       "label": {
         "text": "61  地獄岩石"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 61"
@@ -33,7 +33,7 @@
       "label": {
         "text": "62  地獄自然"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 62"
@@ -43,7 +43,7 @@
       "label": {
         "text": "63  地獄植物"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 63"
@@ -53,7 +53,7 @@
       "label": {
         "text": "64  地獄建材"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 64"
@@ -63,7 +63,7 @@
       "label": {
         "text": "65  石英材料"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 65"
@@ -73,7 +73,7 @@
       "label": {
         "text": "66  終界素材"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 66"
@@ -83,7 +83,7 @@
       "label": {
         "text": "67  地獄掉落"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 67"
@@ -93,7 +93,7 @@
       "label": {
         "text": "68  終界掉落"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 68"
@@ -103,7 +103,7 @@
       "label": {
         "text": "69  維度特殊"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 69"

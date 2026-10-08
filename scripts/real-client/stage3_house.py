@@ -17,7 +17,12 @@ def sel_cells():
 
 def snapshot():
     w = world()
-    return w, {p: w.block(*p) for p in sel_cells()}
+    src = {p: w.block(*p) for p in sel_cells()}
+    # The 3D house is the test fixture: if someone moved it, every check would compare air with air.
+    solid = sum(1 for s in src.values() if s != 'minecraft:air')
+    if solid < len(house.BLOCKS):
+        raise RuntimeError(f'test house missing at {HOUSE_O}: only {solid}/{len(house.BLOCKS)} blocks in the selection')
+    return w, src
 
 def compare(w, expect, label, extra_air=()):
     bad = [(p, e, w.block(*p)) for p, e in expect.items() if w.block(*p) != e]
@@ -42,7 +47,9 @@ def box_around(cells, pad=1):
             for z in range(min(zs) - pad, max(zs) + pad + 1)]
 
 def no_drops(w, label):
-    items = item_entities(w)
+    # Only items this build could drop count; mobs burning at daybreak drop rotten flesh etc.
+    relevant = set(house.BOM) | set(CHEST_LOOT) | {'minecraft:stone_bricks', 'minecraft:white_wool'}
+    items = [e for e in item_entities(w) if e.get('Item', {}).get('id') in relevant]
     return record(label, not items, f'dropped={[(e.get("Item", {}).get("id"), e.get("Item", {}).get("count")) for e in items][:6]}')
 
 def chest_items_at(w, p):
@@ -67,6 +74,10 @@ def select_house():
     look_down_at(*MARK2, 4); trig('pos2')
     cmd(f'setblock {MARK1[0]} {MARK1[1]} {MARK1[2]} air')
     cmd(f'setblock {MARK2[0]} {MARK2[1]} {MARK2[2]} air')
+
+def reset_xform():
+    """Rotation/mirror are per-player Blueprint settings that outlive a Copy; start from identity."""
+    trig('bpreset')
 
 def wait_sorted(sec=15):
     time.sleep(sec)
@@ -125,6 +136,7 @@ if want('build'):
     log('=== Copy -> V Blueprint -> Build from Warehouse, Undo (refund), Redo (charge)')
     w, SRC = snapshot()
     T1 = (1019, Y0, 1039)
+    reset_xform()
     select_house()
     trig('c')
     aim_target(T1[0], T1[2]); trig('v', 3.0)
@@ -135,6 +147,19 @@ if want('build'):
     record('blueprint: V creates no real blocks', not real, f'real={real[:4]}')
     disp = [e for e in w.entities_in(T1[0] - 1, Y0 - 1, T1[2] - 1, T1[0] + 8, Y0 + 5, T1[2] + 8) if e.get('id') == 'minecraft:block_display']
     record('blueprint: block_display preview exists at target', len(disp) > 0, f'{len(disp)} displays')
+    # A block_display renders from its origin corner: it must sit exactly on the block corner of
+    # the cell it previews (an integer-coordinate summon is centred +0.5 X/Z and looks skewed).
+    def _cell(e):
+        p = e.get('Pos', [0.5, 0, 0.5])
+        return tuple(int(v) for v in p) if all(float(v).is_integer() for v in p) else None
+    # 26.3 saves block_state as a string without default properties; mcworld.fmt fills them in.
+    misplaced = [(e.get('Pos'), mcworld.fmt(e.get('block_state'))) for e in disp
+                 if _cell(e) not in exp or mcworld.fmt(e.get('block_state')) != exp[_cell(e)]]
+    nonair = {p for p, s in exp.items() if s != 'minecraft:air'}
+    covered = {_cell(e) for e in disp}
+    record('blueprint: every display sits exactly on its target block with the exact state',
+           disp and not misplaced and covered == nonair and len(disp) == len(nonair),
+           f'{len(disp)} displays for {len(nonair)} blocks; misplaced={misplaced[:4]} missing={sorted(nonair - covered)[:4]}')
     compare(w, SRC, 'blueprint: source untouched')
     trig('build', 1.0); time.sleep(6)
     d.screenshot(str(OUT / 'build.png'))
@@ -158,11 +183,12 @@ if want('build'):
     trig('undo', 1.0); wait_sorted(18)
 
 if want('rotbuild'):
-    for k, val, tx in ((1, 20, 1045), (2, 30, 1065), (3, 40, 1075)):
+    for k, tx in ((1, 1045), (2, 1065), (3, 1075)):
         log(f'=== Blueprint rotate {90 * k} -> Build')
         w, SRC = snapshot()
         T = (tx, Y0, 1060)
-        trig('c'); trig(f'rotate set {val}')
+        trig('c'); trig('bpreset')
+        for _ in range(k): trig('bpturnright')
         aim_target(T[0], T[2]); trig('v', 3.0)
         trig('build', 1.0); time.sleep(6)
         save_world(); w = world()
@@ -170,15 +196,16 @@ if want('rotbuild'):
         compare(w, exp, f'rotated build {90 * k}: exact blocks + rotated states', extra_air=box_around(exp))
         no_drops(w, f'rotated build {90 * k}: no drops')
         trig('undo', 1.0); wait_sorted(15)
-        trig('rotate set 10')
+        trig('bpreset')
     save_world(); stock_is(world(), BOM2, 'rotated builds: all refunds back in Warehouse')
 
 if want('mirbuild'):
-    for val, axis, tx in ((20, 'x', 1045), (30, 'z', 1065)):
+    for flip, axis, tx in (('bpflip', 'x', 1045), ('bpflipfb', 'z', 1065)):  # facing north: left-right = X
         log(f'=== Blueprint mirror {axis} -> Build')
         w, SRC = snapshot()
         T = (tx, Y0, 1080)
-        trig('c'); trig('rotate set 10'); trig(f'mirror set {val}')
+        trig('c'); trig('bpreset')
+        cmd('tp @s ~ ~ ~ 180 30', 0.6); trig(flip)
         aim_target(T[0], T[2]); trig('v', 3.0)
         trig('build', 1.0); time.sleep(6)
         save_world(); w = world()
@@ -189,7 +216,7 @@ if want('mirbuild'):
             compare(w, other, f'(diagnostic) mirrored build {axis} matches the OTHER axis instead?')
         no_drops(w, f'mirrored build {axis}: no drops')
         trig('undo', 1.0); wait_sorted(15)
-        trig('mirror set 10')
+        trig('bpreset')
     save_world(); stock_is(world(), BOM2, 'mirrored builds: all refunds back in Warehouse')
 
 if want('cut'):
@@ -246,17 +273,17 @@ if want('direct'):
     if 'moveonly' in ONLY: raise SystemExit
     direct('move up 2', 'up set 2', shifted(0, 2))
     cx = SX1 + SX2; cz = SZ1 + SZ2
-    direct('flipx', 'flipx', lambda S: {(cx - x, y, z): xform.mirror_state(s, 'x') for (x, y, z), s in S.items()})
-    direct('flipz', 'flipz', lambda S: {(x, y, cz - z): xform.mirror_state(s, 'z') for (x, y, z), s in S.items()})
-    for k in (1, 2, 3):
-        direct(f'rotate{90 * k}', f'rotate{90 * k}', lambda S, k=k: expect_placed(S, MARK1, k=k))
+    direct('flip (facing north = X)', 'flip', lambda S: {(cx - x, y, z): xform.mirror_state(s, 'x') for (x, y, z), s in S.items()})
+    direct('flipfb (facing north = Z)', 'flipfb', lambda S: {(x, y, cz - z): xform.mirror_state(s, 'z') for (x, y, z), s in S.items()})
+    for k, trigger in ((1, 'turnright'), (2, 'rotate180'), (3, 'turnleft')):
+        direct(trigger, trigger, lambda S, k=k: expect_placed(S, MARK1, k=k))
 
 if want('pick'):
     log('=== Pick from Warehouse')
     cmd('clear @s')
     cmd(f'setblock 1030 {Y0} 1030 minecraft:stone_bricks')
     look_at_from(1030.5, Y0, 1033.5, 1030.5, Y0 + 0.5, 1030.5)
-    w0 = None
+    time.sleep(1.0)  # let the client settle on the new view before the server raycasts it
     trig('pick', 2.0)
     save_world(); w = world()
     tot, _ = warehouse_stock(w)

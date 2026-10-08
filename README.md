@@ -10,14 +10,14 @@
 
 | Pack | Type | Source | Latest release | Minecraft | Description |
 | --- | --- | ---: | ---: | --- | --- |
-| [`utilities`](datapacks/utilities) | Data pack | v3.4 | [`v3.4`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/utilities-v3.4) | Java 26.3 | Teleportation, waypoints, coordinate display, and general survival utility systems. |
-| [`warehouse`](datapacks/warehouse) | Data pack | **v4.4.1** | [`v4.4`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/warehouse-v4.4) | Java 26.3 | Automatic sorting, shared inventory API, durable refunds, search/Highlight, and survival Pick. |
-| [`copy-paste`](datapacks/copy-paste) | Data pack | **v1.3** | [`v1.2`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/copy-paste-v1.2) | Java 26.3 | Survival building editor: Blueprint preview/micro-adjust, material-backed construction, Cut/Move/Rotate/Flip, and material-aware Undo/Redo. |
+| [`utilities`](datapacks/utilities) | Data pack | v3.5 | [`v3.5`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/utilities-v3.5) | Java 26.3 | Teleportation, waypoints, coordinate display, and general survival utility systems. |
+| [`warehouse`](datapacks/warehouse) | Data pack | v4.5 | [`v4.5`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/warehouse-v4.5) | Java 26.3 | Automatic sorting, shared inventory API, durable refunds, search/Highlight, and survival Pick. |
+| [`copy-paste`](datapacks/copy-paste) | Data pack | v1.4 | [`v1.4`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/copy-paste-v1.4) | Java 26.3 | Survival building editor: Blueprint preview/micro-adjust, construction from the player's inventory and Warehouse, player-relative turn/flip, Cut/Move, and material-aware Undo/Redo. |
 | [`cat-door-sounds`](resourcepacks/cat-door-sounds) | Resource pack | v1.0 | [`v1.0`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/cat-door-sounds-v1.0) | Java 26.2 | Custom cat meow replacement and an extra wooden-door opening sound layer. |
 
 Each pack is stored as unpacked source. Release ZIPs are generated artifacts rather than development source.
 
-Copy/Paste source is **v1.3** while its latest published release is **v1.2**; Warehouse source is **v4.4.1** (dead-code cleanup, no behaviour change) while its latest published release is **v4.4**. Copy/Paste v1.3 closes v1.2 duplication paths (every world-edit Undo/Redo is guarded by a post-edit snapshot, and Cut → Undo invalidates the live Cut clipboard while Redo rebuilds it), fixes rotated Masked paste, external-Anchor Flip and long-distance Move buffers. Copy/Paste v1.2 includes the external-Anchor pivot fix, persistent/reselectable selection semantics, command tutorial, and expanded 26.3 behavioral regression. Copy uses Blueprint-first, material-backed construction backed by the shared Warehouse registration data and inventory API; Undo/Redo stays five-level per player and material-aware. See its [multiplayer validation notes](datapacks/copy-paste/MULTIPLAYER-VALIDATION.md).
+Current versions: Utilities **v3.5**, Warehouse **v4.5**, Copy/Paste **v1.4**, cat-door-sounds **v1.0** — every source version is also the latest release. Copy/Paste builds from a Blueprint preview using materials from the player's own inventory first and the shared Warehouse second; Warehouse is the shared sorting/storage backend and its API is what Copy/Paste and Pick use. Per-pack details and version history: [Utilities](datapacks/utilities/README.md), [Warehouse](datapacks/warehouse/CHANGELOG.md), [Copy/Paste](datapacks/copy-paste/README.md).
 
 ## Installation
 
@@ -31,13 +31,7 @@ Place the downloaded ZIP directly in:
 <world>/datapacks/
 ```
 
-Then run:
-
-```mcfunction
-/reload
-```
-
-or reopen the world.
+Then leave and re-enter the world. `/reload` refreshes functions only; Dialog pages stored as JSON (for example Warehouse menus) are loaded when the world opens, so after an update always re-enter the world.
 
 ### Resource packs
 
@@ -60,10 +54,18 @@ packs-minecraft-inno/
 ├─ resourcepacks/
 │  └─ cat-door-sounds/
 ├─ scripts/
-│  ├─ build-pack.sh
-│  └─ validate-datapack.py
+│  ├─ build-pack.sh                  # pack → dist/<pack>-<version>.zip
+│  ├─ validate-datapack.py           # generic static validator (+ optional server smoke test)
+│  ├─ test-<pack>.py                 # pack-specific static regressions
+│  ├─ test-*-runtime.py              # official 26.3 server behavioural regressions
+│  ├─ test-datapack-compatibility.py # all three datapacks together
+│  ├─ gen-item-names.py              # Copy/Paste item name / stack-size tables from server reports
+│  ├─ mcc_house.py                   # shared 3D test building
+│  └─ real-client/                   # drives the real Minecraft client and judges from the save files
+├─ tests/evidence/                   # archived manual test evidence
 ├─ docs/
-│  └─ datapack-validation.md
+│  ├─ datapack-validation.md
+│  └─ HANDOFF.md                     # current state and working notes for the next maintainer
 └─ .github/
    └─ workflows/
       ├─ validate-datapacks.yml
@@ -88,13 +90,13 @@ Generated ZIP files go to `dist/`, which is ignored by Git.
 ### Build locally
 
 ```bash
-./scripts/build-pack.sh utilities v3.4
-./scripts/build-pack.sh warehouse v4.4.1
-./scripts/build-pack.sh copy-paste v1.3
+./scripts/build-pack.sh utilities v3.5
+./scripts/build-pack.sh warehouse v4.5
+./scripts/build-pack.sh copy-paste v1.4
 ./scripts/build-pack.sh cat-door-sounds v1.0
 ```
 
-The resulting ZIP is written to `dist/` with the correct Minecraft pack structure at the archive root.
+The resulting ZIP is written to `dist/` with the correct Minecraft pack structure at the archive root. `build-pack.sh` needs the `zip` command (not installed on Windows by default); the release workflow runs it on Linux.
 
 ### Validate datapacks
 

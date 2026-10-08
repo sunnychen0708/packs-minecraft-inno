@@ -217,8 +217,9 @@ def runtime_compatibility(java: Path, server: Path) -> None:
     check("if score #probe mcc_id matches 0", "copy_paste_id_objective")
     check("if score #probe copypaste matches 0", "copy_paste_ui_objective")
 
+    util_version = re.search(r"v(\d+\.\d+(?:\.\d+)?)", json.loads((PACKS["utilities"] / "pack.mcmeta").read_text(encoding="utf-8"))["pack"]["description"]).group(1)
     check(
-        'if data storage sunny_nav:meta {version:"26.3-3.4"}',
+        f'if data storage sunny_nav:meta {{version:"26.3-{util_version}"}}',
         "utilities_storage_initialized",
     )
     check(

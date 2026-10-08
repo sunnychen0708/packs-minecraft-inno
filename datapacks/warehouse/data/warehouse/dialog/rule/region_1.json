@@ -23,7 +23,7 @@
       "label": {
         "text": "11  鑽石綠寶"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 11"
@@ -33,7 +33,7 @@
       "label": {
         "text": "12  紅石青金"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 12"
@@ -43,7 +43,7 @@
       "label": {
         "text": "13  煤炭火把"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 13"
@@ -53,7 +53,7 @@
       "label": {
         "text": "14  鐵礦材料"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 14"
@@ -63,7 +63,7 @@
       "label": {
         "text": "15  黃金獄髓"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 15"
@@ -73,7 +73,7 @@
       "label": {
         "text": "16  銅礦材料"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 16"
@@ -83,7 +83,7 @@
       "label": {
         "text": "17  防具裝備"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 17"
@@ -93,7 +93,7 @@
       "label": {
         "text": "18  戰鬥武器"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 18"
@@ -103,7 +103,7 @@
       "label": {
         "text": "19  生存工具"
       },
-      "width": 150,
+      "width": 120,
       "action": {
         "type": "run_command",
         "command": "trigger wh_rule_dest set 19"

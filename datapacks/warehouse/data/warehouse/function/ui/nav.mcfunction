@@ -1,4 +1,6 @@
-execute if score @s wh_nav matches 1 run function warehouse:ui/main_dynamic
+execute if score @s wh_nav matches 9 run return run function warehouse:ui/back
+# Same main page as the G quick action (with Pick and the Copy/Paste button).
+execute if score @s wh_nav matches 1 run dialog show @s warehouse:main
 execute if score @s wh_nav matches 2 run dialog show @s warehouse:manage
 execute if score @s wh_nav matches 11 run function warehouse:ui/register_region_1
 execute if score @s wh_nav matches 12 run function warehouse:ui/register_region_2
@@ -45,4 +47,8 @@ execute if score @s wh_nav matches 74 run function warehouse:registered/region_4
 execute if score @s wh_nav matches 75 run function warehouse:registered/region_5
 execute if score @s wh_nav matches 76 run function warehouse:registered/region_6
 execute if score @s wh_nav matches 77 run function warehouse:registered/special
+execute if score @s wh_nav matches 17 run dialog show @s warehouse:register/special
+execute if score @s wh_nav matches 37 run dialog show @s warehouse:view/special
+execute if score @s wh_nav matches 57 run dialog show @s warehouse:unregister/special
+execute if score @s wh_nav matches 67 run dialog show @s warehouse:boxname/special
 scoreboard players set @s wh_nav 0

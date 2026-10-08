@@ -58,8 +58,8 @@
     },
     "width": 200,
     "action": {
-      "type": "show_dialog",
-      "dialog": "warehouse:boxname/index"
+      "type": "run_command",
+      "command": "trigger wh_nav set 62"
     }
   },
   "can_close_with_escape": true

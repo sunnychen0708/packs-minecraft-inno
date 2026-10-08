@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Isolated vanilla 26.3 behavioral regression for Copy/Paste v1.3.
+"""Isolated vanilla 26.3 behavioral regression for Copy/Paste v1.4.
 
 Uses a non-player armor stand test actor to exercise internal datapack functions.
 This complements (not replaces) the opt-in real-player trigger/client harnesses.
@@ -49,11 +49,12 @@ def integration(java: Path, server: Path):
     # The main UI is a macro Dialog; render it with sample values as a static dialog
     # so the official server's registry load rejects any schema error.
     import re as _re
-    show=(PACK/'data/mcc/function/ui/show.mcfunction').read_text(encoding='utf-8').strip()
-    assert show.startswith('$dialog show @s ')
-    rendered=_re.sub(r'\$\(([a-z0-9_]+)\)',lambda m:f'sample {m.group(1)}',show[len('$dialog show @s '):])
     (harness/'data/mcc_server_test/dialog').mkdir(parents=True)
-    (harness/'data/mcc_server_test/dialog/ui_preview.json').write_text(rendered,encoding='utf-8')
+    for name in ('show','adjust','more_show','edit'):
+        show=(PACK/f'data/mcc/function/ui/{name}.mcfunction').read_text(encoding='utf-8').strip().lstrip('$')
+        assert show.startswith('dialog show @s '), name
+        rendered=_re.sub(r'\$\(([a-z0-9_]+)\)',lambda m:f'sample {m.group(1)}',show[len('dialog show @s '):])
+        (harness/f'data/mcc_server_test/dialog/ui_preview_{name}.json').write_text(rendered,encoding='utf-8')
     (harness/'pack.mcmeta').write_text(json.dumps({'pack':{'min_format':121,'max_format':121,'description':'CopyPaste server regression'}}),encoding='utf-8')
 
     actor='@e[type=minecraft:armor_stand,tag=mcc_server_actor,limit=1]'
@@ -198,8 +199,8 @@ def integration(java: Path, server: Path):
     target(12,80,12)
     run_as('mcc:paste/dispatch')
     scan()
-    check(f'positioned 12 80 12 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={{block_state:"minecraft:iron_block"}},limit=1] if score {actor} mcc_bptx0 matches 10 if score {actor} mcc_bptz0 matches 11','default_anchor_pos1_blueprint_origin')
-    check('positioned 10 80 11 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]','default_anchor_pos1_blueprint_offset')
+    check(f'positioned 12.0 80.0 12.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={{block_state:"minecraft:iron_block"}},limit=1] if score {actor} mcc_bptx0 matches 10 if score {actor} mcc_bptz0 matches 11','default_anchor_pos1_blueprint_origin')
+    check('positioned 10.0 80.0 11.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]','default_anchor_pos1_blueprint_offset')
     run_as('mcc:blueprint/clear_internal')
 
     # 0a. Custom Anchor must land exactly on the V target, not merely near it.
@@ -215,8 +216,8 @@ def integration(java: Path, server: Path):
     target(20,82,12)
     run_as('mcc:paste/dispatch')
     scan()
-    check(f'positioned 20 82 12 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={{block_state:"minecraft:iron_block"}},limit=1] if score {actor} mcc_bptx0 matches 18 if score {actor} mcc_bpty0 matches 82 if score {actor} mcc_bptz0 matches 11','custom_anchor_direct_exact_target')
-    check('positioned 18 82 11 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]','custom_anchor_direct_source_offset')
+    check(f'positioned 20.0 82.0 12.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={{block_state:"minecraft:iron_block"}},limit=1] if score {actor} mcc_bptx0 matches 18 if score {actor} mcc_bpty0 matches 82 if score {actor} mcc_bptz0 matches 11','custom_anchor_direct_exact_target')
+    check('positioned 18.0 82.0 11.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]','custom_anchor_direct_source_offset')
     run_as('mcc:blueprint/clear_internal')
 
     # 0b. The same custom Anchor invariant must hold for every Rotate/Mirror combination.
@@ -227,7 +228,7 @@ def integration(java: Path, server: Path):
             target(24,82,12)
             run_as('mcc:paste/dispatch')
             scan()
-            check(f'positioned 24 82 12 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={{block_state:"minecraft:iron_block"}},limit=1]','custom_anchor_r%d_m%d_exact_target' % (rot,mir))
+            check(f'positioned 24.0 82.0 12.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={{block_state:"minecraft:iron_block"}},limit=1]','custom_anchor_r%d_m%d_exact_target' % (rot,mir))
             run_as('mcc:blueprint/clear_internal')
     lines.append(f'scoreboard players set {actor} mcc_rot 0')
     lines.append(f'scoreboard players set {actor} mcc_mir 0')
@@ -247,15 +248,15 @@ def integration(java: Path, server: Path):
     target(40,80,40)
     run_as('mcc:paste/dispatch')
     scan()
-    check(f'positioned 30 80 30 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={{block_state:"minecraft:gold_block"}},limit=1] if score {actor} mcc_bptx0 matches 30 if score {actor} mcc_bptz0 matches 30','external_anchor_blueprint_direct')
+    check(f'positioned 30.0 80.0 30.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={{block_state:"minecraft:gold_block"}},limit=1] if score {actor} mcc_bptx0 matches 30 if score {actor} mcc_bptz0 matches 30','external_anchor_blueprint_direct')
     run_as('mcc:blueprint/clear_internal')
 
     lines.append(f'scoreboard players set {actor} mcc_rot 1')
     target(40,80,40)
     run_as('mcc:paste/dispatch')
     scan()
-    check('positioned 50 80 30 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]','external_anchor_blueprint_rotate90_gold')
-    check('positioned 50 80 32 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:diamond_block"},limit=1]','external_anchor_blueprint_rotate90_diamond')
+    check('positioned 50.0 80.0 30.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]','external_anchor_blueprint_rotate90_gold')
+    check('positioned 50.0 80.0 32.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:diamond_block"},limit=1]','external_anchor_blueprint_rotate90_diamond')
     run_as('mcc:blueprint/clear_internal')
 
     lines.append(f'scoreboard players set {actor} mcc_rot 0')
@@ -263,8 +264,8 @@ def integration(java: Path, server: Path):
     target(40,80,40)
     run_as('mcc:paste/dispatch')
     scan()
-    check('positioned 50 80 30 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]','external_anchor_blueprint_mirrorx_gold')
-    check('positioned 48 80 30 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:diamond_block"},limit=1]','external_anchor_blueprint_mirrorx_diamond')
+    check('positioned 50.0 80.0 30.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]','external_anchor_blueprint_mirrorx_gold')
+    check('positioned 48.0 80.0 30.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:diamond_block"},limit=1]','external_anchor_blueprint_mirrorx_diamond')
     run_as('mcc:blueprint/clear_internal')
     lines.append(f'scoreboard players set {actor} mcc_mir 0')
 
@@ -318,35 +319,35 @@ def integration(java: Path, server: Path):
     run_as('mcc:paste/dispatch')
     scan()
     check('if block 12 80 3 air if block 14 80 4 air','copy_v_no_real_blocks')
-    check('positioned 12 80 3 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]','blueprint_gold_state')
-    check('positioned 12 80 4 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:{id:"minecraft:oak_stairs",properties:{facing:"east",half:"bottom",shape:"straight",waterlogged:"false"}}},limit=1]','blueprint_stair_state')
+    check('positioned 12.0 80.0 3.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]','blueprint_gold_state')
+    check('positioned 12.0 80.0 4.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:{id:"minecraft:oak_stairs",properties:{facing:"east",half:"bottom",shape:"straight",waterlogged:"false"}}},limit=1]','blueprint_stair_state')
     check('if block 3 80 3 gold_block if block 5 80 4 iron_block','copy_source_unchanged')
 
     # 1a. Phase 3 Blueprint micro-adjust moves displays without rebuilding the BOM.
     lines.append(f'scoreboard players set {actor} bpright 1')
     run_as('mcc:blueprint/nudge/right')
     run_as('mcc:blueprint/recount_batch')
-    check(f'positioned 11 80 3 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] if score {actor} mcc_bptx0 matches 11 if score {actor} mcc_bpover_scan matches 0','phase3_blueprint_nudge_right')
+    check(f'positioned 11.0 80.0 3.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] if score {actor} mcc_bptx0 matches 11 if score {actor} mcc_bpover_scan matches 0','phase3_blueprint_nudge_right')
     lines.append(f'scoreboard players set {actor} bpleft 1')
     run_as('mcc:blueprint/nudge/left')
     run_as('mcc:blueprint/recount_batch')
-    check(f'positioned 12 80 3 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] if score {actor} mcc_bptx0 matches 12 if score {actor} mcc_bpover_scan matches 0','phase3_blueprint_nudge_left_restore')
+    check(f'positioned 12.0 80.0 3.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] if score {actor} mcc_bptx0 matches 12 if score {actor} mcc_bpover_scan matches 0','phase3_blueprint_nudge_left_restore')
     lines.append(f'scoreboard players set {actor} bpforward 1')
     run_as('mcc:blueprint/nudge/forward')
     run_as('mcc:blueprint/recount_batch')
-    check(f'positioned 12 80 4 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] if score {actor} mcc_bptz0 matches 4 if score {actor} mcc_bpover_scan matches 0','phase3_blueprint_nudge_forward')
+    check(f'positioned 12.0 80.0 4.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] if score {actor} mcc_bptz0 matches 4 if score {actor} mcc_bpover_scan matches 0','phase3_blueprint_nudge_forward')
     lines.append(f'scoreboard players set {actor} bpbackward 1')
     run_as('mcc:blueprint/nudge/backward')
     run_as('mcc:blueprint/recount_batch')
-    check(f'positioned 12 80 3 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] if score {actor} mcc_bptz0 matches 3 if score {actor} mcc_bpover_scan matches 0','phase3_blueprint_nudge_backward_restore')
+    check(f'positioned 12.0 80.0 3.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] if score {actor} mcc_bptz0 matches 3 if score {actor} mcc_bpover_scan matches 0','phase3_blueprint_nudge_backward_restore')
     lines.append(f'scoreboard players set {actor} bpup 1')
     run_as('mcc:blueprint/nudge/up')
     run_as('mcc:blueprint/recount_batch')
-    check(f'positioned 12 81 3 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] if score {actor} mcc_bpty0 matches 81 if score {actor} mcc_bpover_scan matches 0','phase3_blueprint_nudge_up')
+    check(f'positioned 12.0 81.0 3.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] if score {actor} mcc_bpty0 matches 81 if score {actor} mcc_bpover_scan matches 0','phase3_blueprint_nudge_up')
     lines.append(f'scoreboard players set {actor} bpdown 1')
     run_as('mcc:blueprint/nudge/down')
     run_as('mcc:blueprint/recount_batch')
-    check(f'positioned 12 80 3 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] if score {actor} mcc_bpty0 matches 80 if score {actor} mcc_bpover_scan matches 0','phase3_blueprint_nudge_down_restore')
+    check(f'positioned 12.0 80.0 3.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] if score {actor} mcc_bpty0 matches 80 if score {actor} mcc_bpover_scan matches 0','phase3_blueprint_nudge_down_restore')
 
     # Phase 3 overwrite guard: recount target blocks and require a second Build confirmation.
     lines.append('setblock 12 80 3 stone')
@@ -381,6 +382,11 @@ def integration(java: Path, server: Path):
     check(f'if block 12 80 3 air if block 14 80 4 air if score {actor} mcc_matphase matches 0 if score {actor} mcc_bpactive matches 1','build_missing_all_or_nothing')
     check('if data block 8 80 8 Items[{id:"minecraft:gold_block",count:1}] if data block 8 80 8 Items[{id:"minecraft:diamond_block",count:1}]','build_missing_no_consume')
     lines.append('data modify block 8 80 8 Items append value {Slot:3b,id:"minecraft:iron_block",count:1}')
+    # With complete stock a material check must still only report: no take, no build.
+    run_as('mcc:materials/check_start')
+    for _ in range(8): run_as('mcc:materials/process_batch')
+    check(f'if block 12 80 3 air if block 14 80 4 air if score {actor} mcc_matphase matches 0 if score {actor} mcc_matjob matches 0 if score {actor} mcc_bpactive matches 1','material_check_full_stock_does_not_build')
+    check('if data block 8 80 8 Items[{id:"minecraft:gold_block",count:1}] if data block 8 80 8 Items[{id:"minecraft:iron_block",count:1}]','material_check_full_stock_no_consume')
     run_as('mcc:materials/build_start')
     for _ in range(8): run_as('mcc:materials/process_batch')
     check(f'if block 12 80 3 gold_block if block 14 80 3 diamond_block if block 12 80 4 oak_stairs[facing=east] if block 14 80 4 iron_block if score {actor} mcc_bpactive matches 0','build_material_success')
@@ -427,7 +433,7 @@ def integration(java: Path, server: Path):
     target(20,82,21)
     run_as('mcc:paste/dispatch')
     scan()
-    check('positioned 20 82 21 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:iron_block"},limit=1]','custom_anchor_build_preview_exact')
+    check('positioned 20.0 82.0 21.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:iron_block"},limit=1]','custom_anchor_build_preview_exact')
     run_as('mcc:materials/build_start')
     for _ in range(8): run_as('mcc:materials/process_batch')
     check(f'if block 20 82 21 iron_block if block 18 82 20 gold_block if score {actor} mcc_bpactive matches 0','custom_anchor_build_world_exact')
@@ -782,7 +788,7 @@ def integration(java: Path, server: Path):
     run_as('mcc:paste/dispatch')
     scan()
     check('if block 20 80 17 air if block 20 80 19 air if block 19 80 17 air','rotated_blueprint_no_blocks')
-    check('positioned 20 80 17 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..4,limit=1]','rotated_blueprint_display')
+    check('positioned 20.0 80.0 17.0 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..4,limit=1]','rotated_blueprint_display')
     run_as('mcc:blueprint/clear_internal')
     lines.append(f'scoreboard players set {actor} mcc_rot 0')
 
@@ -1019,10 +1025,26 @@ def integration(java: Path, server: Path):
     check(f'if blocks {hbox(HR)} {hat(HS)} all {no_items}','house_rotate90_x4_returns_original')
     lines.append(f'fill 92 79 0 143 86 47 air')
 
-    # Main UI status strings are built from the player's real state.
+    # Main UI toggle labels are built from the player's real state.
     hsel()
-    run_as('mcc:ui/open')
-    check('if data storage mcc:ui {s1:"Pos1 100 80 4",s2:"Pos2 104 83 8",rot:"旋轉 0°"} if data storage mcc:ui hist','ui_status_strings')
+    run_as('mcc:ui/more')
+    check('if data storage mcc:ui mode if data storage mcc:ui modetip','ui_paste_mode_label')
+    check('if data storage mcc:names key{"minecraft:oak_door":"block.minecraft.oak_door","minecraft:redstone":"item.minecraft.redstone"}','item_name_table_loaded')
+    # Materials come from the carrier's own stacks first: the take really removes them
+    # (a modifier that fails to parse must not be recorded as taken, or Undo would duplicate).
+    lines.extend([
+        f'item replace entity {actor} weapon.offhand with minecraft:oak_planks 5',
+        'data modify storage mcc:materials p991 set value {bom:{"minecraft:oak_planks":{need:3,have:0,remain:3,missing:0,taken:0,inv:0,invhave:0}},items:[{id:"minecraft:oak_planks"}]}',
+        'data modify storage mcc:temp mat set value {id:"minecraft:oak_planks",pid:991}',
+        f'execute as {actor} run function mcc:materials/inv_take_one with storage mcc:temp mat',
+    ])
+    check(f'if data entity {actor} equipment.offhand{{id:"minecraft:oak_planks",count:2}} if data storage mcc:materials p991.bom."minecraft:oak_planks"{{remain:0,inv:3}} if data storage mcc:materials p991.items[{{id:"minecraft:oak_planks",inv:3}}]','inventory_take_removes_from_offhand')
+    lines.extend([
+        'data modify storage mcc:temp mat set value {id:"minecraft:oak_planks",pid:991}',
+        f'execute as {actor} run function mcc:materials/inv_count_one with storage mcc:temp mat',
+    ])
+    check('if data storage mcc:materials p991.bom."minecraft:oak_planks"{invhave:2,have:2}','inventory_count_sees_offhand')
+    lines.extend([f'item replace entity {actor} weapon.offhand with minecraft:air', 'data remove storage mcc:materials p991'])
 
     # A gated trigger pressed while a material job runs is reported, not silently dropped.
     lines.extend([
@@ -1035,7 +1057,7 @@ def integration(java: Path, server: Path):
     # tick resets them for the armor-stand actor, so clear every gated trigger.
     lines.extend(f'scoreboard players set {actor} {t} 0' for t in (
         'c','x','v','undo','redo','right','left','up','down','forward','backward',
-        'flipx','flipz','rotate90','rotate180','rotate270',
+        'flip','flipfb','turnright','rotate180','turnleft',
         'bpleft','bpright','bpforward','bpbackward','bpup','bpdown'))
     lines.append(f'scoreboard players set {actor} mcc_tmp 1')
     run_as('mcc:materials/busy_notice')

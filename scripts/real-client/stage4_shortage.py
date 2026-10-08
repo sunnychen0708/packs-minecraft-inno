@@ -4,7 +4,7 @@ log('=== shortage: Warehouse has 0 stone_bricks -> Build must refuse without tou
 save_world(); w0 = world(); before, _ = warehouse_stock(w0)
 _, SRC = snapshot()
 T = (1019, Y0, 1039)
-select_house(); trig('c')
+reset_xform(); select_house(); trig('c')
 aim_target(T[0], T[2]); trig('v', 3.0)
 trig('build', 1.0); time.sleep(6)
 d.screenshot(str(OUT / 'short.png'))
