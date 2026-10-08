@@ -18,6 +18,9 @@ jobs:
       - name: Check out repo
         uses: actions/checkout@v4
 
+      - name: Test Discord dashboard formatting and message reuse (offline)
+        run: python3 -m unittest discover -s scripts -p test_discord_animal_progress.py -v
+
       - name: Verify Discord webhook is configured
         shell: bash
         env:
