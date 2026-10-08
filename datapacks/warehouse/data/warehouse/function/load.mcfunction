@@ -1,5 +1,7 @@
 execute unless data storage warehouse:meta initialized run function warehouse:setup
 function warehouse:init_chests
+# v4.5: "back" target for pages about one box; created on every load so existing worlds get it too.
+scoreboard objectives add wh_back dummy
 scoreboard players add #cursor wh_sys 0
 scoreboard players add #enabled wh_sys 0
 execute unless data storage warehouse:meta v03 run function warehouse:migrate_v03
@@ -26,4 +28,4 @@ execute unless data storage warehouse:meta v40 run function warehouse:migrate_v4
 execute unless data storage warehouse:meta v42 run function warehouse:migrate_v42
 execute unless data storage warehouse:meta v43 run function warehouse:migrate_v43
 execute unless data storage warehouse:meta v44 run function warehouse:migrate_v44
-execute unless data storage warehouse:meta v441 run function warehouse:migrate_v441
+execute unless data storage warehouse:meta v45 run function warehouse:migrate_v45

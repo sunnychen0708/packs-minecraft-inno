@@ -1,3 +1,6 @@
+scoreboard players operation #bcode wh_tmp = @s wh_rename_target
+scoreboard players set #bbase wh_tmp 60
+function warehouse:ui/back_from_code
 execute if score @s wh_rename_target matches 100 run function warehouse:boxname/select_00
 execute if score @s wh_rename_target matches 10 run function warehouse:boxname/select_10
 execute if score @s wh_rename_target matches 11 run function warehouse:boxname/select_11

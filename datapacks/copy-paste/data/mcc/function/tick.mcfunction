@@ -28,7 +28,11 @@ execute as @a unless score @s mcc_bpover matches 0.. run scoreboard players set 
 execute as @a unless score @s mcc_buildconfirm matches 0..1 run scoreboard players set @s mcc_buildconfirm 0
 execute as @a unless score @s mcc_bpover_scan matches 0..1 run scoreboard players set @s mcc_bpover_scan 0
 execute as @a unless score @s mcc_bpoindex matches 0.. run scoreboard players set @s mcc_bpoindex 0
-execute as @a[scores={copypaste=1..}] run function mcc:ui/open
+execute as @a[scores={copypaste=1}] run function mcc:ui/open
+execute as @a[scores={copypaste=2}] run function mcc:ui/adjust
+execute as @a[scores={copypaste=3}] run function mcc:ui/more
+execute as @a[scores={copypaste=4}] run function mcc:ui/edit
+execute as @a[scores={copypaste=5..}] run function mcc:ui/open
 execute as @a[scores={cphelp=1..}] run function mcc:ui/tutorial
 
 execute as @a[scores={pos1=1..}] at @s run function mcc:select/start_pos1
@@ -42,26 +46,15 @@ execute as @a[scores={v=1..,mcc_matphase=0}] at @s run function mcc:select/start
 execute as @a[scores={undo=1..,mcc_matphase=0}] run function mcc:undo/run
 execute as @a[scores={redo=1..,mcc_matphase=0}] run function mcc:redo/run
 execute as @a[scores={mode=1..}] run function mcc:mode_toggle
-execute as @a[scores={rotate=1}] run function mcc:state/rot_cycle
-execute as @a[scores={rotate=10}] run function mcc:state/rot_0
-execute as @a[scores={rotate=20}] run function mcc:state/rot_90
-execute as @a[scores={rotate=30}] run function mcc:state/rot_180
-execute as @a[scores={rotate=40}] run function mcc:state/rot_270
-execute as @a[scores={mirror=1}] run function mcc:state/mir_cycle
-execute as @a[scores={mirror=10}] run function mcc:state/mir_none
-execute as @a[scores={mirror=20}] run function mcc:state/mir_x
-execute as @a[scores={mirror=30}] run function mcc:state/mir_z
+# The "More" page button sends mode 2: reopen it so the new mode is visible at once.
+execute as @a[scores={mode=2}] run function mcc:ui/more
 execute as @a[scores={right=1..,mcc_matphase=0}] at @s run function mcc:move/right
 execute as @a[scores={left=1..,mcc_matphase=0}] at @s run function mcc:move/left
 execute as @a[scores={up=1..,mcc_matphase=0}] at @s run function mcc:move/up
 execute as @a[scores={down=1..,mcc_matphase=0}] at @s run function mcc:move/down
 execute as @a[scores={forward=1..,mcc_matphase=0}] at @s run function mcc:move/forward
 execute as @a[scores={backward=1..,mcc_matphase=0}] at @s run function mcc:move/backward
-execute as @a[scores={flipx=1..,mcc_matphase=0}] run function mcc:flip/x
-execute as @a[scores={flipz=1..,mcc_matphase=0}] run function mcc:flip/z
-execute as @a[scores={rotate90=1..,mcc_matphase=0}] run function mcc:rotate_edit/r90
 execute as @a[scores={rotate180=1..,mcc_matphase=0}] run function mcc:rotate_edit/r180
-execute as @a[scores={rotate270=1..,mcc_matphase=0}] run function mcc:rotate_edit/r270
 execute as @a[scores={previewclear=1..}] run function mcc:blueprint/clear
 execute as @a[scores={build=1..}] run function mcc:materials/build_start
 execute as @a[scores={materials=1..}] run function mcc:materials/check_start
@@ -71,6 +64,15 @@ execute as @a[scores={bpforward=1..,mcc_matphase=0}] at @s run function mcc:blue
 execute as @a[scores={bpbackward=1..,mcc_matphase=0}] at @s run function mcc:blueprint/nudge/backward
 execute as @a[scores={bpup=1..,mcc_matphase=0}] run function mcc:blueprint/nudge/up
 execute as @a[scores={bpdown=1..,mcc_matphase=0}] run function mcc:blueprint/nudge/down
+execute as @a[scores={bpturnright=1..,mcc_matphase=0}] run function mcc:state/bp_turn_right
+execute as @a[scores={bpturnleft=1..,mcc_matphase=0}] run function mcc:state/bp_turn_left
+execute as @a[scores={bpflip=1..,mcc_matphase=0}] at @s run function mcc:state/bp_flip_lr
+execute as @a[scores={bpflipfb=1..,mcc_matphase=0}] at @s run function mcc:state/bp_flip_fb
+execute as @a[scores={bpreset=1..,mcc_matphase=0}] run function mcc:state/bp_reset
+execute as @a[scores={turnright=1..,mcc_matphase=0}] run function mcc:rotate_edit/r90
+execute as @a[scores={turnleft=1..,mcc_matphase=0}] run function mcc:rotate_edit/r270
+execute as @a[scores={flip=1..,mcc_matphase=0}] at @s run function mcc:flip/left_right
+execute as @a[scores={flipfb=1..,mcc_matphase=0}] at @s run function mcc:flip/front_back
 execute as @a[scores={mcc_bpscan=1..}] run function mcc:blueprint/scan_batch
 execute as @a[scores={mcc_bpover_scan=1}] run function mcc:blueprint/recount_batch
 execute as @a[scores={mcc_matphase=1..2}] run function mcc:materials/process_batch
@@ -86,19 +88,13 @@ scoreboard players set @a[scores={v=1..}] v 0
 scoreboard players set @a[scores={undo=1..}] undo 0
 scoreboard players set @a[scores={redo=1..}] redo 0
 scoreboard players set @a[scores={mode=1..}] mode 0
-scoreboard players set @a[scores={rotate=1..}] rotate 0
-scoreboard players set @a[scores={mirror=1..}] mirror 0
 scoreboard players set @a[scores={right=1..}] right 0
 scoreboard players set @a[scores={left=1..}] left 0
 scoreboard players set @a[scores={up=1..}] up 0
 scoreboard players set @a[scores={down=1..}] down 0
 scoreboard players set @a[scores={forward=1..}] forward 0
 scoreboard players set @a[scores={backward=1..}] backward 0
-scoreboard players set @a[scores={flipx=1..}] flipx 0
-scoreboard players set @a[scores={flipz=1..}] flipz 0
-scoreboard players set @a[scores={rotate90=1..}] rotate90 0
 scoreboard players set @a[scores={rotate180=1..}] rotate180 0
-scoreboard players set @a[scores={rotate270=1..}] rotate270 0
 scoreboard players set @a[scores={previewclear=1..}] previewclear 0
 scoreboard players set @a[scores={build=1..}] build 0
 scoreboard players set @a[scores={materials=1..}] materials 0
@@ -108,6 +104,15 @@ scoreboard players set @a[scores={bpforward=1..}] bpforward 0
 scoreboard players set @a[scores={bpbackward=1..}] bpbackward 0
 scoreboard players set @a[scores={bpup=1..}] bpup 0
 scoreboard players set @a[scores={bpdown=1..}] bpdown 0
+scoreboard players set @a[scores={bpturnright=1..}] bpturnright 0
+scoreboard players set @a[scores={bpturnleft=1..}] bpturnleft 0
+scoreboard players set @a[scores={bpflip=1..}] bpflip 0
+scoreboard players set @a[scores={bpflipfb=1..}] bpflipfb 0
+scoreboard players set @a[scores={bpreset=1..}] bpreset 0
+scoreboard players set @a[scores={turnright=1..}] turnright 0
+scoreboard players set @a[scores={turnleft=1..}] turnleft 0
+scoreboard players set @a[scores={flip=1..}] flip 0
+scoreboard players set @a[scores={flipfb=1..}] flipfb 0
 
 scoreboard players enable @a copypaste
 scoreboard players enable @a cphelp
@@ -120,19 +125,13 @@ scoreboard players enable @a v
 scoreboard players enable @a undo
 scoreboard players enable @a redo
 scoreboard players enable @a mode
-scoreboard players enable @a rotate
-scoreboard players enable @a mirror
 scoreboard players enable @a right
 scoreboard players enable @a left
 scoreboard players enable @a up
 scoreboard players enable @a down
 scoreboard players enable @a forward
 scoreboard players enable @a backward
-scoreboard players enable @a flipx
-scoreboard players enable @a flipz
-scoreboard players enable @a rotate90
 scoreboard players enable @a rotate180
-scoreboard players enable @a rotate270
 scoreboard players enable @a previewclear
 scoreboard players enable @a build
 scoreboard players enable @a materials
@@ -142,3 +141,12 @@ scoreboard players enable @a bpforward
 scoreboard players enable @a bpbackward
 scoreboard players enable @a bpup
 scoreboard players enable @a bpdown
+scoreboard players enable @a bpturnright
+scoreboard players enable @a bpturnleft
+scoreboard players enable @a bpflip
+scoreboard players enable @a bpflipfb
+scoreboard players enable @a bpreset
+scoreboard players enable @a turnright
+scoreboard players enable @a turnleft
+scoreboard players enable @a flip
+scoreboard players enable @a flipfb

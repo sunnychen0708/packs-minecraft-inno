@@ -91,12 +91,28 @@ def wait_log(pos, pattern, timeout=20.0):
         time.sleep(0.25)
     return None
 
+VK_CONTROL, VK_A, VK_BACK = 0x11, 0x41, 0x08
+
+def clear_input():
+    """Select all + delete in the focused text box (the T that opened chat can leak into it)."""
+    _send(_key(VK_CONTROL)); tap(VK_A, 0.02); _send(_key(VK_CONTROL, True)); time.sleep(0.05)
+    tap(VK_BACK, 0.02); time.sleep(0.05)
+
 def chat(cmd, settle=0.6):
-    """Open chat with T, type the command like a player, press Enter."""
+    """Open chat with T, clear the box, type the command like a player, press Enter.
+    A command that reaches the log as a plain chat line (<player> ...) was not run: stop."""
     focus()
+    pos = log_len()
     tap(VK_T); time.sleep(0.35)
+    clear_input()
     type_text(cmd); time.sleep(0.15)
     tap(VK_RETURN); time.sleep(settle)
+    if cmd.startswith('/'):
+        out = log_since(pos)
+        if re.search(r'\[CHAT\] <[^>]+> ', out):
+            raise RuntimeError(f'command was sent as plain chat, not run: {cmd!r}')
+        if re.search(r'未知的|Unknown or incomplete command|Incorrect argument', out):
+            raise RuntimeError(f'command rejected: {cmd!r}: {out[-300:]!r}')
 
 def esc(n=1):
     focus()

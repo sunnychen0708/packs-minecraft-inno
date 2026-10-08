@@ -14,5 +14,5 @@ execute unless score @s mcc_ok matches 1 run return run function mcc:flip/fail_p
 function mcc:flip/cleanup_forceload
 function mcc:undo/snapshot_selection
 function mcc:history/commit_edit
-tellraw @s [{"text":"[Copy/Paste] Flip X 完成，可用 /trigger undo。","color":"green"}]
+tellraw @s [{"text":"[Copy/Paste] 翻轉完成，可用 /trigger undo 復原。","color":"green"}]
 return 1

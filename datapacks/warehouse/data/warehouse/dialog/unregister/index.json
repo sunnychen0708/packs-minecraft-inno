@@ -12,7 +12,7 @@
       "contents": {
         "text": "點「入口箱」可管理入口箱與六個溢位箱。\n只解除指定編號，不影響同一實體大箱的其他註冊，也不刪除箱內物品。"
       },
-      "width": 430
+      "width": 390
     }
   ],
   "pause": false,
@@ -20,16 +20,6 @@
   "after_action": "close",
   "columns": 2,
   "actions": [
-    {
-      "label": {
-        "text": "入口箱"
-      },
-      "width": 150,
-      "action": {
-        "type": "show_dialog",
-        "dialog": "warehouse:unregister/special"
-      }
-    },
     {
       "label": {
         "text": "區域 1"
@@ -88,6 +78,16 @@
       "action": {
         "type": "run_command",
         "command": "trigger wh_nav set 56"
+      }
+    },
+    {
+      "label": {
+        "text": "入口箱"
+      },
+      "width": 150,
+      "action": {
+        "type": "show_dialog",
+        "dialog": "warehouse:unregister/special"
       }
     }
   ],

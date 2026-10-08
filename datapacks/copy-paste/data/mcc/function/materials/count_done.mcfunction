@@ -7,10 +7,8 @@ scoreboard players set @s mcc_matkind 0
 scoreboard players set @s mcc_mattotal 0
 execute store result storage mcc:temp pid int 1 run scoreboard players get @s mcc_id
 function mcc:materials/eval_init with storage mcc:temp
-execute if score @s mcc_matjob matches 2 run function mcc:materials/report_all_start
-execute if score @s mcc_matjob matches 2 run scoreboard players set @s mcc_matphase 0
-execute if score @s mcc_matjob matches 2 run scoreboard players set @s mcc_matjob 0
-execute if score @s mcc_matjob matches 2 run return 1
+# A material check (job 2) only reports: it must never fall through to taking materials and building.
+execute if score @s mcc_matjob matches 2 run return run function mcc:materials/check_done
 execute if score @s mcc_matmiss matches 1 if score @s mcc_matjob matches 0 run function mcc:materials/report_missing
 execute if score @s mcc_matmiss matches 1 if score @s mcc_matjob matches 1 run function mcc:materials/report_missing_redo
 execute if score @s mcc_matmiss matches 1 run scoreboard players set @s mcc_matphase 0

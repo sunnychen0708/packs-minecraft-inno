@@ -4,7 +4,7 @@ This repository treats datapack validation as a release gate, not as a player-on
 
 ## Validation levels
 
-### 1. Generic static validation
+## 1. Generic static validation
 
 Run for every datapack change:
 
@@ -21,6 +21,8 @@ The validator checks:
 - Function tags resolve to existing functions or function tags.
 - Macro functions are not called without arguments.
 - Lines marked as macros with `$` must actually reference at least one `$(...)` variable.
+- A `$(...)` placeholder on a line without the `$` prefix fails (it would be printed or run literally); Dialog `dynamic/run_command` templates are exempt.
+- A `multi_action` Dialog shown from a function must have at least one action (Minecraft 26.3 refuses to open it otherwise).
 - Trigger objectives are inventoried; missing obvious enable/reset handling is reported as a warning.
 - User-facing trigger lifecycle is enforced in the pack-specific regression test when the pack depends on it.
 - A test ZIP can be built with `pack.mcmeta` and `data/` at archive root.
@@ -106,7 +108,7 @@ python3 scripts/test-copy-paste-runtime.py \
   --accept-eula
 ```
 
-It loads Copy/Paste together with Warehouse and checks Blueprint-only Copy/V behavior, all six Blueprint nudge directions, overwrite confirmation, read-only material reporting, all-or-nothing material-backed Build, material-aware Undo/Redo, Cut, Move, direct Rotate, and five-level history.
+It loads Copy/Paste together with Warehouse and checks Blueprint-only Copy/V behavior, all six Blueprint nudge directions, overwrite confirmation, read-only material reporting (also with complete stock), all-or-nothing material-backed Build taking from the carrier's own inventory before Warehouse, material-aware Undo/Redo, Cut, Move, direct Rotate, five-level history, and that every Dialog page parses on the official server.
 
 ## 5. Cross-pack compatibility gate
 
@@ -129,11 +131,15 @@ python3 scripts/test-datapack-compatibility.py \
 
 That boots all three datapacks in one Java 26.3 world and verifies representative Utilities, Warehouse, and Copy/Paste objectives/storage plus the shared Warehouse API. This proves the tested coexistence contract; it is not a replacement for each pack's dedicated behavioral regression.
 
-## 6. Client-only checks
+## 6. Real-client verification
 
-Manual player testing is the last resort, not the default validation strategy.
+Some things a headless server cannot show: `/trigger` dispatch for a real player, whether Dialog buttons can be clicked and fit the window, crosshair raycasts, and Dialog JSON that only loads when a world is opened. For these, `scripts/real-client/` (Windows) drives the real Minecraft client with OS-level keyboard and mouse input in a disposable test world and judges every result from the saved world files (region, entities, command storage, player data) — never from a datapack's own PASS messages.
 
-Use it only for behavior that a vanilla headless server cannot faithfully exercise, such as Dialog presentation, actual crosshair/key/mouse feel, or true simultaneous interaction by multiple logged-in clients. When a client-only check remains, document exactly what was not automated.
+- `mcdrive.py` sends input to the Minecraft window and refuses to type when it is not in the foreground; every command must reach the log as a real command, every trigger must be confirmed by the game's "triggered" line, and `/reload` must be followed by the pack's load message.
+- `mcworld.py` reads the save; `defaults.json` fills in the block-state defaults that 26.3 omits from palettes.
+- `stage*.py` scripts cover Warehouse registration and sorting, Copy/Paste Build/Undo/Redo, transforms, multi-chest charging, inventory charging, Dialog navigation and more; see `datapacks/copy-paste/LIVE-VALIDATION.md` and `docs/HANDOFF.md`.
+
+Two simultaneous real clients have not been tested yet; when a client-only check remains, document exactly what was not covered.
 
 ## Release rule
 

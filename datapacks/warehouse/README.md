@@ -1,4 +1,4 @@
-# Warehouse v4.4.1
+# Warehouse v4.5
 
 Minecraft Java 26.3 automatic sorting warehouse data pack.
 
@@ -6,9 +6,72 @@ The actual pack source lives directly in this directory. Keep `pack.mcmeta` and 
 
 ## Release
 
-Current source version: `v4.4.1` (not yet released)
+Current version: `v4.5`
 
-Latest published release: `warehouse-v4.4.zip`
+Latest published release: `warehouse-v4.5.zip`
+
+## 玩家說明
+
+按 **G** 開啟自動分類倉庫主畫面。
+
+### 安裝／升級
+
+1. 移除舊版 Minecraft_Warehouse_26.2_v*.zip、Minecraft_Warehouse_26.3_v*.zip 或舊 warehouse-v*.zip；不要同時載入兩份。
+2. 將 warehouse-v4.5.zip 放入世界 datapacks 資料夾。
+3. 退出世界再重新進入（Dialog 介面只在進入世界時載入，只打 /reload 不會更新介面）。
+4. 既有 61 箱註冊、玩家分類覆寫、自訂箱名、scoreboard 與其他世界資料會沿用；migration 不會重設這些資料。
+
+### 查詢／分類設定
+
+- G →「查詢物品」，或「分類設定」→「打字選擇物品」。
+- 支援繁中名稱、分類名稱、Minecraft ID；一個中文字也可搜尋。
+- 查詢結果會顯示目前分類箱與有庫存／無庫存／箱未註冊／箱失效狀態。
+- 點結果可新增、移動或移除分類，並可直接 Highlight 或取一組。
+- 修改分類後，舊主分類箱內相同 base item ID 的既有庫存會背景搬往新分類箱。
+- 搬移沿用主箱 → 同區溢位箱 → 放不下保留來源的安全搬運邏輯。
+- 每次搜尋最多採用前 30 筆結果。
+- 自由文字 Dialog 仍會出現 Minecraft 原版高權限確認頁，純 Vanilla 無法取消。
+
+### 自動整理控制（需 OP）
+
+```mcfunction
+/function warehouse:system/on
+/function warehouse:system/off
+/function warehouse:system/toggle
+```
+
+預設開啟。
+
+### 舊資料相容性
+
+- 可從 Minecraft 26.2 v3.2、26.3 v3.3/v3.4、Warehouse v4.0～v4.4 直接升級。
+- 不重設 warehouse:chests：61 箱座標、dimension 與其他既有註冊 metadata 保留。
+- 不重設 warehouse:boxnames：玩家自訂箱名保留。
+- 不重設 warehouse:rules overrides：玩家新增／移動／移除的分類覆寫保留。
+- 不更名既有 scoreboard objectives；既有玩家與系統分數可繼續使用。
+- v4.0～v4.5 migrations 都以可再生成資料或版本 marker 為主；目前 v4.5 marker 不會清空既有世界資料。
+- 搜尋索引屬可重建資料；v4.2 起使用 72-shard 建立流程。
+
+### 目前限制
+
+- 尚未提供「依箱子瀏覽全部分類規則」與「一鍵清空該箱全部分類」。
+- 尚未提供入口箱「未分類物品清單 → 直接批次設定」頁面。
+- 尚未提供完整的滿箱／溢位滿／箱子失效通知中心與快速重新註冊提示。
+- 一般背景整理本身不會永久自動管理所有倉庫 chunk 的 forceload；共用 API 呼叫只會暫時處理它需要的來源 chunk。
+- 尚未正式支援自訂維度。
+- 查看倉庫遇到名稱表之外的新物品時，可能顯示 Minecraft ID。
+- 純 Vanilla Datapack 無法提供伺服器硬崩潰瞬間的資料庫級 transaction 保證。
+- 真正的滑鼠中鍵事件無法由純 Vanilla datapack 可靠偵測，因此 Pick 使用 Trigger / Dialog。
+
+### Minecraft 26.3 新物品分類（v4.0 起）
+
+- 28 交通運輸：楊木船、儲物箱楊木船。
+- 35 沙岩建材：16 色混凝土階梯、16 色混凝土半磚。
+- 36 原木木材：楊木原木、楊木塊、剝皮楊木原木、剝皮楊木塊、楊木材。
+- 37 木製建材：楊木階梯、半磚、柵欄、柵欄門、按鈕、壓力板、門、地板門、告示牌、懸掛式告示牌、展示架。
+- 41 探索導航：26.3 的 16 種獨立 Explorer Map 物品。
+- 52 羊毛織染：16 色羊毛階梯、16 色羊毛半磚、16 色坐墊、乾草床。
+- 56 林地生態：楊木樹苗、紅／橙／黃楊木樹葉、層孔菇、紅灌木。
 
 ## Version history
 

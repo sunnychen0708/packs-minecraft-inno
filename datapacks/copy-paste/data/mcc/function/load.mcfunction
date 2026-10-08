@@ -9,19 +9,13 @@ scoreboard objectives add x trigger
 scoreboard objectives add undo trigger
 scoreboard objectives add redo trigger
 scoreboard objectives add mode trigger
-scoreboard objectives add rotate trigger
-scoreboard objectives add rotate90 trigger
 scoreboard objectives add rotate180 trigger
-scoreboard objectives add rotate270 trigger
-scoreboard objectives add mirror trigger
 scoreboard objectives add right trigger
 scoreboard objectives add left trigger
 scoreboard objectives add up trigger
 scoreboard objectives add down trigger
 scoreboard objectives add forward trigger
 scoreboard objectives add backward trigger
-scoreboard objectives add flipx trigger
-scoreboard objectives add flipz trigger
 scoreboard objectives add previewclear trigger
 scoreboard objectives add build trigger
 scoreboard objectives add materials trigger
@@ -31,6 +25,15 @@ scoreboard objectives add bpforward trigger
 scoreboard objectives add bpbackward trigger
 scoreboard objectives add bpup trigger
 scoreboard objectives add bpdown trigger
+scoreboard objectives add bpturnright trigger
+scoreboard objectives add bpturnleft trigger
+scoreboard objectives add bpflip trigger
+scoreboard objectives add bpflipfb trigger
+scoreboard objectives add bpreset trigger
+scoreboard objectives add turnright trigger
+scoreboard objectives add turnleft trigger
+scoreboard objectives add flip trigger
+scoreboard objectives add flipfb trigger
 scoreboard objectives add mcc_id dummy
 scoreboard objectives add mcc_has1 dummy
 scoreboard objectives add mcc_has2 dummy
@@ -249,9 +252,9 @@ scoreboard players set #hgap mcc_id 320
 scoreboard players set #one mcc_id 1
 scoreboard players set #zero mcc_id 0
 scoreboard players set #neg mcc_id -1
+function mcc:names/load
 
 # Shared temporary loot barrel lane used only while deriving the Blueprint BOM.
 execute in minecraft:overworld run forceload add 20008000 20008000
 execute in minecraft:overworld run setblock 20008008 64 20008008 air
 
-tellraw @a [{"text":"[Copy/Paste] ","color":"gold"},{"text":"v1.3 已載入。輸入 ","color":"gray"},{"text":"/trigger copypaste","color":"yellow"},{"text":" 開啟控制面板；","color":"gray"},{"text":"/trigger cphelp","color":"yellow"},{"text":" 開啟指令教學。","color":"gray"}]

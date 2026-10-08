@@ -19,4 +19,3 @@ scoreboard objectives remove clearportal
 scoreboard objectives remove cleartemp
 
 data modify storage allinone:meta version set value "26.3-3.0"
-tellraw @a [{"text":"[屁眼派對] ","color":"gold"},{"text":"已載入。輸入 ","color":"gray"},{"text":"/trigger help","color":"aqua","click_event":{"action":"run_command","command":"/trigger help"},"hover_event":{"action":"show_text","value":{"text":"點擊開啟功能總覽","color":"yellow"}}},{"text":" 查看全部功能與開關。","color":"gray"}]
