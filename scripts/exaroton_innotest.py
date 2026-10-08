@@ -323,6 +323,54 @@ def inno_identity_status(token):
         "world_uuids_not_present_in_whitelist_usercache_ops": unexplained,
     }
 
+
+def inno_world_layout_status(token):
+    """Inspect only directory metadata needed to locate 26.3 player identity files."""
+    client = InnoReadOnlyClient(token)
+    server = client.target()
+    sid = server["id"]
+    properties = client.read_file_optional(sid, "server.properties")
+    if properties is None:
+        raise Error("inno server.properties not found")
+    world = level_name(properties)
+    candidates = [
+        world,
+        f"{world}/players",
+        f"{world}/players/data",
+        f"{world}/players/advancements",
+        f"{world}/players/stats",
+        f"{world}/dimensions",
+        f"{world}/dimensions/minecraft",
+        f"{world}/dimensions/minecraft/overworld",
+        f"{world}/dimensions/minecraft/overworld/playerdata",
+        f"{world}/dimensions/minecraft/overworld/advancements",
+        f"{world}/dimensions/minecraft/overworld/stats",
+    ]
+    result = {"world": world, "paths": {}}
+    for path in candidates:
+        info = client.file_info_optional(sid, path)
+        if info is None:
+            result["paths"][path] = None
+            continue
+        children = []
+        for child in (info.get("children") or []):
+            if not isinstance(child, dict):
+                continue
+            children.append({
+                "name": child.get("name"),
+                "path": child.get("path"),
+                "isDirectory": child.get("isDirectory"),
+                "size": child.get("size"),
+            })
+        result["paths"][path] = {
+            "path": info.get("path"),
+            "name": info.get("name"),
+            "isDirectory": info.get("isDirectory"),
+            "children": children,
+        }
+    return result
+
+
 def pack_zip(name):
     if name not in PACKS: raise Error(f"unsupported datapack: {name}")
     base = ROOT / "datapacks" / name
@@ -596,11 +644,12 @@ def migrate_inno_online_to_innotest_offline(client, token):
         )
 
     result = {}
+    # Minecraft Java 26.3 stores per-player files below world/players/*.
     specs = [
-        ("playerdata", ".dat"),
-        ("playerdata", ".dat_old"),
-        ("advancements", ".json"),
-        ("stats", ".json"),
+        ("players/data", ".dat"),
+        ("players/data", ".dat_old"),
+        ("players/advancements", ".json"),
+        ("players/stats", ".json"),
     ]
 
     for name in BOT_PLAYERS:
@@ -740,9 +789,49 @@ def run(path):
         print("\n".join(selected[-200:]))
     elif op == "inno-identity-status":
         print(json.dumps(inno_identity_status(os.environ.get("EXAROTON_API_TOKEN", "")), ensure_ascii=False, indent=2))
+    elif op == "inno-world-layout-status":
+        print(json.dumps(inno_world_layout_status(os.environ.get("EXAROTON_API_TOKEN", "")), ensure_ascii=False, indent=2))
     elif op in {"inno-uuid-migrate-dry-run", "inno-uuid-migrate-apply"}:
-        from exaroton_inno_uuid_migrate import plan_or_apply
-        plan_or_apply("dry-run" if op.endswith("dry-run") else "apply")
+        import subprocess
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", "nbtlib==1.12.1"])
+        import exaroton_inno_uuid_migrate as migration
+        original_remote_path = migration.remote_path
+        migration.remote_path = lambda p: original_remote_path(str(p).lstrip("/"))
+
+        def _read_file_optional(self, path):
+            try:
+                data = self.req(
+                    "GET",
+                    f"/servers/{self._sidq()}/files/data/{migration.remote_path(path)}",
+                    raw_response=True,
+                )
+                if data == b"" and str(path).endswith(".mca"):
+                    info = self.info_optional(path)
+                    size = int((info or {}).get("size") or 0)
+                    if size == 0:
+                        print(f"skipping empty region file: {path}")
+                        return None
+                    raise migration.Error(
+                        f"binary region download returned 0 bytes for {path} "
+                        f"but exaroton reports size={size}"
+                    )
+                return data
+            except migration.Error as e:
+                if "HTTP 404" in str(e):
+                    return None
+                raise
+
+        def _write_file(self, path, data):
+            self.require_offline()
+            self.req(
+                "PUT",
+                f"/servers/{self._sidq()}/files/data/{migration.remote_path(path)}",
+                raw=data,
+            )
+
+        migration.Client.read_file_optional = _read_file_optional
+        migration.Client.write_file = _write_file
+        migration.plan_or_apply("dry-run" if op.endswith("dry-run") else "apply")
     else: raise Error(f"unsupported operation: {op}")
 
 if __name__ == "__main__":
