@@ -1,6 +1,6 @@
 {
-  "request_id": 9,
-  "operation": "identity-status",
+  "request_id": 16,
+  "operation": "migrate-inno-online-to-innotest-offline",
   "command": "",
   "pack": ""
 }

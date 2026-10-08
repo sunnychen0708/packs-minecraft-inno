@@ -65,6 +65,6 @@ jobs:
         shell: bash
         env:
           MF26_HOST: innotest.exaroton.me
-          MF26_BOTS: InnoBot1,InnoBot2,InnoBot3,InnoBot4
+          MF26_BOTS: SunnyChen,penguin0531,geena0701,Felicitypeng
           MF26_DURATION_MS: ${{ steps.request.outputs.duration_ms }}
         run: node scripts/mineflayer26/keepalive.js

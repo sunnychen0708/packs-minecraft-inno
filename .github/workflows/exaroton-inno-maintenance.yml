@@ -1,0 +1,46 @@
+name: inno offline UUID maintenance
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "ops/inno-maintenance-request.json"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: inno-offline-uuid-maintenance
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Install NBT parser
+        run: python3 -m pip install "nbtlib==1.12.1"
+
+      - name: Run requested offline maintenance
+        shell: bash
+        env:
+          EXAROTON_API_TOKEN: ${{ secrets.EXAROTON_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          mode="$(python3 - <<'PY'
+          import json
+          with open("ops/inno-maintenance-request.json", encoding="utf-8") as handle:
+              request = json.load(handle)
+          op = request.get("operation")
+          if op == "uuid-migrate-dry-run":
+              print("dry-run")
+          elif op == "uuid-migrate-apply":
+              print("apply")
+          else:
+              raise SystemExit(f"unsupported maintenance operation: {op!r}")
+          PY
+          )"
+          python3 scripts/exaroton_inno_uuid_migrate.py "$mode"
