@@ -19,9 +19,13 @@ execute as @a unless score @s mcc_materr matches 0..1 run scoreboard players set
 execute as @a unless score @s mcc_histmat matches 0..1 run scoreboard players set @s mcc_histmat 0
 execute as @a unless score @s mcc_umat matches 0..1 run scoreboard players set @s mcc_umat 0
 execute as @a unless score @s mcc_rmat matches 0..1 run scoreboard players set @s mcc_rmat 0
-execute as @a unless score @s mcc_matjob matches 0..1 run scoreboard players set @s mcc_matjob 0
+execute as @a unless score @s mcc_matjob matches 0..2 run scoreboard players set @s mcc_matjob 0
 execute as @a unless score @s mcc_txslot matches 0..5 run scoreboard players set @s mcc_txslot 0
-execute as @a[scores={copypaste=1..}] run function mcc:panel
+execute as @a unless score @s mcc_bpover matches 0.. run scoreboard players set @s mcc_bpover 0
+execute as @a unless score @s mcc_buildconfirm matches 0..1 run scoreboard players set @s mcc_buildconfirm 0
+execute as @a unless score @s mcc_bpover_scan matches 0..1 run scoreboard players set @s mcc_bpover_scan 0
+execute as @a unless score @s mcc_bpoindex matches 0.. run scoreboard players set @s mcc_bpoindex 0
+execute as @a[scores={copypaste=1..}] run function mcc:ui/open
 
 execute as @a[scores={pos1=1..}] at @s run function mcc:select/start_pos1
 execute as @a[scores={pos2=1..}] at @s run function mcc:select/start_pos2
@@ -55,7 +59,15 @@ execute as @a[scores={rotate180=1..,mcc_matphase=0}] run function mcc:rotate_edi
 execute as @a[scores={rotate270=1..,mcc_matphase=0}] run function mcc:rotate_edit/r270
 execute as @a[scores={previewclear=1..}] run function mcc:blueprint/clear
 execute as @a[scores={build=1..}] run function mcc:materials/build_start
+execute as @a[scores={materials=1..}] run function mcc:materials/check_start
+execute as @a[scores={bpleft=1..,mcc_matphase=0}] at @s run function mcc:blueprint/nudge/left
+execute as @a[scores={bpright=1..,mcc_matphase=0}] at @s run function mcc:blueprint/nudge/right
+execute as @a[scores={bpforward=1..,mcc_matphase=0}] at @s run function mcc:blueprint/nudge/forward
+execute as @a[scores={bpbackward=1..,mcc_matphase=0}] at @s run function mcc:blueprint/nudge/backward
+execute as @a[scores={bpup=1..,mcc_matphase=0}] run function mcc:blueprint/nudge/up
+execute as @a[scores={bpdown=1..,mcc_matphase=0}] run function mcc:blueprint/nudge/down
 execute as @a[scores={mcc_bpscan=1..}] run function mcc:blueprint/scan_batch
+execute as @a[scores={mcc_bpover_scan=1}] run function mcc:blueprint/recount_batch
 execute as @a[scores={mcc_matphase=1..2}] run function mcc:materials/process_batch
 
 scoreboard players set @a[scores={copypaste=1..}] copypaste 0
@@ -83,6 +95,13 @@ scoreboard players set @a[scores={rotate180=1..}] rotate180 0
 scoreboard players set @a[scores={rotate270=1..}] rotate270 0
 scoreboard players set @a[scores={previewclear=1..}] previewclear 0
 scoreboard players set @a[scores={build=1..}] build 0
+scoreboard players set @a[scores={materials=1..}] materials 0
+scoreboard players set @a[scores={bpleft=1..}] bpleft 0
+scoreboard players set @a[scores={bpright=1..}] bpright 0
+scoreboard players set @a[scores={bpforward=1..}] bpforward 0
+scoreboard players set @a[scores={bpbackward=1..}] bpbackward 0
+scoreboard players set @a[scores={bpup=1..}] bpup 0
+scoreboard players set @a[scores={bpdown=1..}] bpdown 0
 
 scoreboard players enable @a copypaste
 scoreboard players enable @a pos1
@@ -109,3 +128,10 @@ scoreboard players enable @a rotate180
 scoreboard players enable @a rotate270
 scoreboard players enable @a previewclear
 scoreboard players enable @a build
+scoreboard players enable @a materials
+scoreboard players enable @a bpleft
+scoreboard players enable @a bpright
+scoreboard players enable @a bpforward
+scoreboard players enable @a bpbackward
+scoreboard players enable @a bpup
+scoreboard players enable @a bpdown

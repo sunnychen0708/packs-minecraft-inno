@@ -32,7 +32,7 @@ scoreboard players set @s mcc_ok 0
 execute if score @s mcc_dstd matches 1 run function mcc:undo/backup_from_overworld with storage mcc:temp
 execute if score @s mcc_dstd matches 2 run function mcc:undo/backup_from_nether with storage mcc:temp
 execute if score @s mcc_dstd matches 3 run function mcc:undo/backup_from_end with storage mcc:temp
-execute unless score @s mcc_ok matches 1 run tellraw @s [{"text":"[Copy/Paste] 施工前 Undo 備份失敗；未改動世界，材料已退還。","color":"red"}]
+execute unless score @s mcc_ok matches 1 run tellraw @s [{"text":"[Copy/Paste] 施工前 Undo 備份失敗；未改動世界，材料已退回 Warehouse。","color":"red"}]
 execute unless score @s mcc_ok matches 1 run function mcc:materials/refund_taken_start
 execute unless score @s mcc_ok matches 1 run scoreboard players set @s mcc_matphase 0
 execute unless score @s mcc_ok matches 1 run return fail
@@ -59,7 +59,7 @@ execute store result storage mcc:temp build.dx2 int 1 run scoreboard players get
 execute store result storage mcc:temp build.dz2 int 1 run scoreboard players get @s mcc_dstz2
 scoreboard players set @s mcc_ok 0
 function mcc:materials/place_buffer with storage mcc:temp build
-execute unless score @s mcc_ok matches 1 run tellraw @s [{"text":"[Copy/Paste] 施工失敗；世界未確認成功，材料已退還，Blueprint 保留。","color":"red"}]
+execute unless score @s mcc_ok matches 1 run tellraw @s [{"text":"[Copy/Paste] 施工失敗；世界未確認成功，材料已退回 Warehouse，Blueprint 保留。","color":"red"}]
 execute unless score @s mcc_ok matches 1 run function mcc:materials/refund_taken_start
 execute unless score @s mcc_ok matches 1 run scoreboard players set @s mcc_matphase 0
 execute unless score @s mcc_ok matches 1 run return fail

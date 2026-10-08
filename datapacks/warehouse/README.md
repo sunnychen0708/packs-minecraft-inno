@@ -65,6 +65,8 @@ Withdrawal is **all-or-nothing**. The API first counts the same plain stacks acr
 function warehouse:api/refund_item {item_id:"minecraft:stone",count:50}
 ```
 
-Refund always targets Warehouse entry chest `c00`; Warehouse's normal sorter remains responsible for routing returned items afterward. The endpoint probes the item's vanilla max stack size, merges into existing plain stacks first, then uses empty entry slots. The result exposes `inserted` and `remaining`. A full entry chest returns `error:"entry_full"` rather than deleting the remainder.
+Refund always targets Warehouse entry chest `c00`; Warehouse's normal sorter remains responsible for routing returned items afterward. The endpoint probes the item's vanilla max stack size, merges into existing plain stacks first, then uses empty entry slots.
+
+Refund is durable: if `c00` is full, temporarily unavailable, stale, or not currently registered, the physical remainder is appended to `storage warehouse:api pending_refunds` before the API returns. The result reports `inserted`, `queued`, `deferred`, and leaves `remaining:0` once Warehouse has accepted responsibility for a valid positive refund. `warehouse:tick` retries one pending entry per tick without overwriting the last public API result. This lets callers such as Copy/Paste finish an Undo safely even when the entry chest cannot accept every returned stack immediately.
 
 `resolve_block` and `highlight` will be added on top of this same API/storage contract in their dedicated implementation phases. They should not duplicate Warehouse registration data.

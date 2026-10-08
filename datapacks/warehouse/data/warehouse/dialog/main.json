@@ -10,7 +10,7 @@
     {
       "type": "minecraft:plain_message",
       "contents": {
-        "text": "v3.4 - 自動分類、背景堆疊、箱子管理、分類設定、庫存查看、物品查詢。\n查詢可顯示目前分類箱是否已有該物品；移動分類會背景搬移舊主箱庫存。"
+        "text": "v4.2 - 自動分類、背景堆疊、箱子管理、分類設定、庫存查看、物品查詢。\\n查詢可顯示目前分類箱是否已有該物品；移動分類會背景搬移舊主箱庫存。"
       },
       "width": 390
     }
@@ -58,6 +58,16 @@
       "action": {
         "type": "show_dialog",
         "dialog": "warehouse:search"
+      }
+    },
+    {
+      "label": {
+        "text": "建築工具"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger copypaste set 1"
       }
     },
     {

@@ -65,6 +65,7 @@ def main() -> None:
 
     load = (PACK / "data/warehouse/function/load.mcfunction").read_text(encoding="utf-8")
     assert "execute unless data storage warehouse:meta v42 run function warehouse:migrate_v42" in load
+    assert "execute unless data storage warehouse:meta v43 run function warehouse:migrate_v43" in load
 
     api_refresh = (PACK / "data/warehouse/function/api/material_sources/refresh.mcfunction").read_text(encoding="utf-8")
     api_append = (PACK / "data/warehouse/function/api/material_sources/append.mcfunction").read_text(encoding="utf-8")
@@ -88,6 +89,8 @@ def main() -> None:
     api_take_stack = (PACK / "data/warehouse/function/api/internal/take_stack.mcfunction").read_text(encoding="utf-8")
     api_refund = (PACK / "data/warehouse/function/api/refund_item.mcfunction").read_text(encoding="utf-8")
     api_refund_entry = (PACK / "data/warehouse/function/api/internal/refund_entry.mcfunction").read_text(encoding="utf-8")
+    api_refund_finalize = (PACK / "data/warehouse/function/api/internal/refund_finalize.mcfunction").read_text(encoding="utf-8")
+    api_pending_tick = (PACK / "data/warehouse/function/api/pending_refunds/tick.mcfunction").read_text(encoding="utf-8")
     assert "function warehouse:api/material_sources/refresh" in api_count
     assert "source_limit:64" in api_count
     assert "forceload query" in api_count_source
@@ -100,7 +103,6 @@ def main() -> None:
     assert "result.stale_sources" in api_count
     assert "function warehouse:api/count_item" in api_take
     assert "insufficient_stock" in api_take
-    assert "function warehouse:api/count_item" in api_take
     assert "source_unavailable" in api_take
     assert "data get storage warehouse:api work.stack.components" in api_take_stack
     assert "container.$(api_slot)" in api_take_stack
@@ -109,8 +111,31 @@ def main() -> None:
     assert "probe_max_stack" in api_refund_entry
     assert "entry_full" in api_refund_entry
     assert "scoreboard players set #api_plain wh_tmp 1" in api_refund_entry
+    assert "warehouse:sort/transport/main_valid" in api_refund_entry
+    assert "pending_refunds append" in api_refund_finalize
+    assert "result.queued" in api_refund_finalize
+    assert "pending_refunds[0]" in api_pending_tick
+    assert "work.saved_result" in api_pending_tick
 
-    print("PASS warehouse regression: reset/search are bounded; shared count/take/refund API is present and component-safe")
+    main_dialog = (PACK / "data/warehouse/dialog/main.json").read_text(encoding="utf-8")
+    assert "v4.2" in main_dialog
+    assert "建築工具" in main_dialog
+    assert "trigger copypaste set 1" in main_dialog
+
+    api_highlight = (PACK / "data/warehouse/function/api/highlight.mcfunction").read_text(encoding="utf-8")
+    highlight_slot = (PACK / "data/warehouse/function/api/highlight_slot.mcfunction").read_text(encoding="utf-8")
+    highlight_box = (PACK / "data/warehouse/function/api/internal/highlight_box.mcfunction").read_text(encoding="utf-8")
+    show_classified = (PACK / "data/warehouse/function/rule/show_classified.mcfunction").read_text(encoding="utf-8")
+    assert "warehouse:chests c$(code)" in highlight_slot
+    assert highlight_slot.splitlines()[0] == "data remove storage warehouse:api work.highlight"
+    assert all(not line.startswith("$") or "$(" in line for line in highlight_slot.splitlines()), "Highlight macro lines must reference a macro variable"
+    assert "return run function warehouse:api/highlight_slot with storage warehouse:api request" in api_highlight
+    assert "particle minecraft:end_rod" in highlight_box
+    assert "force @s" in highlight_box
+    assert "Highlight 箱子" in show_classified
+    assert "trigger wh_highlight set 1" in show_classified
+
+    print("PASS warehouse regression: reset/search/API/Highlight are bounded and validated")
 
 
 if __name__ == "__main__":

@@ -173,14 +173,18 @@ def repo_function_exists(fid: str) -> bool:
 def check_function_references(functions: dict[str, Path]):
     missing = []
     direct_macro_calls = []
+    empty_macro_lines = []
     macro_functions = {}
 
     for fid, path in functions.items():
         text = path.read_text(encoding="utf-8")
         placeholders = set()
-        for line in text.splitlines():
+        for line_no, line in enumerate(text.splitlines(), 1):
             if line.startswith("$"):
-                placeholders.update(MACRO_ARG_RE.findall(line))
+                args = MACRO_ARG_RE.findall(line)
+                if not args:
+                    empty_macro_lines.append((fid, line_no))
+                placeholders.update(args)
         if placeholders:
             macro_functions[fid] = placeholders
 
@@ -207,6 +211,10 @@ def check_function_references(functions: dict[str, Path]):
     if direct_macro_calls:
         details = ", ".join(f"{src}:{line} -> {ref}" for src, line, ref in direct_macro_calls[:20])
         raise ValidationError(f"Macro functions called without arguments: {details}")
+
+    if empty_macro_lines:
+        details = ", ".join(f"{src}:{line}" for src, line in empty_macro_lines[:20])
+        raise ValidationError(f"Macro lines without variables: {details}")
 
     return macro_functions
 

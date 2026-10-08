@@ -227,6 +227,23 @@ def integration(java: Path, server: Path) -> None:
     lines.append(f'execute as {actor} run function warehouse:api/take_item {{item_id:"minecraft:stone",count:1}}')
     check('if data storage warehouse:api result{operation:"take_item",ok:0b,complete:0b,taken:0,error:"source_unavailable"}', "api_take_refuses_stale_snapshot")
 
+    # Durable refund queue: a full c00 accepts the refund debt, then drains after space appears.
+    lines.append("data remove storage warehouse:api pending_refunds")
+    for slot in range(27):
+        lines.append(f'item replace block 9 70 5 container.{slot} with minecraft:cobblestone 64')
+        lines.append(f'item replace block 10 70 5 container.{slot} with minecraft:cobblestone 64')
+    lines.append(f'execute as {actor} run function warehouse:api/refund_item {{item_id:"minecraft:stone",count:10}}')
+    check('if data storage warehouse:api result{operation:"refund_item",ok:1b,complete:1b,inserted:0,queued:10,remaining:0,deferred:1b}', "api_refund_full_entry_queues")
+    check('if data storage warehouse:api pending_refunds[{item_id:"minecraft:stone",count:10}]', "api_refund_pending_persisted")
+    lines.extend(
+        [
+            "item replace block 9 70 5 container.0 with minecraft:air",
+            "function warehouse:api/pending_refunds/tick",
+        ]
+    )
+    check('unless data storage warehouse:api pending_refunds[0]', "api_refund_pending_drained")
+    check('if data block 9 70 5 Items[{Slot:0b,id:"minecraft:stone",count:10}]', "api_refund_pending_materialized")
+
     lines.extend(
         [
             f"execute if score #pass whst matches {len(assertions)} if score #fail whst matches 0 run say WHST_REGRESSION_SUCCESS",

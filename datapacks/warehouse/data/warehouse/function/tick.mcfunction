@@ -9,6 +9,7 @@ scoreboard players enable @a wh_unreg_do
 scoreboard players enable @a wh_unreg
 scoreboard players enable @a wh_search_pick
 scoreboard players enable @a wh_viewpage
+scoreboard players enable @a wh_highlight
 execute as @a[scores={wh_nav=1..}] run function warehouse:ui/nav
 execute as @a[scores={wh_register=100}] run function warehouse:ui/select_00
 execute as @a[scores={wh_register=10..19}] run function warehouse:ui/select_code
@@ -34,6 +35,8 @@ execute as @a[scores={wh_action=5}] run scoreboard players set @s wh_action 0
 execute as @a[scores={wh_view=1..}] run function warehouse:view/dispatch
 execute as @a[scores={wh_viewpage=1..7}] run function warehouse:view/page/dispatch
 execute as @a[scores={wh_search_pick=1..1544}] run function warehouse:rule/select_search
+execute as @a[scores={wh_highlight=1..}] run function warehouse:highlight/from_rule
+execute as @a[scores={wh_highlight=1..}] run scoreboard players set @s wh_highlight 0
 execute as @a[scores={wh_rule=1}] run function warehouse:rule/show_current
 execute as @a[scores={wh_rule=2}] run function warehouse:rule/remove_current
 execute as @a[scores={wh_rule=3}] run scoreboard players set @s wh_rule 0
@@ -53,6 +56,7 @@ execute as @a[scores={wh_rule_dest=50}] run scoreboard players set @s wh_rule_de
 execute as @a[scores={wh_rule_dest=60}] run scoreboard players set @s wh_rule_dest 0
 execute as @a[scores={wh_rule_dest=70..}] run scoreboard players set @s wh_rule_dest 0
 execute if score #enabled wh_sys matches 1 if data storage warehouse:chests c00{registered:1b,valid:1b} run function warehouse:sort/tick
+function warehouse:api/pending_refunds/tick
 execute as @a[scores={wh_unreg=10..69}] run function warehouse:unregister/prepare
 execute as @a[scores={wh_unreg=100}] run function warehouse:unregister/prepare
 execute as @a[scores={wh_unreg_do=1}] run function warehouse:unregister/do
