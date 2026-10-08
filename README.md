@@ -17,7 +17,7 @@
 
 Each pack is stored as unpacked source. Release ZIPs are generated artifacts rather than development source.
 
-Copy/Paste source is **v1.0**. Copy now uses Blueprint-first, material-backed construction: players may register any number of independent material containers, preview/rotate/mirror first, then build only when every required material is available. Cut remains a one-time real move. Undo/Redo stays five-level per player. See its [multiplayer validation notes](datapacks/copy-paste/MULTIPLAYER-VALIDATION.md).
+Copy/Paste source is **v1.0**. Copy now uses Blueprint-first, material-backed construction backed by the shared Warehouse registration data and inventory API: preview/rotate/mirror first, then build only when every required material is available. Cut remains a one-time real move. Undo/Redo stays five-level per player. See its [multiplayer validation notes](datapacks/copy-paste/MULTIPLAYER-VALIDATION.md).
 
 ## Installation
 
