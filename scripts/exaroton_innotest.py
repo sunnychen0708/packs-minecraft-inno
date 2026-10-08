@@ -1273,7 +1273,7 @@ LIVE_SUITES = {
     "warehouse": ("build-warehouse-live-test.py", "warehouse-live-test"),
     **{
         "copy-paste-gap-" + case: ("build-copy-paste-gap-live-test.py", "copy-paste-gap-live-test")
-        for case in ("external", "modes", "dimensions", "history")
+        for case in ("external", "modes", "dimensions", "history", "materials")
     },
 }
 
