@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Isolated vanilla 26.3 behavioral regression for Copy/Paste v1.4.
+"""Isolated vanilla 26.3 behavioral regression for Copy/Paste v1.6.
 
 Uses a non-player armor stand test actor to exercise internal datapack functions.
 This complements (not replaces) the opt-in real-player trigger/client harnesses.
@@ -20,6 +20,10 @@ PACK=ROOT/'datapacks/copy-paste'
 WAREHOUSE=ROOT/'datapacks/warehouse'
 sys.path.insert(0,str(ROOT/'scripts'))
 import mcc_house as house
+
+# /forceload block ranges (x0, z0, x1, z1): every fixture chunk including the raycast stones at
+# x/z=-4, the long-Z Move audit column (x=70, z=0..230) and the 3D house section (x=92..143, z=0..47).
+FORCELOAD=[(-16,-16,47,31),(64,0,79,239),(92,0,143,47)]
 
 def integration(java: Path, server: Path):
     work=ROOT/'dist'/('copy-paste-runtime-'+uuid.uuid4().hex[:8])
@@ -150,6 +154,7 @@ def integration(java: Path, server: Path):
         f'scoreboard players set {actor} mcc_clip 0',
         f'data merge entity {actor} {{Rotation:[180f,0f]}}',
     ])
+    check('if block 0 81 -4 stone if block 0 81 -3 air','raycast_v_fixture_placed')
     run_as('mcc:select/start_paste')
     check(f'if score {actor} mcc_dstx matches 0 if score {actor} mcc_dsty matches 81 if score {actor} mcc_dstz matches -3','raycast_v_adjacent_cell_north')
     lines.extend([
@@ -1046,6 +1051,55 @@ def integration(java: Path, server: Path):
     check('if data storage mcc:materials p991.bom."minecraft:oak_planks"{invhave:2,have:2}','inventory_count_sees_offhand')
     lines.extend([f'item replace entity {actor} weapon.offhand with minecraft:air', 'data remove storage mcc:materials p991'])
 
+    # Clearing or rebuilding a Blueprint must cancel a pending overlap recount and
+    # release its forceload. A 17-wide row puts the actor's buffer (x=20019712,
+    # chunk-aligned) across two X chunks; turned 90° it spans two Z chunks instead,
+    # so the second X chunk is only released if the recount itself is cancelled.
+    def forced(name,x,z):
+        lines.append(f'execute in minecraft:overworld store success score #{name} mccst run forceload query {x} {z}')
+    run_as('mcc:blueprint/clear_internal')
+    lines.extend([
+        'fill 0 88 26 16 88 26 stone',
+        f'scoreboard players set {actor} mcc_rot 0',
+        f'scoreboard players set {actor} mcc_mir 0',
+        f'scoreboard players set {actor} mcc_hasa 0',
+        f'scoreboard players set {actor} mcc_has1 1',
+        f'scoreboard players set {actor} mcc_has2 1',
+        f'scoreboard players set {actor} mcc_p1x 0',
+        f'scoreboard players set {actor} mcc_p1y 88',
+        f'scoreboard players set {actor} mcc_p1z 26',
+        f'scoreboard players set {actor} mcc_p1d 1',
+        f'scoreboard players set {actor} mcc_p2x 16',
+        f'scoreboard players set {actor} mcc_p2y 88',
+        f'scoreboard players set {actor} mcc_p2z 26',
+        f'scoreboard players set {actor} mcc_p2d 1',
+        f'data merge entity {actor} {{Rotation:[0f,0f]}}',
+    ])
+    run_as('mcc:copy/run')
+    for path in ('clear','rebuild'):
+        target(0,88,28)
+        run_as('mcc:paste/dispatch')
+        scan()
+        lines.append(f'scoreboard players set {actor} bpright 1')
+        run_as('mcc:blueprint/nudge/right')
+        forced('fla',20019712,20002000); forced('flb',20019728,20002000)
+        check(f'if score {actor} mcc_bpover_scan matches 1 if score #fla mccst matches 1 if score #flb mccst matches 1','recount_pending_before_'+path)
+        if path=='clear':
+            # Checked before any recount_batch: a stale job would otherwise finish and hide the leak.
+            run_as('mcc:blueprint/clear_internal')
+            forced('fla',20019712,20002000); forced('flb',20019728,20002000)
+            check(f'if score {actor} mcc_bpover_scan matches 0 if score {actor} mcc_bpactive matches 0 if score #fla mccst matches 0 if score #flb mccst matches 0 unless entity @e[type=minecraft:block_display,tag=mcc_blueprint]','clear_cancels_pending_recount')
+        else:
+            run_as('mcc:state/bp_turn_right')
+            scan(4)
+            forced('fla',20019712,20002000); forced('flb',20019728,20002000); forced('flc',20019712,20002016)
+            check(f'if score {actor} mcc_bpover_scan matches 0 if score {actor} mcc_bpready matches 1 if score {actor} mcc_rot matches 1 if score {actor} mcc_bpsx2 matches 20019712 if score {actor} mcc_bpsz2 matches 20002016 if score #fla mccst matches 0 if score #flb mccst matches 0 if score #flc mccst matches 0','rebuild_cancels_pending_recount_forceload')
+    run_as('mcc:blueprint/clear_internal')
+    lines.extend([
+        'fill 0 88 26 16 88 26 air',
+        f'scoreboard players set {actor} mcc_rot 0',
+    ])
+
     # A gated trigger pressed while a material job runs is reported, not silently dropped.
     lines.extend([
         f'scoreboard players set {actor} mcc_tmp 0',
@@ -1063,11 +1117,30 @@ def integration(java: Path, server: Path):
     run_as('mcc:materials/busy_notice')
     check(f'if score {actor} mcc_tmp matches 0','busy_notice_quiet_without_trigger')
 
+    # Legacy objective names are global. Reloading must preserve them because another datapack
+    # may own the same names; only the explicit admin migration may remove them.
+    legacy=('rotate','mirror','rotate90','rotate270','flipx','flipz')
+    lines.extend(f'scoreboard objectives add {t} trigger' for t in legacy)
+    lines.append('function mcc:load')
+    for t in legacy+('rotate180','bpturnright'):
+        lines.append(f'execute store success score #has_{t} mccst run scoreboard players set #probe {t} 0')
+    check(' '.join(f'if score #has_{t} mccst matches 1' for t in legacy)+' if score #has_rotate180 mccst matches 1 if score #has_bpturnright mccst matches 1','legacy_trigger_objectives_preserved_on_load')
+    lines.append('function mcc:admin/cleanup_legacy_triggers')
+    for t in legacy+('rotate180','bpturnright'):
+        lines.append(f'execute store success score #after_{t} mccst run scoreboard players set #probe {t} 0')
+    check(' '.join(f'if score #after_{t} mccst matches 0' for t in legacy)+' if score #after_rotate180 mccst matches 1 if score #after_bpturnright mccst matches 1','legacy_trigger_objectives_removed_by_explicit_cleanup')
+
     lines.extend([
         f'execute if score #pass mccst matches {len(assertions)} if score #fail mccst matches 0 run say MCCST_REGRESSION_SUCCESS',
         'say MCCST_REGRESSION_DONE',
     ])
     (funcs/'run.mcfunction').write_text('\n'.join(lines)+'\n',encoding='utf-8')
+    # The run must not start until every fixture chunk is loaded: on a slow runner the console
+    # commands queue up, and a fixed sleep once let the run start with the raycast stone's
+    # chunk (0,-1) unloaded, failing raycast_v_adjacent_cell_north.
+    ready_lines=[f'execute unless loaded {x} 0 {z} run return run say MCCST_CHUNKS_PENDING'
+                 for x0,z0,x1,z1 in FORCELOAD for x in range(x0>>4<<4,x1+1,16) for z in range(z0>>4<<4,z1+1,16)]
+    (funcs/'chunks_ready.mcfunction').write_text('\n'.join(ready_lines+['say MCCST_CHUNKS_READY'])+'\n',encoding='utf-8')
 
     (work/'eula.txt').write_text('eula=true\n',encoding='utf-8')
     (work/'server.properties').write_text(
@@ -1077,26 +1150,27 @@ def integration(java: Path, server: Path):
         encoding='utf-8'
     )
 
-    ready=threading.Event(); done=threading.Event(); output=[]
-    proc=subprocess.Popen([str(java),'-Xms256M','-Xmx1024M','-jar',str(server),'--nogui'],cwd=work,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,encoding='utf-8',errors='replace')
+    ready=threading.Event(); chunks_ready=threading.Event(); done=threading.Event(); output=[]
+    proc=subprocess.Popen([str(java),'-Xms256M','-Xmx2048M','-jar',str(server),'--nogui'],cwd=work,stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,encoding='utf-8',errors='replace')
     def reader():
         assert proc.stdout is not None
         for line in proc.stdout:
             output.append(line)
             if 'Done (' in line: ready.set()
+            if 'MCCST_CHUNKS_READY' in line: chunks_ready.set()
             if 'MCCST_REGRESSION_DONE' in line: done.set()
     thread=threading.Thread(target=reader,daemon=True); thread.start()
     try:
         assert ready.wait(90),'Server did not become ready'
         assert proc.stdin is not None
-        # /forceload takes block coordinates. Cover every fixture chunk, including the raycast stones at x/z=-4.
-        proc.stdin.write('forceload add -16 -16 47 31\n'); proc.stdin.flush()
-        # Long-Z Move audit column (x=70, z=0..230).
-        proc.stdin.write('forceload add 64 0 79 239\n'); proc.stdin.flush()
-        # 3D house section (x=92..143, z=0..47).
-        proc.stdin.write('forceload add 92 0 143 47\n'); proc.stdin.flush()
+        for x0,z0,x1,z1 in FORCELOAD:
+            proc.stdin.write(f'forceload add {x0} {z0} {x1} {z1}\n'); proc.stdin.flush()
         proc.stdin.write('gamerule minecraft:max_command_sequence_length 20000000\n'); proc.stdin.flush()
-        time.sleep(2)
+        deadline=time.monotonic()+120
+        while not chunks_ready.is_set():
+            assert time.monotonic()<deadline,'Forceloaded fixture chunks did not load'
+            proc.stdin.write('function mcc_server_test:chunks_ready\n'); proc.stdin.flush()
+            chunks_ready.wait(1)
         proc.stdin.write('function mcc_server_test:run\n'); proc.stdin.flush()
         completed=done.wait(300)
     finally:

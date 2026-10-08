@@ -1,6 +1,6 @@
-# Copy/Paste 驗證狀態（v1.4）
+# Copy/Paste 驗證狀態（v1.6）
 
-目前版本 **v1.4**：拿掉載入與第一次使用時的聊天訊息，並移除舊的轉向／翻面指令。目標 Minecraft Java 26.3（Data Pack 121.0）。
+目前版本 **v1.6**：不再自動刪除全域舊 trigger objective；需要清理 v1.3 殘留時，由管理員確認無其他 datapack 使用同名 objective 後手動執行 cleanup。v1.5 清除或重建 Blueprint 時會取消還在跑的覆蓋檢查。v1.4 拿掉載入與第一次使用時的聊天訊息，並移除舊的轉向／翻面指令。目標 Minecraft Java 26.3（Data Pack 121.0）。
 
 這份文件把「官方 server headless regression」和「真人 client 驗證」分開寫。兩者不能互相冒充。
 
@@ -15,18 +15,23 @@
 | **真人 client** | `scripts/real-client/`（Windows） | 用作業系統層級的鍵盤／滑鼠真的操作遊戲，**讀世界存檔逐格判定** |
 | 雙人 harness | `python3 scripts/build-copy-paste-multiplayer-test.py` | 兩位真人同時操作（尚未執行過） |
 
+**GitHub Actions 只跑前四層。** CI 不會執行 `scripts/real-client/`（要 Windows 上真的開著的 Minecraft client），對兩個 trigger harness 也只確認「產生得出來」，不會讓真人玩家去跑。所以 CI 綠燈不能證明 G、Dialog 點擊、真人 `/trigger` dispatch、準星 raycast 這條路徑沒問題。`test-copy-paste.py` 只會確認 `scripts/real-client/*.py` 能編譯、沒有在等已經拿掉的載入訊息。
+
 ## Headless behavioral runtime
 
-`scripts/test-copy-paste-runtime.py` 目前 **187 個動態 assertions**，涵蓋：
+`scripts/test-copy-paste-runtime.py` 目前 **194 個動態 assertions**，涵蓋：
 
-- Pos1／Pos2／Anchor／V 的 raycast；沒有自訂 Anchor 時以 Pos1 為基準（Pos1 不是最小角也精確對位）。
+- Pos1／Pos2／Anchor／V 的 raycast（V 先確認北側石頭真的放好）；沒有自訂 Anchor 時以 Pos1 為基準（Pos1 不是最小角也精確對位）。
 - 自訂 Anchor（含選區外）的 12 種 Rotate/Mirror 組合與連續大半徑 Rotate、Undo。
 - Copy → Blueprint 不改真實世界；Blueprint 預覽落在方塊角；六方向微調與覆蓋重算。
+- 微調後覆蓋重算還在跑時清除預覽或旋轉重建：重算會被取消，暫存區（跨兩個 chunk）的 forceload 全部解除。
 - 材料唯讀報表（材料齊全時也不扣料、不施工）、缺料 all-or-nothing、足料 Build。
 - 先從持有者背包／副手扣料（實際從副手扣掉），再用 Warehouse；Undo 退料、Redo 再扣、防複製 guard。
 - Cut + V、Move、Flip、Rotate 90/180/270、五層 Undo/Redo、每種編輯的防複製快照。
 - Cut → Undo 作廢 Cut Clipboard、Redo 重建；Rotate 後 Masked 貼上；外部 Anchor Flip；長距離 Move。
 - 材料工作進行中被擋下的指令會提示；名稱表與貼上模式標籤已載入；所有 Dialog 頁面能被官方 server 解析。
+- 舊 trigger objective ownership：建立 `rotate`、`mirror`、`rotate90`、`rotate270`、`flipx`、`flipz` 後執行 `mcc:load`，確認六個 objective 全部保留且 `rotate180`、`bpturnright` 正常；只有顯式呼叫 `mcc:admin/cleanup_legacy_triggers` 後才移除那六個舊名稱。
+- 開始前輪詢 `execute if loaded` 等每個 forceload 的 chunk 載入完成。2026-10-06 main 上 `raycast_v_adjacent_cell_north` 曾失敗一次：當時 runner 很慢，固定 2 秒等待結束時北側石頭所在的 chunk (0,-1) 還不保證已載入。
 
 **限制：** runtime 使用 armor stand，直接呼叫多數 `mcc:...` function，所以不能證明玩家 `/trigger` 的 tick dispatch、Dialog 實際可點與版面、準星手感、雙人時序。這些由下一節的真人 client 驗證負責。
 
@@ -45,9 +50,31 @@
 | `stage8_names` | 材料檢查與缺料清單顯示 zh_tw 物品名稱 |
 | `stage9_checkonly` | 材料齊全時「材料檢查」不扣料、不施工 |
 | `stage10_inventory` | 背包／副手優先扣料、改名物品不使用、Undo 退回背包、背包滿時其餘退 Warehouse 且 0 掉落、Redo 同樣先扣背包 |
-| `stage12_all_packs` | Utilities + Warehouse + Copy/Paste 一起安裝：三包載入無錯誤、沒有載入訊息、G 開 Warehouse 主畫面、Utilities 設家／回家／返回／說明正常；同時重跑 `stage5`、`stage10`、`stage9` 全數通過 |
+| `stage12_all_packs` | Utilities + Warehouse + Copy/Paste 一起安裝：三包都在 `/datapack list enabled`、載入無錯誤、沒有載入／第一次加入的聊天訊息、G 開 Warehouse 主畫面、Utilities 設家／回家／返回／說明正常；同時重跑 `stage5`、`stage10`、`stage9` |
 
 **尚未驗證：** 兩位真人 client 同時操作。
+
+**v1.4 三包重跑（2026-10-06 23:20 起）：** main 打包的 Utilities v3.5、Warehouse v4.5、Copy/Paste v1.4 裝進 MCC-Test，在真人 client 跑，結果讀存檔判定：
+
+| Stage | 結果 |
+| --- | --- |
+| `stage5_multisource` | 全過。小屋 196 格正確；石磚從 4 箱、橡木板從 3 箱扣；Undo 退料經入口箱分類回各自的箱子；Redo 正確 |
+| `stage10_inventory` | 全過。先扣背包／副手，改名石磚不動，其餘扣 Warehouse；Undo 放得下的退背包、放不下的 16 個石磚進 Warehouse；0 掉落 |
+| `stage9_checkonly` | 全過。目標位置沒蓋東西、箱子沒變、沒有施工或缺料訊息 |
+| `stage12_all_packs`（舊腳本） | 5 過 2 失敗。通過：載入沒有錯誤、G 開 Warehouse 主畫面、sethome／home／back 傳送正確、`/trigger help` 有回應。失敗的 2 項是舊腳本還在要求 Utilities 與 Copy/Paste 的「已載入／按 G」聊天訊息；這次確實沒有任何載入訊息，pack 行為正確，是腳本過時 |
+
+`stage12_all_packs.py` 因此改成檢查「沒有載入／第一次加入的聊天訊息」，並用 `/datapack list enabled` 確認三包都啟用。
+
+**v1.5 三包重跑（2026-10-06 23:50 起）：** 含 Blueprint 覆蓋檢查修正的 Copy/Paste 與 Utilities v3.5、Warehouse v4.5 一起裝進 MCC-Test，在真人 client 跑，結果讀存檔判定：
+
+| Stage | 結果 |
+| --- | --- |
+| `stage12_all_packs`（新腳本） | 7 項全過：沒有載入／第一次加入的聊天訊息、載入沒有錯誤、三包都在 `/datapack list enabled`、G 開 Warehouse v4.5 主畫面、sethome／home／back 傳送正確、`/trigger help` 有回應 |
+| `stage5_multisource` | 全過，結果同上一輪 |
+| `stage10_inventory` | 全過，結果同上一輪 |
+| `stage9_checkonly` | 全過，結果同上一輪 |
+
+覆蓋檢查修正本身（微調後、重算還沒跑完就清除或轉向）只由 headless runtime 驗證，沒有專門的真人 client stage。
 
 2026-10-06 晚間三包一起重跑時，一度出現「材料表是空的、施工沒扣料」：原因是測試用小屋在 18:08 被手動 Cut 搬走，測試等於在複製空氣，並不是 pack 的問題。`stage3_house.snapshot()` 現在發現小屋不完整就直接停止。
 

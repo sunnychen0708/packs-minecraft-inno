@@ -1,0 +1,70 @@
+name: Mineflayer 26.3 innotest
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "ops/mineflayer-request.json"
+  workflow_dispatch:
+    inputs:
+      duration_ms:
+        description: Keep four bots connected for this many milliseconds (30s-300s)
+        required: true
+        default: "180000"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mineflayer-innotest
+  cancel-in-progress: true
+
+jobs:
+  four-bots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+
+      - name: Build pinned Mineflayer 26.3 stack
+        shell: bash
+        run: python3 scripts/mineflayer26/bootstrap.py
+
+      - name: Resolve request
+        id: request
+        shell: bash
+        env:
+          INPUT_DURATION_MS: ${{ inputs.duration_ms }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          if os.environ["EVENT_NAME"] == "workflow_dispatch":
+              duration = int(os.environ["INPUT_DURATION_MS"])
+          else:
+              req = json.loads(Path("ops/mineflayer-request.json").read_text())
+              if req.get("operation") != "test-4-bots":
+                  raise SystemExit("unsupported mineflayer request")
+              duration = int(req.get("duration_ms", 180000))
+          if not 30000 <= duration <= 300000:
+              raise SystemExit("duration_ms must be 30000..300000")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+              f.write(f"duration_ms={duration}\n")
+          PY
+
+      - name: Keep four test bots online
+        shell: bash
+        env:
+          MF26_HOST: innotest.exaroton.me
+          MF26_BOTS: InnoBot1,InnoBot2,InnoBot3,InnoBot4
+          MF26_DURATION_MS: ${{ steps.request.outputs.duration_ms }}
+        run: node scripts/mineflayer26/keepalive.js

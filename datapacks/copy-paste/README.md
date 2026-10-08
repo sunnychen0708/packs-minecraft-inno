@@ -1,8 +1,18 @@
-# Minecraft Copy/Paste Datapack v1.4
+# Minecraft Copy/Paste Datapack v1.6
+
+> Source: **v1.6（尚未發布）** · Latest release: **copy-paste-v1.5**
 
 適用：Minecraft Java Edition 26.3（Data Pack 121.0）
 
 純 Vanilla datapack。操作使用 Trigger 或 Dialog。施工材料先從玩家背包（含副手）拿，不夠再從同 repo 的 Warehouse datapack 共用材料來源拿。
+
+## v1.6
+
+- v1.4 已不再建立舊 trigger objective：`rotate`、`mirror`、`rotate90`、`rotate270`、`flipx`、`flipz`。這些名稱是全世界共用，Minecraft 沒有 objective ownership metadata，因此 v1.6 **不會在 `/reload` 自動刪除**，避免誤刪其他 datapack 同名 objective。從 v1.3 以前升級、且管理員確認這六個名稱沒有被其他 datapack 使用時，可手動執行 `/function mcc:admin/cleanup_legacy_triggers` 清理。`rotate180` 和其他現行指令不受影響。
+
+## v1.5
+
+- 修正微調 Blueprint 後、覆蓋檢查還沒跑完就清除預覽（`previewclear`、Copy）或旋轉／翻面重建時，舊的覆蓋檢查不會停止：清除後仍會跑完並說「Blueprint 覆蓋檢查更新完成」，重建時可能留下舊暫存區的永久 forceload。現在清除或重建 Blueprint 會先取消進行中的覆蓋檢查並解除它的 forceload。
 
 ## v1.4
 
