@@ -52,6 +52,48 @@ jobs:
           python3 scripts/build-copy-paste-live-test.py --output /tmp/mcc-live-test
           python3 scripts/build-copy-paste-multiplayer-test.py
 
+  warehouse-runtime-smoke:
+    name: Warehouse vanilla 26.3 reset regression
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Download official Minecraft 26.3 server
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 \
+            https://piston-data.mojang.com/v1/objects/33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c/server.jar \
+            --output server.jar
+          echo "33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c  server.jar" | sha1sum --check -
+
+      - name: Run Warehouse registration-reset runtime regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/test-warehouse-runtime.py \
+            --java "$(command -v java)" \
+            --server-jar "$PWD/server.jar" \
+            --accept-eula
+
+      - name: Upload Warehouse runtime evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: warehouse-26.3-runtime-${{ github.run_id }}
+          path: dist/warehouse-runtime-*
+          if-no-files-found: ignore
+          retention-days: 14
+
+
   copy-paste-runtime-smoke:
     name: Copy/Paste vanilla 26.3 smoke
     needs: validate
@@ -106,7 +148,7 @@ jobs:
 
 
   release-copy-paste-v1:
-    name: Publish Copy/Paste v1.0 tag
+    name: Publish Copy/Paste v1.0
     needs: copy-paste-runtime-smoke
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -118,14 +160,35 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Tag validated v1.0
+      - name: Ensure validated v1.0 tag exists
         shell: bash
         run: |
           set -euo pipefail
           grep -q 'Minecraft Copy/Paste v1.0' datapacks/copy-paste/pack.mcmeta
-          if git ls-remote --exit-code --tags origin refs/tags/copy-paste-v1.0 >/dev/null 2>&1; then
-            echo "copy-paste-v1.0 already exists"
+          if ! git ls-remote --exit-code --tags origin refs/tags/copy-paste-v1.0 >/dev/null 2>&1; then
+            git tag copy-paste-v1.0 "$GITHUB_SHA"
+            git push origin copy-paste-v1.0
+          fi
+
+      - name: Build tagged v1.0 ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --tags --force
+          git checkout --detach copy-paste-v1.0
+          python3 scripts/validate-datapack.py copy-paste
+          python3 scripts/test-copy-paste.py
+          chmod +x scripts/build-pack.sh
+          scripts/build-pack.sh copy-paste v1.0
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view copy-paste-v1.0 >/dev/null 2>&1; then
+            echo "copy-paste-v1.0 release already exists"
             exit 0
           fi
-          git tag copy-paste-v1.0 "$GITHUB_SHA"
-          git push origin copy-paste-v1.0
+          gh release create copy-paste-v1.0             dist/copy-paste-v1.0.zip             --verify-tag             --title "copy-paste v1.0"             --generate-notes
