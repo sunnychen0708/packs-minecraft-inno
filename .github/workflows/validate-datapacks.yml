@@ -43,3 +43,63 @@ jobs:
               echo "::endgroup::"
             fi
           done
+
+      - name: Build Copy/Paste opt-in live harnesses
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/build-copy-paste-live-test.py scripts/build-copy-paste-multiplayer-test.py
+          python3 scripts/build-copy-paste-live-test.py --output /tmp/mcc-live-test
+          python3 scripts/build-copy-paste-multiplayer-test.py
+
+  copy-paste-runtime-smoke:
+    name: Copy/Paste vanilla 26.3 smoke
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Download official Minecraft 26.3 server
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 \
+            https://piston-data.mojang.com/v1/objects/33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c/server.jar \
+            --output server.jar
+          echo "33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c  server.jar" | sha1sum --check -
+
+      - name: Boot official 26.3 server and reload Copy/Paste
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/validate-datapack.py copy-paste \
+            --java "$(command -v java)" \
+            --server-jar "$PWD/server.jar" \
+            --accept-eula
+
+      - name: Run Copy/Paste v0.5 behavioral regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/test-copy-paste-runtime.py \
+            --java "$(command -v java)" \
+            --server-jar "$PWD/server.jar" \
+            --accept-eula
+
+      - name: Upload vanilla smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: copy-paste-26.3-smoke-${{ github.run_id }}
+          path: |
+            dist/validation/copy-paste-*
+            dist/copy-paste-runtime-*
+          if-no-files-found: ignore
+          retention-days: 14

@@ -1,0 +1,10 @@
+scoreboard players operation @s mcc_p1x = @s mcc_rp1x
+scoreboard players operation @s mcc_p1y = @s mcc_rp1y
+scoreboard players operation @s mcc_p1z = @s mcc_rp1z
+scoreboard players operation @s mcc_p2x = @s mcc_rp2x
+scoreboard players operation @s mcc_p2y = @s mcc_rp2y
+scoreboard players operation @s mcc_p2z = @s mcc_rp2z
+scoreboard players operation @s mcc_anx = @s mcc_ranx
+scoreboard players operation @s mcc_any = @s mcc_rany
+scoreboard players operation @s mcc_anz = @s mcc_ranz
+scoreboard players operation @s mcc_hasa = @s mcc_rhasa
