@@ -1271,6 +1271,10 @@ def migrate_inno_online_to_innotest_offline(client, token):
 LIVE_SUITES = {
     "utilities": ("build-utilities-live-test.py", "utilities-live-test"),
     "warehouse": ("build-warehouse-live-test.py", "warehouse-live-test"),
+    **{
+        "copy-paste-gap-" + case: ("build-copy-paste-gap-live-test.py", "copy-paste-gap-live-test")
+        for case in ("external", "modes", "dimensions")
+    },
 }
 
 def wait_named_players(client, names, timeout=180):
@@ -1303,6 +1307,8 @@ def run_live_suite(client, suite):
     extra = []
     if suite.endswith("-recheck"):
         suite, extra = suite[:-len("-recheck")], ["--recheck"]
+    if suite.startswith("copy-paste-gap-"):
+        extra = ["--case", suite.removeprefix("copy-paste-gap-")]
     if suite not in LIVE_SUITES:
         raise Error(f"unknown live suite {suite!r}; known: {sorted(LIVE_SUITES)}")
     current = client.target()
@@ -1350,7 +1356,7 @@ def run_live_suite(client, suite):
         remove_harness()
         raise Error("live suite preflight found current-session server errors:\n" + "\n".join(errors[:12]))
 
-    wait_named_players(client, names, 240)
+    wait_named_players(client, names, 60 if suite.startswith("copy-paste-gap-") else 240)
     run_marker = f"{prefix}_RUN_{int(time.time() * 1000)}"
     client.command(f"say {run_marker} START")
     time.sleep(1)
