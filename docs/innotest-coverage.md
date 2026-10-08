@@ -2,7 +2,7 @@
 
 > 適用三個 Datapack；更新功能時請同步更新。僅標註**實際在 innotest 跑完**的項目。靜態／官方 server runtime PASS 不代表 live PASS。細則見 [驗證方式](datapack-validation.md) 和 [AGENTS.md](../AGENTS.md)。
 
-**執行方式：** Utilities 用 `scripts/build-utilities-live-test.py`、Warehouse 用 `scripts/build-warehouse-live-test.py`，透過 `run-live-suite` 執行；Copy/Paste 用 `scripts/build-copy-paste-multiplayer-test.py` + `run-copy-paste-multiplayer-test`，必須以 `scripts/mcc_house.py` 的完整 3D 房屋逐格比對。預設三 bot 為 `penguin0531`／`geena0701`／`Felicitypeng`，不占用 SunnyChen。
+**執行方式：** Utilities 用 `scripts/build-utilities-live-test.py`、Warehouse 用 `scripts/build-warehouse-live-test.py`，透過 `run-live-suite` 執行；Copy/Paste 用 `scripts/build-copy-paste-multiplayer-test.py` + `run-copy-paste-multiplayer-test`；缺口則用 `scripts/build-copy-paste-gap-live-test.py` 的獨立 `copy-paste-gap-{external,modes,dimensions,history,materials,ui-packets}` shards 執行 `run-live-suite`。必須以 `scripts/mcc_house.py` 的完整 3D 房屋逐格比對，Dialog 封包檢查不算真人 UI。預設三 bot 為 `penguin0531`／`geena0701`／`Felicitypeng`，不占用 SunnyChen。
 
 **硬限制：每次 ≤240 秒**，較長的測試切 shard，各 shard 都要獨立 PASS/FAIL、清理／還原，不能砍覆蓋案例。舊 Utilities 40 分鐘 `--full` 不適用；重查已驗項目可用 `utilities-recheck`／`warehouse-recheck`、Copy/Paste `recheck`。必要時僅在 server 指令段使用加速 tick，bot 回應／chunk 載入用 20 tps，清理一律恢復 20。
 
@@ -52,11 +52,11 @@
 | Undo／Redo guard | 忽略同方塊 ID 的 state 改動；換 ID／箱內物品改動會拒絕並列差異 | PASS |
 | Cut／Paste、多人隔離 | 兩位玩家同 tick、A/B 獨立 Undo、Cut/Redo 恢復 Clipboard | PASS |
 | 35,720 種 block state matcher | 全量 + 4 重複案例 | PASS |
-| Warehouse 混合材料／不足不施工 | 只有 official server runtime；完整 live 尚未跑 | **未驗** |
-| 覆蓋保護、`materials`、5 層完整 Undo／退款 | **五層歷史**：連續五次 3D 房屋移動與五次 Undo，逐層全部方塊狀態及歷史筆數 PASS（[37736767886](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37736767886)）。**覆蓋確認、materials 查詢／不足不施工與材料退款** 尚待 live 證據 | **部分** |
+| Warehouse 混合材料／不足不施工 | 真實 innotest 的完整 3D 房屋：背包＋Warehouse 混合扣料、不足完全不施工、施工成功且背包份額精確消耗、Undo 退回背包及 Warehouse 8 種材料逐品項數量精確 PASS（[37737410514](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37737410514)）；測後復原倉庫註冊與測試玩家背包 | **PASS（已驗範圍）** |
+| 覆蓋保護、`materials`、5 層完整 Undo／退款 | `materials` 只讀、目標已有方塊時先警告再施工、Undo 保留原有方塊、混合扣料後背包／Warehouse 精確退款 PASS（[37737410514](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37737410514)）；連續五次房屋 Move＋逐筆 Undo 完整狀態／筆數 PASS（[37736767886](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37736767886)）。**未堆疊五筆獨立材料 Build 後逐筆退款** | **部分** |
 | 外部 Anchor、Replace／Masked | 外部 Anchor 真正 3D Rotate／Flip 與各自 Undo 逐格 PASS（[37736165012](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37736165012)）；Replace／Masked 各自剪下貼上 3D 房屋，含原目標方塊／來源空氣處理 PASS（[37736427722](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37736427722)）。**外部 Anchor Blueprint Build** 尚未 live 驗 | **部分** |
 | 地獄／終界 Copy/Paste | 地獄／終界各自 3D 房屋 Copy、完整 Blueprint、Cut／Paste、來源清空與 Undo 還原逐格 PASS（[37736565101](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37736565101)）；跨維度搬運（例如主世界複製、地獄貼上）未另行驗證 | **部分** |
-| G／Dialog／準星真人 UI | v1.7 以前有部分真人歷史證據；v1.8 未重跑、雙真人併發未驗 | **未驗（v1.8 真人）** |
+| G／Dialog／準星真人 UI | v1.8 兩名 bot 各自收到 Copy/Paste `show_dialog` 封包 PASS（[37737261488](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37737261488)）；**真人按 G、滑鼠點選 Dialog、準星手感與雙真人併發仍未驗** | **部分（非真人 UI）** |
 
 ## Resource Pack
 
