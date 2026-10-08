@@ -10,7 +10,7 @@ const mineflayer = require(path.join(stackRoot, 'mineflayer'))
 const TARGET = 'innotest.exaroton.me'
 const host = String(process.env.MF26_HOST || TARGET).trim().toLowerCase().replace(/\.$/, '')
 const port = Number(process.env.MF26_PORT || 25565)
-const names = (process.env.MF26_BOTS || 'InnoBot1,InnoBot2,InnoBot3,InnoBot4').split(',').map(x => x.trim()).filter(Boolean)
+const names = (process.env.MF26_BOTS || 'SunnyChen,penguin0531,geena0701,Felicitypeng').split(',').map(x => x.trim()).filter(Boolean)
 const spawnTimeoutMs = Number(process.env.MF26_SPAWN_TIMEOUT_MS || 45000)
 const durationMs = Number(process.env.MF26_DURATION_MS || 180000)
 
@@ -35,7 +35,8 @@ function delay (ms) { return new Promise(resolve => setTimeout(resolve, ms)) }
 function createBot (username) {
   const state = { spawned: false, ended: false, errors: [], kicked: [] }
   states.set(username, state)
-  const bot = mineflayer.createBot({ host, port, username, auth: 'offline', version: '26.3' })
+  const bot = mineflayer.createBot({ host, port, username, auth: 'offline', version: '26.3', physicsEnabled: false })
+  bot.physicsEnabled = false
   bots.push(bot)
   bot.once('spawn', () => {
     state.spawned = true
