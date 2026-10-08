@@ -33,9 +33,12 @@ sys.path.insert(0, str(ROOT / 'scripts'))
 from innotest_harness import Suite
 
 OUT = ROOT / 'dist/utilities-live-test'
-# Default: the key cases only (about 4 minutes on innotest). --full runs every log type, every ore,
-# every tier pair, every crop and all 8 waypoint slots (about 40 minutes).
+# Every individual innotest run has a hard 240-second budget. The former monolithic
+# --full mode took about 40 minutes and is intentionally disabled; complete coverage
+# must be split into independent <=240-second shards instead of one long run.
 FULL = '--full' in sys.argv
+if FULL:
+    raise SystemExit('Utilities --full is disabled: split complete coverage into <=240s shards')
 # --recheck: only the checks that have not passed on innotest yet; setup is kept.
 RECHECK = '--recheck' in sys.argv
 NS = 'utest'
@@ -635,6 +638,6 @@ s.extra_function(OUT, 'restore_bbs', [
 s.extra_function(OUT, 'set_bbs', ['$attribute @a[name=$(name),limit=1] minecraft:block_break_speed base set $(v)'])
 s.extra_function(OUT, 'tp_back', ['$execute in $(dim) run tp @a[name=$(name),limit=1] $(x) $(y) $(z) $(yaw) $(pitch)'])
 (OUT / 'suite.json').write_text(json.dumps({
-    'ns': NS, 'prefix': 'UTEST', 'players': PLAYERS, 'timeout_s': 2700 if FULL else 480,
+    'ns': NS, 'prefix': 'UTEST', 'players': PLAYERS, 'timeout_s': 240,
 }, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
 print(f'Built {n} Utilities live-test steps at {OUT}')

@@ -23,6 +23,7 @@
   - Copy/Paste：用 3D 測試房子（`scripts/mcc_house.py`：門、台階、樓梯、原木軸向、玻璃片、火把、燈籠、箱子），每一步逐格比對完整 blockstate。
   - Utilities：玩家真的挖／採收（連鎖砍樹、礦脈、補種），每個據點與 Back／死亡點都實際傳送並比對落點。
   - Warehouse：用 inno 地圖上真的倉庫與玩家自訂分類，不假設預設分類；分類、查詢、Pick、共用 API 都要比對實際箱子內容。
+- **任何單次 innotest 測試都必須在 4 分鐘（240 秒）內完成。** 完整 coverage 若超過 4 分鐘，必須拆成多個互相獨立、各自 ≤240 秒的 shard；不能用「full suite」當理由跑 40 分鐘，也不能為了塞進 4 分鐘而少驗案例。每個 shard 都要能獨立 PASS/FAIL、清理並還原測試狀態。
 - CI 照常跑，但只有 innotest 的結果才算驗過；回報時附上跑了什麼、workflow run 與結果。
 
 ## innotest 保持開機

@@ -8,11 +8,11 @@
 - **已寫未跑**：innotest 測試已寫好，還沒在 innotest 跑過。
 - **PASS（日期、run）**：在 innotest 跑過且通過，附 workflow run。
 
-Utilities 的測試是 `scripts/build-utilities-live-test.py`，用 `exaroton innotest control` 的 `run-live-suite`（pack 選 `utilities`）跑；實際只需要 `penguin0531`、`geena0701`，Mineflayer workflow 預設讓三個非 SunnyChen bot 在線。預設是重點版（約 4 分鐘，315 步）：固定據點每個維度一個（家、礦坑、村莊）加 Back，個人／共用據點各測第 1、8 格（設定、傳送、列表、改名、覆蓋、無效編號、兩人隔離），死亡點；砍樹只測橡木，加不蹲、關閉、無葉、64 上限；礦脈測深板岩鑽石（有經驗）與遠古遺骸（無經驗），鎬等級各一組合格／不合格，加絲綢之觸、不蹲、關閉；補種測小麥與關閉。`--full`（733 步，約 40 分鐘）跑全部原木、礦物、等級組合、作物、5 個固定據點與 8 格據點，改到這些功能本身時才需要。
+Utilities 的測試是 `scripts/build-utilities-live-test.py`，用 `exaroton innotest control` 的 `run-live-suite`（pack 選 `utilities`）跑；實際只需要 `penguin0531`、`geena0701`，Mineflayer workflow 預設讓三個非 SunnyChen bot 在線。預設 suite 必須在 240 秒內完成：固定據點每個維度一個（家、礦坑、村莊）加 Back，個人／共用據點各測第 1、8 格（設定、傳送、列表、改名、覆蓋、無效編號、兩人隔離），死亡點；砍樹只測橡木，加不蹲、關閉、無葉、64 上限；礦脈測深板岩鑽石（有經驗）與遠古遺骸（無經驗），鎬等級各一組合格／不合格，加絲綢之觸、不蹲、關閉；補種測小麥與關閉。舊的單次 `--full` 約 40 分鐘模式已停用；完整 Utilities coverage 必須拆成多個各自 ≤240 秒的 shard，再合併 coverage 結果。
 
 驗法欄裡的「bot」預設指 `penguin0531`、`geena0701`、`Felicitypeng`；`SunnyChen` 保留給真人登入監督或 Computer Use，只有確實需要第 4 位玩家時才由 bot 使用。bot 由測試 datapack 用 `tellraw` 下指令，自己送出 `/trigger`、挖方塊、蹲下（`scripts/mineflayer26/keepalive.js` 的 driver），不是用 `execute as` 代替玩家。測試動到的玩家背包、經驗、遊戲模式、手上物品、世界方塊與 Warehouse 庫存，結束時都要還原。
 
-時間原則：日常 targeted／recheck suite 盡量控制在約 4 分鐘內；明確要求完整覆蓋時可以跑較久的 full suite（例如 Utilities `--full` 約 40 分鐘），不能為了硬塞進 4 分鐘而省略應驗案例。已在 innotest 通過且本次沒有受影響的項目可用 recheck 避免重跑：`--recheck` 只跑還沒通過的項目（`run-live-suite` 的 pack 填 `utilities-recheck`／`warehouse-recheck`；Copy/Paste 的 command 填 `recheck`）。只有 server 在跑的段落用 `tick rate 10000`（最快）；要等 bot 回應或等 chunk 載入的段落用 20 tps；結束與清理一律調回 20。
+時間硬限制：**任何單次 innotest 測試最多 4 分鐘（240 秒），沒有 full-suite 例外。** 完整 coverage 若超過 240 秒，必須拆成多個獨立 shard；每個 shard 都要各自產生 PASS/FAIL、清理測試資料並還原玩家／世界狀態。不能因 4 分鐘限制少驗案例，只能用加速、平行化或切 shard 解決。已在 innotest 通過且本次沒有受影響的項目可用 recheck 避免重跑：`--recheck` 只跑還沒通過的項目（`run-live-suite` 的 pack 填 `utilities-recheck`／`warehouse-recheck`；Copy/Paste 的 command 填 `recheck`）。只有 server 在跑的段落用 `tick rate 10000`（最快）；要等 bot 回應或等 chunk 載入的段落用 20 tps；結束與清理一律調回 20。
 
 Warehouse 的主要測試是 `scripts/build-warehouse-live-test.py`（`run-live-suite`，pack 選 `warehouse`）：用 inno 地圖上真的倉庫與玩家自訂分類，測試物品帶 `custom_data {wtest:1b}`，結束後從每一箱移除；分類、規則修改與移除、查詢、Pick、共用 API、檢視、改名、右鍵註冊／刪除註冊、chunk forceload、系統開關、load/migration 重跑都有。另有 targeted release gate 主動塞滿主箱驗溢位／全滿保留入口；v4.7 另跑跨維度 Compact/merge regression。
 
