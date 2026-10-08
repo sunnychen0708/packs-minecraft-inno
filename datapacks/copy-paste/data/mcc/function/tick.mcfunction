@@ -1,25 +1,69 @@
 execute as @a unless score @s mcc_id matches 1.. run function mcc:player_init
-execute as @a[scores={mcc_help=1..}] run function mcc:help
-execute as @a[scores={mcc_pos1=1..}] at @s run function mcc:select/start_pos1
-execute as @a[scores={mcc_pos2=1..}] at @s run function mcc:select/start_pos2
-execute as @a[scores={mcc_anchor=1}] at @s run function mcc:select/start_anchor
-execute as @a[scores={mcc_anchor=2..}] run function mcc:anchor_clear
-execute as @a[scores={mcc_copy=1..}] run function mcc:copy/run
-execute as @a[scores={mcc_paste=1..}] at @s run function mcc:select/start_paste
-execute as @a[scores={mcc_mode=1..}] run function mcc:mode_toggle
+execute as @a[scores={copypaste=1..}] run function mcc:panel
 
-scoreboard players set @a[scores={mcc_help=1..}] mcc_help 0
-scoreboard players set @a[scores={mcc_pos1=1..}] mcc_pos1 0
-scoreboard players set @a[scores={mcc_pos2=1..}] mcc_pos2 0
-scoreboard players set @a[scores={mcc_anchor=1..}] mcc_anchor 0
-scoreboard players set @a[scores={mcc_copy=1..}] mcc_copy 0
-scoreboard players set @a[scores={mcc_paste=1..}] mcc_paste 0
-scoreboard players set @a[scores={mcc_mode=1..}] mcc_mode 0
+execute as @a[scores={pos1=1..}] at @s run function mcc:select/start_pos1
+execute as @a[scores={pos2=1..}] at @s run function mcc:select/start_pos2
+execute as @a[scores={anchor=1}] at @s run function mcc:select/start_anchor
+execute as @a[scores={anchor=2..}] run function mcc:anchor_clear
+execute as @a[scores={c=1..}] run function mcc:copy/run
+execute as @a[scores={cut=1..}] run function mcc:cut/run
+execute as @a[scores={v=1..}] at @s run function mcc:select/start_paste
+execute as @a[scores={undo=1..}] run function mcc:undo/run
+execute as @a[scores={mode=1..}] run function mcc:mode_toggle
+execute as @a[scores={rotate=1}] run function mcc:state/rot_cycle
+execute as @a[scores={rotate=10}] run function mcc:state/rot_0
+execute as @a[scores={rotate=20}] run function mcc:state/rot_90
+execute as @a[scores={rotate=30}] run function mcc:state/rot_180
+execute as @a[scores={rotate=40}] run function mcc:state/rot_270
+execute as @a[scores={mirror=1}] run function mcc:state/mir_cycle
+execute as @a[scores={mirror=10}] run function mcc:state/mir_none
+execute as @a[scores={mirror=20}] run function mcc:state/mir_x
+execute as @a[scores={mirror=30}] run function mcc:state/mir_z
+execute as @a[scores={right=1..}] at @s run function mcc:move/right
+execute as @a[scores={left=1..}] at @s run function mcc:move/left
+execute as @a[scores={up=1..}] at @s run function mcc:move/up
+execute as @a[scores={down=1..}] at @s run function mcc:move/down
+execute as @a[scores={forward=1..}] at @s run function mcc:move/forward
+execute as @a[scores={backward=1..}] at @s run function mcc:move/backward
+execute as @a[scores={flipx=1..}] run function mcc:flip/x
+execute as @a[scores={flipz=1..}] run function mcc:flip/z
 
-scoreboard players enable @a mcc_pos1
-scoreboard players enable @a mcc_pos2
-scoreboard players enable @a mcc_anchor
-scoreboard players enable @a mcc_copy
-scoreboard players enable @a mcc_paste
-scoreboard players enable @a mcc_mode
-scoreboard players enable @a mcc_help
+scoreboard players set @a[scores={copypaste=1..}] copypaste 0
+scoreboard players set @a[scores={pos1=1..}] pos1 0
+scoreboard players set @a[scores={pos2=1..}] pos2 0
+scoreboard players set @a[scores={anchor=1..}] anchor 0
+scoreboard players set @a[scores={c=1..}] c 0
+scoreboard players set @a[scores={cut=1..}] cut 0
+scoreboard players set @a[scores={v=1..}] v 0
+scoreboard players set @a[scores={undo=1..}] undo 0
+scoreboard players set @a[scores={mode=1..}] mode 0
+scoreboard players set @a[scores={rotate=1..}] rotate 0
+scoreboard players set @a[scores={mirror=1..}] mirror 0
+scoreboard players set @a[scores={right=1..}] right 0
+scoreboard players set @a[scores={left=1..}] left 0
+scoreboard players set @a[scores={up=1..}] up 0
+scoreboard players set @a[scores={down=1..}] down 0
+scoreboard players set @a[scores={forward=1..}] forward 0
+scoreboard players set @a[scores={backward=1..}] backward 0
+scoreboard players set @a[scores={flipx=1..}] flipx 0
+scoreboard players set @a[scores={flipz=1..}] flipz 0
+
+scoreboard players enable @a copypaste
+scoreboard players enable @a pos1
+scoreboard players enable @a pos2
+scoreboard players enable @a anchor
+scoreboard players enable @a c
+scoreboard players enable @a cut
+scoreboard players enable @a v
+scoreboard players enable @a undo
+scoreboard players enable @a mode
+scoreboard players enable @a rotate
+scoreboard players enable @a mirror
+scoreboard players enable @a right
+scoreboard players enable @a left
+scoreboard players enable @a up
+scoreboard players enable @a down
+scoreboard players enable @a forward
+scoreboard players enable @a backward
+scoreboard players enable @a flipx
+scoreboard players enable @a flipz
