@@ -52,6 +52,16 @@
     },
     {
       "label": {
+        "text": "清 Anchor"
+      },
+      "width": 120,
+      "action": {
+        "type": "run_command",
+        "command": "trigger anchor set 2"
+      }
+    },
+    {
+      "label": {
         "text": "Copy"
       },
       "width": 120,
@@ -218,6 +228,16 @@
       "action": {
         "type": "run_command",
         "command": "trigger redo"
+      }
+    },
+    {
+      "label": {
+        "text": "指令教學"
+      },
+      "width": 160,
+      "action": {
+        "type": "run_command",
+        "command": "trigger cphelp"
       }
     }
   ],

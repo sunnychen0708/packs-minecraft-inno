@@ -1,4 +1,4 @@
-tellraw @s [{"text":"===== Copy/Paste v1.1 =====","color":"gold"}]
+tellraw @s [{"text":"===== Copy/Paste v1.2.1 =====","color":"gold"}]
 execute if score @s mcc_mask matches 0 run tellraw @s [{"text":"貼上模式：Replace","color":"gray"}]
 execute if score @s mcc_mask matches 1 run tellraw @s [{"text":"貼上模式：Masked","color":"gray"}]
 execute if score @s mcc_rot matches 0 run tellraw @s [{"text":"旋轉：0°","color":"gray"}]
@@ -19,3 +19,4 @@ tellraw @s [{"text":"直接旋轉真實選取：","color":"gray"},{"text":"[90°
 tellraw @s [{"text":"Copy：V 只預覽；可先 Rotate/Mirror，再按施工從 Warehouse 共用倉庫扣料。","color":"dark_gray"}]
 tellraw @s [{"text":"Blueprint 微調：","color":"gray"},{"text":"[左] ","color":"aqua","click_event":{"action":"run_command","command":"/trigger bpleft set 1"}},{"text":"[右] ","color":"aqua","click_event":{"action":"run_command","command":"/trigger bpright set 1"}},{"text":"[前] ","color":"aqua","click_event":{"action":"run_command","command":"/trigger bpforward set 1"}},{"text":"[後] ","color":"aqua","click_event":{"action":"run_command","command":"/trigger bpbackward set 1"}},{"text":"[上] ","color":"aqua","click_event":{"action":"run_command","command":"/trigger bpup set 1"}},{"text":"[下]","color":"aqua","click_event":{"action":"run_command","command":"/trigger bpdown set 1"}}]
 tellraw @s [{"text":"[材料 / 覆蓋檢查]","color":"yellow","click_event":{"action":"run_command","command":"/trigger materials"}}]
+tellraw @s [{"text":"[指令教學]","color":"yellow","click_event":{"action":"run_command","command":"/trigger cphelp"}}]

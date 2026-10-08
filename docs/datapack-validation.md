@@ -95,13 +95,45 @@ python3 scripts/test-warehouse-runtime.py \
   --accept-eula
 ```
 
-It boots the official server, performs `/reload`, rejects parser/datapack errors, seeds all 61 registration records, runs `warehouse:admin/reset_registrations`, verifies only `registered`/`valid` were cleared, verifies custom box names and classification overrides survived, and re-registers a cleared slot through the normal Warehouse save path.
+It boots the official server, performs `/reload`, rejects parser/datapack errors, verifies the sharded search index, exercises reset/re-registration while preserving custom data, tests the shared count/take/refund API including durable queued refunds and stale-source rejection, and covers the v4.4 Resolve Block / Pick path.
 
-## 5. Client-only checks
+Copy/Paste also has a dedicated 26.3 behavioral harness:
+
+```bash
+python3 scripts/test-copy-paste-runtime.py \
+  --java /path/to/java \
+  --server-jar /path/to/server.jar \
+  --accept-eula
+```
+
+It loads Copy/Paste together with Warehouse and checks Blueprint-only Copy/V behavior, all six Blueprint nudge directions, overwrite confirmation, read-only material reporting, all-or-nothing material-backed Build, material-aware Undo/Redo, Cut, Move, direct Rotate, and five-level history.
+
+## 5. Cross-pack compatibility gate
+
+Utilities, Warehouse, and Copy/Paste are designed to be installed together, so repository validation also treats coexistence as a first-class gate:
+
+```bash
+python3 scripts/test-datapack-compatibility.py
+```
+
+The static mode rejects overlapping non-Minecraft namespaces/resources, duplicate scoreboard objectives, replacement of the shared `minecraft:load` / `minecraft:tick` tags, and undeclared writes into another pack's command storage.
+
+With the official server available, run the combined runtime form:
+
+```bash
+python3 scripts/test-datapack-compatibility.py \
+  --java /path/to/java \
+  --server-jar /path/to/server.jar \
+  --accept-eula
+```
+
+That boots all three datapacks in one Java 26.3 world and verifies representative Utilities, Warehouse, and Copy/Paste objectives/storage plus the shared Warehouse API. This proves the tested coexistence contract; it is not a replacement for each pack's dedicated behavioral regression.
+
+## 6. Client-only checks
 
 Manual player testing is the last resort, not the default validation strategy.
 
-Use it only for behavior that a vanilla headless server cannot faithfully exercise, such as client UI presentation, keybind feel, or a genuinely player-only interaction. When a client-only check remains, document exactly what was not automated.
+Use it only for behavior that a vanilla headless server cannot faithfully exercise, such as Dialog presentation, actual crosshair/key/mouse feel, or true simultaneous interaction by multiple logged-in clients. When a client-only check remains, document exactly what was not automated.
 
 ## Release rule
 
@@ -109,8 +141,10 @@ For datapacks:
 
 1. Generic static validation must pass.
 2. Pack-specific regression tests must pass when present.
-3. Behavior-changing releases should also pass the vanilla server smoke/runtime harness when the target server JAR is available.
-4. Do not describe a pack as "runtime validated" if only static checks were run.
-5. Do not create a release from a known failing validation run.
+3. The cross-pack static compatibility gate must pass.
+4. Datapack releases must pass the combined official Minecraft 26.3 Utilities + Warehouse + Copy/Paste runtime compatibility gate.
+5. Warehouse and Copy/Paste behavior-changing releases must also pass their dedicated 26.3 runtime harnesses.
+6. Do not describe a pack as "runtime validated" if only static checks were run.
+7. Do not create a release from a known failing validation run.
 
-GitHub Actions runs stages 1 and 2 automatically for repository datapacks. Warehouse and Copy/Paste also run official Minecraft 26.3 runtime regressions on main. The release workflow repeats static/pack-specific validation, verifies the tag version matches `pack.mcmeta`, and reruns the official 26.3 runtime gate for Warehouse and Copy/Paste before building a release ZIP.
+GitHub Actions runs generic validation, pack-specific regressions, cross-pack static compatibility, dedicated Warehouse/Copy-Paste runtime jobs, and the all-datapacks 26.3 compatibility job on relevant `main` pushes and pull requests. The release workflow verifies the tag version against `pack.mcmeta`, reruns the combined all-datapacks runtime gate for every datapack tag, reruns the dedicated Warehouse or Copy/Paste runtime gate when applicable, then builds and publishes the ZIP.
