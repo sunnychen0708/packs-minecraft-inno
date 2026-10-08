@@ -1,0 +1,43 @@
+name: Release issue request
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  actions: write
+  contents: read
+  issues: write
+
+jobs:
+  dispatch:
+    if: github.event.issue.author_association == 'OWNER' && startsWith(github.event.issue.title, 'release ')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve release tag
+        id: request
+        env:
+          TITLE: ${{ github.event.issue.title }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${TITLE#release }"
+          if [[ ! "$TAG" =~ ^[a-z0-9]+(-[a-z0-9]+)*-v[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid release tag: $TAG"
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Dispatch protected release workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.request.outputs.tag }}
+        shell: bash
+        run: gh workflow run release-pack.yml -R "$GITHUB_REPOSITORY" --ref main -f tag="$TAG"
+
+      - name: Close release request issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+        shell: bash
+        run: gh issue close "$ISSUE" --comment "Release workflow dispatched."

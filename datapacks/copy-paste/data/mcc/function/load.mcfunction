@@ -89,6 +89,7 @@ scoreboard objectives add mcc_offz dummy
 scoreboard objectives add mcc_bpoffx dummy
 scoreboard objectives add mcc_bpoffz dummy
 scoreboard objectives add mcc_canchor dummy
+scoreboard objectives add mcc_stver dummy
 scoreboard objectives add mcc_cbx dummy
 scoreboard objectives add mcc_cbx2 dummy
 scoreboard objectives add mcc_cbz2 dummy
@@ -267,6 +268,10 @@ scoreboard players set #hgap mcc_id 320
 scoreboard players set #one mcc_id 1
 scoreboard players set #zero mcc_id 0
 scoreboard players set #neg mcc_id -1
+# Undo/Redo guard: above these the state-agnostic compare is skipped (exact match only).
+# Coarse scan ~38 commands per 32-block row; #cmp_work units ~9 commands each.
+scoreboard players set #cmp_vol_max mcc_id 16384
+scoreboard players set #cmp_work_max mcc_id 2500
 function mcc:names/load
 
 # Shared temporary loot barrel lane used only while deriving the Blueprint BOM.
