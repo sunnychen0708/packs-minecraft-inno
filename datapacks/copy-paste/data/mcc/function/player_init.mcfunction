@@ -15,5 +15,13 @@ scoreboard players set @s mcc_uhead 0
 scoreboard players set @s mcc_rcnt 0
 scoreboard players set @s mcc_rhead 0
 scoreboard players set @s mcc_bpscan 0
+scoreboard players set @s mcc_bpactive 0
+scoreboard players set @s mcc_bpready 0
+scoreboard players set @s mcc_bpbad 0
+scoreboard players set @s mcc_matphase 0
+scoreboard players set @s mcc_matleft 0
+scoreboard players set @s mcc_matmiss 0
+scoreboard players set @s mcc_matkind 0
+scoreboard players set @s mcc_mattotal 0
 scoreboard players set @s mcc_usel 0
 tellraw @s [{"text":"[Copy/Paste] ","color":"gold"},{"text":"已建立你的個人 Clipboard。輸入 ","color":"gray"},{"text":"/trigger copypaste","color":"yellow"},{"text":" 查看控制面板。","color":"gray"}]

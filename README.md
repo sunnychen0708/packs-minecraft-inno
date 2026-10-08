@@ -12,13 +12,12 @@
 | --- | --- | ---: | --- | --- |
 | [`utilities`](datapacks/utilities) | Data pack | [`v3.4`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/utilities-v3.4) | Java 26.3 | Teleportation, waypoints, coordinate display, and general survival utility systems. |
 | [`warehouse`](datapacks/warehouse) | Data pack | [`v4.0`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/warehouse-v4.0) | Java 26.3 | Automatic item sorting and warehouse-management system. |
-| [`copy-paste`](datapacks/copy-paste) | Data pack | [`v0.2`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/copy-paste-v0.2) | Java 26.3 | Survival-safe building editor: Copy creates shared visual Blueprints, Cut moves real blocks once, with Move/Rotate/Flip and Undo/Redo. |
+| [`copy-paste`](datapacks/copy-paste) | Data pack | [`v1.0`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/copy-paste-v1.0) | Java 26.3 | Survival building editor: Blueprint preview plus material-backed construction from registered storage, with Cut/Move/Rotate/Flip and Undo/Redo. |
 | [`cat-door-sounds`](resourcepacks/cat-door-sounds) | Resource pack | [`v1.0`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/cat-door-sounds-v1.0) | Java 26.2 | Custom cat meow replacement and an extra wooden-door opening sound layer. |
 
 Each pack is stored as unpacked source. Release ZIPs are generated artifacts rather than development source.
 
-Copy/Paste source is currently **v0.6.0** (the release link above is the last published v0.2).
-Copy/Paste v0.6.0 keeps the shared Blueprint / Cut-once workflow and upgrades Undo/Redo to independent five-level per-player history. See its [live validation report](datapacks/copy-paste/LIVE-VALIDATION.md) and [multiplayer validation notes](datapacks/copy-paste/MULTIPLAYER-VALIDATION.md).
+Copy/Paste source is **v1.0**. Copy now uses Blueprint-first, material-backed construction: players may register any number of independent material containers, preview/rotate/mirror first, then build only when every required material is available. Cut remains a one-time real move. Undo/Redo stays five-level per player. See its [multiplayer validation notes](datapacks/copy-paste/MULTIPLAYER-VALIDATION.md).
 
 ## Installation
 
@@ -91,7 +90,7 @@ Generated ZIP files go to `dist/`, which is ignored by Git.
 ```bash
 ./scripts/build-pack.sh utilities v3.4
 ./scripts/build-pack.sh warehouse v4.0
-./scripts/build-pack.sh copy-paste v0.6.0
+./scripts/build-pack.sh copy-paste v1.0
 ./scripts/build-pack.sh cat-door-sounds v1.0
 ```
 
@@ -133,7 +132,7 @@ Examples:
 ```text
 utilities-v3.4
 warehouse-v4.1
-copy-paste-v0.2
+copy-paste-v1.0
 cat-door-sounds-v1.1
 ```
 

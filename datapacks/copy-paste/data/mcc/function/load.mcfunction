@@ -22,6 +22,10 @@ scoreboard objectives add backward trigger
 scoreboard objectives add flipx trigger
 scoreboard objectives add flipz trigger
 scoreboard objectives add previewclear trigger
+scoreboard objectives add build trigger
+scoreboard objectives add matbox trigger
+scoreboard objectives add matremove trigger
+scoreboard objectives add matlist trigger
 scoreboard objectives add mcc_id dummy
 scoreboard objectives add mcc_has1 dummy
 scoreboard objectives add mcc_has2 dummy
@@ -193,6 +197,18 @@ scoreboard objectives add mcc_bpx dummy
 scoreboard objectives add mcc_bpdst dummy
 scoreboard objectives add mcc_erot dummy
 scoreboard objectives add mcc_ok dummy
+scoreboard objectives add mcc_bpactive dummy
+scoreboard objectives add mcc_bpready dummy
+scoreboard objectives add mcc_bpaimx dummy
+scoreboard objectives add mcc_bpaimy dummy
+scoreboard objectives add mcc_bpaimz dummy
+scoreboard objectives add mcc_bpaimd dummy
+scoreboard objectives add mcc_bpbad dummy
+scoreboard objectives add mcc_matphase dummy
+scoreboard objectives add mcc_matleft dummy
+scoreboard objectives add mcc_matmiss dummy
+scoreboard objectives add mcc_matkind dummy
+scoreboard objectives add mcc_mattotal dummy
 scoreboard players add #next mcc_id 0
 scoreboard players set #slot mcc_id 256
 scoreboard players set #base mcc_id 20000000
@@ -209,4 +225,8 @@ scoreboard players set #one mcc_id 1
 scoreboard players set #zero mcc_id 0
 scoreboard players set #neg mcc_id -1
 
-tellraw @a [{"text":"[Copy/Paste] ","color":"gold"},{"text":"v0.6.0 已載入。輸入 ","color":"gray"},{"text":"/trigger copypaste","color":"yellow"},{"text":" 開啟 Trigger 控制面板。","color":"gray"}]
+# Shared temporary loot barrel lane used only while deriving the Blueprint BOM.
+execute in minecraft:overworld run forceload add 20008000 20008000
+execute in minecraft:overworld run setblock 20008008 64 20008008 air
+
+tellraw @a [{"text":"[Copy/Paste] ","color":"gold"},{"text":"v1.0 已載入。輸入 ","color":"gray"},{"text":"/trigger copypaste","color":"yellow"},{"text":" 開啟 Trigger 控制面板。","color":"gray"}]
