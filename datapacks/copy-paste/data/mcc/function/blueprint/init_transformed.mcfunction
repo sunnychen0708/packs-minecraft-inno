@@ -6,6 +6,9 @@ execute unless score @s mcc_sz matches 1..48 run tellraw @s [{"text":"[Copy/Past
 execute unless score @s mcc_sz matches 1..48 run return fail
 
 # Calculate the real target bounding minimum using the same engine transform math as Paste.
+# Default-anchor center Flips carry a translation relative to the semantic Pos1 target.
+execute if score @s mcc_canchor matches 0 run scoreboard players operation @s mcc_dstx += @s mcc_bpoffx
+execute if score @s mcc_canchor matches 0 run scoreboard players operation @s mcc_dstz += @s mcc_bpoffz
 function mcc:paste/prepare_transform
 scoreboard players operation @s mcc_bptx0 = @s mcc_bminx
 scoreboard players operation @s mcc_bpty0 = @s mcc_psty
