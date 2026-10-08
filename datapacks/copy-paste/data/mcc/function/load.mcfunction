@@ -214,6 +214,12 @@ scoreboard objectives add mcc_erot dummy
 scoreboard objectives add mcc_ok dummy
 scoreboard objectives add mcc_cmpmode dummy
 scoreboard objectives add mcc_cmpaxis dummy
+scoreboard objectives add mcc_cmpdiag dummy
+scoreboard objectives add mcc_diagcount dummy
+scoreboard objectives add mcc_diagshown dummy
+scoreboard objectives add mcc_diagmissing dummy
+scoreboard objectives add mcc_diagremove dummy
+scoreboard objectives add mcc_diagcontent dummy
 scoreboard objectives add mcc_bpactive dummy
 scoreboard objectives add mcc_bpready dummy
 scoreboard objectives add mcc_bpaimx dummy

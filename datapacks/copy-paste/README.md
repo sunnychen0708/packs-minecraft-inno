@@ -32,7 +32,8 @@
 - **材料清單顯示物品名稱**：缺料清單與材料檢查使用遊戲翻譯鍵，玩家看到自己語言的名稱（例如「橡木門」），滑鼠移上去顯示 item ID。
 - `/trigger cphelp` 教學改成 1～5 步驟：選範圍 → 複製 → 放預覽 → 調預覽 → 蓋出來，另列「直接改原本的建築」。
 
-- **防複製修正**：所有真實世界編輯（Cut、Move、Flip、Rotate、貼上、Build）的 Undo/Redo 都會先比對「操作完成後的世界快照」；只要該區域之後被改過（包含箱子內容物），就拒絕 Undo/Redo，避免把已拿走的物品還原回來。
+- **防複製修正**：所有真實世界編輯（Cut、Move、Flip、Rotate、貼上、Build）的 Undo/Redo 都會先比對「操作完成後的世界快照」。同一個 block ID 的 block state 變化一律忽略（例如門開關、樓梯方向、waterlogged）；方塊種類被換掉或 Block Entity 內容（例如箱子物品）被改過仍會拒絕 Undo/Redo，避免資源複製。
+- **Undo／Redo 被安全檢查擋下時會直接列差異**：顯示需要補回的材料／方塊數量、需要移除的多餘方塊、Block Entity／容器內容異常，以及實際世界座標（一次最多 20 筆；修好後重試會繼續列下一批）。
 - **Cut → Undo 會作廢目前的 Cut Clipboard**：來源被還原後，不能再用 `/trigger v` 把同一批方塊或箱子內容物貼第二次。
 - **Cut → Undo → Redo 會重新建立原本的 Cut Clipboard**：即使 Undo 後做過別的 Copy，Redo 也會恢復當初 Cut 的內容，可再用 `/trigger v` 搬移。
 - 修正 Rotate／Mirror 後的 Masked 貼上會退回 Replace：來源是空氣的格子不再覆蓋目標既有方塊。
