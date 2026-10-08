@@ -1,10 +1,18 @@
-# Minecraft Copy/Paste Datapack v1.0
+# Minecraft Copy/Paste Datapack v1.1
 
 適用：Minecraft Java Edition 26.3（Data Pack 121.0）
 
 純 Vanilla datapack。操作使用 Trigger。材料施工依賴同 repo 的 Warehouse datapack，並直接使用 Warehouse 共用註冊資料與 API。
 
-## v1.0 核心流程
+## v1.1
+
+- 完成 Warehouse 共用材料 API 整合，不再維護 Copy/Paste 私有材料箱。
+- Build 的 Undo/Redo 會同步退款／重新扣料，並保留防複製 guard 與持久退款 queue。
+- Blueprint 支援六方向微調、只讀材料報表、覆蓋重算與二次施工確認。
+- 加入 Dialog 控制面板，並可與 Warehouse 主頁互相導覽。
+- Phase 3 路徑已納入官方 Minecraft 26.3 runtime regression。
+
+## 核心流程
 
 Copy 現在是「先 Blueprint、再用真實材料施工」：
 
@@ -85,9 +93,36 @@ Blueprint 建立完成後可以先設定：
 
 目前缺料名稱使用精確 Minecraft item ID，因此不受客戶端語言影響。
 
+## Phase 3：Blueprint 微調、材料報表與覆蓋保護
+
+Blueprint 建立完成後，不必重新用 `v` 定位就能直接微調。左右／前後是以玩家目前面向為基準，上下則是世界 Y 軸：
+
+```mcfunction
+/trigger bpleft set <1..128>
+/trigger bpright set <1..128>
+/trigger bpforward set <1..128>
+/trigger bpbackward set <1..128>
+/trigger bpup set <1..128>
+/trigger bpdown set <1..128>
+```
+
+微調只移動 Blueprint display 與施工目標，不會重新 Copy，也不會修改來源世界。每次微調後會分批重新計算目標區域可能覆蓋的既有非空氣方塊；覆蓋檢查尚未完成時，系統會暫停下一次微調與施工。
+
+施工前可先做只讀檢查：
+
+```mcfunction
+/trigger materials
+```
+
+這會列出 Blueprint 每種材料的需求量、Warehouse 可用量與缺少量，不會扣除任何物品，同時保留目前的覆蓋統計。
+
+如果目前位置會覆蓋既有非空氣方塊，第一次 `/trigger build` 只顯示警告並要求再次確認，不會扣材料或修改世界；第二次施工才會進入正常材料檢查。只要 Blueprint 再次移動、旋轉、鏡像或覆蓋重算，確認狀態就會重置。
+
+`/trigger copypaste` 會開啟 Dialog 控制面板，包含 Pos1/Pos2/Anchor、Copy/Cut、Blueprint 六方向微調、Rotate/Mirror、材料／覆蓋檢查、施工與 Undo/Redo。若 Warehouse 同時安裝，也可以從 Warehouse 主頁直接進入建築工具。
+
 ## 生存安全
 
-v1.0 不會把 Copy 當成免費 Clone：
+Copy/Paste 不會把 Copy 當成免費 Clone：
 
 - 施工只消耗 Warehouse 共用材料來源中的一般、無自訂 components 的物品堆疊。
 - Block Entity 的物品內容在 Blueprint buffer 中會被移除；箱子、熔爐、木桶、潛影盒等不會複製內含物。

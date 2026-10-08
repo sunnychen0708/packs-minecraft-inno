@@ -21,9 +21,9 @@ scoreboard objectives add wh_unreg_do trigger
 scoreboard objectives add wh_unreg trigger
 scoreboard objectives add wh_search_pick trigger
 scoreboard objectives add wh_highlight trigger
+scoreboard objectives add pick trigger
 scoreboard objectives add wh_rule_item dummy
 scoreboard objectives add wh_ruleidx dummy
-scoreboard objectives add wh_search_page trigger
 scoreboard objectives add wh_viewpage trigger
 scoreboard players set #cursor wh_sys 0
 scoreboard players set #enabled wh_sys 1
@@ -36,3 +36,4 @@ data modify storage warehouse:meta v22 set value 1b
 execute unless data storage warehouse:migration queue run data modify storage warehouse:migration queue set value []
 data modify storage warehouse:meta v30 set value 1b
 data modify storage warehouse:meta v43 set value 1b
+data modify storage warehouse:meta v44 set value 1b

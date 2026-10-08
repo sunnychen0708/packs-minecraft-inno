@@ -20,6 +20,7 @@ The validator checks:
 - Every literal function reference resolves to an existing function.
 - Function tags resolve to existing functions or function tags.
 - Macro functions are not called without arguments.
+- Lines marked as macros with `$` must actually reference at least one `$(...)` variable.
 - Trigger objectives are inventoried; missing obvious enable/reset handling is reported as a warning.
 - User-facing trigger lifecycle is enforced in the pack-specific regression test when the pack depends on it.
 - A test ZIP can be built with `pack.mcmeta` and `data/` at archive root.
@@ -112,4 +113,4 @@ For datapacks:
 4. Do not describe a pack as "runtime validated" if only static checks were run.
 5. Do not create a release from a known failing validation run.
 
-GitHub Actions runs stages 1 and 2 automatically for repository datapacks. The release workflow repeats them before building a release ZIP.
+GitHub Actions runs stages 1 and 2 automatically for repository datapacks. Warehouse and Copy/Paste also run official Minecraft 26.3 runtime regressions on main. The release workflow repeats static/pack-specific validation, verifies the tag version matches `pack.mcmeta`, and reruns the official 26.3 runtime gate for Warehouse and Copy/Paste before building a release ZIP.

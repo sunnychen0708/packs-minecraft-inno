@@ -8,16 +8,16 @@
 
 ## Packs
 
-| Pack | Type | Version | Minecraft | Description |
-| --- | --- | ---: | --- | --- |
-| [`utilities`](datapacks/utilities) | Data pack | [`v3.4`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/utilities-v3.4) | Java 26.3 | Teleportation, waypoints, coordinate display, and general survival utility systems. |
-| [`warehouse`](datapacks/warehouse) | Data pack | [`v4.2`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/warehouse-v4.2) | Java 26.3 | Automatic item sorting and warehouse-management system. |
-| [`copy-paste`](datapacks/copy-paste) | Data pack | [`v1.0`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/copy-paste-v1.0) | Java 26.3 | Survival building editor: Blueprint preview plus material-backed construction from registered storage, with Cut/Move/Rotate/Flip and Undo/Redo. |
-| [`cat-door-sounds`](resourcepacks/cat-door-sounds) | Resource pack | [`v1.0`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/cat-door-sounds-v1.0) | Java 26.2 | Custom cat meow replacement and an extra wooden-door opening sound layer. |
+| Pack | Type | Source | Latest release | Minecraft | Description |
+| --- | --- | ---: | ---: | --- | --- |
+| [`utilities`](datapacks/utilities) | Data pack | v3.4 | [`v3.4`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/utilities-v3.4) | Java 26.3 | Teleportation, waypoints, coordinate display, and general survival utility systems. |
+| [`warehouse`](datapacks/warehouse) | Data pack | **v4.4** | [`v4.2`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/warehouse-v4.2) | Java 26.3 | Automatic sorting, shared inventory API, durable refunds, search/Highlight, and survival Pick. |
+| [`copy-paste`](datapacks/copy-paste) | Data pack | **v1.1** | [`v1.0`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/copy-paste-v1.0) | Java 26.3 | Survival building editor: Blueprint preview/micro-adjust, material-backed construction, Cut/Move/Rotate/Flip, and material-aware Undo/Redo. |
+| [`cat-door-sounds`](resourcepacks/cat-door-sounds) | Resource pack | v1.0 | [`v1.0`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/cat-door-sounds-v1.0) | Java 26.2 | Custom cat meow replacement and an extra wooden-door opening sound layer. |
 
 Each pack is stored as unpacked source. Release ZIPs are generated artifacts rather than development source.
 
-Copy/Paste source is **v1.0**. Copy now uses Blueprint-first, material-backed construction backed by the shared Warehouse registration data and inventory API: preview/rotate/mirror first, then build only when every required material is available. Cut remains a one-time real move. Undo/Redo stays five-level per player. See its [multiplayer validation notes](datapacks/copy-paste/MULTIPLAYER-VALIDATION.md).
+Copy/Paste source is **v1.1** and Warehouse source is **v4.4**. These source versions include the completed Phase 3 Blueprint/Highlight work and are newer than the currently published v1.0/v4.2 release ZIPs. Copy uses Blueprint-first, material-backed construction backed by the shared Warehouse registration data and inventory API; Undo/Redo stays five-level per player and material-aware. See its [multiplayer validation notes](datapacks/copy-paste/MULTIPLAYER-VALIDATION.md).
 
 ## Installation
 
@@ -89,8 +89,8 @@ Generated ZIP files go to `dist/`, which is ignored by Git.
 
 ```bash
 ./scripts/build-pack.sh utilities v3.4
-./scripts/build-pack.sh warehouse v4.2
-./scripts/build-pack.sh copy-paste v1.0
+./scripts/build-pack.sh warehouse v4.4
+./scripts/build-pack.sh copy-paste v1.1
 ./scripts/build-pack.sh cat-door-sounds v1.0
 ```
 
@@ -131,9 +131,9 @@ Examples:
 
 ```text
 utilities-v3.4
-warehouse-v4.2
-copy-paste-v1.0
-cat-door-sounds-v1.1
+warehouse-v4.4
+copy-paste-v1.1
+cat-door-sounds-v1.0
 ```
 
 When a matching tag is pushed, `.github/workflows/release-pack.yml` locates the matching datapack or resource pack, builds its ZIP, and publishes a GitHub Release.

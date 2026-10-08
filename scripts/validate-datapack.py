@@ -30,6 +30,7 @@ NAMESPACE_RE = re.compile(r"^[a-z0-9_.-]+$")
 PATH_RE = re.compile(r"^[a-z0-9_./-]+$")
 FUNCTION_TOKEN_RE = re.compile(r"\bfunction\s+([^\s{]+)")
 SCHEDULE_TOKEN_RE = re.compile(r"\bschedule\s+function\s+([^\s{]+)")
+OBJECTIVE_ADD_RE = re.compile(r"\bscoreboard\s+objectives\s+add\s+([A-Za-z0-9_.+\-]+)\b")
 TRIGGER_ADD_RE = re.compile(r"\bscoreboard\s+objectives\s+add\s+([A-Za-z0-9_.+\-]+)\s+trigger\b")
 MACRO_ARG_RE = re.compile(r"\$\(([A-Za-z0-9_.\-]+)\)")
 
@@ -219,6 +220,31 @@ def check_function_references(functions: dict[str, Path]):
     return macro_functions
 
 
+
+def check_duplicate_objective_definitions(functions: dict[str, Path]):
+    duplicates = []
+    for fid, path in functions.items():
+        seen = {}
+        for line_no, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            match = OBJECTIVE_ADD_RE.search(line)
+            if not match:
+                continue
+            objective = match.group(1)
+            if objective in seen:
+                duplicates.append((fid, objective, seen[objective], line_no))
+            else:
+                seen[objective] = line_no
+
+    if duplicates:
+        details = ", ".join(
+            f"{fid}:{first}/{again} -> {objective}"
+            for fid, objective, first, again in duplicates[:20]
+        )
+        raise ValidationError(
+            "Duplicate scoreboard objective definitions in the same function: " + details
+        )
+
+
 def check_triggers(functions: dict[str, Path]):
     texts = {fid: path.read_text(encoding="utf-8") for fid, path in functions.items()}
     all_text = "\n".join(texts.values())
@@ -285,6 +311,7 @@ def static_validation(pack: Path):
     tags = collect_function_tags(data_root)
     resolve_tag_values(data_root, functions, tags)
     macro_functions = check_function_references(functions)
+    check_duplicate_objective_definitions(functions)
     triggers, warnings = check_triggers(functions)
     zip_entries = check_archive(pack)
 
