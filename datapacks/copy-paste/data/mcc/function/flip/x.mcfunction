@@ -1,3 +1,4 @@
+execute if score @s mcc_hasa matches 1 run return run function mcc:flip/x_anchor
 execute store success score @s mcc_tmp run function mcc:flip/common_prepare
 execute unless score @s mcc_tmp matches 1 run return fail
 execute store result storage mcc:temp minx int 1 run scoreboard players get @s mcc_minx
@@ -12,10 +13,6 @@ execute if score @s mcc_p1d matches 3 run function mcc:flip/place_x_end with sto
 execute unless score @s mcc_ok matches 1 run return run function mcc:flip/fail_place_x
 function mcc:flip/cleanup_forceload
 function mcc:undo/snapshot_selection
-execute if score @s mcc_hasa matches 1 run scoreboard players operation @s mcc_tmp = @s mcc_minx
-execute if score @s mcc_hasa matches 1 run scoreboard players operation @s mcc_tmp += @s mcc_maxx
-execute if score @s mcc_hasa matches 1 run scoreboard players operation @s mcc_tmp -= @s mcc_anx
-execute if score @s mcc_hasa matches 1 run scoreboard players operation @s mcc_anx = @s mcc_tmp
 function mcc:history/commit_edit
 tellraw @s [{"text":"[Copy/Paste] Flip X 完成，可用 /trigger undo。","color":"green"}]
 return 1
