@@ -1049,6 +1049,97 @@ def migrate_inno_online_to_innotest_offline(client, token):
     else:
         print("innotest was offline before migration; left offline")
 
+
+def run_utilities_bfs_live_test(client):
+    """Run a focused live regression for the foliage shell-order optimization."""
+    current = client.target()
+    if int(current.get("status", -1)) != 1:
+        raise Error("innotest must be ONLINE before utilities BFS live testing")
+
+    marker = f"UTIL_BFS_LIVE_{int(time.time() * 1000)}"
+    area = "-375 243 90 -345 276 105"
+    force_from = "-375 90"
+    force_to = "-345 105"
+    scores = ("#bfs_near", "#bfs_far", "#bfs_xout", "#bfs_yout", "#bfs_none")
+
+    commands = [
+        f"say {marker} START",
+        f"forceload add {force_from} {force_to}",
+        f"fill {area} minecraft:air",
+        "setblock -350 260 100 minecraft:oak_leaves[persistent=true]",
+        "execute positioned -350 260 100 store result score #bfs_near su_tmp run function survival_utils:tree/check_foliage",
+        "execute positioned -355 244 95 store result score #bfs_far su_tmp run function survival_utils:tree/check_foliage",
+        "execute positioned -356 244 95 store result score #bfs_xout su_tmp run function survival_utils:tree/check_foliage",
+        "execute positioned -355 243 95 store result score #bfs_yout su_tmp run function survival_utils:tree/check_foliage",
+        "execute positioned -370 244 95 store result score #bfs_none su_tmp run function survival_utils:tree/check_foliage",
+        (
+            "execute if score #bfs_near su_tmp matches 1 "
+            "if score #bfs_far su_tmp matches 1 "
+            "if score #bfs_xout su_tmp matches 0 "
+            "if score #bfs_yout su_tmp matches 0 "
+            "if score #bfs_none su_tmp matches 0 "
+            f"run say {marker} PASS"
+        ),
+    ]
+
+    try:
+        for command in commands:
+            client.command(command)
+            time.sleep(0.75)
+        time.sleep(2)
+
+        log = client.log()
+        start = log.rfind(f"{marker} START")
+        if start < 0:
+            raise Error("utilities BFS live marker not found in server log")
+        segment = log[start:]
+        current_errors = [
+            line for line in segment.splitlines()
+            if (
+                "/ERROR]:" in line
+                or "Unknown or incomplete command" in line
+                or "Unknown function" in line
+                or "<--[HERE]" in line
+            )
+        ]
+        if current_errors:
+            raise Error(
+                "utilities BFS live test produced server/command errors:\n"
+                + "\n".join(current_errors[:12])
+            )
+        if f"{marker} PASS" not in segment:
+            for score in scores:
+                try:
+                    client.command(f"scoreboard players get {score} su_tmp")
+                except Error:
+                    pass
+            time.sleep(1)
+            debug = client.log()
+            debug_start = debug.rfind(f"{marker} START")
+            raise Error(
+                "utilities BFS live test did not pass; current session tail:\n"
+                + "\n".join(debug[debug_start:].splitlines()[-40:])
+            )
+
+        print("UTILITIES_BFS_LIVE_TEST=PASS")
+        print("  shell0 hit -> 1")
+        print("  far legal boundary (+5,+16,+5) -> 1")
+        print("  x outside (+6,+16,+5) -> 0")
+        print("  y outside (+5,+17,+5) -> 0")
+        print("  unrelated origin -> 0")
+    finally:
+        cleanup = [
+            f"fill {area} minecraft:air",
+            f"forceload remove {force_from} {force_to}",
+            *[f"scoreboard players reset {score} su_tmp" for score in scores],
+            "scoreboard players set #leaf su_tmp 0",
+        ]
+        for command in cleanup:
+            try:
+                client.command(command)
+            except Error:
+                pass
+
 def run(path):
     try: r = json.loads(Path(path).read_text(encoding="utf-8"))
     except Exception as e: raise Error(f"invalid request file: {path}") from e
@@ -1067,6 +1158,7 @@ def run(path):
     elif op == "command": client.command(str(r.get("command") or "")); print(f"command sent to {TARGET}")
     elif op == "deploy-datapack": deploy(client, str(r.get("pack") or ""))
     elif op == "run-copy-paste-multiplayer-test": run_copy_paste_multiplayer_test(client)
+    elif op == "run-utilities-bfs-live-test": run_utilities_bfs_live_test(client)
     elif op == "set-online-mode-false": set_offline_mode(client)
     elif op == "online-mode-status":
         options = client.get_config("server.properties")

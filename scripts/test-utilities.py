@@ -70,6 +70,20 @@ def static_checks():
             obj = json.loads(path.read_text())
             assert isinstance(obj, dict) and 'type' in obj, path
             assert 'function' not in obj, path
+    # Tree foliage validation must preserve the legacy 11x17x11 acceptance region while
+    # evaluating 26-neighbor BFS (Chebyshev) shells from near to far and exiting on hit.
+    foliage = (DATA / 'survival_utils/function/tree/check_foliage.mcfunction').read_text(encoding='utf-8')
+    foliage_pattern = re.compile(r'execute if block (~-?[0-9]*) (~-?[0-9]*) (~-?[0-9]*) #survival_utils:tree_foliage run return run scoreboard players set #leaf su_tmp 1')
+    foliage_checks = foliage_pattern.findall(foliage)
+    assert len(foliage_checks) == 2057, len(foliage_checks)
+    def rel_coord(token):
+        return 0 if token == '~' else int(token[1:])
+    foliage_coords = [(rel_coord(x), rel_coord(y), rel_coord(z)) for x, y, z in foliage_checks]
+    expected_foliage = {(x, y, z) for y in range(17) for x in range(-5, 6) for z in range(-5, 6)}
+    assert set(foliage_coords) == expected_foliage and len(foliage_coords) == len(expected_foliage) == 2057
+    foliage_shells = [max(abs(x), y, abs(z)) for x, y, z in foliage_coords]
+    assert foliage_shells == sorted(foliage_shells), 'foliage checks are not BFS-shell ordered'
+    assert foliage.rstrip().endswith('return 0'), 'foliage miss path must leave #leaf=0 and return normally'
     # Chain-mined ores drop the vanilla experience range unless mined with Silk Touch.
     silk = 'execute unless items entity @s weapon.mainhand *[minecraft:enchantments~[{enchantments:"minecraft:silk_touch"}]] run function survival_utils:vein/xp '
     loot = 'loot spawn ~0.5 ~0.5 ~0.5 mine ~ ~ ~ mainhand\n'
