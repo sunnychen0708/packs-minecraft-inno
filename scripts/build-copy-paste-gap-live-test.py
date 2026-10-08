@@ -189,10 +189,12 @@ elif CASE == "materials":
            f"item replace entity {WHO} weapon.offhand with air")
     for code in ['00'] + [f"{row}{col}" for row in range(1, 7) for col in range(10)]:
         s.step(f"data modify storage warehouse:chests c{code}.registered set value 0b", delay=1)
-    s.step(run_dim(dim, f"setblock {fmt(entry)} chest"),
-           run_dim(dim, f"setblock {fmt(source)} chest"),
-           'data modify storage warehouse:chests c00 set value {registered:1b,valid:1b,dimension:"minecraft:overworld",a_x:-318,a_y:250,a_z:103,b_x:-318,b_y:250,b_z:103}',
-           'data modify storage warehouse:chests c11 set value {registered:1b,valid:1b,dimension:"minecraft:overworld",a_x:-318,a_y:250,a_z:100,b_x:-318,b_y:250,b_z:100}',
+    s.step(run_dim(dim, f"setblock {fmt(entry)} minecraft:chest[facing=north,type=left]"),
+           run_dim(dim, f"setblock {entry[0]+1} {entry[1]} {entry[2]} minecraft:chest[facing=north,type=right]"),
+           run_dim(dim, f"setblock {fmt(source)} minecraft:chest[facing=north,type=left]"),
+           run_dim(dim, f"setblock {source[0]+1} {source[1]} {source[2]} minecraft:chest[facing=north,type=right]"),
+           'data modify storage warehouse:chests c00 set value {registered:1b,valid:1b,dimension:"minecraft:overworld",a_x:-318,a_y:250,a_z:103,b_x:-317,b_y:250,b_z:103}',
+           'data modify storage warehouse:chests c11 set value {registered:1b,valid:1b,dimension:"minecraft:overworld",a_x:-318,a_y:250,a_z:100,b_x:-317,b_y:250,b_z:100}',
            'function warehouse:chunks/refresh',
            'function warehouse:api/material_sources/refresh')
     s.step(f"give {WHO} minecraft:oak_planks 26",
@@ -276,7 +278,7 @@ elif CASE == "materials":
         cmd += [run_dim(dim, f"item replace entity {WHO} container.{i} from block {fmt(inv1)} container.{i}") for i in range(27)]
         cmd += [run_dim(dim, f"item replace entity {WHO} container.{i} from block {fmt(inv2)} container.{i-27}") for i in range(27, 36)]
         cmd += [run_dim(dim, f"item replace entity {WHO} weapon.offhand from block {fmt(inv2)} container.9")]
-        cmd += [run_dim(dim, f"setblock {fmt(p)} air") for p in (inv1, inv2, entry, source)]
+        cmd += [run_dim(dim, f"setblock {fmt(p)} air") for p in (inv1, inv2, entry, (entry[0]+1,entry[1],entry[2]), source, (source[0]+1,source[1],source[2]))]
         cmd += ["execute if score #force5 htest matches 0 in minecraft:overworld run forceload remove -318 90",
                 "execute if score #force6 htest matches 0 in minecraft:overworld run forceload remove -318 104",
                 "data remove storage cpg:save material_wh",
