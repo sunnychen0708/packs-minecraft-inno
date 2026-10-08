@@ -64,7 +64,7 @@ class ReleaseNotesRegression(unittest.TestCase):
             git(source, "branch", "-M", "main")
             git(source, "push", "--force", "origin", "main")
             git(directory, "clone", "--depth", "1",
-                bare.as_uri().replace("file:", "file:"), str(checkout))
+                bare.as_uri(), str(checkout))
 
             notes_file = checkout / "notes.md"
             result = subprocess.run(
