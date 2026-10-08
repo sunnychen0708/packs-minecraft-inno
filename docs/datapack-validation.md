@@ -146,7 +146,7 @@ The server-side controller operation is:
 run-copy-paste-multiplayer-test
 ```
 
-A normal run uses four Mineflayer 26.3 player connections. Two named players perform the regression while the other two stay online, so the test occurs in a real four-player server session rather than an armor-stand-only harness.
+Normal automation uses a persistent three-bot Mineflayer 26.3 session (`penguin0531`, `geena0701`, `Felicitypeng`) when live players are needed and reserves SunnyChen for the owner/real client. Each harness declares the player names it actually needs; use all four identities only when a test genuinely needs SunnyChen too.
 
 The regression checks:
 
@@ -166,13 +166,13 @@ The runner writes `MCCMP_CHECK PASS/FAIL ...` for each assertion and ends with `
 
 Important implementation rules:
 
-- wait for four players before starting;
+- wait for the harness-declared player names before starting; the normal session has three non-SunnyChen bots, while the current house harness uses `penguin0531` + `geena0701` as its two actors;
 - tag each run with a unique marker so an old `MCCMP_RESULT` cannot be reused accidentally;
 - do not use a fixed sleep as completion detection — exaroton can report `Can't keep up` and scheduled functions may run late;
 - clean the reserved test area, tags, scoreboard objective, temporary test ZIP, and reload only after the current run has produced a result or timed out;
 - distinguish harness/parser/bot infrastructure failures from datapack assertion failures before changing datapack code.
 
-The 2026-10-07 final run passed every check above with `MCCMP_RESULT PASS` while four bot players were online. The corresponding four-bot session also completed a full five-minute hold successfully.
+The latest exact-build run is Copy/Paste **v1.8** on 2026-10-08: [run 37718900567](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37718900567) passed every `MCCMP_CHECK` and ended with `MCCMP_RESULT PASS` / `COPY_PASTE_MULTIPLAYER_LIVE_TEST=PASS`. Three non-SunnyChen bots were online and `penguin0531` + `geena0701` were the two actors. The separate v1.8 full Blueprint matcher live gate also passed in [run 37719130915](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37719130915) with `states=35724 expected=35724 fail=0 air_ret=0`.
 
 This layer is **not** the same as two Windows users manually operating the UI. It proves multiplayer server-side state separation with real player entities and real `/trigger`-compatible identities, not mouse/UI ergonomics.
 
@@ -204,8 +204,8 @@ For datapacks:
 5. Utilities, Warehouse, and Copy/Paste releases must also pass their dedicated 26.3 runtime harnesses.
 6. For multiplayer-sensitive Copy/Paste state changes, run the innotest live multiplayer regression before calling the change multiplayer-validated.
 7. Do not describe a pack as real-client validated if only CI or Mineflayer testing was run.
-8. Do not create a release from a known failing validation run.
+8. The normal release path is gated. If the owner explicitly requests a direct/no-gate release, that exception may skip validation, but the release must be documented as unvalidated for the skipped layer; never turn a skipped or failing run into a PASS claim.
 
 GitHub Actions runs generic validation, pack-specific regressions, cross-pack static compatibility, dedicated Utilities/Warehouse/Copy-Paste runtime jobs, and the all-datapacks 26.3 compatibility job on relevant `main` pushes and pull requests.
 
-The release workflow verifies the tag version against `pack.mcmeta`, reruns the combined all-datapacks runtime gate for every datapack tag, reruns the dedicated Utilities, Warehouse or Copy/Paste runtime gate when applicable, then builds and publishes the ZIP. Publishing is idempotent: runs for the same tag are serialized, and when the release already exists the ZIP is uploaded to it instead of failing. A release can also be started manually (`workflow_dispatch` on `main` with a `tag` input such as `utilities-v3.7`): the same gates run first, and only then does the workflow create the annotated tag on that `main` commit; it refuses a tag that already points at another commit. Generated release notes start at the same pack's previous release tag (e.g. `copy-paste-v1.5` for `copy-paste-v1.6`), not at whichever pack was tagged last.
+The release workflow verifies the tag version against `pack.mcmeta`, reruns the combined all-datapacks runtime gate for every datapack tag, reruns the dedicated Utilities, Warehouse or Copy/Paste runtime gate when applicable, then builds and publishes the ZIP. Publishing is idempotent: runs for the same tag are serialized, and when the release already exists the ZIP is uploaded to it instead of failing. A release can also be started manually (`workflow_dispatch` on `main` with a `tag` input such as `utilities-v3.8`): the same gates run first, and only then does the workflow create the annotated tag on that `main` commit; it refuses a tag that already points at another commit. Generated release notes start at the same pack's previous release tag (e.g. `copy-paste-v1.5` for `copy-paste-v1.6`), not at whichever pack was tagged last.

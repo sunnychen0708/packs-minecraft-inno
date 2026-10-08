@@ -1,6 +1,6 @@
 # Minecraft Copy/Paste Datapack v1.8
 
-> Source: **v1.8** · Latest release: **copy-paste-v1.7** · Download: **copy-paste-v1.7.zip**
+> Source: **v1.8** · Latest release: **copy-paste-v1.8** · Download: **copy-paste-v1.8.zip**
 
 適用：Minecraft Java Edition 26.3（Data Pack 121.0）
 
@@ -261,7 +261,7 @@ Build 的 Undo/Redo 會連材料交易一起處理：Undo 在施工區仍與 Bui
 - Rotate / Mirror Structure Template：每軸 ≤ 48；有自訂 Anchor 的 Flip X/Z 也走這條路徑，同樣每軸 ≤ 48。
 - Move / 直接 Rotate 的 Undo 範圍（來源加目的地）每軸 ≤ 256。
 - Warehouse 共用材料來源上限為 64；Copy/Paste 不再有自己的材料箱上限或註冊資料。
-- Blueprint exact-state matcher覆蓋 Java 26.3 的 1,283 種非空氣 block IDs、35,720 個 block states。它由 `scripts/gen-blueprint-matcher.py` 依官方 block report 產生：先用依出現頻率加權的 block-tag 樹找出 block ID，再逐一判斷每個 property（2 值 property 先寫預設值、再判斷一次），不再逐一列舉完整 state（#49）。
+- Blueprint exact-state matcher 覆蓋 Java 26.3 的 1,283 種非空氣 block IDs、35,720 個合法 block states；live harness 另外重複 4 個 regression case，所以完整 live 計數是 35,724。它由 `scripts/gen-blueprint-matcher.py` 依官方 block report 產生：先用依出現頻率加權的 block-tag 樹找出 block ID，再逐一判斷每個 property（2 值 property 先寫預設值、再判斷一次），不再逐一列舉完整 state（#49）。
 - 實體不包含在 Copy/Cut/Blueprint 中。
 
 ## 驗證
@@ -286,6 +286,6 @@ python3 scripts/test-copy-paste-runtime.py \
   --accept-eula
 ```
 
-目前 CI 會同時跑 Copy/Paste 專用 26.3 runtime，以及 Utilities + Warehouse + Copy/Paste 三包一起載入的 26.3 compatibility gate。`copy-paste-v1.3` 經過同一組 release gate 後發布。更完整的覆蓋範圍與仍需真人 client 驗證的項目見 [LIVE-VALIDATION.md](LIVE-VALIDATION.md)；多人隔離設計與雙人測試方式見 [MULTIPLAYER-VALIDATION.md](MULTIPLAYER-VALIDATION.md)。
+目前 CI 會同時跑 Copy/Paste 專用 26.3 runtime，以及 Utilities + Warehouse + Copy/Paste 三包一起載入的 26.3 compatibility gate。一般 release 走這組 gate；v1.8 當時依使用者明確要求走 direct/no-gate release，因此不能把**發布當下被跳過的 gated workflow**寫成 PASS。不過 v1.8 exact build 已在發布後補跑正式 innotest：3D-house multiplayer run [37718900567](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37718900567) 全部 PASS；全量 Blueprint matcher run [37719130915](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37719130915) 為 `states=35724 expected=35724 fail=0 air_ret=0`。更完整的覆蓋範圍與仍需真人 client 驗證的項目見 [LIVE-VALIDATION.md](LIVE-VALIDATION.md)；多人隔離設計與雙人測試方式見 [MULTIPLAYER-VALIDATION.md](MULTIPLAYER-VALIDATION.md)。
 
 正式版本仍統一由 `<pack-name>-v<version>` tag 觸發 `release-pack.yml` 驗證、打包與發布 ZIP。
