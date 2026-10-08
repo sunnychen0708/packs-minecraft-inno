@@ -1,0 +1,148 @@
+name: inno animal collection (read only)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/inno-animal-progress.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Read inno player advancements (no server control or writes)
+        shell: bash
+        env:
+          EXAROTON_API_TOKEN: ${{ secrets.EXAROTON_API_TOKEN }}
+        run: |
+          python3 - <<'PY'
+          import ast
+          import json
+          import os
+          from pathlib import Path
+          from urllib.error import HTTPError
+          from urllib.parse import quote
+          from urllib.request import Request, urlopen
+
+          API = "https://api.exaroton.com/v1"
+          TARGET = "inno.exaroton.me"
+          CATS = (
+              "tabby", "black", "red", "siamese", "british_shorthair",
+              "calico", "persian", "ragdoll", "white", "jellie", "all_black",
+          )
+          WOLVES = (
+              "ashen", "black", "chestnut", "pale", "rusty",
+              "snowy", "spotted", "striped", "woods",
+          )
+          token = os.environ["EXAROTON_API_TOKEN"].strip()
+          if not token:
+              raise SystemExit("ERROR: EXAROTON_API_TOKEN is missing")
+
+          def get(path, *, binary=False, missing_ok=False):
+              req = Request(API + path, headers={
+                  "Authorization": "Bearer " + token,
+                  "User-Agent": "packs-minecraft-inno/animal-progress-readonly",
+              }, method="GET")
+              try:
+                  with urlopen(req, timeout=25) as resp:
+                      raw = resp.read()
+              except HTTPError as exc:
+                  if missing_ok and exc.code == 404:
+                      return None
+                  raise RuntimeError("exaroton GET failed: HTTP " + str(exc.code) + " " + path) from exc
+              if binary:
+                  return raw
+              decoded = json.loads(raw)
+              if isinstance(decoded, dict) and decoded.get("success") is False:
+                  raise RuntimeError("exaroton API returned an error for " + path)
+              return decoded.get("data") if isinstance(decoded, dict) and "data" in decoded else decoded
+
+          servers = get("/servers/")
+          matched = [s for s in servers if isinstance(s, dict)
+                     and str(s.get("address", "")).strip().rstrip(".").lower() == TARGET]
+          if len(matched) != 1:
+              raise SystemExit("ERROR: production server lock failed")
+          sid = quote(str(matched[0]["id"]), safe="")
+          server = get("/servers/" + sid)
+          if str(server.get("address", "")).strip().rstrip(".").lower() != TARGET:
+              raise SystemExit("ERROR: server identity mismatch")
+
+          def file_bytes(path, *, missing_ok=False):
+              return get("/servers/" + sid + "/files/data/" + quote(path, safe="/") + "/",
+                         binary=True, missing_ok=missing_ok)
+
+          props = file_bytes("server.properties", missing_ok=True)
+          world = "world"
+          if props:
+              for line in props.decode("utf-8-sig", "replace").splitlines():
+                  if line.startswith("level-name="):
+                      world = line.split("=", 1)[1].strip() or "world"
+          if not world or world.startswith("/") or ".." in world.split("/"):
+              raise SystemExit("ERROR: invalid world path")
+
+          tree = ast.parse(Path("scripts/exaroton_inno_uuid_migrate.py").read_text(encoding="utf-8"))
+          mapping_node = next(n.value for n in tree.body if isinstance(n, ast.Assign)
+                              and any(isinstance(t, ast.Name) and t.id == "PLAYER_MAP" for t in n.targets))
+          players = ast.literal_eval(mapping_node)
+          expected = ("SunnyChen", "penguin0531", "geena0701", "Felicitypeng")
+          if set(players) != set(expected):
+              raise SystemExit("ERROR: player list changed unexpectedly")
+
+          def criterion_id(value):
+              return str(value).split(":")[-1].split("/")[-1].removesuffix(".png")
+
+          def result(data, advancement, variants):
+              node = data.get(advancement, {})
+              if not isinstance(node, dict):
+                  node = {}
+              criteria = node.get("criteria", {})
+              if not isinstance(criteria, dict):
+                  criteria = {}
+              found = {criterion_id(k) for k in criteria}
+              return {
+                  "count": len(found.intersection(variants)),
+                  "total": len(variants),
+                  "collected": [k for k in variants if k in found],
+                  "missing": [k for k in variants if k not in found],
+                  "unknown_criteria": sorted(found.difference(variants)),
+                  "done": node.get("done") is True,
+              }
+
+          reports = {}
+          for name in expected:
+              online_uuid = players[name][1]
+              path = f"{world}/players/advancements/{online_uuid}.json"
+              raw = file_bytes(path, missing_ok=True)
+              if raw is None:
+                  reports[name] = {"error": "Advancement file absent; progress unknown, not zero"}
+                  continue
+              data = json.loads(raw.decode("utf-8-sig"))
+              if not isinstance(data, dict):
+                  reports[name] = {"error": "Invalid advancement file"}
+                  continue
+              reports[name] = {
+                  "cats": result(data, "minecraft:husbandry/complete_catalogue", CATS),
+                  "wolves": result(data, "minecraft:husbandry/whole_pack", WOLVES),
+              }
+
+          print("INNO_ANIMAL_PROGRESS_START")
+          print(json.dumps({
+              "server": TARGET,
+              "server_status_code": server.get("status"),
+              "world": world,
+              "read_only": True,
+              "source": "saved player advancement files (not live entities)",
+              "players": reports,
+          }, ensure_ascii=False, indent=2))
+          print("INNO_ANIMAL_PROGRESS_END")
+          if any("error" in p for p in reports.values()):
+              raise SystemExit("ERROR: one or more player advancement files unavailable")
+          PY
