@@ -103,6 +103,9 @@ def static_checks():
     print(f'PASS static: JSON, format 121.0, {len(logs)} log events, dispatch/reset, function references, {len(VEIN_XP)} ore XP ranges', flush=True)
 
 
+TP_DIMS = ('overworld', 'the_nether', 'the_end')
+
+
 def integration(java, server):
     work = ROOT / 'dist' / ('utilities-test-' + uuid.uuid4().hex[:8])
     work.mkdir()
@@ -224,6 +227,16 @@ def integration(java, server):
     lines += ['data modify storage sunny_nav:players p999 set value {custom:{s1:{set:1b,name:{text:"Preserved"},x:12,y:80,z:34,dim:"minecraft:overworld"}}}', 'data modify storage sunny_nav:shared s1 set value {set:1b,name:{text:"Shared"},x:5,y:80,z:9,dim:"minecraft:overworld"}', 'function allinone:load']
     check('if data storage sunny_nav:players p999.custom.s1{x:12,z:34,name:{text:"Preserved"}}', 'personal_waypoint_preserved')
     check('if data storage sunny_nav:shared s1{x:5,z:9,name:{text:"Shared"}}', 'shared_waypoint_preserved')
+    # Saved waypoints are block coordinates; every teleport must land in the middle of that block
+    # (not on the corner of four blocks), on both sides of zero and in every dimension.
+    tp_stand = '@e[type=minecraft:armor_stand,tag=tpcheck]'
+    for dim in TP_DIMS:
+        # A stand already in the target dimension: cross-dimension entity moves finish after the tick.
+        lines += [f'kill {tp_stand}', f'execute in minecraft:{dim} run summon minecraft:armor_stand 0 80 0 {{Tags:["tpcheck"],NoGravity:1b}}']
+        for x, z in ((5, 7), (-6, -9)):
+            lines.append(f'execute as {tp_stand} run function sunny_nav:macro/tp_{dim.removeprefix("the_")} {{x:{x},y:80,z:{z}}}')
+            check(f'in minecraft:{dim} positioned {x + 0.5} 80 {z + 0.5} if entity @e[type=minecraft:armor_stand,tag=tpcheck,distance=..0.01]', f'teleport_centered_{dim}_{x}_{z}')
+        lines.append(f'kill {tp_stand}')
     # Instantiate every macro against harmless test arguments to catch lazy parser errors.
     args = '{id:999,slot:1,name:"Regression",x:1,y:80,z:1,dim:"minecraft:overworld",yaw:0,pitch:0,min:1,max:1,v:1}'
     for path in DATA.rglob('*.mcfunction'):
@@ -233,8 +246,13 @@ def integration(java, server):
             lines.append(f'execute as {actor} at @s run function {function} {args}')
     lines += [f'execute if score #passed test matches {len(assertions)} run say REGRESSION_SUCCESS', 'say REGRESSION_DONE']
     (funcs / 'run.mcfunction').write_text('\n'.join(lines) + '\n', encoding='utf-8')
-    # Every fixture is in chunk (0, 0); wait until it is loaded instead of sleeping a fixed time.
-    (funcs / 'chunks_ready.mcfunction').write_text('execute unless loaded 0 0 0 run return run say CHUNKS_PENDING\nsay CHUNKS_READY\n')
+    # Fixtures are in chunk (0, 0) plus the teleport-check chunks of each dimension; wait until they
+    # are loaded instead of sleeping a fixed time.
+    (funcs / 'chunks_ready.mcfunction').write_text(
+        'execute unless loaded 0 0 0 run return run say CHUNKS_PENDING\n'
+        + ''.join(f'execute in minecraft:{dim} unless loaded -16 0 -16 run return run say CHUNKS_PENDING\n'
+                  f'execute in minecraft:{dim} unless loaded 15 0 15 run return run say CHUNKS_PENDING\n' for dim in TP_DIMS)
+        + 'say CHUNKS_READY\n')
     (work / 'eula.txt').write_text('eula=true\n')
     (work / 'server.properties').write_text('server-ip=127.0.0.1\nserver-port=0\nonline-mode=false\nwhite-list=true\nview-distance=2\nsimulation-distance=2\nlevel-type=minecraft:flat\ngenerator-settings={"layers":[{"block":"minecraft:bedrock","height":1}],"biome":"minecraft:plains"}\n')
     ready, chunks_ready, done = threading.Event(), threading.Event(), threading.Event()
@@ -256,6 +274,8 @@ def integration(java, server):
     try:
         assert ready.wait(60), 'Server did not become ready'
         proc.stdin.write('forceload add 0 0\n')
+        for dim in TP_DIMS:
+            proc.stdin.write(f'execute in minecraft:{dim} run forceload add -16 -16 15 15\n')
         proc.stdin.flush()
         deadline = time.monotonic() + 60
         while not chunks_ready.is_set():

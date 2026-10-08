@@ -35,6 +35,11 @@ jobs:
           python3 -m py_compile scripts/exaroton_innotest.py scripts/exaroton_inno_uuid_migrate.py
           python3 scripts/test-exaroton-migrations.py
 
+      - name: Check generated Blueprint matcher is up to date
+        run: |
+          python3 scripts/test-blueprint-report.py
+          python3 scripts/gen-blueprint-matcher.py --check
+
       - name: Validate every datapack
         shell: bash
         run: |

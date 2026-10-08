@@ -60,3 +60,4 @@ execute if score @s wh_target matches 66 run function warehouse:unregister/do_66
 execute if score @s wh_target matches 67 run function warehouse:unregister/do_67
 execute if score @s wh_target matches 68 run function warehouse:unregister/do_68
 execute if score @s wh_target matches 69 run function warehouse:unregister/do_69
+function warehouse:chunks/refresh

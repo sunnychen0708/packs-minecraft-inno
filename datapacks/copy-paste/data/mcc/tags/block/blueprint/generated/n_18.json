@@ -1,0 +1,14 @@
+{
+  "values": [
+    "minecraft:black_concrete",
+    "minecraft:blue_concrete",
+    "minecraft:black_carpet",
+    "minecraft:warped_button",
+    "minecraft:warped_fence_gate",
+    "minecraft:warped_pressure_plate",
+    "minecraft:spruce_fence_gate",
+    "minecraft:spruce_pressure_plate",
+    "minecraft:stone_button",
+    "minecraft:stone_pressure_plate"
+  ]
+}

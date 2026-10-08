@@ -1,0 +1,21 @@
+{
+  "values": [
+    "minecraft:acacia_trapdoor",
+    "minecraft:bamboo_door",
+    "minecraft:bamboo_trapdoor",
+    "minecraft:birch_door",
+    "minecraft:acacia_door",
+    "minecraft:lantern",
+    "minecraft:rail",
+    "minecraft:acacia_hanging_sign",
+    "minecraft:acacia_sapling",
+    "minecraft:yellow_wall_banner",
+    "minecraft:zombie_head",
+    "minecraft:zombie_wall_head",
+    "minecraft:yellow_wool_stairs",
+    "minecraft:crafting_table",
+    "minecraft:furnace",
+    "minecraft:hay_block",
+    "minecraft:ladder"
+  ]
+}

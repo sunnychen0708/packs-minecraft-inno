@@ -572,10 +572,7 @@ def run_copy_paste_multiplayer_test(client):
     # Clean the temporary harness and its reserved test state only after the
     # current run has produced a result (or timed out).
     cleanup = [
-        "fill -305 248 85 -270 255 130 air",
-        "tag @a remove mcc_mp_a",
-        "tag @a remove mcc_mp_b",
-        "scoreboard objectives remove mccmp",
+        "function mcc_mp_test:cleanup",
     ]
     for command in cleanup:
         try:
@@ -616,6 +613,94 @@ def run_copy_paste_multiplayer_test(client):
         f"live multiplayer test did not pass; "
         f"current-run result={result or '<missing>'}"
     )
+
+def run_blueprint_matcher_live_test(client):
+    """Issue #49: every exact 26.3 block state through the Blueprint matcher on innotest."""
+    current = client.target()
+    if int(current.get("status", -1)) != 1:
+        raise Error("innotest must be ONLINE before Blueprint matcher live testing")
+
+    session_marker = f"MCCBP_SESSION_{int(time.time() * 1000)}"
+    client.command(f"say {session_marker} START")
+    time.sleep(1)
+
+    # Deploy the exact Copy/Paste source from the checked-out commit.
+    deploy(client, "copy-paste")
+    time.sleep(5)
+
+    import subprocess
+    subprocess.check_call([sys.executable, str(ROOT / "scripts" / "build-blueprint-matcher-live-test.py")])
+    payload = zip_tree(ROOT / "dist" / "mcc-bp-matcher-live-test")
+    world = level_name(client.read_file("server.properties"))
+    remote_harness = f"{world}/datapacks/mcc-bp-matcher-live-test.zip"
+    client.write_file(remote_harness, payload)
+    print(f"deployed Blueprint matcher harness -> {remote_harness} ({len(payload)} bytes)")
+    client.command("reload")
+    time.sleep(6)
+
+    result = ""
+    segment = ""
+    try:
+        log = client.log()
+        session_at = log.rfind(f"{session_marker} START")
+        if session_at < 0:
+            raise Error("Blueprint matcher preflight marker not found in server log")
+        preflight_errors = [line for line in log[session_at:].splitlines() if "/ERROR]:" in line]
+        if preflight_errors:
+            raise Error("Blueprint matcher preflight found current-session server errors:\n"
+                        + "\n".join(preflight_errors[:12]))
+
+        run_marker = f"MCCBP_RUN_{int(time.time() * 1000)}"
+        client.command(f"say {run_marker} START")
+        time.sleep(1)
+        client.command("function mcc_bp_live:start")
+        # Read-only progress probes; never cancel the pending first batch here.
+        time.sleep(10)
+        for command in ("tick query",
+                        "scoreboard players get #states mccbp",
+                        "data get storage mcc_bp_live:t want"):
+            client.command(command)
+            time.sleep(1)
+
+        deadline = time.time() + 300
+        while time.time() < deadline:
+            log = client.log()
+            marker = log.rfind(f"{run_marker} START")
+            if marker >= 0:
+                segment = log[marker:]
+                hits = [line for line in segment.splitlines() if "MCCBP_RESULT " in line]
+                if hits:
+                    result = hits[-1]
+                    break
+            time.sleep(3)
+    finally:
+        for command in ("scoreboard objectives remove mccbp",
+                        "data remove storage mcc_bp_live:t want",
+                        "execute in minecraft:overworld run setblock -440 250 120 minecraft:air strict",
+                        "execute in minecraft:overworld run forceload remove -440 120"):
+            try:
+                client.command(command)
+            except Error:
+                pass
+        try:
+            client.delete_file(remote_harness)
+        finally:
+            try:
+                client.command("reload")
+            except Error:
+                pass
+
+    report = "\n".join(line for line in segment.splitlines() if "MCCBP_" in line)
+    if report:
+        print(report)
+    errors = [line for line in segment.splitlines() if "/ERROR]:" in line]
+    if errors:
+        raise Error("Blueprint matcher live test produced current-run server errors:\n"
+                    + "\n".join(errors[:12]))
+    if "MCCBP_RESULT PASS" in result:
+        print("BLUEPRINT_MATCHER_LIVE_TEST=PASS")
+        return
+    raise Error(f"Blueprint matcher live test did not pass; current-run result={result or '<missing>'}")
 
 def wait_status(client, wanted, timeout=180):
     deadline = time.time() + timeout
@@ -1050,6 +1135,170 @@ def migrate_inno_online_to_innotest_offline(client, token):
         print("innotest was offline before migration; left offline")
 
 
+def run_warehouse_compact_live_test(client):
+    """Run a focused live regression for compact arithmetic direct dispatch."""
+    current = client.target()
+    if int(current.get("status", -1)) != 1:
+        raise Error("innotest must be ONLINE before Warehouse compact live testing")
+
+    marker = f"WH_COMPACT_LIVE_{int(time.time() * 1000)}"
+    ax, ay, az = -430, 250, 120
+    bx, by, bz = -428, 250, 120
+    force_from = "-430 120"
+    force_to = "-428 120"
+
+    setup = [
+        f"say {marker} START",
+        "scoreboard players operation #whc_old_enabled wh_sys = #enabled wh_sys",
+        "scoreboard players operation #whc_old_code wh_tmp = #compact_code wh_tmp",
+        "scoreboard players operation #whc_old_slot wh_tmp = #compact_slot wh_tmp",
+        "scoreboard players set #enabled wh_sys 0",
+        "execute store success score #whc_had wh_tmp run data get storage warehouse:chests c69",
+        "data remove storage warehouse:runtime compact_live_backup",
+        "data modify storage warehouse:runtime compact_live_backup set from storage warehouse:chests c69",
+        f"forceload add {force_from} {force_to}",
+        f"setblock {ax} {ay} {az} minecraft:chest",
+        f"setblock {bx} {by} {bz} minecraft:chest",
+        (
+            "data modify storage warehouse:chests c69 set value "
+            f'{{registered:1b,valid:1b,dimension:"minecraft:overworld",'
+            f"a_x:{ax},a_y:{ay},a_z:{az},b_x:{bx},b_y:{by},b_z:{bz}}}"
+        ),
+        f'data modify block {ax} {ay} {az} Items set value ['
+        '{Slot:0b,id:"minecraft:diamond",count:10},'
+        '{Slot:5b,id:"minecraft:diamond",count:10}]',
+        f'data modify block {bx} {by} {bz} Items set value ['
+        '{Slot:3b,id:"minecraft:diamond",count:7}]',
+        "scoreboard players set #compact_code wh_tmp 60",
+        "scoreboard players set #compact_slot wh_tmp 0",
+    ]
+
+    try:
+        for command in setup:
+            client.command(command)
+            time.sleep(0.15)
+
+        # First call must direct-dispatch code 60 to c69 and process A slot 0.
+        client.command("function warehouse:compact/step")
+        client.command(
+            f"execute if score #compact_active wh_tmp matches 1 "
+            f"if score #compact_code wh_tmp matches 60 "
+            f"if score #compact_slot wh_tmp matches 1 "
+            f"run say {marker} CODE_PASS"
+        )
+
+        # Advance through A slot 5; the second 10-stack should merge into slot 0.
+        for _ in range(5):
+            client.command("function warehouse:compact/step")
+        client.command(
+            f'execute if data block {ax} {ay} {az} '
+            'Items[{Slot:0b,id:"minecraft:diamond",count:20}] '
+            f'unless data block {ax} {ay} {az} Items[{{Slot:5b,id:"minecraft:diamond"}}] '
+            f'run say {marker} A_PASS'
+        )
+
+        # Advance from global slot 6 through global slot 30 (B local slot 3).
+        for _ in range(25):
+            client.command("function warehouse:compact/step")
+        client.command(
+            f'execute if data block {ax} {ay} {az} '
+            'Items[{Slot:0b,id:"minecraft:diamond",count:27}] '
+            f'unless data block {bx} {by} {bz} Items[{{Slot:3b,id:"minecraft:diamond"}}] '
+            f'run say {marker} B_PASS'
+        )
+
+        # Finish the cycle and verify cursor wrap semantics.
+        for _ in range(23):
+            client.command("function warehouse:compact/step")
+        client.command(
+            f"execute if score #compact_code wh_tmp matches 0 "
+            f"if score #compact_slot wh_tmp matches 0 "
+            f"run say {marker} WRAP_PASS"
+        )
+        time.sleep(2)
+
+        log = client.log()
+        start_at = log.rfind(f"{marker} START")
+        if start_at < 0:
+            raise Error("Warehouse compact live marker not found in server log")
+        segment = log[start_at:]
+        current_errors = [
+            line for line in segment.splitlines()
+            if (
+                "/ERROR]:" in line
+                or "Unknown or incomplete command" in line
+                or "Unknown function" in line
+                or "<--[HERE]" in line
+            )
+        ]
+        if current_errors:
+            raise Error(
+                "Warehouse compact live test produced server/command errors:\n"
+                + "\n".join(current_errors[:12])
+            )
+
+        required = ("CODE_PASS", "A_PASS", "B_PASS", "WRAP_PASS")
+        missing = [name for name in required if f"{marker} {name}" not in segment]
+        if missing:
+            # Persist diagnostics into the server log before cleanup.
+            diagnostic_commands = [
+                f"data get block {ax} {ay} {az} Items",
+                f"data get block {bx} {by} {bz} Items",
+                "scoreboard players get #compact_active wh_tmp",
+                "scoreboard players get #compact_code wh_tmp",
+                "scoreboard players get #compact_slot wh_tmp",
+                "data get storage warehouse:runtime compact",
+            ]
+            for command in diagnostic_commands:
+                try:
+                    client.command(command)
+                except Error:
+                    pass
+            time.sleep(1)
+            debug = client.log()
+            debug_start = debug.rfind(f"{marker} START")
+            raise Error(
+                "Warehouse compact live test missing checkpoints "
+                + ", ".join(missing)
+                + "; current session tail:\n"
+                + "\n".join(debug[debug_start:].splitlines()[-60:])
+            )
+
+        print("WAREHOUSE_COMPACT_LIVE_TEST=PASS")
+        print("  code 60 -> c69 direct dispatch: PASS")
+        print("  A global/local slot mapping and merge: PASS")
+        print("  B global 30 -> local slot 3 mapping and merge: PASS")
+        print("  54-slot cursor wrap to code 0 / slot 0: PASS")
+    finally:
+        cleanup = [
+            f"setblock {ax} {ay} {az} minecraft:air",
+            f"setblock {bx} {by} {bz} minecraft:air",
+            f"forceload remove {force_from} {force_to}",
+            (
+                "execute if score #whc_had wh_tmp matches 1 "
+                "run data modify storage warehouse:chests c69 "
+                "set from storage warehouse:runtime compact_live_backup"
+            ),
+            (
+                "execute unless score #whc_had wh_tmp matches 1 "
+                "run data remove storage warehouse:chests c69"
+            ),
+            "data remove storage warehouse:runtime compact_live_backup",
+            "scoreboard players operation #compact_code wh_tmp = #whc_old_code wh_tmp",
+            "scoreboard players operation #compact_slot wh_tmp = #whc_old_slot wh_tmp",
+            "scoreboard players operation #enabled wh_sys = #whc_old_enabled wh_sys",
+            "scoreboard players reset #whc_had wh_tmp",
+            "scoreboard players reset #whc_old_code wh_tmp",
+            "scoreboard players reset #whc_old_slot wh_tmp",
+            "scoreboard players reset #whc_old_enabled wh_sys",
+        ]
+        for command in cleanup:
+            try:
+                client.command(command)
+            except Error:
+                pass
+
+
 def run_utilities_bfs_live_test(client):
     """Run a focused live regression for the foliage shell-order optimization."""
     current = client.target()
@@ -1158,6 +1407,8 @@ def run(path):
     elif op == "command": client.command(str(r.get("command") or "")); print(f"command sent to {TARGET}")
     elif op == "deploy-datapack": deploy(client, str(r.get("pack") or ""))
     elif op == "run-copy-paste-multiplayer-test": run_copy_paste_multiplayer_test(client)
+    elif op == "run-blueprint-matcher-live-test": run_blueprint_matcher_live_test(client)
+    elif op == "run-warehouse-compact-live-test": run_warehouse_compact_live_test(client)
     elif op == "run-utilities-bfs-live-test": run_utilities_bfs_live_test(client)
     elif op == "set-online-mode-false": set_offline_mode(client)
     elif op == "online-mode-status":
