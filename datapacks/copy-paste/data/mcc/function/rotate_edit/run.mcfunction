@@ -34,8 +34,9 @@ scoreboard players operation @s mcc_dsty2 = @s mcc_psty
 scoreboard players operation @s mcc_dsty2 += @s mcc_sy
 scoreboard players remove @s mcc_dsty2 1
 
-# Transform the Work snapshot in hidden space before touching the real world.
-# The hidden target is cleared first so occupied real targets cannot suppress source blocks.
+# Save the Work snapshot as a structure, then transform it into a separate hidden stage lane.
+# Do not clear/reuse the Work source immediately after the structure save: same-tick multiplayer
+# saves can still be reading it, which previously produced partial structures for the second player.
 execute store result storage mcc:temp id int 1 run scoreboard players get @s mcc_id
 execute store result storage mcc:temp wbx int 1 run scoreboard players get @s mcc_wbx
 execute store result storage mcc:temp wbx2 int 1 run scoreboard players get @s mcc_wbx2
@@ -45,16 +46,14 @@ execute store result storage mcc:temp sz int 1 run scoreboard players get @s mcc
 execute store result storage mcc:temp wbz2 int 1 run scoreboard players get @s mcc_wbz2
 function mcc:work/save_template with storage mcc:temp
 
-execute store result storage mcc:temp old_wbx2 int 1 run scoreboard players get @s mcc_wbx2
-execute store result storage mcc:temp old_wbz2 int 1 run scoreboard players get @s mcc_wbz2
 execute store result storage mcc:temp wby2 int 1 run scoreboard players get @s mcc_wby2
 
-# Translate the real placement origin so the transformed bounds start at the Work lane.
+# Translate the real placement origin so the transformed bounds start at the stage lane.
 scoreboard players operation @s mcc_tmp = @s mcc_wbx
 scoreboard players operation @s mcc_tmp -= @s mcc_bminx
 scoreboard players operation @s mcc_tmp += @s mcc_pstx
 execute store result storage mcc:temp spx int 1 run scoreboard players get @s mcc_tmp
-scoreboard players operation @s mcc_tmp = #workz mcc_id
+scoreboard players operation @s mcc_tmp = #stagez mcc_id
 scoreboard players operation @s mcc_tmp -= @s mcc_bminz
 scoreboard players operation @s mcc_tmp += @s mcc_pstz
 execute store result storage mcc:temp spz int 1 run scoreboard players get @s mcc_tmp
@@ -64,7 +63,7 @@ scoreboard players operation @s mcc_wbx2 -= @s mcc_bminx
 scoreboard players operation @s mcc_wbx2 += @s mcc_wbx
 scoreboard players operation @s mcc_wbz2 = @s mcc_bmaxz
 scoreboard players operation @s mcc_wbz2 -= @s mcc_bminz
-scoreboard players operation @s mcc_wbz2 += #workz mcc_id
+scoreboard players operation @s mcc_wbz2 += #stagez mcc_id
 execute store result storage mcc:temp stage_wbx2 int 1 run scoreboard players get @s mcc_wbx2
 execute store result storage mcc:temp stage_wbz2 int 1 run scoreboard players get @s mcc_wbz2
 
@@ -164,9 +163,9 @@ execute store result storage mcc:temp dstx int 1 run scoreboard players get @s m
 execute store result storage mcc:temp dsty int 1 run scoreboard players get @s mcc_psty
 execute store result storage mcc:temp dstz int 1 run scoreboard players get @s mcc_bminz
 scoreboard players set @s mcc_ok 0
-execute if score @s mcc_p1d matches 1 run function mcc:work/to_overworld_replace with storage mcc:temp
-execute if score @s mcc_p1d matches 2 run function mcc:work/to_nether_replace with storage mcc:temp
-execute if score @s mcc_p1d matches 3 run function mcc:work/to_end_replace with storage mcc:temp
+execute if score @s mcc_p1d matches 1 run function mcc:rotate_edit/to_overworld_replace with storage mcc:temp
+execute if score @s mcc_p1d matches 2 run function mcc:rotate_edit/to_nether_replace with storage mcc:temp
+execute if score @s mcc_p1d matches 3 run function mcc:rotate_edit/to_end_replace with storage mcc:temp
 execute unless score @s mcc_ok matches 1 run return run function mcc:rotate_edit/fail_place
 
 function mcc:move/cleanup_forceload
