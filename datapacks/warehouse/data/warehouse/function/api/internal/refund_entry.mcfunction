@@ -7,10 +7,9 @@ $execute if score #api_bforced wh_tmp matches 0 in $(dimension) run forceload ad
 
 scoreboard players set #api_plain wh_tmp 0
 scoreboard players set #api_sourceok wh_tmp 1
-$execute in $(dimension) unless loaded $(a_x) $(a_y) $(a_z) run scoreboard players set #api_sourceok wh_tmp 0
-$execute in $(dimension) unless loaded $(b_x) $(b_y) $(b_z) run scoreboard players set #api_sourceok wh_tmp 0
-$execute in $(dimension) if loaded $(a_x) $(a_y) $(a_z) unless block $(a_x) $(a_y) $(a_z) #warehouse:storage_chests run scoreboard players set #api_sourceok wh_tmp 0
-$execute in $(dimension) if loaded $(b_x) $(b_y) $(b_z) unless block $(b_x) $(b_y) $(b_z) #warehouse:storage_chests run scoreboard players set #api_sourceok wh_tmp 0
+# The entry chest is usable as soon as block commands can access it; `execute if loaded` is stricter than needed.
+$execute in $(dimension) unless block $(a_x) $(a_y) $(a_z) #warehouse:storage_chests run scoreboard players set #api_sourceok wh_tmp 0
+$execute in $(dimension) unless block $(b_x) $(b_y) $(b_z) #warehouse:storage_chests run scoreboard players set #api_sourceok wh_tmp 0
 execute unless score #api_sourceok wh_tmp matches 1 run data modify storage warehouse:api result.error set value "entry_stale"
 execute unless score #api_sourceok wh_tmp matches 1 run function warehouse:api/internal/refund_cleanup with storage warehouse:api work.refund
 execute unless score #api_sourceok wh_tmp matches 1 run return 0

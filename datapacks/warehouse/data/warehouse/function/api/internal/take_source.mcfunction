@@ -7,10 +7,9 @@ $execute in $(dimension) store success score #api_bforced wh_tmp run forceload q
 $execute if score #api_bforced wh_tmp matches 0 in $(dimension) run forceload add $(b_x) $(b_z)
 
 scoreboard players set #api_sourceok wh_tmp 1
-$execute in $(dimension) unless loaded $(a_x) $(a_y) $(a_z) run scoreboard players set #api_sourceok wh_tmp 0
-$execute in $(dimension) unless loaded $(b_x) $(b_y) $(b_z) run scoreboard players set #api_sourceok wh_tmp 0
-$execute in $(dimension) if loaded $(a_x) $(a_y) $(a_z) unless block $(a_x) $(a_y) $(a_z) #warehouse:storage_chests run scoreboard players set #api_sourceok wh_tmp 0
-$execute in $(dimension) if loaded $(b_x) $(b_y) $(b_z) unless block $(b_x) $(b_y) $(b_z) #warehouse:storage_chests run scoreboard players set #api_sourceok wh_tmp 0
+# Validate the actual registered block after adding the temporary ticket; do not require `execute if loaded`.
+$execute in $(dimension) unless block $(a_x) $(a_y) $(a_z) #warehouse:storage_chests run scoreboard players set #api_sourceok wh_tmp 0
+$execute in $(dimension) unless block $(b_x) $(b_y) $(b_z) #warehouse:storage_chests run scoreboard players set #api_sourceok wh_tmp 0
 
 $execute if score #api_sourceok wh_tmp matches 1 run data modify storage warehouse:api work.half set value {dimension:"$(dimension)",x:$(a_x),y:$(a_y),z:$(a_z),item_id:"$(item_id)"}
 execute if score #api_sourceok wh_tmp matches 1 if score #api_remaining wh_tmp matches 1.. run function warehouse:api/internal/take_half with storage warehouse:api work.half

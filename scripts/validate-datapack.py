@@ -163,6 +163,13 @@ def static_function_tokens(line: str):
             yield token
 
 
+def repo_function_exists(fid: str) -> bool:
+    """Allow intentional cross-pack calls when the target function exists elsewhere in this repo."""
+    namespace, fpath = fid.split(":", 1)
+    rel = Path("data") / namespace / "function" / (fpath + ".mcfunction")
+    return any((pack / rel).is_file() for pack in DATAPACKS.iterdir() if pack.is_dir())
+
+
 def check_function_references(functions: dict[str, Path]):
     missing = []
     direct_macro_calls = []
@@ -183,7 +190,7 @@ def check_function_references(functions: dict[str, Path]):
         for line in text.splitlines():
             refs.update(static_function_tokens(line))
         for ref in sorted(refs):
-            if ref not in functions:
+            if ref not in functions and not repo_function_exists(ref):
                 missing.append((source_id, ref))
 
         for line_no, line in enumerate(text.splitlines(), 1):

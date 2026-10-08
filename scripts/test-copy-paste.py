@@ -386,7 +386,7 @@ def check_v100_semantics(pack: Path):
     assert 'function mcc:materials/sanitize_block' in scan
     assert 'function mcc:materials/queue_items' in build
     assert 'function mcc:materials/queue_boxes' not in build
-    process_next=read(pack/'data/mcc/function/materials/process_next.mcfunction')
+    process_next=read(pack/'data/mcc/function/materials/process_next_do.mcfunction')
     count_one=read(pack/'data/mcc/function/materials/warehouse_count_one.mcfunction')
     take_one=read(pack/'data/mcc/function/materials/warehouse_take_one.mcfunction')
     assert 'warehouse:api/count_item' in count_one
