@@ -45,6 +45,8 @@ execute as @a[scores={ml_cherry=1..}] at @s run function survival_utils:tree/tri
 scoreboard players set @a[scores={ml_cherry=1..}] ml_cherry 0
 execute as @a[scores={ml_paleoak=1..}] at @s run function survival_utils:tree/trigger
 scoreboard players set @a[scores={ml_paleoak=1..}] ml_paleoak 0
+execute as @a[scores={ml_poplar=1..}] at @s run function survival_utils:tree/trigger
+scoreboard players set @a[scores={ml_poplar=1..}] ml_poplar 0
 execute as @a[scores={ml_crimson=1..}] at @s run function survival_utils:tree/trigger
 scoreboard players set @a[scores={ml_crimson=1..}] ml_crimson 0
 execute as @a[scores={ml_warped=1..}] at @s run function survival_utils:tree/trigger

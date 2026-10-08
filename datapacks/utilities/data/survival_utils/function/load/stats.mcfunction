@@ -7,6 +7,7 @@ scoreboard objectives add ml_darkoak minecraft.mined:minecraft.dark_oak_log
 scoreboard objectives add ml_mangrove minecraft.mined:minecraft.mangrove_log
 scoreboard objectives add ml_cherry minecraft.mined:minecraft.cherry_log
 scoreboard objectives add ml_paleoak minecraft.mined:minecraft.pale_oak_log
+scoreboard objectives add ml_poplar minecraft.mined:minecraft.poplar_log
 scoreboard objectives add ml_crimson minecraft.mined:minecraft.crimson_stem
 scoreboard objectives add ml_warped minecraft.mined:minecraft.warped_stem
 scoreboard objectives add mo_co1 minecraft.mined:minecraft.coal_ore

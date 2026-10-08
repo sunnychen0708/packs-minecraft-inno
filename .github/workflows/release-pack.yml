@@ -38,6 +38,10 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "kind=$KIND" >> "$GITHUB_OUTPUT"
 
+      - name: Validate Utilities
+        if: steps.pack.outputs.pack == 'utilities'
+        run: python3 scripts/test-utilities.py
+
       - name: Build ZIP
         shell: bash
         run: |
