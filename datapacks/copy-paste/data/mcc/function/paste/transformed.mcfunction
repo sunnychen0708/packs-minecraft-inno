@@ -4,8 +4,6 @@ execute unless score @s mcc_sy matches 1..48 run tellraw @s [{"text":"[Copy/Past
 execute unless score @s mcc_sy matches 1..48 run return fail
 execute unless score @s mcc_sz matches 1..48 run tellraw @s [{"text":"[Copy/Paste] 使用旋轉/鏡像時，Z 長度必須 ≤ 48。","color":"red"}]
 execute unless score @s mcc_sz matches 1..48 run return fail
-execute if score @s mcc_mask matches 1 run tellraw @s [{"text":"[Copy/Paste] 旋轉/鏡像貼上目前使用 Replace，已忽略 Masked。","color":"yellow"}]
-
 function mcc:paste/prepare_transform
 scoreboard players operation @s mcc_pstx2 = @s mcc_bmaxx
 scoreboard players operation @s mcc_psty2 = @s mcc_psty
@@ -58,15 +56,17 @@ execute store result storage mcc:temp sz int 1 run scoreboard players get @s mcc
 execute store result storage mcc:temp cbz2 int 1 run scoreboard players get @s mcc_cbz2
 function mcc:paste/save_template with storage mcc:temp
 
-# Restore placement origin after using pstx/pstz fields for bounding minimum.
-function mcc:paste/prepare_transform
-execute store result storage mcc:temp pstx int 1 run scoreboard players get @s mcc_pstx
-execute store result storage mcc:temp psty int 1 run scoreboard players get @s mcc_psty
-execute store result storage mcc:temp pstz int 1 run scoreboard players get @s mcc_pstz
-scoreboard players set @s mcc_ok 0
-execute if score @s mcc_dstd matches 1 run function mcc:paste/do_place
-execute if score @s mcc_dstd matches 2 run execute in minecraft:the_nether run function mcc:paste/do_place
-execute if score @s mcc_dstd matches 3 run execute in minecraft:the_end run function mcc:paste/do_place
+# Replace may place the structure directly. Masked first transforms into the
+# player's hidden work lane, then clones only non-air blocks to the target.
+execute if score @s mcc_mask matches 1 run function mcc:paste/transformed_masked
+execute if score @s mcc_mask matches 0 run function mcc:paste/prepare_transform
+execute if score @s mcc_mask matches 0 store result storage mcc:temp pstx int 1 run scoreboard players get @s mcc_pstx
+execute if score @s mcc_mask matches 0 store result storage mcc:temp psty int 1 run scoreboard players get @s mcc_psty
+execute if score @s mcc_mask matches 0 store result storage mcc:temp pstz int 1 run scoreboard players get @s mcc_pstz
+execute if score @s mcc_mask matches 0 run scoreboard players set @s mcc_ok 0
+execute if score @s mcc_mask matches 0 if score @s mcc_dstd matches 1 run function mcc:paste/do_place
+execute if score @s mcc_mask matches 0 if score @s mcc_dstd matches 2 run execute in minecraft:the_nether run function mcc:paste/do_place
+execute if score @s mcc_mask matches 0 if score @s mcc_dstd matches 3 run execute in minecraft:the_end run function mcc:paste/do_place
 execute unless score @s mcc_ok matches 1 run tellraw @s [{"text":"[Copy/Paste] 旋轉/鏡像貼上失敗。","color":"red"}]
 execute unless score @s mcc_ok matches 1 run return fail
 function mcc:history/commit_edit

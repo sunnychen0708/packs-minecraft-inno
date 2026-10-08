@@ -27,6 +27,13 @@ scoreboard players set @s mcc_materr 0
 scoreboard players set @s mcc_histmat 0
 scoreboard players set @s mcc_umat 0
 scoreboard players set @s mcc_rmat 0
+scoreboard players set @s mcc_histguard 0
+scoreboard players set @s mcc_uguard 0
+scoreboard players set @s mcc_rguard 0
+scoreboard players set @s mcc_histcut 0
+scoreboard players set @s mcc_ucut 0
+scoreboard players set @s mcc_rcut 0
+scoreboard players set @s mcc_emir 0
 scoreboard players set @s mcc_matjob 0
 scoreboard players set @s mcc_txslot 0
 scoreboard players set @s mcc_bpover 0

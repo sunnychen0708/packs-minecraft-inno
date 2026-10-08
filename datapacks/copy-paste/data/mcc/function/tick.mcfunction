@@ -19,6 +19,9 @@ execute as @a unless score @s mcc_materr matches 0..1 run scoreboard players set
 execute as @a unless score @s mcc_histmat matches 0..1 run scoreboard players set @s mcc_histmat 0
 execute as @a unless score @s mcc_umat matches 0..1 run scoreboard players set @s mcc_umat 0
 execute as @a unless score @s mcc_rmat matches 0..1 run scoreboard players set @s mcc_rmat 0
+execute as @a unless score @s mcc_histguard matches 0..1 run scoreboard players set @s mcc_histguard 0
+execute as @a unless score @s mcc_histcut matches 0..1 run scoreboard players set @s mcc_histcut 0
+execute as @a unless score @s mcc_emir matches 0..2 run scoreboard players set @s mcc_emir 0
 execute as @a unless score @s mcc_matjob matches 0..2 run scoreboard players set @s mcc_matjob 0
 execute as @a unless score @s mcc_txslot matches 0..5 run scoreboard players set @s mcc_txslot 0
 execute as @a unless score @s mcc_bpover matches 0.. run scoreboard players set @s mcc_bpover 0
@@ -32,6 +35,7 @@ execute as @a[scores={pos1=1..}] at @s run function mcc:select/start_pos1
 execute as @a[scores={pos2=1..}] at @s run function mcc:select/start_pos2
 execute as @a[scores={anchor=1}] at @s run function mcc:select/start_anchor
 execute as @a[scores={anchor=2..}] run function mcc:anchor_clear
+execute as @a[scores={mcc_matphase=1..}] run function mcc:materials/busy_notice
 execute as @a[scores={c=1..,mcc_matphase=0}] run function mcc:copy/run
 execute as @a[scores={x=1..,mcc_matphase=0}] run function mcc:cut/run
 execute as @a[scores={v=1..,mcc_matphase=0}] at @s run function mcc:select/start_paste

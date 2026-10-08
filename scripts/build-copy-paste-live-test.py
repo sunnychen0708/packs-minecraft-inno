@@ -1,4 +1,4 @@
-"""Build an opt-in real-player v1.2.1 integration test datapack; never runs on load.
+"""Build an opt-in real-player v1.3 integration test datapack; never runs on load.
 
 Run /function mcc_test:start in a BACKED UP disposable creative world.
 Uses the real player's triggers and Minecraft tick dispatch, with delayed assertions.
@@ -7,13 +7,16 @@ The test owns x=-210..-160, y=248..260, z=80..120 in each vanilla dimension.
 import argparse
 import json
 from pathlib import Path
+import sys
+sys.path.insert(0,str(Path(__file__).resolve().parent))
+import mcc_house as house
 
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--output',type=Path,default=Path(__file__).resolve().parents[1]/'dist/mcc-live-test')
 OUT=parser.parse_args().output.resolve()
 F=OUT/'data/mcc_test/function'
 F.mkdir(parents=True,exist_ok=True)
-(OUT/'pack.mcmeta').write_text(json.dumps({'pack':{'description':'Opt-in CopyPaste v1.2.1 live regression','min_format':121,'max_format':121}},ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+(OUT/'pack.mcmeta').write_text(json.dumps({'pack':{'description':'Opt-in CopyPaste v1.3 live regression','min_format':121,'max_format':121}},ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 
 steps=[]
 def step(*commands): steps.append(list(commands))
@@ -52,11 +55,20 @@ def reset_transform():
          'scoreboard players set @s mcc_mir 0',
          'scoreboard players set @s mcc_mask 0')
 
+# The fixtures write blocks before the player is necessarily nearby (and the
+# Nether section prepares its target before teleporting there). Force-load the
+# owned areas first and let them load, otherwise setblock/fill silently fail and
+# a raycast can hit unrelated terrain such as the Nether roof.
+step('execute in minecraft:overworld run forceload add -210 80 -160 120',
+     'execute in minecraft:the_nether run forceload add -210 80 -160 120',
+     'execute in minecraft:overworld run tp @s -179.5 254 90.5 0 90')
+for _ in range(6): step()
 reset_transform()
 fixture(); selection()
+check('overworld fixture ready','in minecraft:overworld if block -200 250 90 gold_block if block -180 249 90 stone')
 check('raycast selection','if score @s mcc_p1x matches -200 if score @s mcc_p1y matches 250 if score @s mcc_p1z matches 90 if score @s mcc_p2x matches -198 if score @s mcc_p2z matches 91')
 
-# v1.2.1 selection contract: reselecting Pos1/Pos2 changes the next Copy, while
+# v1.3 selection contract: reselecting Pos1/Pos2 changes the next Copy, while
 # doing another Copy without new Pos keeps using the current selection.
 selection2(); trigger('c')
 target(-170,105); trigger('v')
@@ -68,7 +80,7 @@ check('selection persists without new pos','in minecraft:overworld positioned -1
 trigger('previewclear')
 selection()
 
-# v1.2.1 Anchor lifecycle: external pivots are valid, Clear Anchor works through the
+# v1.3 Anchor lifecycle: external pivots are valid, Clear Anchor works through the
 # real trigger/tick path, and reselecting either endpoint drops a stale custom Anchor.
 step('execute in minecraft:overworld run setblock -190 250 100 stone')
 aim(-190,100); trigger('anchor')
@@ -109,7 +121,7 @@ check('preview clear','in minecraft:overworld unless entity @e[type=minecraft:bl
 # Copy/Blueprint is not a real world edit and must not consume its Clipboard.
 check('copy clipboard persists','if score @s mcc_clip matches 1 if score @s mcc_cliptype matches 1')
 
-# v1.2.1 material-backed Build through the real player trigger path.
+# v1.3 material-backed Build through the real player trigger path.
 # The harness expects the Warehouse datapack to be installed alongside Copy/Paste.
 target(); trigger('v')
 step(
@@ -125,13 +137,14 @@ check('material build consumed warehouse stock','in minecraft:overworld unless d
 # Reset owned test area before the Cut sequence.
 fixture(); selection()
 
-# Cut is now X. It edits real blocks and supports Undo/Redo toggling.
+# Cut is X. It edits real blocks; Undo invalidates the live Cut clipboard and
+# Redo rebuilds the original one (v1.3).
 trigger('x')
 check('x cuts real source','in minecraft:overworld if block -200 250 90 air if block -198 250 91 air if score @s mcc_cliptype matches 2')
 trigger('undo')
-check('x undo','in minecraft:overworld if block -200 250 90 gold_block if block -198 250 91 iron_block if score @s mcc_redo matches 1')
+check('x undo invalidates cut clipboard','in minecraft:overworld if block -200 250 90 gold_block if block -198 250 91 iron_block if score @s mcc_redo matches 1 if score @s mcc_clip matches 0')
 trigger('redo')
-check('x redo','in minecraft:overworld if block -200 250 90 air if block -198 250 91 air if score @s mcc_undo matches 1')
+check('x redo rebuilds cut clipboard','in minecraft:overworld if block -200 250 90 air if block -198 250 91 air if score @s mcc_undo matches 1 if score @s mcc_clip matches 1 if score @s mcc_cliptype matches 2')
 trigger('undo')
 check('x undo again','in minecraft:overworld if block -200 250 90 gold_block if block -198 250 91 iron_block')
 
@@ -210,7 +223,9 @@ trigger('rotate set 10')
 fixture('overworld'); selection('overworld'); trigger('c')
 step('execute in minecraft:the_nether run fill -185 249 85 -170 255 100 air',
      'execute in minecraft:the_nether run setblock -180 249 90 stone')
+check('nether target ready','in minecraft:the_nether if block -180 249 90 stone if block -180 250 90 air')
 target(-180,90,'the_nether'); trigger('v')
+check('nether raycast hits target','if score @s mcc_dstd matches 2 if score @s mcc_dstx matches -180 if score @s mcc_dsty matches 250 if score @s mcc_dstz matches 90')
 check('nether blueprint no real blocks','in minecraft:the_nether if block -180 250 90 air if block -178 250 91 air')
 check('nether blueprint display','in minecraft:the_nether positioned -180 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..5,limit=1]')
 trigger('previewclear')
@@ -218,6 +233,7 @@ trigger('previewclear')
 # Cross-dimension Cut paste still moves real blocks and consumes the clipboard.
 step('execute in minecraft:overworld run tp @s -199.5 254 88.5 0 70')
 selection('overworld'); trigger('x')
+check('nether target still ready','in minecraft:the_nether if block -180 249 90 stone if block -180 250 90 air')
 target(-180,90,'the_nether'); trigger('v')
 check('cross-dimension x paste','in minecraft:the_nether if block -180 250 90 gold_block if block -178 250 91 iron_block if score @s mcc_clip matches 0')
 trigger('undo')
@@ -225,6 +241,91 @@ check('cross-dimension paste undo','in minecraft:the_nether if block -180 250 90
 trigger('redo')
 check('cross-dimension paste redo','in minecraft:the_nether if block -180 250 90 gold_block if block -178 250 91 iron_block')
 
+# ---- Real Warehouse + 3D house through the player's triggers and real ticks ----
+# Does not assume default classification: every Warehouse code gets a box, one
+# custom player rule is applied, and stock is always counted through the
+# Warehouse API across all boxes. The world's own registrations and rules are
+# backed up first and restored at the end.
+OW='in minecraft:overworld'
+CODES=['00']+[f'{r}{s}' for r in range(1,7) for s in range(10)]
+BOX={}
+for i,code in enumerate(CODES):
+    BOX[code]=(-209+2*(i%25), 111+3*(i//25))
+def box_cmds():
+    out=[]
+    for code,(x,z) in BOX.items():
+        out += [f'execute in minecraft:overworld run setblock {x} 249 {z} chest',
+                f'execute in minecraft:overworld run setblock {x} 249 {z+1} chest',
+                f'data modify storage warehouse:chests c{code} set value {{registered:1b,valid:1b,dimension:"minecraft:overworld",a_x:{x},a_y:249,a_z:{z},b_x:{x},b_y:249,b_z:{z+1}}}']
+    return out
+def all_boxes_empty_of(item):
+    return ' '.join(f'unless data block {x} 249 {z} Items[{{id:"{item}"}}] unless data block {x} 249 {z+1} Items[{{id:"{item}"}}]' for x,z in BOX.values())
+def stock_is(label_prefix, expect):
+    for item,count in house.BOM.items():
+        n=expect if expect is not None else count
+        step(f'function warehouse:api/count_item {{item_id:"{item}"}}')
+        check(f'{label_prefix} {item.split(":")[1]} = {n}',f'if data storage warehouse:api result{{ok:1b,complete:1b,available:{n}}}')
+step('kill @e[type=minecraft:item]',
+     'data modify storage mcc_test:backup chests set from storage warehouse:chests',
+     'data modify storage mcc_test:backup overrides set from storage warehouse:rules overrides',
+     'execute in minecraft:overworld run fill -210 249 80 -160 255 120 air',
+     'execute in minecraft:overworld run fill -210 248 80 -160 248 120 stone',
+     'scoreboard players set #enabled wh_sys 1',
+     # Custom player rule: planks go to box 11 instead of the default box.
+     'data modify storage warehouse:rules overrides."minecraft:oak_planks" set value 11')
+step(*box_cmds())
+x00,z00=BOX['00']
+step(f'execute in minecraft:overworld run data modify block {x00} 249 {z00} Items set value [{",".join(house.stock_items())}]')
+for _ in range(12): step()  # real Warehouse ticks sort the entry chest
+check('warehouse sorted all house materials out of entry',f'{OW} unless data block {x00} 249 {z00} Items[0] unless data block {x00} 249 {z00+1} Items[0]')
+x11,z11=BOX['11']
+check('custom rule: planks sorted into box 11',f'{OW} if data block {x11} 249 {z11} Items[{{id:"minecraft:oak_planks",count:{house.BOM["minecraft:oak_planks"]}}}]')
+stock_is('warehouse stock',None)
+
+# House plus two temporary corner markers visible from above (selection -206..-200, 250..253, 99..105).
+step(*house.place_commands(-205,250,100,'overworld'),
+     'execute in minecraft:overworld run setblock -206 250 99 minecraft:white_wool',
+     'execute in minecraft:overworld run setblock -200 253 105 minecraft:white_wool',
+     'execute in minecraft:overworld run setblock -185 249 99 stone',
+     'scoreboard players set @s mcc_rot 0','scoreboard players set @s mcc_mir 0','scoreboard players set @s mcc_mask 0')
+check('3d house fixture ready',f'{OW} if block -203 252 100 minecraft:oak_door[half=upper] if block -203 252 102 minecraft:lantern[hanging=true] if block -204 252 101 minecraft:wall_torch')
+aim(-206,99,250); trigger('pos1')
+aim(-200,105,253); trigger('pos2')
+check('3d selection by raycast','if score @s mcc_p1x matches -206 if score @s mcc_p1y matches 250 if score @s mcc_p1z matches 99 if score @s mcc_p2x matches -200 if score @s mcc_p2y matches 253 if score @s mcc_p2z matches 105')
+step('execute in minecraft:overworld run setblock -206 250 99 air',
+     'execute in minecraft:overworld run setblock -200 253 105 air')
+trigger('c')
+target(-185,99); trigger('v')
+for _ in range(4): step()
+check('3d blueprint ready, no real blocks',f'{OW} if score @s mcc_bpactive matches 1 if score @s mcc_bpready matches 1 if score @s mcc_bpbad matches 0 if block -184 250 100 air if block -182 253 100 air')
+trigger('build')
+for _ in range(6): step()
+check('3d build exact copy',f'{OW} if blocks -206 250 99 -200 253 105 -185 250 99 all')
+check('3d build no item drops','unless entity @e[type=minecraft:item]')
+stock_is('after build',0)
+trigger('undo')
+check('3d build undo world',f'{OW} if block -184 250 100 air if block -183 251 99 air if block -182 253 100 air')
+for _ in range(12): step()
+check('undo refunds sorted back out of entry',f'{OW} unless data block {x00} 249 {z00} Items[0] unless data block {x00} 249 {z00+1} Items[0]')
+stock_is('after undo',None)
+trigger('redo')
+for _ in range(6): step()
+check('3d redo exact copy',f'{OW} if blocks -206 250 99 -200 253 105 -185 250 99 all')
+stock_is('after redo',0)
+trigger('undo')
+for _ in range(12): step()
+
+# Pick: look at a stone brick block and take one stack from the Warehouse.
+step('clear @s minecraft:stone_bricks','execute in minecraft:overworld run setblock -195 249 108 minecraft:stone_bricks')
+aim(-195,108,249)
+trigger('pick')
+check('pick gives warehouse stone bricks',f'if items entity @s container.* minecraft:stone_bricks {OW} {all_boxes_empty_of("minecraft:stone_bricks")}')
+step('clear @s minecraft:stone_bricks',
+     *[f'data modify storage warehouse:chests c{code} set from storage mcc_test:backup chests.c{code}' for code in CODES],
+     'data remove storage warehouse:rules overrides',
+     'data modify storage warehouse:rules overrides set from storage mcc_test:backup overrides')
+step('execute in minecraft:overworld run forceload remove -210 80 -160 120',
+     'execute in minecraft:the_nether run forceload remove -210 80 -160 120')
 step('tellraw @s [{"text":"MCCT DONE pass="},{"score":{"name":"#pass","objective":"mcct"}},{"text":" fail="},{"score":{"name":"#fail","objective":"mcct"}}]')
 for i,cmds in enumerate(steps):
     if i+1<len(steps):
@@ -239,4 +340,4 @@ for i,cmds in enumerate(steps):
     'function mcc_test:step_0\n',
     encoding='utf-8'
 )
-print(f'Built {len(steps)} v1.2.1 live steps at {OUT}')
+print(f'Built {len(steps)} v1.3 live steps at {OUT}')

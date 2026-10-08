@@ -218,6 +218,13 @@ scoreboard objectives add mcc_materr dummy
 scoreboard objectives add mcc_histmat dummy
 scoreboard objectives add mcc_umat dummy
 scoreboard objectives add mcc_rmat dummy
+scoreboard objectives add mcc_histguard dummy
+scoreboard objectives add mcc_uguard dummy
+scoreboard objectives add mcc_rguard dummy
+scoreboard objectives add mcc_histcut dummy
+scoreboard objectives add mcc_ucut dummy
+scoreboard objectives add mcc_rcut dummy
+scoreboard objectives add mcc_emir dummy
 scoreboard objectives add mcc_matjob dummy
 scoreboard objectives add mcc_txslot dummy
 scoreboard objectives add mcc_bpover dummy
@@ -229,13 +236,15 @@ scoreboard players set #slot mcc_id 256
 scoreboard players set #base mcc_id 20000000
 scoreboard players set #cbz mcc_id 20000000
 scoreboard players set #ubz mcc_id 20000200
-scoreboard players set #workz mcc_id 20000400
+scoreboard players set #workz mcc_id 20000500
 scoreboard players set #redoz mcc_id 20001000
 scoreboard players set #bpz mcc_id 20002000
 scoreboard players set #bpofs mcc_id 64
 scoreboard players set #uhistz mcc_id 20003040
 scoreboard players set #rhistz mcc_id 20005120
 scoreboard players set #mhistz mcc_id 20007200
+scoreboard players set #rguardz mcc_id 20009280
+scoreboard players set #cutredoz mcc_id 20011360
 scoreboard players set #hgap mcc_id 320
 scoreboard players set #one mcc_id 1
 scoreboard players set #zero mcc_id 0
@@ -245,4 +254,4 @@ scoreboard players set #neg mcc_id -1
 execute in minecraft:overworld run forceload add 20008000 20008000
 execute in minecraft:overworld run setblock 20008008 64 20008008 air
 
-tellraw @a [{"text":"[Copy/Paste] ","color":"gold"},{"text":"v1.2.1 已載入。輸入 ","color":"gray"},{"text":"/trigger copypaste","color":"yellow"},{"text":" 開啟控制面板；","color":"gray"},{"text":"/trigger cphelp","color":"yellow"},{"text":" 開啟指令教學。","color":"gray"}]
+tellraw @a [{"text":"[Copy/Paste] ","color":"gold"},{"text":"v1.3 已載入。輸入 ","color":"gray"},{"text":"/trigger copypaste","color":"yellow"},{"text":" 開啟控制面板；","color":"gray"},{"text":"/trigger cphelp","color":"yellow"},{"text":" 開啟指令教學。","color":"gray"}]
