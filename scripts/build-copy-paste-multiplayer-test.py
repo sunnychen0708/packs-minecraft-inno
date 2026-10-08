@@ -1,4 +1,4 @@
-"""Build an opt-in two-player v1.7 Copy/Paste regression datapack that works on the 3D test house.
+"""Build an opt-in two-player v1.8 Copy/Paste regression datapack that works on the 3D test house.
 
 Player A: /function mcc_mp_test:join_a
 Player B: /function mcc_mp_test:join_b
@@ -37,7 +37,7 @@ if OUT.exists(): shutil.rmtree(OUT)
 F=OUT/'data/mcc_mp_test/function'
 F.mkdir(parents=True,exist_ok=True)
 (OUT/'pack.mcmeta').write_text(json.dumps({
-    'pack':{'description':'Opt-in CopyPaste v1.7 two-player 3D house regression','min_format':121,'max_format':121}
+    'pack':{'description':'Opt-in CopyPaste v1.8 two-player 3D house regression','min_format':121,'max_format':121}
 },ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 
 OW='in minecraft:overworld'
@@ -402,7 +402,15 @@ def blueprint_presence(p,origin,transform=None):
                     f'player {p.upper()} blueprint missing at {wx} {wy} {wz} after {transform or "identity"}'))
     return out
 
+# v1.8: every new Copy must discard stale Blueprint Rotate/Flip state.
+step(
+    *[f'scoreboard players set {sel(p)} mcc_rot 2' for p in P],
+    *[f'scoreboard players set {sel(p)} mcc_mir 1' for p in P],
+)
 both_trigger('c')
+check('new copy resets stale blueprint orientation',
+      *[f'score {sel(p)} mcc_rot matches 0' for p in P],
+      *[f'score {sel(p)} mcc_mir matches 0' for p in P])
 step(*[aim_down(p,P[p]['T'][0],Y-1,P[p]['T'][2]) for p in P])
 both_trigger('v')
 wait('transform blueprints ready',[c for p in P for c in (
@@ -506,10 +514,17 @@ both_trigger('undo')
 check('undo works again once the changes are put back',*[c for p in P for c in exact_house(P[p]['S'])],no_items())
 
 # ---- X (Cut) and V paste of real blocks; per-player isolated Undo/Redo ----
+# v1.8: a new Cut also discards stale Blueprint Rotate/Flip state.
+step(
+    *[f'scoreboard players set {sel(p)} mcc_rot 3' for p in P],
+    *[f'scoreboard players set {sel(p)} mcc_mir 2' for p in P],
+)
 both_trigger('x')
 check('simultaneous cut clears both sources',
       *[air_box(P[p]['S']) for p in P],
-      *[f'score {sel(p)} mcc_cliptype matches 2' for p in P],no_items())
+      *[f'score {sel(p)} mcc_cliptype matches 2' for p in P],
+      *[f'score {sel(p)} mcc_rot matches 0' for p in P],
+      *[f'score {sel(p)} mcc_mir matches 0' for p in P],no_items())
 step(*[aim_down(p,P[p]['T'][0],Y-1,P[p]['T'][2]) for p in P])
 both_trigger('v')
 check('simultaneous cut paste exact',*[c for p in P for c in exact_house(P[p]['T'])],
@@ -525,6 +540,27 @@ check('B independent undo',*exact_house(P['a']['T']),air_box(P['b']['T']))
 step(f'execute as {sel("b")} run trigger undo')
 check('B second undo restores cut source',*exact_house(P['b']['S']),air_box(P['b']['T']),
       *exact_house(P['a']['T']),air_box(P['a']['S']),no_items())
+
+# v1.8: Cut -> Undo -> Redo rebuilds the Cut Clipboard at original orientation,
+# even if stale Rotate/Flip state exists immediately before Redo.
+step(
+    f'scoreboard players set {sel("b")} mcc_rot 2',
+    f'scoreboard players set {sel("b")} mcc_mir 1',
+    f'execute as {sel("b")} run trigger redo',
+)
+check('B cut redo rebuilds original orientation',
+      air_box(P['b']['S']),air_box(P['b']['T']),
+      f'score {sel("b")} mcc_clip matches 1',
+      f'score {sel("b")} mcc_cliptype matches 2',
+      f'score {sel("b")} mcc_rot matches 0',
+      f'score {sel("b")} mcc_mir matches 0',
+      *exact_house(P['a']['T']),no_items())
+step(aim_down('b',P['b']['T'][0],Y-1,P['b']['T'][2]))
+step(f'execute as {sel("b")} run trigger v')
+check('B cut redo clipboard pastes exact original house',
+      *exact_house(P['b']['T']),air_box(P['b']['S']),
+      f'score {sel("b")} mcc_clip matches 0',
+      *exact_house(P['a']['T']),no_items())
 
 step(
     *[f'tellraw @a[tag={P[p]["tag"]}] [{{"text":"MCCMP DONE pass="}},{{"score":{{"name":"#pass","objective":"mccmp"}}}},{{"text":" fail="}},{{"score":{{"name":"#fail","objective":"mccmp"}}}}]' for p in P],
@@ -617,4 +653,4 @@ for p in P:
          'execute unless data storage mcc_mp_test:stash a unless data storage mcc_mp_test:stash b if data storage mcc_mp_test:stash {fl:1b} in minecraft:overworld run forceload remove -310 86 -310 92',
          'execute unless data storage mcc_mp_test:stash a unless data storage mcc_mp_test:stash b run data remove storage mcc_mp_test:stash fl']
     (F/f'unstash_{p}.mcfunction').write_text('\n'.join(un)+'\n',encoding='utf-8')
-print(f'Built {len(steps)} v1.7 two-player 3D house steps at {OUT}')
+print(f'Built {len(steps)} v1.8 two-player 3D house steps at {OUT}')
