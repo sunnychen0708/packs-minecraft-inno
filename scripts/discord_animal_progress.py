@@ -125,7 +125,6 @@ def discord_payload(report: dict, *, now: datetime | None = None) -> dict:
     })
     status = "OFFLINE" if report.get("server_status_code") == 0 else "ONLINE／其他"
     payload = {
-        "username": "Inno 收集進度",
         "allowed_mentions": {"parse": []},
         "embeds": [{
             "title": "🐱 貓與狼收集圖鑑 🐺",
