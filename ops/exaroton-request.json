@@ -1,6 +1,6 @@
 {
-  "request_id": 29,
-  "operation": "inno-uuid-migrate-verify",
-  "command": "uuid-migration-1791312983.json",
+  "request_id": 0,
+  "operation": "noop",
+  "command": "",
   "pack": ""
 }

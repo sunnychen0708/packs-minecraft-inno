@@ -268,13 +268,13 @@ def inno_identity_status(token):
     ops = _json_file(client, sid, "ops.json")
 
     playerdata = _uuid_files(
-        client.file_info_optional(sid, f"{world}/playerdata"), ".dat"
+        client.file_info_optional(sid, f"{world}/players/data"), ".dat"
     )
     advancements = _uuid_files(
-        client.file_info_optional(sid, f"{world}/advancements"), ".json"
+        client.file_info_optional(sid, f"{world}/players/advancements"), ".json"
     )
     stats = _uuid_files(
-        client.file_info_optional(sid, f"{world}/stats"), ".json"
+        client.file_info_optional(sid, f"{world}/players/stats"), ".json"
     )
 
     known = {}
@@ -476,6 +476,12 @@ def run_copy_paste_multiplayer_test(client):
     print(f"live multiplayer test starting with player count={player_count(server)}")
 
     # Use two named real-player entities while the other two remain connected.
+    # Mark this run in the server log so stale results from previous attempts
+    # can never be mistaken for the current test.
+    run_marker = f"MCCMP_RUN_{int(time.time() * 1000)}"
+    client.command(f"say {run_marker} START")
+    time.sleep(1)
+
     commands = [
         "tag @a remove mcc_mp_a",
         "tag @a remove mcc_mp_b",
@@ -487,12 +493,29 @@ def run_copy_paste_multiplayer_test(client):
         client.command(command)
         time.sleep(1)
 
-    time.sleep(35)
-    log = client.log()
-    result_lines = [line for line in log.splitlines() if "MCCMP_RESULT " in line]
-    result = result_lines[-1] if result_lines else ""
+    # The exaroton test server can fall behind under the full datapack load.
+    # Wait for the scheduled regression chain itself to finish instead of
+    # assuming a fixed wall-clock duration.
+    deadline = time.time() + 180
+    result = ""
+    segment = ""
+    log = ""
+    while time.time() < deadline:
+        log = client.log()
+        marker = log.rfind(f"{run_marker} START")
+        if marker >= 0:
+            segment = log[marker:]
+            result_lines = [
+                line for line in segment.splitlines()
+                if "MCCMP_RESULT " in line
+            ]
+            if result_lines:
+                result = result_lines[-1]
+                break
+        time.sleep(3)
 
-    # Clean the temporary harness and its reserved test state after capturing result.
+    # Clean the temporary harness and its reserved test state only after the
+    # current run has produced a result (or timed out).
     cleanup = [
         "fill -305 248 85 -270 255 130 air",
         "tag @a remove mcc_mp_a",
@@ -512,17 +535,21 @@ def run_copy_paste_multiplayer_test(client):
         except Error:
             pass
 
+    current_checks = "\n".join(
+        line for line in segment.splitlines()
+        if "MCCMP_CHECK " in line or "MCCMP_RESULT " in line
+    )
+    if current_checks:
+        print(current_checks)
+
     if "MCCMP_RESULT PASS" in result:
-        print(result)
         print("COPY_PASTE_MULTIPLAYER_LIVE_TEST=PASS")
         return
 
-    tail = "\n".join(
-        line for line in log.splitlines()[-500:]
-        if "MCCMP" in line or "Unknown function" in line or "Failed" in line
+    raise Error(
+        f"live multiplayer test did not pass; "
+        f"current-run result={result or '<missing>'}"
     )
-    print(tail)
-    raise Error(f"live multiplayer test did not pass; result={result or '<missing>'}")
 
 def wait_status(client, wanted, timeout=180):
     deadline = time.time() + timeout
@@ -608,10 +635,10 @@ def migrate_bot_identities(client):
 
         copied = []
         specs = [
-            ("playerdata", ".dat"),
-            ("playerdata", ".dat_old"),
-            ("advancements", ".json"),
-            ("stats", ".json"),
+            ("players/data", ".dat"),
+            ("players/data", ".dat_old"),
+            ("players/advancements", ".json"),
+            ("players/stats", ".json"),
         ]
         for folder, suffix in specs:
             dest_path = f"{world}/{folder}/{target_uuid}{suffix}"
