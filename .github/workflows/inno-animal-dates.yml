@@ -1,0 +1,126 @@
+name: Inno cat and wolf unlock dates (read-only)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/inno-animal-dates.yml
+
+permissions:
+  contents: read
+
+jobs:
+  dates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read saved advancements without touching the server
+        env:
+          EXAROTON_API_TOKEN: ${{ secrets.EXAROTON_API_TOKEN }}
+        run: |
+          python3 - <<'PY'
+          import ast
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          from urllib.error import HTTPError
+          from urllib.parse import quote
+          from urllib.request import Request, urlopen
+          from zoneinfo import ZoneInfo
+
+          ROOT = "https://api.exaroton.com/v1"
+          TARGET = "inno.exaroton.me"
+          TOKEN = os.environ.get("EXAROTON_API_TOKEN", "").strip()
+          if not TOKEN:
+              raise SystemExit("Missing EXAROTON_API_TOKEN")
+
+          def api(path, *, raw=False, optional=False):
+              req = Request(ROOT + path, headers={
+                  "Authorization": "Bearer " + TOKEN,
+                  "User-Agent": "inno-animal-dates-readonly",
+              }, method="GET")
+              try:
+                  with urlopen(req, timeout=25) as res:
+                      payload = res.read()
+              except HTTPError as e:
+                  if optional and e.code == 404:
+                      return None
+                  raise RuntimeError("Read failed (HTTP %s)" % e.code) from e
+              if raw:
+                  return payload
+              response = json.loads(payload)
+              if isinstance(response, dict) and response.get("success") is False:
+                  raise RuntimeError("Remote API refused read")
+              return response.get("data", response) if isinstance(response, dict) else response
+
+          servers = api("/servers/")
+          matches = [s for s in servers if isinstance(s, dict)
+                     and str(s.get("address", "")).lower().rstrip(".") == TARGET]
+          if len(matches) != 1:
+              raise SystemExit("Production server identity check failed")
+          sid = quote(str(matches[0]["id"]), safe="")
+          details = api("/servers/" + sid)
+          if str(details.get("address", "")).lower().rstrip(".") != TARGET:
+              raise SystemExit("Production server identity check failed")
+
+          def read_file(name, *, optional=False):
+              return api("/servers/" + sid + "/files/data/" + quote(name, safe="/") + "/",
+                         raw=True, optional=optional)
+
+          props = read_file("server.properties", optional=True)
+          world = "world"
+          if props:
+              for line in props.decode("utf-8-sig", "replace").splitlines():
+                  if line.startswith("level-name="):
+                      world = line.partition("=")[2].strip() or "world"
+          if not world or world.startswith("/") or ".." in world.split("/"):
+              raise SystemExit("Invalid world directory")
+
+          tree = ast.parse(Path("scripts/exaroton_inno_uuid_migrate.py").read_text(encoding="utf-8"))
+          obj = next(n.value for n in tree.body if isinstance(n, ast.Assign)
+                     and any(isinstance(t, ast.Name) and t.id == "PLAYER_MAP" for t in n.targets))
+          mapping = ast.literal_eval(obj)
+          names = ("SunnyChen", "penguin0531", "geena0701", "Felicitypeng")
+          if set(mapping) != set(names):
+              raise SystemExit("Unexpected player list")
+
+          def local_time(value):
+              if not isinstance(value, str):
+                  return {"raw": value, "taiwan_time": None}
+              try:
+                  # Minecraft advancement criteria timestamps normally use "+0000".
+                  dt = datetime.strptime(value, "%Y-%m-%d %H:%M:%S %z")
+              except ValueError:
+                  try:
+                      dt = datetime.fromisoformat(value)
+                  except ValueError:
+                      return {"raw": value, "taiwan_time": None}
+              if dt.tzinfo is None:
+                  return {"raw": value, "taiwan_time": None}
+              return {"raw": value,
+                      "taiwan_time": dt.astimezone(ZoneInfo("Asia/Taipei")).strftime("%Y-%m-%d %H:%M:%S +08:00")}
+
+          def entries(data, key):
+              advancement = data.get(key, {})
+              criteria = advancement.get("criteria", {}) if isinstance(advancement, dict) else {}
+              if not isinstance(criteria, dict):
+                  raise RuntimeError("Unexpected criteria format")
+              return {k.split(":")[-1].split("/")[-1]: local_time(v)
+                      for k, v in sorted(criteria.items())}
+
+          report = {}
+          for player in names:
+              uuid = mapping[player][1]
+              raw = read_file(f"{world}/players/advancements/{uuid}.json")
+              data = json.loads(raw.decode("utf-8-sig"))
+              report[player] = {
+                  "cats": entries(data, "minecraft:husbandry/complete_catalogue"),
+                  "wolves": entries(data, "minecraft:husbandry/whole_pack"),
+              }
+          print("INNO_ANIMAL_DATES_BEGIN")
+          print(json.dumps(report, ensure_ascii=False, indent=2))
+          print("INNO_ANIMAL_DATES_END")
+          PY
