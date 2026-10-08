@@ -1,4 +1,5 @@
 execute if score @s mcc_cmpmode matches 1 run return run function mcc:history/compare_block_id_callback
+execute if score @s mcc_cmpmode matches 2 run return run function mcc:history/diag_current_id_callback
 $execute if score @s mcc_bpdst matches 1 in minecraft:overworld run summon minecraft:block_display $(tx).0 $(ty).0 $(tz).0 {Tags:["mcc_blueprint","mcc_new","mcc_bp_$(id)"]}
 $execute if score @s mcc_bpdst matches 2 in minecraft:the_nether run summon minecraft:block_display $(tx).0 $(ty).0 $(tz).0 {Tags:["mcc_blueprint","mcc_new","mcc_bp_$(id)"]}
 $execute if score @s mcc_bpdst matches 3 in minecraft:the_end run summon minecraft:block_display $(tx).0 $(ty).0 $(tz).0 {Tags:["mcc_blueprint","mcc_new","mcc_bp_$(id)"]}

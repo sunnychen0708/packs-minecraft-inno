@@ -34,6 +34,45 @@ scoreboard players operation @s mcc_dsty2 = @s mcc_psty
 scoreboard players operation @s mcc_dsty2 += @s mcc_sy
 scoreboard players remove @s mcc_dsty2 1
 
+# Transform the Work snapshot in hidden space before touching the real world.
+# The hidden target is cleared first so occupied real targets cannot suppress source blocks.
+execute store result storage mcc:temp id int 1 run scoreboard players get @s mcc_id
+execute store result storage mcc:temp wbx int 1 run scoreboard players get @s mcc_wbx
+execute store result storage mcc:temp wbx2 int 1 run scoreboard players get @s mcc_wbx2
+execute store result storage mcc:temp sx int 1 run scoreboard players get @s mcc_selx
+execute store result storage mcc:temp sy int 1 run scoreboard players get @s mcc_sely
+execute store result storage mcc:temp sz int 1 run scoreboard players get @s mcc_selz
+execute store result storage mcc:temp wbz2 int 1 run scoreboard players get @s mcc_wbz2
+function mcc:work/save_template with storage mcc:temp
+
+execute store result storage mcc:temp old_wbx2 int 1 run scoreboard players get @s mcc_wbx2
+execute store result storage mcc:temp old_wbz2 int 1 run scoreboard players get @s mcc_wbz2
+execute store result storage mcc:temp wby2 int 1 run scoreboard players get @s mcc_wby2
+
+# Translate the real placement origin so the transformed bounds start at the Work lane.
+scoreboard players operation @s mcc_tmp = @s mcc_wbx
+scoreboard players operation @s mcc_tmp -= @s mcc_bminx
+scoreboard players operation @s mcc_tmp += @s mcc_pstx
+execute store result storage mcc:temp spx int 1 run scoreboard players get @s mcc_tmp
+scoreboard players operation @s mcc_tmp = #workz mcc_id
+scoreboard players operation @s mcc_tmp -= @s mcc_bminz
+scoreboard players operation @s mcc_tmp += @s mcc_pstz
+execute store result storage mcc:temp spz int 1 run scoreboard players get @s mcc_tmp
+
+scoreboard players operation @s mcc_wbx2 = @s mcc_bmaxx
+scoreboard players operation @s mcc_wbx2 -= @s mcc_bminx
+scoreboard players operation @s mcc_wbx2 += @s mcc_wbx
+scoreboard players operation @s mcc_wbz2 = @s mcc_bmaxz
+scoreboard players operation @s mcc_wbz2 -= @s mcc_bminz
+scoreboard players operation @s mcc_wbz2 += #workz mcc_id
+execute store result storage mcc:temp stage_wbx2 int 1 run scoreboard players get @s mcc_wbx2
+execute store result storage mcc:temp stage_wbz2 int 1 run scoreboard players get @s mcc_wbz2
+
+scoreboard players set @s mcc_ok 0
+function mcc:rotate_edit/stage_work with storage mcc:temp
+execute unless score @s mcc_ok matches 1 run tellraw @s [{"text":"[Copy/Paste] Rotate/Flip 轉換暫存失敗，沒有修改世界。","color":"red"}]
+execute unless score @s mcc_ok matches 1 run return fail
+
 # Union of source and rotated destination for one-step Undo/Redo.
 scoreboard players operation @s mcc_uminx = @s mcc_minx
 scoreboard players operation @s mcc_uminx < @s mcc_bminx
@@ -103,16 +142,6 @@ scoreboard players operation @s mcc_uz2 = @s mcc_umaxz
 scoreboard players set @s mcc_usel 0
 scoreboard players set @s mcc_undo 1
 
-# Build an engine-native structure from the Work snapshot before clearing.
-execute store result storage mcc:temp id int 1 run scoreboard players get @s mcc_id
-execute store result storage mcc:temp wbx int 1 run scoreboard players get @s mcc_wbx
-execute store result storage mcc:temp wbx2 int 1 run scoreboard players get @s mcc_wbx2
-execute store result storage mcc:temp sx int 1 run scoreboard players get @s mcc_selx
-execute store result storage mcc:temp sy int 1 run scoreboard players get @s mcc_sely
-execute store result storage mcc:temp sz int 1 run scoreboard players get @s mcc_selz
-execute store result storage mcc:temp wbz2 int 1 run scoreboard players get @s mcc_wbz2
-function mcc:work/save_template with storage mcc:temp
-
 execute store result storage mcc:temp minx int 1 run scoreboard players get @s mcc_minx
 execute store result storage mcc:temp miny int 1 run scoreboard players get @s mcc_miny
 execute store result storage mcc:temp minz int 1 run scoreboard players get @s mcc_minz
@@ -125,13 +154,19 @@ execute if score @s mcc_p1d matches 2 run function mcc:cut/clear_nether with sto
 execute if score @s mcc_p1d matches 3 run function mcc:cut/clear_end with storage mcc:temp
 execute unless score @s mcc_ok matches 1 run return run function mcc:rotate_edit/fail_clear
 
-execute store result storage mcc:temp pstx int 1 run scoreboard players get @s mcc_pstx
-execute store result storage mcc:temp psty int 1 run scoreboard players get @s mcc_psty
-execute store result storage mcc:temp pstz int 1 run scoreboard players get @s mcc_pstz
+# Clone the transformed Work snapshot into the real destination.
+# replace force makes selected source blocks win over occupied target blocks.
+execute store result storage mcc:temp wbx int 1 run scoreboard players get @s mcc_wbx
+execute store result storage mcc:temp wbx2 int 1 run scoreboard players get @s mcc_wbx2
+execute store result storage mcc:temp wby2 int 1 run scoreboard players get @s mcc_wby2
+execute store result storage mcc:temp wbz2 int 1 run scoreboard players get @s mcc_wbz2
+execute store result storage mcc:temp dstx int 1 run scoreboard players get @s mcc_bminx
+execute store result storage mcc:temp dsty int 1 run scoreboard players get @s mcc_psty
+execute store result storage mcc:temp dstz int 1 run scoreboard players get @s mcc_bminz
 scoreboard players set @s mcc_ok 0
-execute if score @s mcc_p1d matches 1 run function mcc:rotate_edit/place_overworld with storage mcc:temp
-execute if score @s mcc_p1d matches 2 run function mcc:rotate_edit/place_nether with storage mcc:temp
-execute if score @s mcc_p1d matches 3 run function mcc:rotate_edit/place_end with storage mcc:temp
+execute if score @s mcc_p1d matches 1 run function mcc:work/to_overworld_replace with storage mcc:temp
+execute if score @s mcc_p1d matches 2 run function mcc:work/to_nether_replace with storage mcc:temp
+execute if score @s mcc_p1d matches 3 run function mcc:work/to_end_replace with storage mcc:temp
 execute unless score @s mcc_ok matches 1 run return run function mcc:rotate_edit/fail_place
 
 function mcc:move/cleanup_forceload

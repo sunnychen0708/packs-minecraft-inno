@@ -50,6 +50,32 @@ def check(label,*conditions):
     ]
     step(*cmds)
 
+def check_display_block(label, x, y, z, block):
+    """Assert the exact block_display block ID at one target cell.
+
+    26.3 server implementations can serialize block_state as a scalar or as a
+    compound. Accept the known equivalent NBT shapes, but still require the
+    requested block ID at the exact display position.
+    """
+    cmds=['scoreboard players set #ok mccmp 0']
+    for state_nbt in (
+        f'"minecraft:{block}"',
+        f'{{id:"minecraft:{block}"}}',
+        f'{{Name:"minecraft:{block}"}}',
+    ):
+        cmds.append(
+            f'execute in minecraft:overworld positioned {x} {y} {z} '
+            f'if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={{block_state:{state_nbt}}},limit=1] '
+            f'run scoreboard players set #ok mccmp 1'
+        )
+    cmds += [
+        f'execute if score #ok mccmp matches 1 run say MCCMP_CHECK PASS {label}',
+        f'execute unless score #ok mccmp matches 1 run say MCCMP_CHECK FAIL {label}',
+        'execute if score #ok mccmp matches 1 run scoreboard players add #pass mccmp 1',
+        'execute unless score #ok mccmp matches 1 run scoreboard players add #fail mccmp 1',
+    ]
+    step(*cmds)
+
 # Two visually distinct source fixtures and two target areas.
 step(
     'execute in minecraft:overworld run fill -305 248 85 -245 255 130 air',
@@ -112,26 +138,43 @@ check('blueprint flip keeps bounds',
       'score @a[tag=mcc_mp_a,limit=1] mcc_bptx0 matches -280',
       'score @a[tag=mcc_mp_b,limit=1] mcc_bptx0 matches -280',
       'score @a[tag=mcc_mp_a,limit=1] mcc_bptz0 matches 90',
-      'score @a[tag=mcc_mp_b,limit=1] mcc_bptz0 matches 120')
+      'score @a[tag=mcc_mp_b,limit=1] mcc_bptz0 matches 120',
+      'score @a[tag=mcc_mp_a,limit=1] mcc_bpready matches 1',
+      'score @a[tag=mcc_mp_b,limit=1] mcc_bpready matches 1')
 check('blueprint flip offset',
       'score @a[tag=mcc_mp_a,limit=1] mcc_bpoffx matches 2',
       'score @a[tag=mcc_mp_b,limit=1] mcc_bpoffx matches 2',
       'score @a[tag=mcc_mp_a,limit=1] mcc_bpoffz matches 0',
       'score @a[tag=mcc_mp_b,limit=1] mcc_bpoffz matches 0')
-check('blueprint flip content',
-      'in minecraft:overworld positioned -278 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]',
-      'in minecraft:overworld positioned -280 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:diamond_block"},limit=1]',
-      'in minecraft:overworld positioned -278 250 120 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:copper_block"},limit=1]',
-      'in minecraft:overworld positioned -280 250 120 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:lapis_block"},limit=1]')
+check_display_block('blueprint flip A gold', -278, 250, 90, 'gold_block')
+check_display_block('blueprint flip A diamond', -280, 250, 90, 'diamond_block')
+check_display_block('blueprint flip B copper', -278, 250, 120, 'copper_block')
+check_display_block('blueprint flip B lapis', -280, 250, 120, 'lapis_block')
+
+# Dump the actual A-side display states so live failures distinguish a bad transform
+# from a stale/incorrect assertion. The macro function prints the exact saved NBT.
+for dx in range(3):
+    x = -280 + dx
+    step(
+        f'execute in minecraft:overworld positioned {x} 250 90 as @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] run data modify storage mcc_mp_test:diag state set from entity @s block_state',
+        f'execute in minecraft:overworld positioned {x} 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] run function mcc_mp_test:diag with storage mcc_mp_test:diag'
+    )
+step(
+    'execute in minecraft:overworld positioned -280 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1] run say MCCMP_DIAG flip_A_gold_x=-280',
+    'execute in minecraft:overworld positioned -279 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1] run say MCCMP_DIAG flip_A_gold_x=-279',
+    'execute in minecraft:overworld positioned -278 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1] run say MCCMP_DIAG flip_A_gold_x=-278',
+    'execute in minecraft:overworld positioned -280 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:diamond_block"},limit=1] run say MCCMP_DIAG flip_A_diamond_x=-280',
+    'execute in minecraft:overworld positioned -279 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:diamond_block"},limit=1] run say MCCMP_DIAG flip_A_diamond_x=-279',
+    'execute in minecraft:overworld positioned -278 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:diamond_block"},limit=1] run say MCCMP_DIAG flip_A_diamond_x=-278'
+)
 both_trigger('bpflip')
 check('blueprint flip twice restores offset',
       'score @a[tag=mcc_mp_a,limit=1] mcc_bpoffx matches 0',
       'score @a[tag=mcc_mp_b,limit=1] mcc_bpoffx matches 0',
       'score @a[tag=mcc_mp_a,limit=1] mcc_bpoffz matches 0',
       'score @a[tag=mcc_mp_b,limit=1] mcc_bpoffz matches 0')
-check('blueprint flip twice restores content',
-      'in minecraft:overworld positioned -280 250 90 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:gold_block"},limit=1]',
-      'in minecraft:overworld positioned -280 250 120 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,nbt={block_state:"minecraft:copper_block"},limit=1]')
+check_display_block('blueprint flip twice A gold', -280, 250, 90, 'gold_block')
+check_display_block('blueprint flip twice B copper', -280, 250, 120, 'copper_block')
 both_trigger('previewclear')
 check('both blueprints clear','in minecraft:overworld unless entity @e[type=minecraft:block_display,tag=mcc_blueprint]')
 
@@ -174,8 +217,13 @@ check('simultaneous redo',
 both_trigger('undo')
 
 # Same-tick direct real Rotate and independent Undo.
+# Occupied transformed targets must be replaced by the selected blocks, not swallow them.
+step(
+    'execute in minecraft:overworld run setblock -300 250 92 stone',
+    'execute in minecraft:overworld run setblock -300 250 122 deepslate'
+)
 both_trigger('turnright')
-check('simultaneous real rotate',
+check('simultaneous real rotate overwrites occupied targets',
       'in minecraft:overworld if block -300 250 90 gold_block',
       'in minecraft:overworld if block -300 250 92 diamond_block',
       'in minecraft:overworld if block -300 250 120 copper_block',
@@ -184,8 +232,10 @@ both_trigger('undo')
 check('rotate undo isolated',
       'in minecraft:overworld if block -300 250 90 gold_block',
       'in minecraft:overworld if block -298 250 90 diamond_block',
+      'in minecraft:overworld if block -300 250 92 stone',
       'in minecraft:overworld if block -300 250 120 copper_block',
-      'in minecraft:overworld if block -298 250 120 lapis_block')
+      'in minecraft:overworld if block -298 250 120 lapis_block',
+      'in minecraft:overworld if block -300 250 122 deepslate')
 
 # Direct Flip already uses the selection center; keep it paired with Blueprint Flip.
 both_trigger('flip')
@@ -234,30 +284,24 @@ check('B independent undo',
       'in minecraft:overworld if block -280 250 120 air')
 
 # Undo guard ignores block-state-only changes while preserving block-ID / Block Entity safety.
-step(
-    'execute in minecraft:overworld run setblock -260 250 90 oak_door[half=lower,facing=north,hinge=left,open=false,powered=false]',
-    'execute in minecraft:overworld run setblock -260 251 90 oak_door[half=upper,facing=north,hinge=left,open=false,powered=false]'
-)
+step('execute in minecraft:overworld run setblock -260 250 90 oak_stairs[facing=north,half=bottom,shape=straight,waterlogged=false]')
 aim('mcc_mp_a',-260,90,250); step('execute as @a[tag=mcc_mp_a,limit=1] run trigger pos1')
-aim('mcc_mp_a',-260,90,251); step('execute as @a[tag=mcc_mp_a,limit=1] run trigger pos2')
+aim('mcc_mp_a',-260,90,250); step('execute as @a[tag=mcc_mp_a,limit=1] run trigger pos2')
 step('execute as @a[tag=mcc_mp_a,limit=1] run trigger up set 3')
-check('state guard door moved',
-      'in minecraft:overworld if block -260 253 90 oak_door[half=lower,open=false]',
-      'in minecraft:overworld if block -260 254 90 oak_door[half=upper,open=false]')
+check('state guard stairs moved',
+      'in minecraft:overworld if block -260 253 90 oak_stairs[facing=north,half=bottom,shape=straight,waterlogged=false]')
 step(
-    'execute in minecraft:overworld run setblock -260 253 90 oak_door[half=lower,facing=north,hinge=left,open=true,powered=false]',
-    'execute in minecraft:overworld run setblock -260 254 90 oak_door[half=upper,facing=north,hinge=left,open=true,powered=false]',
+    'execute in minecraft:overworld run setblock -260 253 90 oak_stairs[facing=east,half=top,shape=straight,waterlogged=false]',
     'execute as @a[tag=mcc_mp_a,limit=1] run trigger undo'
 )
 check('undo ignores block state',
-      'in minecraft:overworld if block -260 250 90 oak_door[half=lower,open=false]',
-      'in minecraft:overworld if block -260 251 90 oak_door[half=upper,open=false]',
+      'in minecraft:overworld if block -260 250 90 oak_stairs[facing=north,half=bottom,shape=straight,waterlogged=false]',
       'in minecraft:overworld if block -260 253 90 air',
       'score @a[tag=mcc_mp_a,limit=1] mcc_redo matches 1')
 
 step('execute as @a[tag=mcc_mp_a,limit=1] run trigger redo')
 check('state guard redo restored move',
-      'in minecraft:overworld if block -260 253 90 oak_door[half=lower]',
+      'in minecraft:overworld if block -260 253 90 oak_stairs',
       'score @a[tag=mcc_mp_a,limit=1] mcc_undo matches 1')
 step(
     'execute in minecraft:overworld run setblock -260 253 90 stone',
@@ -266,6 +310,11 @@ step(
 check('undo still rejects block id change',
       'in minecraft:overworld if block -260 253 90 stone',
       'score @a[tag=mcc_mp_a,limit=1] mcc_undo matches 1')
+check('undo diagnostic reports material and coordinate',
+      'score @a[tag=mcc_mp_a,limit=1] mcc_diagcount matches 1',
+      'score @a[tag=mcc_mp_a,limit=1] mcc_diagmissing matches 1',
+      'data storage mcc:temp diag.materials."minecraft:oak_stairs"',
+      'data storage mcc:temp diag.coords[{x:-260,y:253,z:90,expected:"minecraft:oak_stairs",current:"minecraft:stone",kind:1}]')
 
 step(
     'execute in minecraft:overworld run fill -255 248 85 -245 255 95 air strict',
@@ -285,6 +334,10 @@ check('undo still rejects block entity change',
       'in minecraft:overworld if block -250 253 90 chest',
       'in minecraft:overworld if block -250 250 90 air',
       'score @a[tag=mcc_mp_a,limit=1] mcc_undo matches 1')
+check('undo diagnostic reports block entity coordinate',
+      'score @a[tag=mcc_mp_a,limit=1] mcc_diagcount matches 1',
+      'score @a[tag=mcc_mp_a,limit=1] mcc_diagcontent matches 1',
+      'data storage mcc:temp diag.coords[{x:-250,y:253,z:90,expected:"minecraft:chest",current:"minecraft:chest",kind:3}]')
 
 step(
     'tellraw @a[tag=mcc_mp_a] [{"text":"MCCMP DONE pass="},{"score":{"name":"#pass","objective":"mccmp"}},{"text":" fail="},{"score":{"name":"#fail","objective":"mccmp"}}]',
@@ -296,13 +349,14 @@ for i,commands in enumerate(steps):
     if i+1<len(steps): commands.append(f'schedule function mcc_mp_test:step_{i+1} 10t replace')
     (F/f'step_{i}.mcfunction').write_text('\n'.join(commands)+'\n',encoding='utf-8')
 
+(F/'diag.mcfunction').write_text('$say MCCMP_DIAG display_state=$(state)\n',encoding='utf-8')
 (F/'join_a.mcfunction').write_text('tag @s remove mcc_mp_b\ntag @s add mcc_mp_a\ntellraw @s "MCCMP: registered as player A"\n',encoding='utf-8')
 (F/'join_b.mcfunction').write_text('tag @s remove mcc_mp_a\ntag @s add mcc_mp_b\ntellraw @s "MCCMP: registered as player B"\n',encoding='utf-8')
 # The fixture is far from spawn. A real client does not keep these chunks loaded
 # before the first teleport; wait for them before placing any test blocks.
 chunk_setup=[]
 chunk_cleanup=[]
-for cx in range(-305//16, -270//16+1):
+for cx in range(-305//16, -245//16+1):
     for cz in range(85//16, 130//16+1):
         holder=f'#chunk_{cx}_{cz}'
         pos=f'{cx*16} {cz*16}'

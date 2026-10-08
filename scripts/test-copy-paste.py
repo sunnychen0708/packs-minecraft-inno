@@ -463,6 +463,40 @@ def check_v100_semantics(pack: Path):
     assert 'function mcc:materials/redo_start' in redo_hist
     assert 'function mcc:history/copy_redo_snapshot_to_material_guard' in redo_apply
     assert (pack/'data/mcc/function/history/compare_hidden.mcfunction').is_file()
+    compare_hidden=read(pack/'data/mcc/function/history/compare_hidden.mcfunction')
+    assert 'function mcc:history/compare_hidden_state' in compare_hidden
+    assert 'mcc_cmpmode matches 1' in read(pack/'data/mcc/function/blueprint/summon.mcfunction')
+    for name in (
+        'compare_hidden_state.mcfunction','compare_hidden_x_loop.mcfunction',
+        'compare_hidden_y_loop.mcfunction','compare_hidden_z_loop.mcfunction',
+        'compare_chunk.mcfunction','compare_line.mcfunction','compare_block.mcfunction',
+        'compare_block_id_callback.mcfunction','compare_block_id.mcfunction',
+    ):
+        assert (pack/'data/mcc/function/history'/name).is_file()
+    load_text=read(pack/'data/mcc/function/load.mcfunction')
+    assert 'scoreboard objectives add mcc_cmpmode dummy' in load_text
+    assert 'scoreboard objectives add mcc_cmpaxis dummy' in load_text
+    assert 'scoreboard objectives add mcc_cmpdiag dummy' in load_text
+    assert 'scoreboard objectives add mcc_diagcount dummy' in load_text
+    assert 'mcc_cmpmode matches 2' in read(pack/'data/mcc/function/blueprint/summon.mcfunction')
+    assert 'function mcc:history/undo_guard_fail' in undo_hist
+    assert 'function mcc:history/redo_guard_fail' in redo_apply
+    assert 'function mcc:history/diag_record' in read(pack/'data/mcc/function/history/compare_block.mcfunction')
+    for name in (
+        'diagnose_guard.mcfunction','diag_record.mcfunction','diag_add_need.mcfunction',
+        'diag_resolve_materials.mcfunction','diag_resolve_materials_loop.mcfunction',
+        'diag_resolve_material_one.mcfunction','diag_add_material.mcfunction',
+        'diag_current_id_callback.mcfunction','undo_guard_fail.mcfunction','redo_guard_fail.mcfunction',
+        'diag_report.mcfunction','diag_report_need_init.mcfunction','diag_report_need_loop.mcfunction',
+        'diag_report_need_prepare.mcfunction','diag_report_need_one.mcfunction',
+        'diag_report_coord_init.mcfunction','diag_report_coord_loop.mcfunction',
+        'diag_report_coord_prepare.mcfunction','diag_report_coord_one.mcfunction',
+        'diag_report_coord_replace.mcfunction','diag_report_coord_remove.mcfunction',
+        'diag_report_coord_content.mcfunction',
+    ):
+        assert (pack/'data/mcc/function/history'/name).is_file()
+    diag_report=read(pack/'data/mcc/function/history/diag_report.mcfunction')
+    assert '需要補回' in diag_report and '異常位置' in diag_report
 
     for p in (
         pack/'data/mcc/function/move/run.mcfunction',
@@ -477,9 +511,16 @@ def check_v100_semantics(pack: Path):
     assert 'function mcc:work/snapshot_selection' in rotate
     assert 'function mcc:undo/backup_from_' in rotate
     assert 'function mcc:cut/clear_' in rotate
-    assert 'function mcc:rotate_edit/place_' in rotate
-    assert rotate.index('function mcc:work/snapshot_selection') < rotate.index('function mcc:cut/clear_')
+    assert 'function mcc:rotate_edit/stage_work' in rotate
+    assert 'function mcc:work/to_overworld_replace' in rotate
+    assert 'function mcc:work/to_nether_replace' in rotate
+    assert 'function mcc:work/to_end_replace' in rotate
+    assert rotate.index('function mcc:work/snapshot_selection') < rotate.index('function mcc:rotate_edit/stage_work')
+    assert rotate.index('function mcc:rotate_edit/stage_work') < rotate.index('function mcc:cut/clear_')
     assert rotate.index('function mcc:undo/backup_from_') < rotate.index('function mcc:cut/clear_')
+    stage_work=read(pack/'data/mcc/function/rotate_edit/stage_work.mcfunction')
+    assert 'fill $(wbx) 0 20000500 $(old_wbx2) $(wby2) $(old_wbz2) minecraft:air strict' in stage_work
+    assert 'place template mcc:work_$(id)' in stage_work
     for name in ('r90.mcfunction','r180.mcfunction','r270.mcfunction'):
         assert (pack/'data/mcc/function/rotate_edit'/name).is_file()
 
