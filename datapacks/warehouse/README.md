@@ -1,4 +1,4 @@
-# Warehouse v4.6
+# Warehouse v4.7
 
 Minecraft Java 26.3 automatic sorting warehouse data pack.
 
@@ -6,9 +6,13 @@ The actual pack source lives directly in this directory. Keep `pack.mcmeta` and 
 
 ## Release
 
-Current version: `v4.6`（尚未發布）
+Current version: `v4.7`
 
-Latest published release: `warehouse-v4.5.zip`
+Latest published release: `warehouse-v4.7.zip`
+
+## v4.7 修正
+
+修正背景堆疊與共用搬運合併的箱子 NBT 讀取維度：來源依 `dimension`、主箱目的依 `dest_dimension`、溢位目的依 `ov_dimension`，避免地獄／終界倉庫誤讀主世界同座標箱子的庫存。既有註冊、分類與物品格式不變，不需要 migration。
 
 ## 玩家說明
 
@@ -17,7 +21,7 @@ Latest published release: `warehouse-v4.5.zip`
 ### 安裝／升級
 
 1. 移除舊版 Minecraft_Warehouse_26.2_v*.zip、Minecraft_Warehouse_26.3_v*.zip 或舊 warehouse-v*.zip；不要同時載入兩份。
-2. 將 warehouse-v4.5.zip 放入世界 datapacks 資料夾。
+2. 將 warehouse-v4.7.zip 放入世界 datapacks 資料夾。
 3. 退出世界再重新進入（Dialog 介面只在進入世界時載入，只打 /reload 不會更新介面）。
 4. 既有 61 箱註冊、玩家分類覆寫、自訂箱名、scoreboard 與其他世界資料會沿用；migration 不會重設這些資料。
 

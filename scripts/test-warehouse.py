@@ -162,6 +162,18 @@ def main() -> None:
     assert "container.$(slot)" in compact_slot
     assert "Items[{Slot:$(slot)b}]" in compact_slot
     assert "scoreboard players operation #compact_src wh_tmp = #compact_slot wh_tmp" in compact_slot
+    assert "$execute in $(dimension) run data modify storage warehouse:runtime move.stack set from block" in compact_slot
+    # Every shared merge reader must use its destination dimension, including
+    # main/overflow A/B halves. Compact runs from the overworld tick context.
+    merge_readers = list((PACK / "data/warehouse/function/sort/transport").glob("merge_*.mcfunction"))
+    dimension_reads = 0
+    for path in merge_readers:
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if "move.candidate set from block" in line:
+                dimension = "ov_dimension" if path.name.startswith("merge_o") else "dest_dimension"
+                assert line.startswith(f"$execute in $({dimension}) run "), path
+                dimension_reads += 1
+    assert dimension_reads == 108
     compact_dir = PACK / "data/warehouse/function/compact"
     assert not (compact_dir / "slot_dispatch.mcfunction").exists(), "legacy 54-way slot dispatcher must be removed"
     assert not list(compact_dir.glob("slot_[0-9][0-9].mcfunction")), "legacy per-slot compact handlers must be removed"

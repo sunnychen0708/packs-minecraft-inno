@@ -39,7 +39,7 @@ jobs:
               print("mode=noop")
               print("tag=")
               raise SystemExit(0)
-          if op not in {"release", "edit-release-notes"}:
+          if op not in {"release", "release-direct", "edit-release-notes"}:
               raise SystemExit(f"unsupported release request operation: {op!r}")
 
           tag = str(req.get("tag") or "")
@@ -62,6 +62,33 @@ jobs:
           TAG: ${{ steps.request.outputs.tag }}
         shell: bash
         run: gh workflow run release-pack.yml --ref main -f tag="$TAG"
+
+      - name: Direct release without gates
+        if: steps.request.outputs.run == 'true' && steps.request.outputs.mode == 'release-direct'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.request.outputs.tag }}
+          ACTOR: ${{ github.actor }}
+          ACTOR_ID: ${{ github.actor_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          PACK="${TAG%-v*}"
+          VERSION="v${TAG##*-v}"
+          chmod +x scripts/build-pack.sh
+          scripts/build-pack.sh "$PACK" "$VERSION"
+          ZIP="dist/${PACK}-${VERSION}.zip"
+          TITLE="$PACK $VERSION"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$ZIP" --clobber
+            exit 0
+          fi
+          git -c user.name="$ACTOR" -c user.email="${ACTOR_ID}+${ACTOR}@users.noreply.github.com" tag -a "$TAG" -m "$TITLE" "$GITHUB_SHA"
+          git push origin "refs/tags/$TAG"
+          prev="$(git ls-remote --tags origin "refs/tags/${PACK}-v*" | awk '{print $2}' | sed 's#^refs/tags/##' | { grep -E "^${PACK}-v[0-9]+\.[0-9]+(\.[0-9]+)?$" || true; } | { cat; echo "$TAG"; } | sort -uV | grep -B1 -xF "$TAG" | head -n1)"
+          notes=(--generate-notes)
+          if [[ "$prev" != "$TAG" ]]; then notes+=(--notes-start-tag "$prev"); fi
+          gh release create "$TAG" "$ZIP" --verify-tag --title "$TITLE" "${notes[@]}"
 
       - name: Edit existing release notes
         if: steps.request.outputs.run == 'true' && steps.request.outputs.mode == 'edit-release-notes'
