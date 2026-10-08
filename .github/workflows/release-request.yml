@@ -85,10 +85,10 @@ jobs:
           fi
           git -c user.name="$ACTOR" -c user.email="${ACTOR_ID}+${ACTOR}@users.noreply.github.com" tag -a "$TAG" -m "$TITLE" "$GITHUB_SHA"
           git push origin "refs/tags/$TAG"
-          prev="$(git ls-remote --tags origin "refs/tags/${PACK}-v*" | awk '{print $2}' | sed 's#^refs/tags/##' | { grep -E "^${PACK}-v[0-9]+\.[0-9]+(\.[0-9]+)?$" || true; } | { cat; echo "$TAG"; } | sort -uV | grep -B1 -xF "$TAG" | head -n1)"
-          notes=(--generate-notes)
-          if [[ "$prev" != "$TAG" ]]; then notes+=(--notes-start-tag "$prev"); fi
-          gh release create "$TAG" "$ZIP" --verify-tag --title "$TITLE" "${notes[@]}"
+          # The previous tag may belong to a pre-squash history. Compare only
+          # this pack's file trees rather than GitHub's commit-based changelog.
+          python3 scripts/generate-release-notes.py "$PACK" "$TAG" /tmp/release-notes.md
+          gh release create "$TAG" "$ZIP" --verify-tag --title "$TITLE" --notes-file /tmp/release-notes.md
 
       - name: Edit existing release notes
         if: steps.request.outputs.run == 'true' && steps.request.outputs.mode == 'edit-release-notes'
