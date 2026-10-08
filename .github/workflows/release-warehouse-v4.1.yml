@@ -1,0 +1,52 @@
+name: Release Warehouse v4.1
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate Warehouse
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/validate-datapack.py warehouse
+          grep -q '自動分類倉庫 v4.1' datapacks/warehouse/pack.mcmeta
+
+      - name: Build Warehouse ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x scripts/build-pack.sh
+          scripts/build-pack.sh warehouse v4.1
+
+      - name: Create v4.1 tag and release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="warehouse-v4.1"
+
+          if ! git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
+            git tag "$TAG" "$GITHUB_SHA"
+            git push origin "$TAG"
+          fi
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "$TAG release already exists"
+            exit 0
+          fi
+
+          gh release create "$TAG"             "dist/warehouse-v4.1.zip"             --verify-tag             --title "Warehouse v4.1"             --notes "Minecraft Java 26.3 Warehouse hotfix. Fixes warehouse:admin/reset_registrations failing to load because of an incomplete data remove storage command. The reset now clears only the 61 chest registration states and preserves classifications and custom chest names."

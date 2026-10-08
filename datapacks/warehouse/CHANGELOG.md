@@ -32,3 +32,4 @@
 | **v3.3** | Minecraft Java 26.3 初步相容版。Data Pack version 更新到 121.0；修正 26.3 `minecraft:any_block_use` / predicate schema 變更，使資料包能在 26.3 載入。尚未加入 26.3 新物品。 |
 | **v3.4** | 26.3 的舊資料相容強化版。重點是確保從 26.2 升級後既有的箱子註冊、玩家自訂箱名、分類覆寫與其他 storage／scoreboard 紀錄能繼續使用；不重新初始化或覆蓋舊資料。這版仍沒有加入 26.3 新物品。 |
 | **v4.0** | 正式把 Minecraft 26.3 新增物品加入倉庫分類，沿用既有 54 箱分類邏輯分配新物品，並維持 v3.4 的舊世界資料相容性。 |
+| **v4.1** | Hotfix：修正 `warehouse:admin/reset_registrations` 使用不完整的 `data remove storage warehouse:chests`，導致伺服器啟動／reload 時該 function 無法載入的問題；改為只清除 61 個箱位的註冊狀態，保留分類與自訂箱名。 |
