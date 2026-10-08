@@ -2,6 +2,7 @@
 """Static regression checks for the Warehouse datapack."""
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -14,6 +15,14 @@ CODES = SPECIAL + MAIN
 
 
 def main() -> None:
+    meta = json.loads((PACK / "pack.mcmeta").read_text(encoding="utf-8"))
+    description = str(meta["pack"]["description"])
+    version_match = re.search(r"v(\d+\.\d+(?:\.\d+)?)", description)
+    assert version_match, f"pack description has no semantic version: {description}"
+    version = version_match.group(1)
+    readme = (PACK / "README.md").read_text(encoding="utf-8")
+    assert readme.startswith(f"# Warehouse v{version}"), "README version must match pack.mcmeta"
+
     reset = PACK / "data/warehouse/function/admin/reset_registrations.mcfunction"
     text = reset.read_text(encoding="utf-8")
 
@@ -63,9 +72,17 @@ def main() -> None:
     assert "warehouse:meta search_ready" in run
     assert "return fail" in run
 
+    setup = (PACK / "data/warehouse/function/setup.mcfunction").read_text(encoding="utf-8")
+    warehouse_tick = (PACK / "data/warehouse/function/tick.mcfunction").read_text(encoding="utf-8")
+    assert "scoreboard objectives add wh_search_page trigger" not in setup
+    assert "scoreboard players enable @a wh_rename" in warehouse_tick
+
     load = (PACK / "data/warehouse/function/load.mcfunction").read_text(encoding="utf-8")
     assert "execute unless data storage warehouse:meta v42 run function warehouse:migrate_v42" in load
     assert "execute unless data storage warehouse:meta v43 run function warehouse:migrate_v43" in load
+    current_marker = "v" + version.replace(".", "")
+    assert f"warehouse:meta {current_marker}" in load, "current source version has no migration marker"
+    assert f"warehouse:migrate_{current_marker}" in load, "current source version has no migration function"
 
     api_refresh = (PACK / "data/warehouse/function/api/material_sources/refresh.mcfunction").read_text(encoding="utf-8")
     api_append = (PACK / "data/warehouse/function/api/material_sources/append.mcfunction").read_text(encoding="utf-8")
@@ -118,7 +135,7 @@ def main() -> None:
     assert "work.saved_result" in api_pending_tick
 
     main_dialog = (PACK / "data/warehouse/dialog/main.json").read_text(encoding="utf-8")
-    assert "v4.2" in main_dialog
+    assert f"v{version}" in main_dialog
     assert "建築工具" in main_dialog
     assert "trigger copypaste set 1" in main_dialog
 
@@ -134,8 +151,48 @@ def main() -> None:
     assert "force @s" in highlight_box
     assert "Highlight 箱子" in show_classified
     assert "trigger wh_highlight set 1" in show_classified
+    select_search = (PACK / "data/warehouse/function/rule/select_search.mcfunction").read_text(encoding="utf-8")
+    show_selected = (PACK / "data/warehouse/function/rule/show_selected.mcfunction").read_text(encoding="utf-8")
+    highlight_from_rule = (PACK / "data/warehouse/function/highlight/from_rule.mcfunction").read_text(encoding="utf-8")
+    assert "scores={wh_search_pick=1..1544}" in warehouse_tick and "warehouse:rule/select_search" in warehouse_tick
+    assert "function warehouse:rule/show_selected" in select_search
+    assert "function warehouse:rule/show_classified" in show_selected
+    assert "scores={wh_highlight=1..}" in warehouse_tick and "warehouse:highlight/from_rule" in warehouse_tick
+    assert "wh_rulebox matches 10..69" in highlight_from_rule
+    assert "function warehouse:api/highlight" in highlight_from_rule
 
-    print("PASS warehouse regression: reset/search/API/Highlight are bounded and validated")
+    # Phase 4 Pick / block resolver.
+    api_resolve = (PACK / "data/warehouse/function/api/resolve_block.mcfunction").read_text(encoding="utf-8")
+    pick_start = (PACK / "data/warehouse/function/pick/start.mcfunction").read_text(encoding="utf-8")
+    pick_raycast = (PACK / "data/warehouse/function/pick/raycast.mcfunction").read_text(encoding="utf-8")
+    pick_hit = (PACK / "data/warehouse/function/pick/hit.mcfunction").read_text(encoding="utf-8")
+    pick_withdraw = (PACK / "data/warehouse/function/pick/withdraw.mcfunction").read_text(encoding="utf-8")
+    pick_take = (PACK / "data/warehouse/function/pick/take.mcfunction").read_text(encoding="utf-8")
+    pick_give = (PACK / "data/warehouse/function/pick/give.mcfunction").read_text(encoding="utf-8")
+    pick_from_item = (PACK / "data/warehouse/function/pick/from_item.mcfunction").read_text(encoding="utf-8")
+    show_unclassified = (PACK / "data/warehouse/function/rule/show_unclassified.mcfunction").read_text(encoding="utf-8")
+    assert setup.count("scoreboard objectives add pick trigger") == 1
+    assert "warehouse:meta v44" in load and "warehouse:migrate_v44" in load
+    assert warehouse_tick.count("scoreboard players enable @a pick") == 1
+    assert "scores={pick=1..}" in warehouse_tick and "warehouse:pick/start" in warehouse_tick
+    assert "trigger pick" in main_dialog and "Pick 一組" in main_dialog
+    assert 'minecraft:enchantments={"minecraft:silk_touch":1}' in api_resolve
+    assert "probe_max_stack" in api_resolve and "result.max_stack" in api_resolve
+    assert "data remove storage warehouse:pick\n" not in pick_start
+    assert "data remove storage warehouse:pick request" in pick_start
+    assert "data remove storage warehouse:pick result" in pick_start
+    assert "anchored eyes" in pick_start and "warehouse:pick/raycast" in pick_start
+    assert "minecraft:water" in pick_raycast and "minecraft:lava" in pick_raycast
+    assert "warehouse:api/resolve_block" in pick_hit
+    assert "warehouse:api/count_item" in pick_withdraw
+    assert "warehouse:api/take_item" in pick_take
+    assert "entity @s[type=minecraft:player]" in pick_take
+    assert "$give @s $(item_id) $(count)" in pick_give
+    assert "probe_max_stack" in pick_from_item and "warehouse:pick/withdraw" in pick_from_item
+    assert "warehouse:pick/from_item" in show_classified and "取一組" in show_classified
+    assert "warehouse:pick/from_item" in show_unclassified and "取一組" in show_unclassified
+
+    print(f"PASS warehouse regression v{version}: reset/search/API/Highlight/Pick are bounded and validated")
 
 
 if __name__ == "__main__":

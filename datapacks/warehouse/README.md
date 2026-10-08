@@ -1,4 +1,4 @@
-# Warehouse v4.2
+# Warehouse v4.4
 
 Minecraft Java 26.3 automatic sorting warehouse data pack.
 
@@ -6,9 +6,9 @@ The actual pack source lives directly in this directory. Keep `pack.mcmeta` and 
 
 ## Release
 
-Repository tag: `warehouse-v4.2`
+Current source version: `v4.4`
 
-Release ZIP: `warehouse-v4.2.zip`
+Latest published release: `warehouse-v4.2.zip` (source v4.4 is newer)
 
 ## Version history
 
@@ -69,4 +69,37 @@ Refund always targets Warehouse entry chest `c00`; Warehouse's normal sorter rem
 
 Refund is durable: if `c00` is full, temporarily unavailable, stale, or not currently registered, the physical remainder is appended to `storage warehouse:api pending_refunds` before the API returns. The result reports `inserted`, `queued`, `deferred`, and leaves `remaining:0` once Warehouse has accepted responsibility for a valid positive refund. `warehouse:tick` retries one pending entry per tick without overwriting the last public API result. This lets callers such as Copy/Paste finish an Undo safely even when the entry chest cannot accept every returned stack immediately.
 
-`resolve_block` and `highlight` will be added on top of this same API/storage contract in their dedicated implementation phases. They should not duplicate Warehouse registration data.
+### Highlight
+
+Warehouse 已提供玩家可見的 Highlight API：
+
+```mcfunction
+data modify storage warehouse:api request set value {code:11}
+function warehouse:api/highlight
+```
+
+API 直接讀取既有 `warehouse:chests` 註冊資料，不建立第二份箱子座標表。有效箱位會只對呼叫玩家顯示 `end_rod` 粒子 Highlight，並在聊天列印箱號、維度與 A/B 兩半座標；未註冊或失效箱位會拒絕 Highlight。
+
+遊戲內「物品查詢」也共用這條路徑：搜尋物品 → 點選結果 → 分類結果頁 →「Highlight 箱子」。因此搜尋與分類設定使用同一份 `wh_rulebox` / Warehouse 註冊資料，不需要額外同步。
+
+### Resolve block
+
+`warehouse:api/resolve_block` 會在目前執行位置讀取方塊，使用 Silk Touch loot 模擬解析其可取得的生存物品，但不破壞來源方塊：
+
+```mcfunction
+execute positioned 100 64 100 run function warehouse:api/resolve_block
+```
+
+成功時 `storage warehouse:api result` 會包含 `operation:"resolve_block"`、`item_id` 與該物品的 `max_stack`。沒有正常生存掉落對應的方塊會回報 `no_survival_item`，不會憑空建立物品。
+
+## Pick
+
+玩家看著方塊後可直接：
+
+```mcfunction
+/trigger pick
+```
+
+Pick 最遠約 6 格，會忽略空氣與水／岩漿等流體，解析準星方塊後使用共用 Warehouse `count_item` / `take_item` API 取料。一次最多拿該物品的原版最大堆疊數；若倉庫只有較少數量，會拿現有數量。只消耗 Warehouse API 認定的普通、無自訂 components 堆疊。
+
+真正的滑鼠中鍵事件無法由純 Vanilla datapack 可靠偵測，因此 Phase 4 的入口是 `/trigger pick` 與 Warehouse 主 Dialog 的「Pick 一組」按鈕。物品查詢也共用同一條取料路徑：搜尋物品 → 點選結果 →「取一組」，不另外維護第二套庫存或扣料邏輯。

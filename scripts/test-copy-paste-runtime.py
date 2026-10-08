@@ -34,7 +34,7 @@ def integration(java: Path, server: Path):
     harness=packs/'regression'
     funcs=harness/'data/mcc_server_test/function'
     funcs.mkdir(parents=True)
-    (harness/'pack.mcmeta').write_text(json.dumps({'pack':{'min_format':121,'max_format':121,'description':'CopyPaste v1.0 server regression'}}),encoding='utf-8')
+    (harness/'pack.mcmeta').write_text(json.dumps({'pack':{'min_format':121,'max_format':121,'description':'CopyPaste server regression'}}),encoding='utf-8')
 
     actor='@e[type=minecraft:armor_stand,tag=mcc_server_actor,limit=1]'
     lines=[
@@ -130,6 +130,22 @@ def integration(java: Path, server: Path):
     run_as('mcc:blueprint/nudge/left')
     run_as('mcc:blueprint/recount_batch')
     check(f'positioned 12 80 3 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] if score {actor} mcc_bptx0 matches 12 if score {actor} mcc_bpover_scan matches 0','phase3_blueprint_nudge_left_restore')
+    lines.append(f'scoreboard players set {actor} bpforward 1')
+    run_as('mcc:blueprint/nudge/forward')
+    run_as('mcc:blueprint/recount_batch')
+    check(f'positioned 12 80 4 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] if score {actor} mcc_bptz0 matches 4 if score {actor} mcc_bpover_scan matches 0','phase3_blueprint_nudge_forward')
+    lines.append(f'scoreboard players set {actor} bpbackward 1')
+    run_as('mcc:blueprint/nudge/backward')
+    run_as('mcc:blueprint/recount_batch')
+    check(f'positioned 12 80 3 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] if score {actor} mcc_bptz0 matches 3 if score {actor} mcc_bpover_scan matches 0','phase3_blueprint_nudge_backward_restore')
+    lines.append(f'scoreboard players set {actor} bpup 1')
+    run_as('mcc:blueprint/nudge/up')
+    run_as('mcc:blueprint/recount_batch')
+    check(f'positioned 12 81 3 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] if score {actor} mcc_bpty0 matches 81 if score {actor} mcc_bpover_scan matches 0','phase3_blueprint_nudge_up')
+    lines.append(f'scoreboard players set {actor} bpdown 1')
+    run_as('mcc:blueprint/nudge/down')
+    run_as('mcc:blueprint/recount_batch')
+    check(f'positioned 12 80 3 if entity @e[type=minecraft:block_display,tag=mcc_blueprint,distance=..0.1,limit=1] if score {actor} mcc_bpty0 matches 80 if score {actor} mcc_bpover_scan matches 0','phase3_blueprint_nudge_down_restore')
 
     # Phase 3 overwrite guard: recount target blocks and require a second Build confirmation.
     lines.append('setblock 12 80 3 stone')

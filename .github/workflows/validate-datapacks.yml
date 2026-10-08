@@ -8,6 +8,7 @@ on:
       - "docs/datapack-validation.md"
       - ".github/workflows/validate-datapacks.yml"
       - ".github/workflows/release-pack.yml"
+      - ".github/actions/setup-minecraft-runtime/**"
   push:
     branches:
       - main
@@ -17,6 +18,7 @@ on:
       - "docs/datapack-validation.md"
       - ".github/workflows/validate-datapacks.yml"
       - ".github/workflows/release-pack.yml"
+      - ".github/actions/setup-minecraft-runtime/**"
 
 jobs:
   validate:
@@ -44,6 +46,10 @@ jobs:
             fi
           done
 
+          echo "::group::Cross-pack static compatibility"
+          python3 scripts/test-datapack-compatibility.py
+          echo "::endgroup::"
+
       - name: Build Copy/Paste opt-in live harnesses
         shell: bash
         run: |
@@ -60,20 +66,8 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
-      - name: Set up Java 25
-        uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: "25"
-
-      - name: Download official Minecraft 26.3 server
-        shell: bash
-        run: |
-          set -euo pipefail
-          curl --fail --location --retry 3 \
-            https://piston-data.mojang.com/v1/objects/33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c/server.jar \
-            --output server.jar
-          echo "33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c  server.jar" | sha1sum --check -
+      - name: Set up Minecraft 26.3 runtime
+        uses: ./.github/actions/setup-minecraft-runtime
 
       - name: Run Warehouse registration-reset runtime regression
         shell: bash
@@ -102,20 +96,8 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
-      - name: Set up Java 25
-        uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: "25"
-
-      - name: Download official Minecraft 26.3 server
-        shell: bash
-        run: |
-          set -euo pipefail
-          curl --fail --location --retry 3 \
-            https://piston-data.mojang.com/v1/objects/33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c/server.jar \
-            --output server.jar
-          echo "33680f5f2ac32864d6d7cf5e56a705fdb3e05f4c  server.jar" | sha1sum --check -
+      - name: Set up Minecraft 26.3 runtime
+        uses: ./.github/actions/setup-minecraft-runtime
 
       - name: Boot official 26.3 server and reload Copy/Paste
         shell: bash
@@ -126,7 +108,7 @@ jobs:
             --server-jar "$PWD/server.jar" \
             --accept-eula
 
-      - name: Run Copy/Paste v1.0 behavioral regression
+      - name: Run Copy/Paste behavioral regression
         shell: bash
         run: |
           set -euo pipefail
@@ -146,3 +128,32 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+
+  all-datapacks-runtime-smoke:
+    name: All datapacks vanilla 26.3 compatibility
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Minecraft 26.3 runtime
+        uses: ./.github/actions/setup-minecraft-runtime
+
+      - name: Run all-datapacks compatibility regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/test-datapack-compatibility.py \
+            --java "$(command -v java)" \
+            --server-jar "$PWD/server.jar" \
+            --accept-eula
+
+      - name: Upload all-datapacks runtime evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: all-datapacks-26.3-compatibility-${{ github.run_id }}
+          path: dist/all-datapacks-runtime-*
+          if-no-files-found: ignore
+          retention-days: 14
