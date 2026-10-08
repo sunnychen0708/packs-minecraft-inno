@@ -1,6 +1,6 @@
 {
-  "request_id": 20261008140006,
-  "operation": "log",
+  "request_id": 20261008140007,
+  "operation": "run-live-suite",
   "command": "",
-  "pack": ""
+  "pack": "copy-paste-gap-external"
 }
