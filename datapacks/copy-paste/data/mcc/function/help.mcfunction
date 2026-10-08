@@ -1,4 +1,4 @@
-tellraw @s [{"text":"===== Copy/Paste v0.1 =====","color":"gold"}]
+tellraw @s [{"text":"===== Copy/Paste v0.2 =====","color":"gold"}]
 tellraw @s [{"text":"1. 看著第一個角：","color":"gray"},{"text":"/trigger mcc_pos1","color":"yellow","click_event":{"action":"run_command","command":"/trigger mcc_pos1"}}]
 tellraw @s [{"text":"2. 看著另一個角：","color":"gray"},{"text":"/trigger mcc_pos2","color":"yellow","click_event":{"action":"run_command","command":"/trigger mcc_pos2"}}]
 tellraw @s [{"text":"3. 選用 Anchor：","color":"gray"},{"text":"/trigger mcc_anchor","color":"yellow","click_event":{"action":"run_command","command":"/trigger mcc_anchor"}},{"text":"（不設就用 Pos1）","color":"dark_gray"}]
