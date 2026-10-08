@@ -1,4 +1,4 @@
-name: inno animal collection (read only)
+name: Publish inno animal collection to Discord (manual)
 
 on:
   workflow_dispatch:
