@@ -5,7 +5,7 @@ $execute in $(dimension) if items block $(src_x) $(src_y) $(src_z) container.$(s
 $execute in $(dimension) if items block $(src_x) $(src_y) $(src_z) container.$(slot) *[minecraft:max_stack_size=1] run scoreboard players set #max wh_tmp 1
 execute if score #max wh_tmp matches 1 run return 0
 data remove storage warehouse:runtime move
-$data modify storage warehouse:runtime move.stack set from block $(src_x) $(src_y) $(src_z) Items[{Slot:$(slot)b}]
+$execute in $(dimension) run data modify storage warehouse:runtime move.stack set from block $(src_x) $(src_y) $(src_z) Items[{Slot:$(slot)b}]
 execute unless data storage warehouse:runtime move.stack run return 0
 data remove storage warehouse:runtime move.stack.Slot
 execute unless data storage warehouse:runtime move.stack.components run data modify storage warehouse:runtime move.stack.components set value {}

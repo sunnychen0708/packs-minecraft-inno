@@ -1,6 +1,6 @@
 scoreboard players set #transfer wh_tmp 0
 data remove storage warehouse:runtime move.candidate
-$data modify storage warehouse:runtime move.candidate set from block $(ov_a_x) $(ov_a_y) $(ov_a_z) Items[{Slot:1b}]
+$execute in $(ov_dimension) run data modify storage warehouse:runtime move.candidate set from block $(ov_a_x) $(ov_a_y) $(ov_a_z) Items[{Slot:1b}]
 execute unless data storage warehouse:runtime move.candidate run return 0
 execute store result score #before wh_tmp run data get storage warehouse:runtime move.candidate.count
 execute if score #before wh_tmp >= #max wh_tmp run return 0

@@ -1,6 +1,6 @@
 {
-  "request_id": 20261007234020,
-  "operation": "deploy-datapack-no-reload",
+  "request_id": 20261008010001,
+  "operation": "recover-warehouse-compact-live-test",
   "command": "",
-  "pack": "utilities"
+  "pack": "warehouse"
 }
