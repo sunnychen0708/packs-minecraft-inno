@@ -376,6 +376,99 @@ def make_harness(harness: Path, mode: str = "full") -> tuple[int, list[str]]:
 
         return len(assertions), assertions
 
+    if mode == "compact":
+        # Minimal physical setup for background stack compaction on c31.
+        lines = [
+            "function warehouse:system/off",
+            "setblock 3 80 1 minecraft:chest",
+            "setblock 3 80 3 minecraft:chest",
+            f"scoreboard players set {actor} wh_target 31",
+            f"execute as {actor} run function warehouse:register/save_nonzero {{code:31,a_x:3,a_y:80,a_z:1,b_x:3,b_y:80,b_z:3,dimension:\"minecraft:overworld\"}}",
+            "data modify block 3 80 1 Items set value []",
+            "data modify block 3 80 3 Items set value []",
+            "say WFTA_PHASE_COMPACT_SETUP_DONE",
+        ]
+        (funcs / "compact_setup.mcfunction").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        # Case 1: two partial stacks of the same item merge.
+        lines = [
+            "data modify block 3 80 1 Items set value []",
+            "item replace block 3 80 1 container.0 with minecraft:stone 10",
+            "item replace block 3 80 1 container.1 with minecraft:stone 20",
+            "scoreboard players set #compact_code wh_tmp 22",
+            "scoreboard players set #compact_slot wh_tmp 1",
+            "function warehouse:system/on",
+            "say WFTA_PHASE_COMPACT_CASE1_STARTED",
+        ]
+        (funcs / "compact_case1_start.mcfunction").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        lines, check = phase("compact_merge")
+        lines += [
+            "function warehouse:system/off",
+            "scoreboard players set #tmp wfta 0",
+            "execute store result score #tmp wfta run data get block 3 80 1 Items[{Slot:0b}].count 1",
+        ]
+        check("if score #tmp wfta matches 30", "dest_count")
+        check("unless items block 3 80 1 container.1 *", "source_cleared")
+        lines.append("say WFTA_PHASE_COMPACT_CASE1_DONE")
+        (funcs / "compact_case1_verify.mcfunction").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        # Case 2: a full target stack is never overfilled or destroyed.
+        lines = [
+            "data modify block 3 80 1 Items set value []",
+            "item replace block 3 80 1 container.0 with minecraft:stone 64",
+            "item replace block 3 80 1 container.1 with minecraft:stone 20",
+            "scoreboard players set #compact_code wh_tmp 22",
+            "scoreboard players set #compact_slot wh_tmp 1",
+            "function warehouse:system/on",
+            "say WFTA_PHASE_COMPACT_CASE2_STARTED",
+        ]
+        (funcs / "compact_case2_start.mcfunction").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        lines, check = phase("compact_full")
+        lines += [
+            "function warehouse:system/off",
+            "scoreboard players set #tmp0 wfta 0",
+            "scoreboard players set #tmp1 wfta 0",
+            "execute store result score #tmp0 wfta run data get block 3 80 1 Items[{Slot:0b}].count 1",
+            "execute store result score #tmp1 wfta run data get block 3 80 1 Items[{Slot:1b}].count 1",
+        ]
+        check("if score #tmp0 wfta matches 64", "full_stack_unchanged")
+        check("if score #tmp1 wfta matches 20", "source_stack_unchanged")
+        check("if items block 3 80 1 container.0 minecraft:stone", "dest_item_preserved")
+        check("if items block 3 80 1 container.1 minecraft:stone", "source_item_preserved")
+        lines.append("say WFTA_PHASE_COMPACT_CASE2_DONE")
+        (funcs / "compact_case2_verify.mcfunction").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        # Case 3: different item types are never merged into each other.
+        lines = [
+            "data modify block 3 80 1 Items set value []",
+            "item replace block 3 80 1 container.0 with minecraft:stone 10",
+            "item replace block 3 80 1 container.1 with minecraft:dirt 20",
+            "scoreboard players set #compact_code wh_tmp 22",
+            "scoreboard players set #compact_slot wh_tmp 1",
+            "function warehouse:system/on",
+            "say WFTA_PHASE_COMPACT_CASE3_STARTED",
+        ]
+        (funcs / "compact_case3_start.mcfunction").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        lines, check = phase("compact_mismatch")
+        lines += [
+            "function warehouse:system/off",
+            "scoreboard players set #tmp0 wfta 0",
+            "scoreboard players set #tmp1 wfta 0",
+            "execute store result score #tmp0 wfta run data get block 3 80 1 Items[{Slot:0b}].count 1",
+            "execute store result score #tmp1 wfta run data get block 3 80 1 Items[{Slot:1b}].count 1",
+        ]
+        check("if score #tmp0 wfta matches 10", "stone_count")
+        check("if score #tmp1 wfta matches 20", "dirt_count")
+        check("if items block 3 80 1 container.0 minecraft:stone", "stone_item")
+        check("if items block 3 80 1 container.1 minecraft:dirt", "dirt_item")
+        lines.append("say WFTA_PHASE_COMPACT_DONE")
+        (funcs / "compact_case3_verify.mcfunction").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+        return len(assertions), assertions
+
     # Simulate an actual v3.4 world: all pre-v4 markers and persistent user state exist.
     lines = [
         'data modify storage warehouse:meta initialized set value 1b',
@@ -864,6 +957,27 @@ def runtime_audit(pack_zip: Path, java: Path, server: Path, phase: str = "full")
             time.sleep(0.8)
             send("function warehouse_full_test:routing_safe_verify")
             wait_marker("WFTA_PHASE_ROUTING_DONE")
+        elif phase == "compact":
+            send("function warehouse_full_test:compact_setup")
+            wait_marker("WFTA_PHASE_COMPACT_SETUP_DONE")
+
+            send("function warehouse_full_test:compact_case1_start")
+            wait_marker("WFTA_PHASE_COMPACT_CASE1_STARTED")
+            time.sleep(0.8)
+            send("function warehouse_full_test:compact_case1_verify")
+            wait_marker("WFTA_PHASE_COMPACT_CASE1_DONE")
+
+            send("function warehouse_full_test:compact_case2_start")
+            wait_marker("WFTA_PHASE_COMPACT_CASE2_STARTED")
+            time.sleep(0.8)
+            send("function warehouse_full_test:compact_case2_verify")
+            wait_marker("WFTA_PHASE_COMPACT_CASE2_DONE")
+
+            send("function warehouse_full_test:compact_case3_start")
+            wait_marker("WFTA_PHASE_COMPACT_CASE3_STARTED")
+            time.sleep(0.8)
+            send("function warehouse_full_test:compact_case3_verify")
+            wait_marker("WFTA_PHASE_COMPACT_DONE")
         else:
             send("function warehouse_full_test:seed_v34")
             wait_marker("WFTA_PHASE_SEED_V34_DONE")
@@ -947,6 +1061,11 @@ def runtime_audit(pack_zip: Path, java: Path, server: Path, phase: str = "full")
             label for label in assertion_labels
             if label.startswith(("fresh_", "auto_sort_", "routing_overflow_", "routing_safe_"))
         ]
+    elif phase == "compact":
+        labels_to_check = [
+            label for label in assertion_labels
+            if label.startswith(("fresh_", "compact_merge_", "compact_full_", "compact_mismatch_"))
+        ]
     failures = [label for label in labels_to_check if f"WFTA_PASS_{label}" not in report]
     explicit_fails = [line.strip() for line in output if "WFTA_FAIL_" in line]
     parser_errors = [
@@ -969,7 +1088,7 @@ def main():
     ap.add_argument("--pack-zip", type=Path, required=True)
     ap.add_argument("--java", type=Path, required=True)
     ap.add_argument("--server-jar", type=Path, required=True)
-    ap.add_argument("--phase", choices=("compat", "basic", "routing", "full"), default="full")
+    ap.add_argument("--phase", choices=("compat", "basic", "routing", "compact", "full"), default="full")
     args = ap.parse_args()
 
     stats = static_audit(args.pack_zip.resolve())
