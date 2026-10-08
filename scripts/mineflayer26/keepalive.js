@@ -18,8 +18,9 @@ if (host !== TARGET) {
   console.error(`SAFETY LOCK: refusing Minecraft connection to ${host}; only ${TARGET} is allowed`)
   process.exit(2)
 }
-if (names.length !== 4 || new Set(names).size !== 4) {
-  console.error('Exactly four unique bot names are required')
+const allowedNames = new Set(['SunnyChen', 'penguin0531', 'geena0701', 'Felicitypeng'])
+if (![1, 4].includes(names.length) || new Set(names).size !== names.length || names.some(name => !allowedNames.has(name))) {
+  console.error('Use either one allowed player or all four unique allowed players')
   process.exit(2)
 }
 if (!Number.isFinite(durationMs) || durationMs < 30000 || durationMs > 300000) {
@@ -52,14 +53,26 @@ function createBot (username) {
   return bot
 }
 
-async function main () {
-  names.forEach(createBot)
+async function waitForSpawn (name) {
   const deadline = Date.now() + spawnTimeoutMs
-
   while (Date.now() < deadline) {
-    if (names.every(name => states.get(name).spawned && !states.get(name).ended)) break
-    if (names.some(name => states.get(name).ended)) break
+    const state = states.get(name)
+    if (state && state.spawned && !state.ended) return
+    if (state && state.ended) break
     await delay(100)
+  }
+  const state = states.get(name)
+  throw new Error(`bot failed during serialized login: ${name} ${JSON.stringify(state)}`)
+}
+
+async function main () {
+  // Minecraft 26.3 + the current Mineflayer patch has a race when several
+  // clients perform initial position sync at once. Fully finish one login
+  // before creating the next client, then leave a short quiet period.
+  for (const name of names) {
+    createBot(name)
+    await waitForSpawn(name)
+    if (names.length > 1) await delay(1500)
   }
 
   const failures = names.filter(name => {
@@ -72,10 +85,10 @@ async function main () {
       const s = states.get(name)
       console.error(JSON.stringify({ name, ...s }))
     }
-    throw new Error(`failed to keep all four bots online: ${failures.join(', ')}`)
+    throw new Error(`failed to keep requested bot(s) online: ${failures.join(', ')}`)
   }
 
-  console.log(`READY 4/4 on ${TARGET}:${port} as ${names.join(',')}`)
+  console.log(`READY ${names.length}/${names.length} on ${TARGET}:${port} as ${names.join(',')}`)
   const endAt = Date.now() + durationMs
   while (Date.now() < endAt) {
     const ended = names.filter(name => states.get(name).ended)

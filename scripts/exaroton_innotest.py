@@ -113,6 +113,11 @@ class APIClient:
         sid = urllib.parse.quote(str(server["id"]), safe="")
         self.req("PUT", f"/servers/{sid}/files/data/{remote_path(path)}/", raw=content)
 
+    def delete_file(self, path):
+        server = self.target(); server = self.verify(server["id"])
+        sid = urllib.parse.quote(str(server["id"]), safe="")
+        self.req("DELETE", f"/servers/{sid}/files/data/{remote_path(path)}/")
+
     def file_info(self, path):
         server = self.target()
         sid = urllib.parse.quote(str(server["id"]), safe="")
@@ -323,6 +328,54 @@ def inno_identity_status(token):
         "world_uuids_not_present_in_whitelist_usercache_ops": unexplained,
     }
 
+
+def inno_world_layout_status(token):
+    """Inspect only directory metadata needed to locate 26.3 player identity files."""
+    client = InnoReadOnlyClient(token)
+    server = client.target()
+    sid = server["id"]
+    properties = client.read_file_optional(sid, "server.properties")
+    if properties is None:
+        raise Error("inno server.properties not found")
+    world = level_name(properties)
+    candidates = [
+        world,
+        f"{world}/players",
+        f"{world}/players/data",
+        f"{world}/players/advancements",
+        f"{world}/players/stats",
+        f"{world}/dimensions",
+        f"{world}/dimensions/minecraft",
+        f"{world}/dimensions/minecraft/overworld",
+        f"{world}/dimensions/minecraft/overworld/playerdata",
+        f"{world}/dimensions/minecraft/overworld/advancements",
+        f"{world}/dimensions/minecraft/overworld/stats",
+    ]
+    result = {"world": world, "paths": {}}
+    for path in candidates:
+        info = client.file_info_optional(sid, path)
+        if info is None:
+            result["paths"][path] = None
+            continue
+        children = []
+        for child in (info.get("children") or []):
+            if not isinstance(child, dict):
+                continue
+            children.append({
+                "name": child.get("name"),
+                "path": child.get("path"),
+                "isDirectory": child.get("isDirectory"),
+                "size": child.get("size"),
+            })
+        result["paths"][path] = {
+            "path": info.get("path"),
+            "name": info.get("name"),
+            "isDirectory": info.get("isDirectory"),
+            "children": children,
+        }
+    return result
+
+
 def pack_zip(name):
     if name not in PACKS: raise Error(f"unsupported datapack: {name}")
     base = ROOT / "datapacks" / name
@@ -356,6 +409,120 @@ def deploy(client, which):
         client.command("reload"); print("server online: reload issued")
     else:
         print("server offline/not-online: not started, no reload issued")
+
+def zip_tree(base):
+    if not base.is_dir():
+        raise Error(f"missing directory to zip: {base}")
+    out = io.BytesIO()
+    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
+        for p in sorted(base.rglob("*")):
+            if p.is_symlink():
+                raise Error(f"symlink refused: {p}")
+            if p.is_file():
+                z.write(p, p.relative_to(base).as_posix())
+    return out.getvalue()
+
+def player_count(server):
+    players = server.get("players")
+    if isinstance(players, int):
+        return players
+    if isinstance(players, list):
+        return len(players)
+    if isinstance(players, dict):
+        for key in ("count", "online", "current"):
+            value = players.get(key)
+            if isinstance(value, int):
+                return value
+        listing = players.get("list")
+        if isinstance(listing, list):
+            return len(listing)
+    return -1
+
+def wait_players(client, minimum=4, timeout=180):
+    deadline = time.time() + timeout
+    last = -1
+    while time.time() < deadline:
+        server = client.target()
+        if int(server.get("status", -1)) != 1:
+            time.sleep(2)
+            continue
+        last = player_count(server)
+        if last >= minimum:
+            return server
+        time.sleep(2)
+    raise Error(f"timeout waiting for at least {minimum} players; last count={last}")
+
+def run_copy_paste_multiplayer_test(client):
+    current = client.target()
+    if int(current.get("status", -1)) != 1:
+        raise Error("innotest must be ONLINE before live multiplayer testing")
+
+    # Deploy the exact datapacks from the checked-out main commit first.
+    deploy(client, "all")
+    time.sleep(5)
+
+    import subprocess
+    subprocess.check_call([sys.executable, str(ROOT / "scripts" / "build-copy-paste-multiplayer-test.py")])
+    harness = ROOT / "dist" / "mcc-multiplayer-test"
+    payload = zip_tree(harness)
+    world = level_name(client.read_file("server.properties"))
+    remote_harness = f"{world}/datapacks/mcc-multiplayer-test.zip"
+    client.write_file(remote_harness, payload)
+    print(f"deployed live multiplayer harness -> {remote_harness} ({len(payload)} bytes)")
+    client.command("reload")
+    time.sleep(6)
+
+    server = wait_players(client, 4, 180)
+    print(f"live multiplayer test starting with player count={player_count(server)}")
+
+    # Use two named real-player entities while the other two remain connected.
+    commands = [
+        "tag @a remove mcc_mp_a",
+        "tag @a remove mcc_mp_b",
+        "execute as @a[name=SunnyChen,limit=1] run function mcc_mp_test:join_a",
+        "execute as @a[name=penguin0531,limit=1] run function mcc_mp_test:join_b",
+        "execute as @a[name=SunnyChen,limit=1] run function mcc_mp_test:start",
+    ]
+    for command in commands:
+        client.command(command)
+        time.sleep(1)
+
+    time.sleep(35)
+    log = client.log()
+    result_lines = [line for line in log.splitlines() if "MCCMP_RESULT " in line]
+    result = result_lines[-1] if result_lines else ""
+
+    # Clean the temporary harness and its reserved test state after capturing result.
+    cleanup = [
+        "fill -305 248 85 -270 255 130 air",
+        "tag @a remove mcc_mp_a",
+        "tag @a remove mcc_mp_b",
+        "scoreboard objectives remove mccmp",
+    ]
+    for command in cleanup:
+        try:
+            client.command(command)
+        except Error:
+            pass
+    try:
+        client.delete_file(remote_harness)
+    finally:
+        try:
+            client.command("reload")
+        except Error:
+            pass
+
+    if "MCCMP_RESULT PASS" in result:
+        print(result)
+        print("COPY_PASTE_MULTIPLAYER_LIVE_TEST=PASS")
+        return
+
+    tail = "\n".join(
+        line for line in log.splitlines()[-500:]
+        if "MCCMP" in line or "Unknown function" in line or "Failed" in line
+    )
+    print(tail)
+    raise Error(f"live multiplayer test did not pass; result={result or '<missing>'}")
 
 def wait_status(client, wanted, timeout=180):
     deadline = time.time() + timeout
@@ -596,11 +763,12 @@ def migrate_inno_online_to_innotest_offline(client, token):
         )
 
     result = {}
+    # Minecraft Java 26.3 stores per-player files below world/players/*.
     specs = [
-        ("playerdata", ".dat"),
-        ("playerdata", ".dat_old"),
-        ("advancements", ".json"),
-        ("stats", ".json"),
+        ("players/data", ".dat"),
+        ("players/data", ".dat_old"),
+        ("players/advancements", ".json"),
+        ("players/stats", ".json"),
     ]
 
     for name in BOT_PLAYERS:
@@ -698,6 +866,7 @@ def run(path):
     elif op in {"start", "stop", "restart"}: client.action(op); print(f"{op} requested for {TARGET}")
     elif op == "command": client.command(str(r.get("command") or "")); print(f"command sent to {TARGET}")
     elif op == "deploy-datapack": deploy(client, str(r.get("pack") or ""))
+    elif op == "run-copy-paste-multiplayer-test": run_copy_paste_multiplayer_test(client)
     elif op == "set-online-mode-false": set_offline_mode(client)
     elif op == "online-mode-status":
         options = client.get_config("server.properties")
@@ -740,9 +909,106 @@ def run(path):
         print("\n".join(selected[-200:]))
     elif op == "inno-identity-status":
         print(json.dumps(inno_identity_status(os.environ.get("EXAROTON_API_TOKEN", "")), ensure_ascii=False, indent=2))
+    elif op == "inno-world-layout-status":
+        print(json.dumps(inno_world_layout_status(os.environ.get("EXAROTON_API_TOKEN", "")), ensure_ascii=False, indent=2))
     elif op in {"inno-uuid-migrate-dry-run", "inno-uuid-migrate-apply"}:
-        from exaroton_inno_uuid_migrate import plan_or_apply
-        plan_or_apply("dry-run" if op.endswith("dry-run") else "apply")
+        import subprocess
+        import site
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", "nbtlib==1.12.1"])
+        site.addsitedir(site.getusersitepackages())
+        import exaroton_inno_uuid_migrate as migration
+        original_remote_path = migration.remote_path
+        migration.remote_path = lambda p: original_remote_path(str(p).lstrip("/"))
+
+        def _read_file_optional(self, path):
+            try:
+                data = self.req(
+                    "GET",
+                    f"/servers/{self._sidq()}/files/data/{migration.remote_path(path)}",
+                    raw_response=True,
+                )
+                if data == b"" and str(path).endswith(".mca"):
+                    info = self.info_optional(path)
+                    size = int((info or {}).get("size") or 0)
+                    if size == 0:
+                        print(f"skipping empty region file: {path}")
+                        return None
+                    raise migration.Error(
+                        f"binary region download returned 0 bytes for {path} "
+                        f"but exaroton reports size={size}"
+                    )
+                return data
+            except migration.Error as e:
+                if "HTTP 404" in str(e):
+                    return None
+                raise
+
+        def _write_file(self, path, data):
+            self.require_offline()
+            self.req(
+                "PUT",
+                f"/servers/{self._sidq()}/files/data/{migration.remote_path(path)}/",
+                raw=data,
+            )
+
+        migration.Client.read_file_optional = _read_file_optional
+        migration.Client.write_file = _write_file
+        migration.plan_or_apply("dry-run" if op.endswith("dry-run") else "apply")
+    elif op == "inno-uuid-migrate-verify":
+        import subprocess
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", "nbtlib==1.12.1"])
+        import exaroton_inno_uuid_migrate as migration
+        original_remote_path = migration.remote_path
+        migration.remote_path = lambda p: original_remote_path(str(p).lstrip("/"))
+        verifier = migration.Client(os.environ.get("EXAROTON_API_TOKEN", ""))
+        server = verifier.require_offline()
+        manifest_name = str(r.get("command") or "").strip()
+        if not manifest_name.startswith("uuid-migration-") or not manifest_name.endswith(".json"):
+            raise Error("verification requires uuid-migration-*.json manifest name")
+        manifest_raw = verifier.read_file_optional(manifest_name)
+        if manifest_raw is None:
+            raise Error(f"migration manifest not found: {manifest_name}")
+        manifest = json.loads(manifest_raw.decode("utf-8"))
+        writes = manifest.get("writes") if isinstance(manifest, dict) else None
+        if not isinstance(writes, list):
+            raise Error("migration manifest has no writes list")
+        checked = []
+        for item in writes:
+            if not isinstance(item, dict):
+                raise Error("invalid migration manifest write entry")
+            path = str(item.get("path") or "")
+            expected = str(item.get("new_sha256") or "")
+            current = verifier.read_file_optional(path)
+            if current is None:
+                raise Error(f"verification missing written file: {path}")
+            actual = hashlib.sha256(current).hexdigest()
+            if expected and actual != expected:
+                raise Error(f"verification checksum mismatch: {path}")
+            old_refs = 0
+            if path.endswith(".mca"):
+                transformed, stats = migration.transform_region(current)
+                old_refs = int(stats.get("int_array", 0)) + int(stats.get("string", 0))
+                if transformed != current or old_refs:
+                    raise Error(f"verification found remaining offline UUID refs in {path}: {old_refs}")
+            checked.append({"path": path, "sha256_ok": True, "remaining_old_uuid_refs": old_refs})
+        cache = json.loads(verifier.read_file_optional("usercache.json").decode("utf-8"))
+        typo_left = [
+            e for e in cache
+            if isinstance(e, dict) and (
+                str(e.get("name") or "").lower() == migration.TYPO_NAME.lower()
+                or migration.normalize_uuid_string(str(e.get("uuid") or "")) == str(uuid.UUID(migration.TYPO_UUID))
+            )
+        ]
+        if typo_left:
+            raise Error("verification found penguin531 still present in usercache.json")
+        print(json.dumps({
+            "server_status": int(server.get("status", -1)),
+            "server_status_name": STATUS.get(int(server.get("status", -1)), "UNKNOWN"),
+            "manifest": manifest_name,
+            "files_verified": len(checked),
+            "penguin531_entries": 0,
+            "checked": checked,
+        }, ensure_ascii=False, indent=2))
     else: raise Error(f"unsupported operation: {op}")
 
 if __name__ == "__main__":

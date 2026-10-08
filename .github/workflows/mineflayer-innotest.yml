@@ -50,21 +50,32 @@ jobs:
           from pathlib import Path
           if os.environ["EVENT_NAME"] == "workflow_dispatch":
               duration = int(os.environ["INPUT_DURATION_MS"])
+              names = "SunnyChen,penguin0531,geena0701,Felicitypeng"
           else:
               req = json.loads(Path("ops/mineflayer-request.json").read_text())
-              if req.get("operation") != "test-4-bots":
+              op = req.get("operation")
+              if op == "test-4-bots":
+                  names = "SunnyChen,penguin0531,geena0701,Felicitypeng"
+              elif op == "probe-one":
+                  player = str(req.get("player") or "")
+                  allowed = {"SunnyChen", "penguin0531", "geena0701", "Felicitypeng"}
+                  if player not in allowed:
+                      raise SystemExit("unsupported probe player")
+                  names = player
+              else:
                   raise SystemExit("unsupported mineflayer request")
               duration = int(req.get("duration_ms", 180000))
           if not 30000 <= duration <= 300000:
               raise SystemExit("duration_ms must be 30000..300000")
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
               f.write(f"duration_ms={duration}\n")
+              f.write(f"names={names}\n")
           PY
 
       - name: Keep four test bots online
         shell: bash
         env:
           MF26_HOST: innotest.exaroton.me
-          MF26_BOTS: SunnyChen,penguin0531,geena0701,Felicitypeng
+          MF26_BOTS: ${{ steps.request.outputs.names }}
           MF26_DURATION_MS: ${{ steps.request.outputs.duration_ms }}
         run: node scripts/mineflayer26/keepalive.js

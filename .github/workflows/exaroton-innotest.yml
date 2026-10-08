@@ -74,7 +74,7 @@ jobs:
               json.dump(request, handle, ensure_ascii=False)
           PY
 
-      - name: Install NBT parser\n        run: python3 -m pip install "nbtlib==1.12.1"\n\n      - name: Run safe exaroton control
+      - name: Run safe exaroton control
         shell: bash
         env:
           EXAROTON_API_TOKEN: ${{ secrets.EXAROTON_API_TOKEN }}
@@ -85,4 +85,6 @@ jobs:
           else
             request=ops/exaroton-request.json
           fi
+          python3 -m pip install --quiet "nbtlib==1.12.1"
+          python3 -c "import nbtlib; print('nbtlib import ok')"
           python3 scripts/exaroton_innotest.py "$request"
