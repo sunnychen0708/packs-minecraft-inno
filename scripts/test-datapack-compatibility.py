@@ -8,6 +8,8 @@ from pathlib import Path
 import re
 import subprocess
 import threading
+
+from minecraft_ci_server import wait_for_server_ready
 import time
 import uuid
 import zipfile
@@ -283,7 +285,7 @@ def runtime_compatibility(java: Path, server: Path) -> None:
     thread = threading.Thread(target=reader, daemon=True)
     thread.start()
     try:
-        assert ready.wait(90), "Combined server did not become ready"
+        wait_for_server_ready(ready, proc, output, work, label="Combined datapacks runtime")
         assert proc.stdin is not None
         proc.stdin.write("reload\n")
         proc.stdin.flush()

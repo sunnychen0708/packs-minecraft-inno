@@ -63,3 +63,6 @@ execute if data storage warehouse:chests c66{registered:1b} if data storage ware
 execute if data storage warehouse:chests c67{registered:1b} if data storage warehouse:chests c67.dimension if data storage warehouse:chests c67.b_z run function warehouse:chunks/hold with storage warehouse:chests c67
 execute if data storage warehouse:chests c68{registered:1b} if data storage warehouse:chests c68.dimension if data storage warehouse:chests c68.b_z run function warehouse:chunks/hold with storage warehouse:chests c68
 execute if data storage warehouse:chests c69{registered:1b} if data storage warehouse:chests c69.dimension if data storage warehouse:chests c69.b_z run function warehouse:chunks/hold with storage warehouse:chests c69
+
+# Additional independent single-chest bag locations
+function warehouse:bag/chunks/ensure

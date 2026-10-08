@@ -1,3 +1,4 @@
+tag @s remove wh_bag_reg_pending
 scoreboard players set @s wh_target 0
 scoreboard players set @s wh_back 17
 scoreboard players set @s wh_register 0

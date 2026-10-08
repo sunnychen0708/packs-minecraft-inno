@@ -1,0 +1,10 @@
+execute if data storage warehouse:bags slots.p01.a{registered:1b} run function warehouse:bag/chunks/hold with storage warehouse:bags slots.p01.a
+execute if data storage warehouse:bags slots.p01.b{registered:1b} run function warehouse:bag/chunks/hold with storage warehouse:bags slots.p01.b
+execute if data storage warehouse:bags slots.p02.a{registered:1b} run function warehouse:bag/chunks/hold with storage warehouse:bags slots.p02.a
+execute if data storage warehouse:bags slots.p02.b{registered:1b} run function warehouse:bag/chunks/hold with storage warehouse:bags slots.p02.b
+execute if data storage warehouse:bags slots.p03.a{registered:1b} run function warehouse:bag/chunks/hold with storage warehouse:bags slots.p03.a
+execute if data storage warehouse:bags slots.p03.b{registered:1b} run function warehouse:bag/chunks/hold with storage warehouse:bags slots.p03.b
+execute if data storage warehouse:bags slots.p04.a{registered:1b} run function warehouse:bag/chunks/hold with storage warehouse:bags slots.p04.a
+execute if data storage warehouse:bags slots.p04.b{registered:1b} run function warehouse:bag/chunks/hold with storage warehouse:bags slots.p04.b
+execute if data storage warehouse:bags slots.p05.a{registered:1b} run function warehouse:bag/chunks/hold with storage warehouse:bags slots.p05.a
+execute if data storage warehouse:bags slots.p05.b{registered:1b} run function warehouse:bag/chunks/hold with storage warehouse:bags slots.p05.b

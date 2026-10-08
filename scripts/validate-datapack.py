@@ -19,6 +19,8 @@ import re
 import subprocess
 import tempfile
 import threading
+
+from minecraft_ci_server import wait_for_server_ready
 import time
 import zipfile
 from pathlib import Path
@@ -284,7 +286,16 @@ def check_triggers(functions: dict[str, Path]):
 def check_all_json(pack: Path):
     count = 0
     for path in pack.rglob("*.json"):
-        read_json(path)
+        data = read_json(path)
+        # Minecraft 26.3 fails registry loading when a multi_action Dialog
+        # has an empty actions list, even if exit_action is present.
+        if "/dialog/" in path.as_posix() and isinstance(data, dict):
+            if data.get("type") in ("minecraft:multi_action", "multi_action"):
+                actions = data.get("actions")
+                if not isinstance(actions, list) or not actions:
+                    raise ValidationError(
+                        f"multi_action Dialog must have at least one action: {path.relative_to(ROOT)}"
+                    )
         count += 1
     return count
 
@@ -407,8 +418,7 @@ def server_smoke(pack: Path, java: Path, server_jar: Path):
     thread.start()
 
     try:
-        if not ready.wait(90):
-            raise ValidationError("Vanilla server did not become ready within 90 seconds")
+        wait_for_server_ready(ready, proc, output, evidence, label=f"Vanilla {pack.name} smoke")
         assert proc.stdin is not None
         proc.stdin.write("reload\n")
         proc.stdin.flush()

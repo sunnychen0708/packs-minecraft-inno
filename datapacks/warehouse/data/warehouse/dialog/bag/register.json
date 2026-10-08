@@ -1,0 +1,134 @@
+{
+  "type": "minecraft:multi_action",
+  "title": {
+    "text": "背包箱註冊／換箱"
+  },
+  "external_title": {
+    "text": "背包箱註冊／換箱"
+  },
+  "body": [
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "選 01–05 的 A 或 B，再對準獨立小箱右鍵。更換註冊只改座標，完全不碰背包或箱內物品；01–04 只允許各自玩家。05 由 SunnyChen 管理。"
+      },
+      "width": 390
+    }
+  ],
+  "pause": false,
+  "can_close_with_escape": true,
+  "after_action": "close",
+  "columns": 2,
+  "actions": [
+    {
+      "label": {
+        "text": "01-A"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_bag_reg set 1"
+      }
+    },
+    {
+      "label": {
+        "text": "01-B"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_bag_reg set 2"
+      }
+    },
+    {
+      "label": {
+        "text": "02-A"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_bag_reg set 3"
+      }
+    },
+    {
+      "label": {
+        "text": "02-B"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_bag_reg set 4"
+      }
+    },
+    {
+      "label": {
+        "text": "03-A"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_bag_reg set 5"
+      }
+    },
+    {
+      "label": {
+        "text": "03-B"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_bag_reg set 6"
+      }
+    },
+    {
+      "label": {
+        "text": "04-A"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_bag_reg set 7"
+      }
+    },
+    {
+      "label": {
+        "text": "04-B"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_bag_reg set 8"
+      }
+    },
+    {
+      "label": {
+        "text": "05-A"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_bag_reg set 9"
+      }
+    },
+    {
+      "label": {
+        "text": "05-B"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_bag_reg set 10"
+      }
+    }
+  ],
+  "exit_action": {
+    "label": {
+      "text": "返回背包箱管理"
+    },
+    "width": 200,
+    "action": {
+      "type": "show_dialog",
+      "dialog": "warehouse:bag/manage"
+    }
+  }
+}

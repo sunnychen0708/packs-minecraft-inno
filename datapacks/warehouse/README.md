@@ -24,6 +24,14 @@ Minecraft Java 26.3 自動分類倉庫 Datapack。最新 [warehouse-v4.7.zip](ht
 
 倉庫 chunk 自 v4.6 起會依註冊維持 forceload，背景 sorting、查詢、Pick 與 API 不必玩家在場；**如果整個 server 因無玩家而暫停 tick，背景整理仍不會進行**。只支援原版三維度，未正式支援自訂維度。
 
+## 背包交換（開發中，已完成核心 innotest 實機回歸）
+
+- 個人 `/trigger bag`：交換玩家主背包的 27 格與目前綁定的 01–04 A 小箱；01–04 B 小箱作為必須為空的交換緩衝。
+- 共用 `/trigger sbag`：與 05-A 共用背包切換，05-B 暫存進入前的個人背包；同時只允許一人使用。
+- **G → 箱子管理 → 背包箱**：分別註冊、換綁或取消 A/B 小箱。換綁不改變任何物品。01–04 指定四位玩家，05 由 SunnyChen 管理。
+- 兩箱皆為獨立小箱，可在不同區塊／維度；快捷列、裝備、副手不交換；06–09 暫不使用。
+- **核心實機測試已 PASS**：[innotest Run 37787701641](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37787701641) 驗證 27 格 Item Components、跨三維度交換、共用背包競爭／離線及防覆寫；[Run 37799688068](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37799688068) 驗證 02–04 玩家 A/B 註冊與權限 42/42 PASS；[Run 37803796428](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37803796428) 驗證 01 與 05 註冊與管理權限 31/31 PASS（含共用使用中禁止改綁及取消），合計 01–05 全部已跑過玩家 Trigger 與實際右鍵箱子。**尚未驗證人手按 G 與點選 Dialog 按鈕、各玩家完整物品排列與既有 Warehouse 所有功能的 live 回歸；PR 仍為 Draft，不代表已發布或可部署正式服。** 一鍵卸貨尚未納入。
+
 ## 舊資料／版本
 
 - 可以從 26.2 v3.2、26.3 v3.3/v3.4、Warehouse v4.0–v4.6 升級，玩家自訂分類優先於預設規則；索引是可重建資料。

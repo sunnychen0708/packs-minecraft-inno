@@ -272,6 +272,39 @@ def main() -> None:
         assert [a["label"]["text"] for a in acts] == [f"區域 {i}" for i in range(1, 7)] + ["入口箱"], f
     assert "wh_nav matches 1 run dialog show @s warehouse:main" in nav
 
+    # Issue #72: G management page must actually expose the 01–05 bag
+    # dialogs; all button actions must map to the right trigger value.
+    dialog_dir = PACK / "data/warehouse/dialog"
+    manage = json.loads((dialog_dir / "manage.json").read_text(encoding="utf-8"))
+    assert any(
+        a.get("label", {}).get("text") == "背包箱 (01–05)"
+        and a.get("action") == {"type": "show_dialog", "dialog": "warehouse:bag/manage"}
+        for a in manage["actions"]
+    ), "G box management must expose the bag menu"
+    bag_manage = json.loads((dialog_dir / "bag/manage.json").read_text(encoding="utf-8"))
+    destinations = [a["action"].get("dialog") for a in bag_manage["actions"]]
+    assert destinations == ["warehouse:bag/register", "warehouse:bag/unregister", "warehouse:bag/help"]
+    for dialog_name, objective in (("register", "wh_bag_reg"), ("unregister", "wh_bag_unreg")):
+        dialog = json.loads((dialog_dir / f"bag/{dialog_name}.json").read_text(encoding="utf-8"))
+        assert [a["label"]["text"] for a in dialog["actions"]] == [
+            f"{i:02d}-{side}" for i in range(1, 6) for side in ("A", "B")
+        ], f"incorrect {dialog_name} choices"
+        assert [a["action"]["command"] for a in dialog["actions"]] == [
+            f"trigger {objective} set {i}" for i in range(1, 11)
+        ], f"incorrect {dialog_name} trigger mappings"
+    bag_load = (fn / "bag/load.mcfunction").read_text(encoding="utf-8")
+    bag_tick = (fn / "bag/tick.mcfunction").read_text(encoding="utf-8")
+    for trigger in ("bag", "sbag", "wh_bag_reg", "wh_bag_unreg"):
+        assert f"scoreboard objectives add {trigger} trigger" in bag_load
+        assert f"scoreboard players enable @a {trigger}" in bag_tick
+    right_click = (fn / "register/on_use.mcfunction").read_text(encoding="utf-8")
+    assert "warehouse:bag/register/on_use" in right_click, "physical chest use must invoke bag raycast"
+    assert "advancement revoke @s only warehouse:register_chest" in right_click
+    bag_raycast = (fn / "bag/register/raycast.mcfunction").read_text(encoding="utf-8")
+    assert "#warehouse:storage_chests[type=single]" in bag_raycast
+    assert "warehouse:bag/register/hit" in bag_raycast
+    assert '"actions": []' not in (dialog_dir / "bag/help.json").read_text(encoding="utf-8")
+
     print(f"PASS warehouse regression v{version}: reset/search/API/Highlight/Pick are bounded and validated")
 
 

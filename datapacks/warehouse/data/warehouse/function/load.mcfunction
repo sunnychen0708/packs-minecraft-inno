@@ -33,3 +33,6 @@ execute unless data storage warehouse:meta v46 run function warehouse:migrate_v4
 execute unless data storage warehouse:meta v47 run function warehouse:migrate_v47
 # v4.6: box chunks stay force-loaded; rebuilt on every load from the current registrations.
 function warehouse:chunks/refresh
+
+# Bag feature initialization (kept separate from existing warehouse data)
+function warehouse:bag/load

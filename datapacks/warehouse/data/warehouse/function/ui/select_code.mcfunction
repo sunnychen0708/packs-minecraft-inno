@@ -1,3 +1,4 @@
+tag @s remove wh_bag_reg_pending
 scoreboard players operation @s wh_target = @s wh_register
 scoreboard players operation #bcode wh_tmp = @s wh_register
 scoreboard players set #bbase wh_tmp 10

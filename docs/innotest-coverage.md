@@ -38,6 +38,10 @@
 | 開關／遷移 | system on/off、v4.0–v4.6 舊資料重跑 | PASS |
 | G 主畫面／Dialog | bot 收到主畫面、管理、查詢、分類、說明及返回 | PASS（非真人點擊） |
 | Highlight | 共用 `warehouse:api/highlight` 的 live API 路徑有 PASS；玩家可見粒子位置／訊息未跑 | **部分** |
+| **Issue #72：個人背包 `bag`** | [innotest Run 37774242630](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37774242630) 驗證 02-A/02-B、J→Q→K→J 改綁交換；[完整實測 Run 37787701641](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37787701641) 第 1 組 27 格及 Item Components 逐格比對、來回交換 PASS（92.99 秒）。尚未驗所有玩家、快捷列／裝備／副手的完整逐格回歸。 | **部分 PASS** |
+| **Issue #72：共用背包 `sbag`** | [完整實測 Run 37787701641](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37787701641) 第 3 組兩名 bot 競爭、占用互斥、占用者斷線、他人被拒、重新登入歸還、05-A 遭外部放物品時防覆寫／清空後歸還 PASS（186.08 秒）。尚未驗所有四名玩家的完整排列與真人介面。 | **部分 PASS** |
+| **Issue #72：跨維度／無效箱防護** | [完整實測 Run 37787701641](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37787701641) 第 2 組：玩家在主世界、A 在地獄、B 在終界，來回交換與資料比對、B 非空拒絕、A 無效座標拒絕 PASS（154.44 秒）。其他玩家維度組合尚未逐一驗證。 | **部分 PASS** |
+| **Issue #72：G → 背包箱註冊** | [Run 37799688068](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37799688068)：02–04 三名玩家各 14/14 PASS（42/42）；[Run 37803796428](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37803796428)：01 與 05 使用 SunnyChen 身分實機右鍵及 Trigger 分別 14/14、17/17 PASS，合計 31/31（30.6、30.9 秒），包含 A/B、B 非空拒絕、改綁不搬物品、其他玩家越權拒絕、取消註冊，以及共用背包使用中禁止重新註冊與取消 05。五組均完成測試資料／原 ZIP 還原和 bot 斷線確認；innotest 保持開機。**01–05 註冊權限及 Minecraft 原版右鍵流程已驗證；真人按 G 鍵、實際點選 Dialog 按鈕尚未驗證（已驗證 wh_nav 的 show_dialog 封包及按鈕指令映射）。** | **部分 PASS** |
 
 ## Copy/Paste v1.8
 
