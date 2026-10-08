@@ -6,12 +6,12 @@
 
 | Pack | Source | Latest release |
 | --- | --- | --- |
-| Utilities | v3.7 | `utilities-v3.7` |
-| Warehouse | v4.5 | `warehouse-v4.5` |
-| Copy/Paste | v1.6 | `copy-paste-v1.6` |
+| Utilities | v3.8 | `utilities-v3.7` |
+| Warehouse | v4.6 | `warehouse-v4.5` |
+| Copy/Paste | v1.7 | `copy-paste-v1.6` |
 | cat-door-sounds | v1.0 | `cat-door-sounds-v1.0` |
 
-- 所有原始碼版本都已發布。
+- Utilities v3.8（傳送落點置中修正）與 Warehouse v4.6（倉庫區塊常駐載入、查詢讀取未載入箱子的庫存）只有原始碼，尚未發布；其他原始碼版本都已發布。
 - 發布：`.github/workflows/release-pack.yml` 會驗證、打包、建 Release。兩種觸發方式：在 `main` 推 `<pack>-v<版本>` tag；或手動執行這個 workflow（`workflow_dispatch`，ref 選 `main`，輸入 `tag` 例如 `utilities-v3.7`），全部 gate 通過後由 workflow 在該 `main` commit 建 annotated tag 再建 Release。雲端 session 不能推 tag，要用手動執行。**發布前要先問使用者。**
 - 2026-10-06 曾改寫 `main` 的最後一段歷史，拿掉 AI 工具署名並刪除舊分支。改寫前完整備份在使用者電腦 `C:\Users\sunny\repo-backups\packs-minecraft-inno-before-rewrite-20261006.git`。
 - **最新 CI 狀態**：Utilities、Warehouse、Copy/Paste 專用 26.3 runtime 與三包 together compatibility 都通過。
@@ -46,8 +46,8 @@
 ### `inno.exaroton.me`
 
 - Production 世界。
-- 一般 exaroton 操作**不要自動啟動 `inno`**；正常檢查應保持 read-only。
-- 使用者已明確允許 repo 內的 **offline UUID maintenance** 寫入入口；這是 production write 的特例，不代表可以任意改 production。
+- **任何寫入 inno 都要使用者明確下指令**（裝 datapack、改檔、執行指令、開關機、UUID maintenance apply），每次都要；讀取不用問（見 `AGENTS.md`）。
+- repo 內的 **offline UUID maintenance** 是寫入 inno 的入口，同樣要使用者明確下指令才能 apply；dry-run 只讀取。
 - 特例 workflow：`.github/workflows/exaroton-inno-maintenance.yml` + `scripts/exaroton_inno_uuid_migrate.py`。
 - Production maintenance 必須要求 `inno` 已經 OFFLINE，而且 maintenance 自己**不得啟動** production server。先 dry-run，再 apply。\n- Production offline/online stats 現在採 **sum-per-counter** 真正累加；`uuid-migration-stats-sum-state.json` 防止重跑時把同一份 offline 歷史再加一次。若偵測到舊 max-per-counter migration backup，會用 backup 還原 baseline，再保留之後新增的 online progress。
 - Secret 只存在 GitHub Actions `EXAROTON_API_TOKEN`，不要寫進 repo、request JSON 或 log。
@@ -78,7 +78,7 @@ ops/inno-maintenance-request.json
 - 修正後四 bot 已完整 hold 5 分鐘並成功結束 workflow；可穩定提供 4/10 真實玩家實體給 datapack 多人 regression。
 - 這套 client 適合 presence、trigger/state、多玩家 server-side regression；**不要假設目前已能當完整走路/操作世界的通用 client**。
 
-## 5. Copy/Paste v1.6 重要設計
+## 5. Copy/Paste v1.7 重要設計
 
 - **介面**：玩家按 G →「建築工具」（`/trigger copypaste` 仍可，但玩家提示統一叫按 G）。主畫面 `ui/show`、調整預覽 `ui/adjust`、更多 `ui/more`、直接改原本建築 `ui/edit`。聊天教學 `/trigger cphelp` 是步驟式。
 - **Anchor**：預設 pos1；自訂 anchor 不限制必須在選區內，否則無法做大半徑旋轉。
@@ -94,6 +94,7 @@ ops/inno-maintenance-request.json
 - 箱子詳細頁返回原本清單頁，依 `wh_back` / `ui/back_from_code` 邏輯返回。
 - 頁面寬度維持 ≤ 390；三欄按鈕 120 寬。
 - Warehouse 是 Copy/Paste 與 Pick 共用的 shared storage backend。
+- v4.6 起已註冊箱子的 chunk 常駐 forceload（`warehouse:chunks/ensure|refresh|release`，自己加的記在 `warehouse:forceload chunks`，別人加的不碰；每 10 秒補回）。Copy/Paste 的 `place_buffer` 會無條件 `forceload remove` 施工區，所以靠定期補回。移除 Warehouse 前先 `/function warehouse:chunks/release`。
 - 玩家可能自訂分類；任何測試都不能假定物品一定在預設箱位。
 
 ## 7. Minecraft 26.3 的坑
@@ -163,6 +164,8 @@ Copy/Paste runtime 失敗時會印 `MCCST_DIAG_DROP_<步驟>` / `MCCST_DIAG_DIFF
 - Blueprint rotate/mirror 設定會跨 Copy 保留，測試前先 `bpreset`。
 
 ## 10. MCC-Test 本機測試世界
+
+> 測試一律直接在 innotest 跑（見 `AGENTS.md`）。MCC-Test 只有使用者明確要求時才用。
 
 - 只改 `%APPDATA%\.minecraft\saves\MCC-Test`，不要碰使用者其他世界；改 datapack 前先備份。
 - 世界開著時 datapack ZIP 可能被鎖，不能刪 / 改名；要換檔名先退出世界。

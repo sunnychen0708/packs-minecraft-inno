@@ -13,6 +13,13 @@ on:
         required: true
         default: "180000"
         type: string
+      player_mode:
+        description: Reserve SunnyChen for the real client, or connect all four bots
+        type: choice
+        default: four-bots
+        options:
+          - four-bots
+          - three-bots-with-real-client
 
 permissions:
   contents: read
@@ -34,6 +41,7 @@ jobs:
         shell: bash
         env:
           INPUT_DURATION_MS: ${{ inputs.duration_ms }}
+          INPUT_PLAYER_MODE: ${{ inputs.player_mode }}
           EVENT_NAME: ${{ github.event_name }}
         run: |
           python3 - <<'PY'
@@ -47,6 +55,8 @@ jobs:
           if os.environ["EVENT_NAME"] == "workflow_dispatch":
               duration = int(os.environ["INPUT_DURATION_MS"])
               names = "SunnyChen,penguin0531,geena0701,Felicitypeng"
+              if os.environ["INPUT_PLAYER_MODE"] == "three-bots-with-real-client":
+                  names = "penguin0531,geena0701,Felicitypeng"
           else:
               req = json.loads(Path("ops/mineflayer-request.json").read_text())
               op = req.get("operation")

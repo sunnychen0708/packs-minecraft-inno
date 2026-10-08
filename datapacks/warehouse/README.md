@@ -1,4 +1,4 @@
-# Warehouse v4.5
+# Warehouse v4.6
 
 Minecraft Java 26.3 automatic sorting warehouse data pack.
 
@@ -6,7 +6,7 @@ The actual pack source lives directly in this directory. Keep `pack.mcmeta` and 
 
 ## Release
 
-Current version: `v4.5`
+Current version: `v4.6`（尚未發布）
 
 Latest published release: `warehouse-v4.5.zip`
 
@@ -20,6 +20,8 @@ Latest published release: `warehouse-v4.5.zip`
 2. 將 warehouse-v4.5.zip 放入世界 datapacks 資料夾。
 3. 退出世界再重新進入（Dialog 介面只在進入世界時載入，只打 /reload 不會更新介面）。
 4. 既有 61 箱註冊、玩家分類覆寫、自訂箱名、scoreboard 與其他世界資料會沿用；migration 不會重設這些資料。
+
+移除 Warehouse 前先執行 `/function warehouse:chunks/release`，釋放 Warehouse 自己加的倉庫 chunk forceload（不會動到別人加的）。
 
 ### 查詢／分類設定
 
@@ -49,7 +51,7 @@ Latest published release: `warehouse-v4.5.zip`
 - 不重設 warehouse:boxnames：玩家自訂箱名保留。
 - 不重設 warehouse:rules overrides：玩家新增／移動／移除的分類覆寫保留。
 - 不更名既有 scoreboard objectives；既有玩家與系統分數可繼續使用。
-- v4.0～v4.5 migrations 都以可再生成資料或版本 marker 為主；目前 v4.5 marker 不會清空既有世界資料。
+- v4.0～v4.6 migrations 都以可再生成資料或版本 marker 為主；目前 v4.6 marker 不會清空既有世界資料。
 - 搜尋索引屬可重建資料；v4.2 起使用 72-shard 建立流程。
 
 ### 目前限制
@@ -57,7 +59,8 @@ Latest published release: `warehouse-v4.5.zip`
 - 尚未提供「依箱子瀏覽全部分類規則」與「一鍵清空該箱全部分類」。
 - 尚未提供入口箱「未分類物品清單 → 直接批次設定」頁面。
 - 尚未提供完整的滿箱／溢位滿／箱子失效通知中心與快速重新註冊提示。
-- 一般背景整理本身不會永久自動管理所有倉庫 chunk 的 forceload；共用 API 呼叫只會暫時處理它需要的來源 chunk。
+- v4.6 起，已註冊箱子所在的 chunk 會一直保持 forceload（inno 的 61 箱只占 3 個 chunk），所以就算沒有人在倉庫附近，背景整理、查詢、Pick 與共用材料 API 都照常運作。只在註冊、刪除註冊、重設註冊與載入時重建，另外每 10 秒補回被其他 datapack 拿掉的 forceload；原本就由別人 forceload 的 chunk 不會被記錄或移除。
+- 伺服器在沒有任何玩家時若設定 `pause-when-empty-seconds` 會暫停整個世界，這段時間背景整理也不會跑。
 - 尚未正式支援自訂維度。
 - 查看倉庫遇到名稱表之外的新物品時，可能顯示 Minecraft ID。
 - 純 Vanilla Datapack 無法提供伺服器硬崩潰瞬間的資料庫級 transaction 保證。
