@@ -6,6 +6,7 @@ import io
 import json
 import os
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -101,6 +102,21 @@ class APIClient:
         sid = urllib.parse.quote(str(server["id"]), safe="")
         self.req("PUT", f"/servers/{sid}/files/data/{remote_path(path)}/", raw=content)
 
+    def file_info(self, path):
+        server = self.target()
+        sid = urllib.parse.quote(str(server["id"]), safe="")
+        return self.req("GET", f"/servers/{sid}/files/info/{remote_path(path)}/")
+
+    def get_config(self, path):
+        server = self.target()
+        sid = urllib.parse.quote(str(server["id"]), safe="")
+        return self.req("GET", f"/servers/{sid}/files/config/{remote_path(path)}/")
+
+    def update_config(self, path, values):
+        server = self.target(); server = self.verify(server["id"])
+        sid = urllib.parse.quote(str(server["id"]), safe="")
+        return self.req("POST", f"/servers/{sid}/files/config/{remote_path(path)}/", obj=values)
+
 def pack_zip(name):
     if name not in PACKS: raise Error(f"unsupported datapack: {name}")
     base = ROOT / "datapacks" / name
@@ -135,6 +151,35 @@ def deploy(client, which):
     else:
         print("server offline/not-online: not started, no reload issued")
 
+def wait_status(client, wanted, timeout=180):
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        server = client.target()
+        if int(server.get("status", -1)) == wanted:
+            return server
+        time.sleep(3)
+    raise Error(f"timeout waiting for status {STATUS.get(wanted, wanted)}")
+
+def set_offline_mode(client):
+    current = client.target()
+    status = int(current.get("status", -1))
+    restart_after = status != 0
+    if status != 0:
+        if status != 1:
+            raise Error(f"refusing config change while server is {STATUS.get(status, status)}; retry when stable")
+        client.action("stop")
+        print("stopping innotest before changing online-mode")
+        wait_status(client, 0)
+
+    client.update_config("server.properties", {"online-mode": False})
+    print("online-mode=false written to innotest server.properties")
+
+    if restart_after:
+        client.action("start")
+        print("innotest start requested after config change")
+    else:
+        print("innotest was already offline; left it offline")
+
 def run(path):
     try: r = json.loads(Path(path).read_text(encoding="utf-8"))
     except Exception as e: raise Error(f"invalid request file: {path}") from e
@@ -152,6 +197,34 @@ def run(path):
     elif op in {"start", "stop", "restart"}: client.action(op); print(f"{op} requested for {TARGET}")
     elif op == "command": client.command(str(r.get("command") or "")); print(f"command sent to {TARGET}")
     elif op == "deploy-datapack": deploy(client, str(r.get("pack") or ""))
+    elif op == "set-online-mode-false": set_offline_mode(client)
+    elif op == "online-mode-status":
+        options = client.get_config("server.properties")
+        online = next((item.get("value") for item in options if isinstance(item, dict) and item.get("key") == "online-mode"), None)
+        server = client.target()
+        code = int(server.get("status", -1))
+        print(json.dumps({"online-mode": online, "server_status": STATUS.get(code, "UNKNOWN")}, ensure_ascii=False))
+    elif op == "whitelist-status":
+        entries = json.loads(client.read_file("whitelist.json").decode("utf-8"))
+        print(json.dumps([{"name":e.get("name"),"uuid":e.get("uuid")} for e in entries], ensure_ascii=False, indent=2))
+    elif op == "identity-status":
+        wl = json.loads(client.read_file("whitelist.json").decode("utf-8"))
+        names = {str(e.get("name") or "").lower() for e in wl}
+        try:
+            cache = json.loads(client.read_file("usercache.json").decode("utf-8"))
+        except Error:
+            cache = []
+        try:
+            ops = json.loads(client.read_file("ops.json").decode("utf-8"))
+        except Error:
+            ops = []
+        result = {
+            "whitelist": wl,
+            "usercache_matches": [e for e in cache if str(e.get("name") or "").lower() in names],
+            "ops_matches": [e for e in ops if str(e.get("name") or "").lower() in names],
+            "world": level_name(client.read_file("server.properties")),
+        }
+        print(json.dumps(result, ensure_ascii=False, indent=2))
     else: raise Error(f"unsupported operation: {op}")
 
 if __name__ == "__main__":

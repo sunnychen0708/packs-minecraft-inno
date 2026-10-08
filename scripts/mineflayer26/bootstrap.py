@@ -88,6 +88,71 @@ def prepare_node_minecraft_data(path: Path, cfg: dict) -> None:
     run(["git", "checkout", "--detach", "--force", "FETCH_HEAD"], cwd=data_dir)
 
 
+def apply_minecraft_data_component_fix(path: Path) -> None:
+    """Fill 26.3 SlotComponent wire schemas that are still absent from the pinned upstream PR."""
+    protocol_file = path / "data" / "pc" / "26.3" / "protocol.json"
+    protocol = json.loads(protocol_file.read_text(encoding="utf-8"))
+    fields = protocol["types"]["SlotComponent"][1][1]["type"][1]["fields"]
+
+    def either(left: str, right: str) -> list:
+        return [
+            "container",
+            [
+                {"name": "isConstant", "type": "bool"},
+                {
+                    "name": "value",
+                    "type": [
+                        "switch",
+                        {
+                            "compareTo": "isConstant",
+                            "fields": {"true": left, "false": right},
+                        },
+                    ],
+                },
+            ],
+        ]
+
+    resolvable_int = either("i32", "string")
+    resolvable_float = either("f32", "string")
+    expected = {
+        "block_transformer": "varint",
+        "compostable": [
+            "container",
+            [{"name": "layers", "type": resolvable_int}],
+        ],
+        "cooking_fuel": [
+            "container",
+            [
+                {"name": "burnTime", "type": resolvable_int},
+                {"name": "speedMultiplier", "type": resolvable_float},
+            ],
+        ],
+        "brewing_fuel": [
+            "container",
+            [
+                {"name": "uses", "type": resolvable_int},
+                {"name": "speedMultiplier", "type": resolvable_float},
+            ],
+        ],
+        "provides_pottery_pattern": "varint",
+    }
+
+    changed = False
+    for name, schema in expected.items():
+        current = fields.get(name)
+        if current is None:
+            fields[name] = schema
+            changed = True
+        elif current != schema:
+            raise RuntimeError(f"26.3 component schema changed upstream for {name}; re-verify its wire codec")
+
+    missing = [name for name in expected if name not in fields]
+    if missing:
+        raise RuntimeError(f"26.3 component schema patch incomplete: {', '.join(missing)}")
+    if changed:
+        protocol_file.write_text(json.dumps(protocol, indent=2) + "\n", encoding="utf-8")
+
+
 def replace_exact(path: Path, old: str, new: str) -> None:
     text = path.read_text(encoding="utf-8")
     count = text.count(old)
@@ -193,10 +258,16 @@ def main() -> int:
         checkout(dest / name, cfg["repo"], cfg["commit"], force=args.force)
 
     prepare_node_minecraft_data(dest / "node-minecraft-data", stack["node_minecraft_data"])
+    apply_minecraft_data_component_fix(dest / "node-minecraft-data" / "minecraft-data")
     apply_mineflayer_mapper_fix(dest / "mineflayer")
 
     local_md = "file:../node-minecraft-data"
     patch_package(dest / "node-minecraft-protocol", deps={"minecraft-data": local_md})
+    patch_package(
+        dest / "prismarine-chunk",
+        deps={"minecraft-data": local_md},
+        overrides={"minecraft-data": "$minecraft-data"},
+    )
     patch_package(dest / "prismarine-physics", deps={"minecraft-data": local_md})
     patch_package(
         dest / "mineflayer",
