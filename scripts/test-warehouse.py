@@ -68,7 +68,7 @@ def main() -> None:
 
     api_refresh = (PACK / "data/warehouse/function/api/material_sources/refresh.mcfunction").read_text(encoding="utf-8")
     api_append = (PACK / "data/warehouse/function/api/material_sources/append.mcfunction").read_text(encoding="utf-8")
-    exported_codes = re.findall(r'append \\{code:"(\\d{2})"\\}', api_refresh)
+    exported_codes = re.findall(r'append \{code:"(\d{2})"\}', api_refresh)
     assert exported_codes == CODES, "material source API must enumerate the canonical 61 Warehouse slots"
     assert "material_source_limit:64" in api_refresh
     assert "matches ..63" in api_refresh
@@ -79,16 +79,29 @@ def main() -> None:
     api_count = (PACK / "data/warehouse/function/api/count_item.mcfunction").read_text(encoding="utf-8")
     api_count_source = (PACK / "data/warehouse/function/api/internal/count_source.mcfunction").read_text(encoding="utf-8")
     api_count_loop = (PACK / "data/warehouse/function/api/internal/count_inv_loop.mcfunction").read_text(encoding="utf-8")
+    api_count_stack = (PACK / "data/warehouse/function/api/internal/count_stack.mcfunction").read_text(encoding="utf-8")
+    api_take = (PACK / "data/warehouse/function/api/take_item.mcfunction").read_text(encoding="utf-8")
+    api_take_stack = (PACK / "data/warehouse/function/api/internal/take_stack.mcfunction").read_text(encoding="utf-8")
+    api_refund = (PACK / "data/warehouse/function/api/refund_item.mcfunction").read_text(encoding="utf-8")
+    api_refund_entry = (PACK / "data/warehouse/function/api/internal/refund_entry.mcfunction").read_text(encoding="utf-8")
     assert "function warehouse:api/material_sources/refresh" in api_count
     assert "source_limit:64" in api_count
     assert "forceload query" in api_count_source
     assert "forceload add" in api_count_source
     assert "forceload remove" in api_count_source
-    assert 'id:"$(item_id)"' in api_count_loop
+    assert 'id:"$(item_id)",components:{}' in api_count_stack
     assert "result.available" in api_count
     assert "result.stale_sources" in api_count
+    assert "function warehouse:api/material_sources/refresh" in api_take
+    assert "insufficient_stock" in api_take
+    assert 'components:{}' in api_take_stack
+    assert "container.$(api_slot)" in api_take_stack
+    assert "warehouse:chests c00" in api_refund
+    assert "function warehouse:sort/transport/main" in api_refund_entry
+    assert "probe_max_stack" in api_refund_entry
+    assert "entry_full" in api_refund_entry
 
-    print("PASS warehouse regression: reset is scoped; search-index rebuild is bounded; shared material count API is present")
+    print("PASS warehouse regression: reset/search are bounded; shared count/take/refund API is present and component-safe")
 
 
 if __name__ == "__main__":

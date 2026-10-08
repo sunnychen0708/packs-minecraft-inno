@@ -146,36 +146,66 @@ def integration(java: Path, server: Path) -> None:
         "reregister_keeps_classification_override",
     )
 
-    # Shared Warehouse material API: count across both halves of one registered source.
+    # Shared Warehouse API: count/take/refund plain items across registered sources.
     lines.extend(
         [
-            "setblock 5 70 5 minecraft:chest[facing=north,type=left]",
-            "setblock 6 70 5 minecraft:chest[facing=north,type=right]",
-            'data modify block 5 70 5 Items set value [{Slot:0b,id:"minecraft:stone",count:20},{Slot:1b,id:"minecraft:dirt",count:5}]',
+            "setblock 5 70 5 minecraft:chest",
+            "setblock 6 70 5 minecraft:chest",
+            "setblock 7 70 5 minecraft:chest",
+            "setblock 8 70 5 minecraft:chest",
+            "setblock 9 70 5 minecraft:chest",
+            "setblock 10 70 5 minecraft:chest",
+            'data modify block 5 70 5 Items set value [{Slot:0b,id:"minecraft:stone",count:20},{Slot:1b,id:"minecraft:stone",count:7,components:{"minecraft:custom_data":{warehouse_api_test:1b}}}]',
             'data modify block 6 70 5 Items set value [{Slot:0b,id:"minecraft:stone",count:12}]',
+            'data modify block 7 70 5 Items set value [{Slot:0b,id:"minecraft:stone",count:40}]',
+            "data modify storage warehouse:chests c12.registered set value 1b",
+            "data modify storage warehouse:chests c12.valid set value 1b",
+            'data modify storage warehouse:chests c12.dimension set value "minecraft:overworld"',
+            "data modify storage warehouse:chests c12.a_x set value 7",
+            "data modify storage warehouse:chests c12.a_y set value 70",
+            "data modify storage warehouse:chests c12.a_z set value 5",
+            "data modify storage warehouse:chests c12.b_x set value 8",
+            "data modify storage warehouse:chests c12.b_y set value 70",
+            "data modify storage warehouse:chests c12.b_z set value 5",
+            "data modify storage warehouse:chests c00.registered set value 1b",
+            "data modify storage warehouse:chests c00.valid set value 1b",
+            'data modify storage warehouse:chests c00.dimension set value "minecraft:overworld"',
+            "data modify storage warehouse:chests c00.a_x set value 9",
+            "data modify storage warehouse:chests c00.a_y set value 70",
+            "data modify storage warehouse:chests c00.a_z set value 5",
+            "data modify storage warehouse:chests c00.b_x set value 10",
+            "data modify storage warehouse:chests c00.b_y set value 70",
+            "data modify storage warehouse:chests c00.b_z set value 5",
             f'execute as {actor} run function warehouse:api/count_item {{item_id:"minecraft:stone"}}',
         ]
     )
-    check(
-        'if data storage warehouse:api result{ok:1b,complete:1b,item_id:"minecraft:stone",available:32,sources_scanned:1,stale_sources:0,source_limit:64}',
-        "api_count_stone_across_double_chest",
-    )
-    check(
-        'if data storage warehouse:api {material_source_count:1,meta:{material_source_limit:64}}',
-        "api_material_source_snapshot",
-    )
+    check('if data storage warehouse:api result{ok:1b,complete:1b}', "api_count_ok")
+    check('if data storage warehouse:api result{item_id:"minecraft:stone",available:72}', "api_count_plain_72")
+    check('if data storage warehouse:api result{sources_scanned:3,stale_sources:0,source_limit:64}', "api_count_three_sources")
+    check('if data storage warehouse:api {material_source_count:3,meta:{material_source_limit:64}}', "api_material_source_snapshot")
+
+    lines.append(f'execute as {actor} run function warehouse:api/take_item {{item_id:"minecraft:stone",count:50}}')
+    check('if data storage warehouse:api result{operation:"take_item",ok:1b,complete:1b,requested:50,taken:50,remaining:0,stale_sources:0}', "api_take_exact_amount")
+    check('if data block 5 70 5 Items[{Slot:1b,id:"minecraft:stone",count:7,components:{"minecraft:custom_data":{warehouse_api_test:1b}}}]', "api_take_preserves_custom_stack")
+
+    lines.append(f'execute as {actor} run function warehouse:api/count_item {{item_id:"minecraft:stone"}}')
+    check('if data storage warehouse:api result{ok:1b,complete:1b,available:22,stale_sources:0}', "api_count_after_take")
+
+    lines.append(f'execute as {actor} run function warehouse:api/refund_item {{item_id:"minecraft:stone",count:50}}')
+    check('if data storage warehouse:api result{operation:"refund_item",ok:1b,complete:1b,requested:50,inserted:50,remaining:0}', "api_refund_to_entry")
+    check('if data block 9 70 5 Items[{id:"minecraft:stone",count:50}]', "api_refund_materialized_in_entry")
+
+    lines.append(f'execute as {actor} run function warehouse:api/count_item {{item_id:"minecraft:stone"}}')
+    check('if data storage warehouse:api result{ok:1b,complete:1b,available:72,stale_sources:0}', "api_count_after_refund")
 
     # A stale registration must not silently look like a complete inventory total.
     lines.extend(
         [
-            "setblock 6 70 5 air",
+            "setblock 8 70 5 air",
             f'execute as {actor} run function warehouse:api/count_item {{item_id:"minecraft:stone"}}',
         ]
     )
-    check(
-        'if data storage warehouse:api result{ok:0b,complete:0b,available:0,sources_scanned:1,stale_sources:1,source_limit:64}',
-        "api_count_rejects_stale_source",
-    )
+    check('if data storage warehouse:api result{ok:0b,complete:0b,available:50,sources_scanned:3,stale_sources:1,source_limit:64}', "api_count_rejects_stale_source")
 
     lines.extend(
         [

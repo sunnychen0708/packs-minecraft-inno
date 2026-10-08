@@ -1,8 +1,8 @@
 execute unless data storage warehouse:api work.inv[0].id run return 0
-scoreboard players set #api_stack wh_tmp 0
-$execute if data storage warehouse:api work.inv[0]{id:"$(item_id)"} run scoreboard players set #api_stack wh_tmp 1
-$execute if data storage warehouse:api work.inv[0]{id:"$(item_id)",count:1..} store result score #api_stack wh_tmp run data get storage warehouse:api work.inv[0].count
-scoreboard players operation #api_total wh_tmp += #api_stack wh_tmp
+data modify storage warehouse:api work.stack set from storage warehouse:api work.inv[0]
+data modify storage warehouse:api work.stack.item_id set from storage warehouse:api work.inv_ctx.item_id
+execute unless data storage warehouse:api work.stack.components run data modify storage warehouse:api work.stack.components set value {}
+function warehouse:api/internal/count_stack with storage warehouse:api work.stack
 data remove storage warehouse:api work.inv[0]
 execute if data storage warehouse:api work.inv[0].id run return run function warehouse:api/internal/count_inv_loop with storage warehouse:api work.inv_ctx
 return 1
