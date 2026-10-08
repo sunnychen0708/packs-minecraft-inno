@@ -244,6 +244,13 @@ elif CASE == "materials":
     s.check("material Undo returns inventory contribution",
             "score #returned_planks htest matches 26",
             "score #returned_slabs htest matches 12")
+    for i, (item, count) in enumerate(warehouse_items):
+        s.step(f'function warehouse:api/count_item {{item_id:"{item}"}}',
+               f'execute store result score #refund{i} htest run data get storage warehouse:api result.available', delay=1)
+    s.check("Warehouse material Undo refund exact for each item", *[
+        (f"score #refund{i} htest matches {count}",
+         f"Warehouse refund mismatch for {item}, expected {count}")
+        for i, (item, count) in enumerate(warehouse_items)])
     # Set an occupied target for the overlap protection. First Build warns
     # without taking inventory or warehouse stock; confirmation can build.
     s.step(run_dim(dim, f"setblock {T[0]+2} {T[1]} {T[2]+2} stone"))
