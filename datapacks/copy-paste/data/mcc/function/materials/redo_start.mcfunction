@@ -2,6 +2,7 @@ execute if score @s mcc_matphase matches 1.. run tellraw @s [{"text":"[Copy/Past
 execute if score @s mcc_matphase matches 1.. run return fail
 function mcc:materials/ensure_player
 scoreboard players operation @s mcc_txslot = @s mcc_rhead
+data modify storage mcc:temp tx set value {}
 execute store result storage mcc:temp tx.id int 1 run scoreboard players get @s mcc_id
 execute store result storage mcc:temp tx.slot int 1 run scoreboard players get @s mcc_txslot
 function mcc:materials/load_redo_transaction with storage mcc:temp tx

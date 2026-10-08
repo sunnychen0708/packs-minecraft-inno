@@ -1,3 +1,4 @@
+data modify storage mcc:temp tx set value {}
 execute store result storage mcc:temp tx.id int 1 run scoreboard players get @s mcc_id
 execute store result storage mcc:temp tx.src int 1 run scoreboard players get @s mcc_uhead
 execute store result storage mcc:temp tx.dst int 1 run scoreboard players get @s mcc_hnext

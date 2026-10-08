@@ -13,7 +13,7 @@ RE_TRIGGER = re.compile(r'^scoreboard objectives add (\S+) trigger$', re.M)
 USER_TRIGGERS = {
     'copypaste','pos1','pos2','anchor','c','x','v','undo','redo','mode','rotate','mirror',
     'right','left','up','down','forward','backward','flipx','flipz',
-    'rotate90','rotate180','rotate270','previewclear','build'
+    'rotate90','rotate180','rotate270','previewclear','build','materials','bpleft','bpright','bpforward','bpbackward','bpup','bpdown'
 }
 
 def read(p: Path) -> str:
@@ -69,7 +69,7 @@ def check_trigger_lifecycle(pack: Path):
 
 def check_upgrade_and_mode(pack: Path):
     tick=read(pack/'data/mcc/function/tick.mcfunction')
-    for objective,valid in [('mcc_rot','0..3'),('mcc_mir','0..2'),('mcc_usel','0..1'),('mcc_cliptype','0..2'),('mcc_redo','0..1'),('mcc_ucnt','0..5'),('mcc_uhead','0..5'),('mcc_rcnt','0..5'),('mcc_rhead','0..5'),('mcc_bpscan','0..1'),('mcc_bpactive','0..1'),('mcc_bpready','0..1'),('mcc_bpbad','0..1'),('mcc_matphase','0..2'),('mcc_matleft','0..')]:
+    for objective,valid in [('mcc_rot','0..3'),('mcc_mir','0..2'),('mcc_usel','0..1'),('mcc_cliptype','0..2'),('mcc_redo','0..1'),('mcc_ucnt','0..5'),('mcc_uhead','0..5'),('mcc_rcnt','0..5'),('mcc_rhead','0..5'),('mcc_bpscan','0..1'),('mcc_bpactive','0..1'),('mcc_bpready','0..1'),('mcc_bpbad','0..1'),('mcc_matphase','0..2'),('mcc_matleft','0..'),('mcc_bpover','0..'),('mcc_buildconfirm','0..1'),('mcc_bpover_scan','0..1'),('mcc_bpoindex','0..')]:
         migration=f'execute as @a unless score @s {objective} matches {valid} run scoreboard players set @s {objective} 0'
         assert migration in tick, f'missing non-destructive upgrade for {objective}'
         assert tick.index(migration)<tick.index('scores={copypaste='), 'migrate before dispatch'
@@ -304,6 +304,9 @@ def check_v100_semantics(pack: Path):
     assert '.materials.items set from storage mcc:materials p$(id).items' in save_u
     assert '.materials.bom set from storage mcc:materials p$(id).bom' in save_u
     assert 'scoreboard players set @s mcc_umat 0' in load_u
+    assert 'u_p$(id)_s$(slot){mat:1} run scoreboard players set @s mcc_umat 1' in load_u
+    load_r=read(pack/'data/mcc/function/history/load_redo_meta.mcfunction')
+    assert 'r_p$(id)_s$(slot){mat:1} run scoreboard players set @s mcc_rmat 1' in load_r
     undo_hist=read(pack/'data/mcc/function/history/undo.mcfunction')
     redo_hist=read(pack/'data/mcc/function/history/redo.mcfunction')
     redo_apply=read(pack/'data/mcc/function/history/redo_apply.mcfunction')
@@ -391,9 +394,33 @@ def check_v100_semantics(pack: Path):
     take_one=read(pack/'data/mcc/function/materials/warehouse_take_one.mcfunction')
     assert 'warehouse:api/count_item' in count_one
     assert 'warehouse:api/take_item' in take_one
+    assert 'items[{id:"$(id)"}].taken' in take_one
     assert 'mcc:materials/warehouse_count_one' in process_next
     assert 'mcc:materials/warehouse_take_one' in process_next
+    refund_taken=read(pack/'data/mcc/function/materials/refund_taken_one.mcfunction')
+    refund_undo=read(pack/'data/mcc/function/history/refund_undo_materials_one.mcfunction')
+    assert 'warehouse:api/refund_item' in refund_taken
+    assert 'warehouse:api/refund_item' in refund_undo
+    assert 'mcc:temp mat.taken' in refund_taken
+    assert 'mcc:temp txitem.taken' in refund_undo
+    refund_tx_entry=read(pack/'data/mcc/function/history/refund_undo_materials.mcfunction')
+    copy_tx_entry=read(pack/'data/mcc/function/history/copy_undo_materials_to_redo.mcfunction')
+    redo_tx_entry=read(pack/'data/mcc/function/materials/redo_start.mcfunction')
+    for tx_entry in (refund_tx_entry,copy_tx_entry,redo_tx_entry):
+        assert 'data modify storage mcc:temp tx set value {}' in tx_entry
+    assert 'give @s' not in refund_taken and 'give @s' not in refund_undo
     assert 'function mcc:materials/place_buffer' in place
+    assert 'mcc_bpover' in read(pack/'data/mcc/function/blueprint/scan_one.mcfunction')
+    assert 'function mcc:materials/build_warn_overlap' in build
+    assert (pack/'data/mcc/function/materials/check_start.mcfunction').is_file()
+    assert (pack/'data/mcc/function/materials/report_all_start.mcfunction').is_file()
+    assert (pack/'data/mcc/function/blueprint/nudge/run.mcfunction').is_file()
+    assert 'function mcc:blueprint/recount_start' in read(pack/'data/mcc/function/blueprint/nudge/run.mcfunction')
+    assert 'mcc_bpover_scan' in read(pack/'data/mcc/function/tick.mcfunction')
+    assert (pack/'data/mcc/dialog/main.json').is_file()
+    main_dialog=read(pack/'data/mcc/dialog/main.json')
+    assert '"dialog": "warehouse:main"' not in main_dialog
+    assert '"command": "trigger wh_nav set 1"' in main_dialog
     assert 'scoreboard players set @s mcc_histmat 1' in place
     assert (pack/'data/mcc/tags/block/material_unsupported.json').is_file()
     panel=read(pack/'data/mcc/function/panel.mcfunction')

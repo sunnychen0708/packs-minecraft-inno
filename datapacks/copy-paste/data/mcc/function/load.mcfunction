@@ -23,6 +23,13 @@ scoreboard objectives add flipx trigger
 scoreboard objectives add flipz trigger
 scoreboard objectives add previewclear trigger
 scoreboard objectives add build trigger
+scoreboard objectives add materials trigger
+scoreboard objectives add bpleft trigger
+scoreboard objectives add bpright trigger
+scoreboard objectives add bpforward trigger
+scoreboard objectives add bpbackward trigger
+scoreboard objectives add bpup trigger
+scoreboard objectives add bpdown trigger
 scoreboard objectives add mcc_id dummy
 scoreboard objectives add mcc_has1 dummy
 scoreboard objectives add mcc_has2 dummy
@@ -212,6 +219,10 @@ scoreboard objectives add mcc_umat dummy
 scoreboard objectives add mcc_rmat dummy
 scoreboard objectives add mcc_matjob dummy
 scoreboard objectives add mcc_txslot dummy
+scoreboard objectives add mcc_bpover dummy
+scoreboard objectives add mcc_buildconfirm dummy
+scoreboard objectives add mcc_bpover_scan dummy
+scoreboard objectives add mcc_bpoindex dummy
 scoreboard players add #next mcc_id 0
 scoreboard players set #slot mcc_id 256
 scoreboard players set #base mcc_id 20000000

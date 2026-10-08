@@ -10,6 +10,10 @@ execute if score @s mcc_bpbad matches 1.. run tellraw @s [{"text":"[Copy/Paste] 
 execute if score @s mcc_bpbad matches 1.. run return fail
 execute if score @s mcc_matphase matches 1.. run tellraw @s [{"text":"[Copy/Paste] 材料檢查已在進行中。","color":"yellow"}]
 execute if score @s mcc_matphase matches 1.. run return fail
+execute if score @s mcc_bpover_scan matches 1 run tellraw @s [{"text":"[Copy/Paste] Blueprint 覆蓋檢查仍在更新，請稍候。","color":"yellow"}]
+execute if score @s mcc_bpover_scan matches 1 run return fail
+execute if score @s mcc_bpover matches 1.. unless score @s mcc_buildconfirm matches 1 run return run function mcc:materials/build_warn_overlap
+scoreboard players set @s mcc_buildconfirm 0
 function mcc:materials/ensure_player
 function mcc:materials/reset_have_start
 scoreboard players set @s mcc_materr 0
