@@ -54,8 +54,8 @@
 | 35,720 種 block state matcher | 全量 + 4 重複案例 | PASS |
 | Warehouse 混合材料／不足不施工 | 只有 official server runtime；完整 live 尚未跑 | **未驗** |
 | 覆蓋保護、`materials`、5 層完整 Undo／退款 | official server runtime 涵蓋；完整 live 未跑 | **未驗** |
-| 外部 Anchor、Replace／Masked | headless 覆蓋；完整 live 未跑 | **未驗** |
-| 地獄／終界 Copy/Paste | 三維度完整現場流程未跑 | **未驗** |
+| 外部 Anchor、Replace／Masked | 外部 Anchor 真正 3D Rotate／Flip 與各自 Undo 逐格 PASS（[37736165012](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37736165012)）；Replace／Masked 各自剪下貼上 3D 房屋，含原目標方塊／來源空氣處理 PASS（[37736427722](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37736427722)）。**外部 Anchor Blueprint Build** 尚未 live 驗 | **部分** |
+| 地獄／終界 Copy/Paste | 地獄／終界各自 3D 房屋 Copy、完整 Blueprint、Cut／Paste、來源清空與 Undo 還原逐格 PASS（[37736565101](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37736565101)）；跨維度搬運（例如主世界複製、地獄貼上）未另行驗證 | **部分** |
 | G／Dialog／準星真人 UI | v1.7 以前有部分真人歷史證據；v1.8 未重跑、雙真人併發未驗 | **未驗（v1.8 真人）** |
 
 ## Resource Pack
