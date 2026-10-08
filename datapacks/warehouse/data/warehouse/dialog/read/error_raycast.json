@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:notice",
+  "title": {
+    "text": "讀取失敗"
+  },
+  "body": [
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "沒有可靠偵測到你右鍵的箱子，請再試一次。"
+      },
+      "width": 340
+    }
+  ],
+  "pause": false,
+  "after_action": "close",
+  "can_close_with_escape": true,
+  "action": {
+    "label": {
+      "text": "再試一次"
+    },
+    "width": 200,
+    "action": {
+      "type": "run_command",
+      "command": "trigger wh_action set 9"
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "values": [
+    {
+      "id": "minecraft:paper",
+      "required": false
+    },
+    {
+      "id": "minecraft:book",
+      "required": false
+    },
+    {
+      "id": "minecraft:enchanted_book",
+      "required": false
+    },
+    {
+      "id": "minecraft:writable_book",
+      "required": false
+    },
+    {
+      "id": "minecraft:written_book",
+      "required": false
+    },
+    {
+      "id": "minecraft:experience_bottle",
+      "required": false
+    },
+    {
+      "id": "minecraft:bookshelf",
+      "required": false
+    },
+    {
+      "id": "minecraft:chiseled_bookshelf",
+      "required": false
+    },
+    {
+      "id": "minecraft:lectern",
+      "required": false
+    }
+  ]
+}

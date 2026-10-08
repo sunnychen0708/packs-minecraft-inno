@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:notice",
+  "title": {
+    "text": "無法讀取箱子"
+  },
+  "body": [
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "已註冊的位置目前不是可用的 大箱子，或所在區塊尚未載入。物品不會被修改。"
+      },
+      "width": 380
+    }
+  ],
+  "pause": false,
+  "after_action": "close",
+  "can_close_with_escape": true,
+  "exit_action": {
+    "label": {
+      "text": "返回"
+    },
+    "width": 200,
+    "action": {
+      "type": "run_command",
+      "command": "trigger wh_nav set 30"
+    }
+  }
+}

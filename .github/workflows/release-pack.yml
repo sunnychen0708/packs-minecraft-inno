@@ -1,0 +1,52 @@
+name: Release pack
+
+on:
+  push:
+    tags:
+      - "*-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Resolve pack from tag
+        id: pack
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME}"
+          PACK="${TAG%-v*}"
+          VERSION="v${TAG##*-v}"
+
+          if [[ -d "datapacks/$PACK" ]]; then
+            KIND="datapack"
+          elif [[ -d "resourcepacks/$PACK" ]]; then
+            KIND="resource pack"
+          else
+            echo "No datapacks/$PACK or resourcepacks/$PACK directory exists."
+            exit 1
+          fi
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "pack=$PACK" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "kind=$KIND" >> "$GITHUB_OUTPUT"
+
+      - name: Build ZIP
+        shell: bash
+        run: |
+          chmod +x scripts/build-pack.sh
+          scripts/build-pack.sh "${{ steps.pack.outputs.pack }}" "${{ steps.pack.outputs.version }}"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh release create "${{ steps.pack.outputs.tag }}"             "dist/${{ steps.pack.outputs.pack }}-${{ steps.pack.outputs.version }}.zip"             --verify-tag             --title "${{ steps.pack.outputs.pack }} ${{ steps.pack.outputs.version }}"             --generate-notes

@@ -1,0 +1,96 @@
+{
+  "values": [
+    {
+      "id": "minecraft:crimson_stem",
+      "required": false
+    },
+    {
+      "id": "minecraft:crimson_hyphae",
+      "required": false
+    },
+    {
+      "id": "minecraft:stripped_crimson_stem",
+      "required": false
+    },
+    {
+      "id": "minecraft:stripped_crimson_hyphae",
+      "required": false
+    },
+    {
+      "id": "minecraft:crimson_planks",
+      "required": false
+    },
+    {
+      "id": "minecraft:warped_stem",
+      "required": false
+    },
+    {
+      "id": "minecraft:warped_hyphae",
+      "required": false
+    },
+    {
+      "id": "minecraft:stripped_warped_stem",
+      "required": false
+    },
+    {
+      "id": "minecraft:stripped_warped_hyphae",
+      "required": false
+    },
+    {
+      "id": "minecraft:warped_planks",
+      "required": false
+    },
+    {
+      "id": "minecraft:crimson_nylium",
+      "required": false
+    },
+    {
+      "id": "minecraft:warped_nylium",
+      "required": false
+    },
+    {
+      "id": "minecraft:crimson_fungus",
+      "required": false
+    },
+    {
+      "id": "minecraft:warped_fungus",
+      "required": false
+    },
+    {
+      "id": "minecraft:crimson_roots",
+      "required": false
+    },
+    {
+      "id": "minecraft:warped_roots",
+      "required": false
+    },
+    {
+      "id": "minecraft:nether_sprouts",
+      "required": false
+    },
+    {
+      "id": "minecraft:weeping_vines",
+      "required": false
+    },
+    {
+      "id": "minecraft:twisting_vines",
+      "required": false
+    },
+    {
+      "id": "minecraft:nether_wart_block",
+      "required": false
+    },
+    {
+      "id": "minecraft:warped_wart_block",
+      "required": false
+    },
+    {
+      "id": "minecraft:shroomlight",
+      "required": false
+    },
+    {
+      "id": "minecraft:nether_wart",
+      "required": false
+    }
+  ]
+}

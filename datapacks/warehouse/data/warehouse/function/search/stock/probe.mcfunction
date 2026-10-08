@@ -1,0 +1,4 @@
+data modify storage warehouse:runtime search.stock set value "箱失效"
+$execute in $(dimension) if loaded $(a_x) $(a_y) $(a_z) if loaded $(b_x) $(b_y) $(b_z) if block $(a_x) $(a_y) $(a_z) #warehouse:storage_chests if block $(b_x) $(b_y) $(b_z) #warehouse:storage_chests run data modify storage warehouse:runtime search.stock set value "無庫存"
+$execute in $(dimension) if loaded $(a_x) $(a_y) $(a_z) if block $(a_x) $(a_y) $(a_z) #warehouse:storage_chests if items block $(a_x) $(a_y) $(a_z) container.* $(item_id) run data modify storage warehouse:runtime search.stock set value "有庫存"
+$execute in $(dimension) if loaded $(b_x) $(b_y) $(b_z) if block $(b_x) $(b_y) $(b_z) #warehouse:storage_chests if items block $(b_x) $(b_y) $(b_z) container.* $(item_id) run data modify storage warehouse:runtime search.stock set value "有庫存"

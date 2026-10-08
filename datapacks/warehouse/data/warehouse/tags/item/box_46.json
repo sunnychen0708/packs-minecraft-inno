@@ -1,0 +1,204 @@
+{
+  "values": [
+    {
+      "id": "minecraft:elytra",
+      "required": false
+    },
+    {
+      "id": "minecraft:totem_of_undying",
+      "required": false
+    },
+    {
+      "id": "minecraft:copper_bars",
+      "required": false
+    },
+    {
+      "id": "minecraft:exposed_copper_bars",
+      "required": false
+    },
+    {
+      "id": "minecraft:weathered_copper_bars",
+      "required": false
+    },
+    {
+      "id": "minecraft:oxidized_copper_bars",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_copper_bars",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_exposed_copper_bars",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_weathered_copper_bars",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_oxidized_copper_bars",
+      "required": false
+    },
+    {
+      "id": "minecraft:copper_chain",
+      "required": false
+    },
+    {
+      "id": "minecraft:exposed_copper_chain",
+      "required": false
+    },
+    {
+      "id": "minecraft:weathered_copper_chain",
+      "required": false
+    },
+    {
+      "id": "minecraft:oxidized_copper_chain",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_copper_chain",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_exposed_copper_chain",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_weathered_copper_chain",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_oxidized_copper_chain",
+      "required": false
+    },
+    {
+      "id": "minecraft:copper_door",
+      "required": false
+    },
+    {
+      "id": "minecraft:exposed_copper_door",
+      "required": false
+    },
+    {
+      "id": "minecraft:weathered_copper_door",
+      "required": false
+    },
+    {
+      "id": "minecraft:oxidized_copper_door",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_copper_door",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_exposed_copper_door",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_weathered_copper_door",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_oxidized_copper_door",
+      "required": false
+    },
+    {
+      "id": "minecraft:copper_trapdoor",
+      "required": false
+    },
+    {
+      "id": "minecraft:exposed_copper_trapdoor",
+      "required": false
+    },
+    {
+      "id": "minecraft:weathered_copper_trapdoor",
+      "required": false
+    },
+    {
+      "id": "minecraft:oxidized_copper_trapdoor",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_copper_trapdoor",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_exposed_copper_trapdoor",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_weathered_copper_trapdoor",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_oxidized_copper_trapdoor",
+      "required": false
+    },
+    {
+      "id": "minecraft:copper_lantern",
+      "required": false
+    },
+    {
+      "id": "minecraft:exposed_copper_lantern",
+      "required": false
+    },
+    {
+      "id": "minecraft:weathered_copper_lantern",
+      "required": false
+    },
+    {
+      "id": "minecraft:oxidized_copper_lantern",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_copper_lantern",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_exposed_copper_lantern",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_weathered_copper_lantern",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_oxidized_copper_lantern",
+      "required": false
+    },
+    {
+      "id": "minecraft:copper_grate",
+      "required": false
+    },
+    {
+      "id": "minecraft:exposed_copper_grate",
+      "required": false
+    },
+    {
+      "id": "minecraft:weathered_copper_grate",
+      "required": false
+    },
+    {
+      "id": "minecraft:oxidized_copper_grate",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_copper_grate",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_exposed_copper_grate",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_weathered_copper_grate",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_oxidized_copper_grate",
+      "required": false
+    }
+  ]
+}

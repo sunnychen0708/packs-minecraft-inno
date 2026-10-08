@@ -1,0 +1,24 @@
+{
+  "values": [
+    {
+      "id": "minecraft:blaze_rod",
+      "required": false
+    },
+    {
+      "id": "minecraft:ghast_tear",
+      "required": false
+    },
+    {
+      "id": "minecraft:magma_cream",
+      "required": false
+    },
+    {
+      "id": "minecraft:fire_charge",
+      "required": false
+    },
+    {
+      "id": "minecraft:dried_ghast",
+      "required": false
+    }
+  ]
+}

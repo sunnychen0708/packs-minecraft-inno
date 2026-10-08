@@ -1,0 +1,116 @@
+{
+  "values": [
+    {
+      "id": "minecraft:wooden_shovel",
+      "required": false
+    },
+    {
+      "id": "minecraft:wooden_pickaxe",
+      "required": false
+    },
+    {
+      "id": "minecraft:wooden_hoe",
+      "required": false
+    },
+    {
+      "id": "minecraft:copper_shovel",
+      "required": false
+    },
+    {
+      "id": "minecraft:copper_pickaxe",
+      "required": false
+    },
+    {
+      "id": "minecraft:copper_hoe",
+      "required": false
+    },
+    {
+      "id": "minecraft:stone_shovel",
+      "required": false
+    },
+    {
+      "id": "minecraft:stone_pickaxe",
+      "required": false
+    },
+    {
+      "id": "minecraft:stone_hoe",
+      "required": false
+    },
+    {
+      "id": "minecraft:golden_shovel",
+      "required": false
+    },
+    {
+      "id": "minecraft:golden_pickaxe",
+      "required": false
+    },
+    {
+      "id": "minecraft:golden_hoe",
+      "required": false
+    },
+    {
+      "id": "minecraft:iron_shovel",
+      "required": false
+    },
+    {
+      "id": "minecraft:iron_pickaxe",
+      "required": false
+    },
+    {
+      "id": "minecraft:iron_hoe",
+      "required": false
+    },
+    {
+      "id": "minecraft:diamond_shovel",
+      "required": false
+    },
+    {
+      "id": "minecraft:diamond_pickaxe",
+      "required": false
+    },
+    {
+      "id": "minecraft:diamond_hoe",
+      "required": false
+    },
+    {
+      "id": "minecraft:netherite_shovel",
+      "required": false
+    },
+    {
+      "id": "minecraft:netherite_pickaxe",
+      "required": false
+    },
+    {
+      "id": "minecraft:netherite_hoe",
+      "required": false
+    },
+    {
+      "id": "minecraft:flint_and_steel",
+      "required": false
+    },
+    {
+      "id": "minecraft:fishing_rod",
+      "required": false
+    },
+    {
+      "id": "minecraft:shears",
+      "required": false
+    },
+    {
+      "id": "minecraft:brush",
+      "required": false
+    },
+    {
+      "id": "minecraft:carrot_on_a_stick",
+      "required": false
+    },
+    {
+      "id": "minecraft:warped_fungus_on_a_stick",
+      "required": false
+    },
+    {
+      "id": "minecraft:spyglass",
+      "required": false
+    }
+  ]
+}

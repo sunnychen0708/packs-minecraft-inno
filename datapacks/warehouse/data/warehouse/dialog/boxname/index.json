@@ -1,0 +1,104 @@
+{
+  "type": "minecraft:multi_action",
+  "title": {
+    "text": "箱子命名"
+  },
+  "external_title": {
+    "text": "箱子命名"
+  },
+  "body": [
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "點「入口箱」可命名入口箱與六個溢位箱。\n選擇箱子後可直接輸入新名稱。"
+      },
+      "width": 430
+    }
+  ],
+  "pause": false,
+  "can_close_with_escape": true,
+  "after_action": "close",
+  "columns": 2,
+  "actions": [
+    {
+      "label": {
+        "text": "入口箱"
+      },
+      "width": 150,
+      "action": {
+        "type": "show_dialog",
+        "dialog": "warehouse:boxname/special"
+      }
+    },
+    {
+      "label": {
+        "text": "區域 1"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_nav set 61"
+      }
+    },
+    {
+      "label": {
+        "text": "區域 2"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_nav set 62"
+      }
+    },
+    {
+      "label": {
+        "text": "區域 3"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_nav set 63"
+      }
+    },
+    {
+      "label": {
+        "text": "區域 4"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_nav set 64"
+      }
+    },
+    {
+      "label": {
+        "text": "區域 5"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_nav set 65"
+      }
+    },
+    {
+      "label": {
+        "text": "區域 6"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_nav set 66"
+      }
+    }
+  ],
+  "exit_action": {
+    "label": {
+      "text": "返回箱子管理"
+    },
+    "width": 200,
+    "action": {
+      "type": "run_command",
+      "command": "trigger wh_nav set 2"
+    }
+  }
+}

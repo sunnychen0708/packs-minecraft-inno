@@ -1,0 +1,92 @@
+{
+  "values": [
+    {
+      "id": "minecraft:dragon_egg",
+      "required": false
+    },
+    {
+      "id": "minecraft:dragon_head",
+      "required": false
+    },
+    {
+      "id": "minecraft:nether_star",
+      "required": false
+    },
+    {
+      "id": "minecraft:wither_skeleton_skull",
+      "required": false
+    },
+    {
+      "id": "minecraft:beacon",
+      "required": false
+    },
+    {
+      "id": "minecraft:copper_golem_statue",
+      "required": false
+    },
+    {
+      "id": "minecraft:exposed_copper_golem_statue",
+      "required": false
+    },
+    {
+      "id": "minecraft:weathered_copper_golem_statue",
+      "required": false
+    },
+    {
+      "id": "minecraft:oxidized_copper_golem_statue",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_copper_golem_statue",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_exposed_copper_golem_statue",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_weathered_copper_golem_statue",
+      "required": false
+    },
+    {
+      "id": "minecraft:waxed_oxidized_copper_golem_statue",
+      "required": false
+    },
+    {
+      "id": "minecraft:painting",
+      "required": false
+    },
+    {
+      "id": "minecraft:item_frame",
+      "required": false
+    },
+    {
+      "id": "minecraft:glow_item_frame",
+      "required": false
+    },
+    {
+      "id": "minecraft:skeleton_skull",
+      "required": false
+    },
+    {
+      "id": "minecraft:player_head",
+      "required": false
+    },
+    {
+      "id": "minecraft:zombie_head",
+      "required": false
+    },
+    {
+      "id": "minecraft:creeper_head",
+      "required": false
+    },
+    {
+      "id": "minecraft:piglin_head",
+      "required": false
+    },
+    {
+      "id": "minecraft:wither_rose",
+      "required": false
+    }
+  ]
+}

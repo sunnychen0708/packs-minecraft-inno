@@ -1,0 +1,67 @@
+{
+  "type": "minecraft:multi_action",
+  "title": {
+    "text": "分類設定"
+  },
+  "external_title": {
+    "text": "分類設定"
+  },
+  "body": [
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "可以用手持物品讀取，或直接打字搜尋並選擇物品。"
+      },
+      "width": 390
+    },
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "可新增、移除或移動分類。移動分類後，舊主箱內相同物品會在背景搬往新分類箱；放不下的部分會安全留在舊箱。"
+      },
+      "width": 390
+    }
+  ],
+  "pause": false,
+  "after_action": "close",
+  "columns": 2,
+  "actions": [
+    {
+      "label": {
+        "text": "讀取手持物品"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_rule set 1"
+      }
+    },
+    {
+      "label": {
+        "text": "打字選擇物品"
+      },
+      "width": 150,
+      "action": {
+        "type": "show_dialog",
+        "dialog": "warehouse:search"
+      }
+    },
+    {
+      "label": {
+        "text": "回主選單"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_nav set 1"
+      }
+    }
+  ],
+  "exit_action": {
+    "label": {
+      "text": "關閉"
+    },
+    "width": 200
+  },
+  "can_close_with_escape": true
+}

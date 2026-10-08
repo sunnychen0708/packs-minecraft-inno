@@ -1,0 +1,216 @@
+{
+  "values": [
+    {
+      "id": "minecraft:oak_log",
+      "required": false
+    },
+    {
+      "id": "minecraft:oak_wood",
+      "required": false
+    },
+    {
+      "id": "minecraft:stripped_oak_log",
+      "required": false
+    },
+    {
+      "id": "minecraft:stripped_oak_wood",
+      "required": false
+    },
+    {
+      "id": "minecraft:oak_planks",
+      "required": false
+    },
+    {
+      "id": "minecraft:spruce_log",
+      "required": false
+    },
+    {
+      "id": "minecraft:spruce_wood",
+      "required": false
+    },
+    {
+      "id": "minecraft:stripped_spruce_log",
+      "required": false
+    },
+    {
+      "id": "minecraft:stripped_spruce_wood",
+      "required": false
+    },
+    {
+      "id": "minecraft:spruce_planks",
+      "required": false
+    },
+    {
+      "id": "minecraft:birch_log",
+      "required": false
+    },
+    {
+      "id": "minecraft:birch_wood",
+      "required": false
+    },
+    {
+      "id": "minecraft:stripped_birch_log",
+      "required": false
+    },
+    {
+      "id": "minecraft:stripped_birch_wood",
+      "required": false
+    },
+    {
+      "id": "minecraft:birch_planks",
+      "required": false
+    },
+    {
+      "id": "minecraft:jungle_log",
+      "required": false
+    },
+    {
+      "id": "minecraft:jungle_wood",
+      "required": false
+    },
+    {
+      "id": "minecraft:stripped_jungle_log",
+      "required": false
+    },
+    {
+      "id": "minecraft:stripped_jungle_wood",
+      "required": false
+    },
+    {
+      "id": "minecraft:jungle_planks",
+      "required": false
+    },
+    {
+      "id": "minecraft:acacia_log",
+      "required": false
+    },
+    {
+      "id": "minecraft:acacia_wood",
+      "required": false
+    },
+    {
+      "id": "minecraft:stripped_acacia_log",
+      "required": false
+    },
+    {
+      "id": "minecraft:stripped_acacia_wood",
+      "required": false
+    },
+    {
+      "id": "minecraft:acacia_planks",
+      "required": false
+    },
+    {
+      "id": "minecraft:cherry_log",
+      "required": false
+    },
+    {
+      "id": "minecraft:cherry_wood",
+      "required": false
+    },
+    {
+      "id": "minecraft:stripped_cherry_log",
+      "required": false
+    },
+    {
+      "id": "minecraft:stripped_cherry_wood",
+      "required": false
+    },
+    {
+      "id": "minecraft:cherry_planks",
+      "required": false
+    },
+    {
+      "id": "minecraft:pale_oak_log",
+      "required": false
+    },
+    {
+      "id": "minecraft:pale_oak_wood",
+      "required": false
+    },
+    {
+      "id": "minecraft:stripped_pale_oak_log",
+      "required": false
+    },
+    {
+      "id": "minecraft:stripped_pale_oak_wood",
+      "required": false
+    },
+    {
+      "id": "minecraft:pale_oak_planks",
+      "required": false
+    },
+    {
+      "id": "minecraft:dark_oak_log",
+      "required": false
+    },
+    {
+      "id": "minecraft:dark_oak_wood",
+      "required": false
+    },
+    {
+      "id": "minecraft:stripped_dark_oak_log",
+      "required": false
+    },
+    {
+      "id": "minecraft:stripped_dark_oak_wood",
+      "required": false
+    },
+    {
+      "id": "minecraft:dark_oak_planks",
+      "required": false
+    },
+    {
+      "id": "minecraft:mangrove_log",
+      "required": false
+    },
+    {
+      "id": "minecraft:mangrove_wood",
+      "required": false
+    },
+    {
+      "id": "minecraft:stripped_mangrove_log",
+      "required": false
+    },
+    {
+      "id": "minecraft:stripped_mangrove_wood",
+      "required": false
+    },
+    {
+      "id": "minecraft:mangrove_planks",
+      "required": false
+    },
+    {
+      "id": "minecraft:bamboo_block",
+      "required": false
+    },
+    {
+      "id": "minecraft:stripped_bamboo_block",
+      "required": false
+    },
+    {
+      "id": "minecraft:bamboo_planks",
+      "required": false
+    },
+    {
+      "id": "minecraft:poplar_log",
+      "required": false
+    },
+    {
+      "id": "minecraft:poplar_wood",
+      "required": false
+    },
+    {
+      "id": "minecraft:stripped_poplar_log",
+      "required": false
+    },
+    {
+      "id": "minecraft:stripped_poplar_wood",
+      "required": false
+    },
+    {
+      "id": "minecraft:poplar_planks",
+      "required": false
+    }
+  ]
+}

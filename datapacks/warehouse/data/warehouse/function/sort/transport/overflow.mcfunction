@@ -1,0 +1,1 @@
+$execute in $(ov_dimension) if loaded $(ov_a_x) $(ov_a_y) $(ov_a_z) if loaded $(ov_b_x) $(ov_b_y) $(ov_b_z) if block $(ov_a_x) $(ov_a_y) $(ov_a_z) #warehouse:storage_chests if block $(ov_b_x) $(ov_b_y) $(ov_b_z) #warehouse:storage_chests run function warehouse:sort/transport/overflow_valid with storage warehouse:runtime move

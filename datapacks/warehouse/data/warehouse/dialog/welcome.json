@@ -1,0 +1,31 @@
+{
+  "type": "minecraft:notice",
+  "title": {
+    "text": "自動分類倉庫 v3.4"
+  },
+  "external_title": {
+    "text": "自動分類倉庫 v3.4"
+  },
+  "body": [
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "安裝完成。按 G 可從 Quick Actions 開啟自動分類倉庫。"
+      },
+      "width": 380
+    }
+  ],
+  "pause": false,
+  "after_action": "close",
+  "action": {
+    "label": {
+      "text": "開始使用"
+    },
+    "width": 200,
+    "action": {
+      "type": "run_command",
+      "command": "trigger wh_nav set 1"
+    }
+  },
+  "can_close_with_escape": true
+}

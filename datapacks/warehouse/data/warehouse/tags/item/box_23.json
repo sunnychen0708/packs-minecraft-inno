@@ -1,0 +1,36 @@
+{
+  "values": [
+    {
+      "id": "minecraft:rotten_flesh",
+      "required": false
+    },
+    {
+      "id": "minecraft:bone",
+      "required": false
+    },
+    {
+      "id": "minecraft:bone_meal",
+      "required": false
+    },
+    {
+      "id": "minecraft:string",
+      "required": false
+    },
+    {
+      "id": "minecraft:spider_eye",
+      "required": false
+    },
+    {
+      "id": "minecraft:gunpowder",
+      "required": false
+    },
+    {
+      "id": "minecraft:phantom_membrane",
+      "required": false
+    },
+    {
+      "id": "minecraft:cobweb",
+      "required": false
+    }
+  ]
+}

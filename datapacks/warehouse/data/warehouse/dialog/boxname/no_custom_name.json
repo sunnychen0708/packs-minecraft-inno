@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:notice",
+  "title": {
+    "text": "無法命名"
+  },
+  "body": [
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "手持物品沒有鐵砧自訂名稱。請先在鐵砧改名後再試。"
+      },
+      "width": 360
+    }
+  ],
+  "pause": false,
+  "after_action": "close",
+  "can_close_with_escape": true,
+  "action": {
+    "label": {
+      "text": "返回"
+    },
+    "width": 200,
+    "action": {
+      "type": "run_command",
+      "command": "trigger wh_nav set 60"
+    }
+  }
+}

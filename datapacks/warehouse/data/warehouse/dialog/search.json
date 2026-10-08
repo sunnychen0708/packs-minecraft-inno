@@ -1,0 +1,56 @@
+{
+  "type": "minecraft:multi_action",
+  "title": {
+    "text": "查詢／選擇物品"
+  },
+  "external_title": {
+    "text": "查詢物品"
+  },
+  "body": [
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "輸入關鍵字查詢物品。支援繁中物品名稱、分類名稱、Minecraft ID；中文字可只輸入一個字。\n搜尋結果可直接點選，查看並修改該物品的分類。"
+      },
+      "width": 430
+    }
+  ],
+  "inputs": [
+    {
+      "type": "minecraft:text",
+      "key": "query",
+      "label": {
+        "text": "搜尋關鍵字"
+      },
+      "width": 300,
+      "max_length": 48,
+      "initial": ""
+    }
+  ],
+  "pause": false,
+  "can_close_with_escape": true,
+  "after_action": "close",
+  "columns": 1,
+  "actions": [
+    {
+      "label": {
+        "text": "搜尋"
+      },
+      "width": 220,
+      "action": {
+        "type": "minecraft:dynamic/run_command",
+        "template": "function warehouse:search/run {q:\"$(query)\"}"
+      }
+    }
+  ],
+  "exit_action": {
+    "label": {
+      "text": "回主選單"
+    },
+    "width": 200,
+    "action": {
+      "type": "run_command",
+      "command": "trigger wh_nav set 1"
+    }
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "values": [
+    {
+      "id": "minecraft:leather",
+      "required": false
+    },
+    {
+      "id": "minecraft:feather",
+      "required": false
+    },
+    {
+      "id": "minecraft:egg",
+      "required": false
+    },
+    {
+      "id": "minecraft:blue_egg",
+      "required": false
+    },
+    {
+      "id": "minecraft:brown_egg",
+      "required": false
+    },
+    {
+      "id": "minecraft:rabbit_foot",
+      "required": false
+    },
+    {
+      "id": "minecraft:rabbit_hide",
+      "required": false
+    },
+    {
+      "id": "minecraft:turtle_scute",
+      "required": false
+    },
+    {
+      "id": "minecraft:armadillo_scute",
+      "required": false
+    },
+    {
+      "id": "minecraft:ink_sac",
+      "required": false
+    },
+    {
+      "id": "minecraft:glow_ink_sac",
+      "required": false
+    },
+    {
+      "id": "minecraft:honeycomb",
+      "required": false
+    },
+    {
+      "id": "minecraft:honeycomb_block",
+      "required": false
+    },
+    {
+      "id": "minecraft:bee_nest",
+      "required": false
+    },
+    {
+      "id": "minecraft:beehive",
+      "required": false
+    },
+    {
+      "id": "minecraft:turtle_egg",
+      "required": false
+    },
+    {
+      "id": "minecraft:sniffer_egg",
+      "required": false
+    },
+    {
+      "id": "minecraft:milk_bucket",
+      "required": false
+    },
+    {
+      "id": "minecraft:pufferfish_bucket",
+      "required": false
+    },
+    {
+      "id": "minecraft:salmon_bucket",
+      "required": false
+    },
+    {
+      "id": "minecraft:cod_bucket",
+      "required": false
+    },
+    {
+      "id": "minecraft:tropical_fish_bucket",
+      "required": false
+    },
+    {
+      "id": "minecraft:axolotl_bucket",
+      "required": false
+    }
+  ]
+}

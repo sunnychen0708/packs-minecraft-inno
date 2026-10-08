@@ -1,0 +1,104 @@
+{
+  "type": "minecraft:multi_action",
+  "title": {
+    "text": "新增註冊"
+  },
+  "external_title": {
+    "text": "新增註冊"
+  },
+  "body": [
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "點「入口箱」可管理入口箱與六個溢位箱。\n同一個實體大箱可以重複綁定多個編號。"
+      },
+      "width": 430
+    }
+  ],
+  "pause": false,
+  "can_close_with_escape": true,
+  "after_action": "close",
+  "columns": 2,
+  "actions": [
+    {
+      "label": {
+        "text": "入口箱"
+      },
+      "width": 150,
+      "action": {
+        "type": "show_dialog",
+        "dialog": "warehouse:register/special"
+      }
+    },
+    {
+      "label": {
+        "text": "區域 1"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_nav set 11"
+      }
+    },
+    {
+      "label": {
+        "text": "區域 2"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_nav set 12"
+      }
+    },
+    {
+      "label": {
+        "text": "區域 3"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_nav set 13"
+      }
+    },
+    {
+      "label": {
+        "text": "區域 4"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_nav set 14"
+      }
+    },
+    {
+      "label": {
+        "text": "區域 5"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_nav set 15"
+      }
+    },
+    {
+      "label": {
+        "text": "區域 6"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_nav set 16"
+      }
+    }
+  ],
+  "exit_action": {
+    "label": {
+      "text": "返回箱子管理"
+    },
+    "width": 200,
+    "action": {
+      "type": "run_command",
+      "command": "trigger wh_nav set 2"
+    }
+  }
+}
