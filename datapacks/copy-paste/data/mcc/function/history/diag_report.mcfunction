@@ -9,5 +9,6 @@ execute if score @s mcc_diagshown matches 1.. run function mcc:history/diag_repo
 scoreboard players operation #diag_extra mcc_tmp = @s mcc_diagcount
 scoreboard players operation #diag_extra mcc_tmp -= @s mcc_diagshown
 execute if score #diag_extra mcc_tmp matches 1.. run tellraw @s [{"text":"另有 ","color":"gray"},{"score":{"name":"#diag_extra","objective":"mcc_tmp"},"color":"yellow"},{"text":" 個異常位置未列出；先修好上面這批再重試，會繼續列下一批。","color":"gray"}]
+execute if score #cmp_big mcc_id matches 1 run tellraw @s [{"text":"差異太多，只檢查到一部分；上面的數量不是全部。","color":"gray"}]
 execute unless score @s mcc_diagcount matches 1.. run tellraw @s [{"text":"無法解析出具體差異；為安全起見仍未執行。","color":"yellow"}]
 return 1

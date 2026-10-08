@@ -1,6 +1,6 @@
 # Utilities v3.8
 
-> Source: **v3.8（尚未發布）** · Latest release: **utilities-v3.7** · Download: **utilities-v3.7.zip** · Previous package name: **整合_v3.2**.
+> Source: **v3.8** · Latest release: **utilities-v3.8** · Download: **utilities-v3.8.zip** · Previous package name: **整合_v3.2**.
 
 遊戲內名稱「屁眼派對」：Minecraft Java 26.3 資料包，整合生存便利三合一、回家與自訂據點、座標顯示。
 
@@ -58,7 +58,7 @@ The actual pack source lives directly in this directory. Keep `pack.mcmeta` and 
 
 ## 安裝與更新
 
-下載 [utilities-v3.7.zip](https://github.com/sunnychen0708/packs-minecraft-inno/releases/download/utilities-v3.7/utilities-v3.7.zip)，移除世界 `datapacks/` 中的舊 Utilities ZIP（utilities-v3.6.zip、utilities-v3.5.zip、utilities-v3.4.zip、utilities-v3.3.zip、utilities-v3.2.zip、整合_v3.2.zip 或 vanilla-utilities-v3.2.zip），ZIP 不用解壓直接放入，再執行 `/reload`。不要同時載入兩份。
+下載 [utilities-v3.8.zip](https://github.com/sunnychen0708/packs-minecraft-inno/releases/download/utilities-v3.8/utilities-v3.8.zip)，移除世界 `datapacks/` 中的舊 Utilities ZIP（utilities-v3.7.zip、utilities-v3.6.zip、utilities-v3.5.zip、utilities-v3.4.zip、utilities-v3.3.zip、utilities-v3.2.zip、整合_v3.2.zip 或 vanilla-utilities-v3.2.zip），ZIP 不用解壓直接放入，再執行 `/reload`。不要同時載入兩份。
 
 蹲下並持斧頭挖掉 Poplar 原木即可觸發；紅／橙／黃葉皆支援。單次最多連鎖 64 根，仍需附近有樹葉；無葉倒木及建築木材不會因這次更新取消保護。
 
