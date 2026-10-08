@@ -18,6 +18,16 @@ API Token 只放 GitHub Actions Secret `EXAROTON_API_TOKEN`，不得寫進 repo 
 | `ops/inno-maintenance-request.json` | `exaroton-inno-maintenance.yml` | inno 唯讀／離線 UUID 維護 |
 | `ops/release-request.json` | `release-request.yml` | 版本發佈 |
 
+## Discord 貓／狼收集進度榜（只支援手動更新）
+
+- Workflow：[inno animal collection (read only)](../.github/workflows/inno-animal-progress.yml)，只有 `workflow_dispatch`，**沒有** push／cron／定時更新。
+- 設定：在 Discord 頻道 **編輯頻道 → 整合 → Webhook**（或伺服器設定 → 整合 → Webhooks）建立一個 Webhook；將完整 URL 存到此 GitHub repo 的 **Settings → Secrets and variables → Actions → Repository secrets**，名稱為 `DISCORD_WEBHOOK_URL`。不可把 URL 貼進 Issue、workflow、原始碼或 Actions 日誌。`EXAROTON_API_TOKEN` 沿用既有 Secret。
+- 更新：GitHub **Actions → inno animal collection (read only) → Run workflow → 選 main → Run workflow**。首次執行建立一則 Discord Embed；以後手動執行只編輯這一則，避免洗版（建議在 Discord 將它釘選）。
+- 為了記住 Discord 訊息，首次成功發送後 workflow 會透過 GitHub API 在 `main` 建立 `ops/discord-animal-message.json`，**僅包含公開數字識別碼** `webhook_id` 和 `message_id`，不含 token。訊息若已被刪除或 Webhook 更換，下次執行才發新訊息並更新檔案。此狀態檔由 `GITHUB_TOKEN` 的 `contents: write` 權限維護；若 GitHub 分支保護阻止 workflow 寫入，需先調整允許方式，否則新訊息可能已送出但狀態寫入失敗。
+- 執行期間僅使用 exaroton **GET** 讀取正式 `inno` 玩家 `world/players/advancements/<online-uuid>.json`；不開機、不操作 Minecraft 指令、不寫入世界。資料為**各玩家曾經馴服過的變種**，不是目前活著的寵物數量，離線也能查最後儲存的進度。
+- 四位玩家固定是 `SunnyChen`、`penguin0531`、`geena0701`、`Felicitypeng`。只要有一位玩家存檔讀取失敗／內容不完整，整個發送流程失敗，不會發布不完整清單。
+- 若 Secret 未設定，workflow 會在開始讀取前給明確錯誤；需使用者自行到 Discord 建立 Webhook 並填入 GitHub Secret。此 workflow 不會自動建立 Discord 頻道或 Webhook。
+
 ## 玩家身分與資料遷移
 
 - `innotest` 為 `online-mode=false`。預設使用 `penguin0531`、`geena0701`、`Felicitypeng` 三個 Mineflayer bot；**`SunnyChen` 留給使用者真人登入**，必要時才作第四個 bot。
