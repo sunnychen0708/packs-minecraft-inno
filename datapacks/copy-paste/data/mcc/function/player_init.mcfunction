@@ -26,5 +26,7 @@ scoreboard players set @s mcc_mattotal 0
 scoreboard players set @s mcc_histmat 0
 scoreboard players set @s mcc_umat 0
 scoreboard players set @s mcc_rmat 0
+scoreboard players set @s mcc_matjob 0
+scoreboard players set @s mcc_txslot 0
 scoreboard players set @s mcc_usel 0
 tellraw @s [{"text":"[Copy/Paste] ","color":"gold"},{"text":"已建立你的個人 Clipboard。輸入 ","color":"gray"},{"text":"/trigger copypaste","color":"yellow"},{"text":" 查看控制面板。","color":"gray"}]

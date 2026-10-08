@@ -307,6 +307,15 @@ def check_v100_semantics(pack: Path):
     assert '.materials.items set from storage mcc:materials p$(id).items' in save_u
     assert '.materials.bom set from storage mcc:materials p$(id).bom' in save_u
     assert 'scoreboard players set @s mcc_umat 0' in load_u
+    undo_hist=read(pack/'data/mcc/function/history/undo.mcfunction')
+    redo_hist=read(pack/'data/mcc/function/history/redo.mcfunction')
+    redo_apply=read(pack/'data/mcc/function/history/redo_apply.mcfunction')
+    assert 'function mcc:history/check_undo_material_guard' in undo_hist
+    assert 'function mcc:history/refund_undo_materials' in undo_hist
+    assert 'function mcc:history/copy_undo_materials_to_redo' in undo_hist
+    assert 'function mcc:materials/redo_start' in redo_hist
+    assert 'function mcc:history/copy_redo_snapshot_to_material_guard' in redo_apply
+    assert (pack/'data/mcc/function/history/compare_hidden.mcfunction').is_file()
 
     for p in (
         pack/'data/mcc/function/move/run.mcfunction',

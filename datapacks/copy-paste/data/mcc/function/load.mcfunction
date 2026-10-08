@@ -212,6 +212,8 @@ scoreboard objectives add mcc_mattotal dummy
 scoreboard objectives add mcc_histmat dummy
 scoreboard objectives add mcc_umat dummy
 scoreboard objectives add mcc_rmat dummy
+scoreboard objectives add mcc_matjob dummy
+scoreboard objectives add mcc_txslot dummy
 scoreboard players add #next mcc_id 0
 scoreboard players set #slot mcc_id 256
 scoreboard players set #base mcc_id 20000000
@@ -223,6 +225,7 @@ scoreboard players set #bpz mcc_id 20002000
 scoreboard players set #bpofs mcc_id 64
 scoreboard players set #uhistz mcc_id 20003040
 scoreboard players set #rhistz mcc_id 20005120
+scoreboard players set #mhistz mcc_id 20007200
 scoreboard players set #hgap mcc_id 320
 scoreboard players set #one mcc_id 1
 scoreboard players set #zero mcc_id 0
