@@ -18,11 +18,11 @@ import xform
 from innotest_harness import Suite
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--case", choices=("external", "modes", "dimensions", "history", "materials"), required=True)
+ap.add_argument("--case", choices=("external", "modes", "dimensions", "history", "materials", "ui-packets"), required=True)
 CASE = ap.parse_args().case
 
 OUT = ROOT / "dist" / "copy-paste-gap-live-test"
-s = Suite("cpg", "CPG", {"a": "penguin0531"},
+s = Suite("cpg", "CPG", {"a": "penguin0531", "b": "geena0701"} if CASE == "ui-packets" else {"a": "penguin0531"},
           "Opt-in 3D Copy/Paste innotest coverage " + CASE)
 s.default_delay = 3
 WHO = s.sel("a")
@@ -285,6 +285,14 @@ elif CASE == "materials":
                 "say CPG_RESTORE warehouse and inventory done"]
         return cmd
 
+elif CASE == "ui-packets":
+    # Bot-level protocol evidence only. This cannot verify a human G key,
+    # mouse reticle or clicking actual Dialog buttons in a Minecraft client.
+    s.dialog("a", "trigger copypaste", "A receives Copy/Paste v1.8 Dialog packet")
+    s.dialog("b", "trigger copypaste", "B receives Copy/Paste v1.8 Dialog packet")
+    s.check("both players independently connected", 
+            "entity @a[name=penguin0531]", "entity @a[name=geena0701]")
+
 elif CASE == "dimensions":
     for dim in DIMS:
         src = (S[0], 220, S[2])
@@ -329,7 +337,7 @@ s.extra_function(OUT, "restore", [
     "$execute in $(dim) run tp @a[name=penguin0531,limit=1] $(x) $(y) $(z) $(yaw) $(pitch)"
 ])
 (OUT / "suite.json").write_text(json.dumps({
-    "ns":"cpg", "prefix":"CPG", "players":{"a":"penguin0531"},
+    "ns":"cpg", "prefix":"CPG", "players":({"a":"penguin0531","b":"geena0701"} if CASE == "ui-packets" else {"a":"penguin0531"}),
     "start_function":"cpg:start", "cleanup_function":"cpg:cleanup",
     "timeout_s":210
 },indent=2) + "\n",encoding="utf-8")
