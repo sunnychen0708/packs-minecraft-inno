@@ -701,9 +701,10 @@ def check_version_labels(pack: Path, repo: Path|None=None):
     load=read(pack/'data/mcc/function/load.mcfunction')
     assert '已載入' not in load and 'tellraw @a' not in load, 'Copy/Paste must not announce itself on load'
     assert f'v{version}' in read(pack/'README.md').splitlines()[0], f'pack README not synced to v{version}'
-    assert f'v{version}' in read(pack/'LIVE-VALIDATION.md').splitlines()[0], f'LIVE-VALIDATION not synced to v{version}'
-    assert f'v{version}' in read(pack/'MULTIPLAYER-VALIDATION.md').splitlines()[0], f'MULTIPLAYER-VALIDATION not synced to v{version}'
     source_repo=repo or Path(__file__).resolve().parents[1]
+    # The two old validation Markdown files were consolidated into one coverage ledger.
+    coverage=read(source_repo/'docs/innotest-coverage.md')
+    assert f'Copy/Paste v{version}' in coverage, f'innotest coverage not synced to v{version}'
     runtime=read(source_repo/'scripts/test-copy-paste-runtime.py')
     multi=read(source_repo/'scripts/build-copy-paste-multiplayer-test.py')
     assert f'Copy/Paste v{version}' in runtime, f'headless runtime label not synced to v{version}'

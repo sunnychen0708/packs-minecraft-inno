@@ -1,210 +1,46 @@
 # Minecraft Inno Packs
 
-<p align="center">
-  Minecraft Java datapacks and resource packs maintained in one repository for clean development, versioning, releases, CI, and live server validation.
-</p>
+Minecraft Java Datapacks 與 Resource Pack 專案；遊戲內名詞使用台灣常見譯名或 English。**正式規則**：[AGENTS.md](AGENTS.md)；**測試紀錄**：[innotest 覆蓋表](docs/innotest-coverage.md)。
 
----
+## 版本與使用說明
 
-## Packs
+| Pack | 最新 Release | 功能／教學 |
+| --- | --- | --- |
+| Utilities | [v3.8](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/utilities-v3.8) | [據點、傳送、連鎖砍樹／礦脈／補種與指令](datapacks/utilities/README.md) |
+| Warehouse | [v4.7](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/warehouse-v4.7) | [自動分類、查詢、箱子管理、Pick、API](datapacks/warehouse/README.md) |
+| Copy/Paste | [v1.8](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/copy-paste-v1.8) | [Blueprint、Build、Move、Rotate、Flip、Undo/Redo 與指令](datapacks/copy-paste/README.md) |
+| cat-door-sounds | [v1.0](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/cat-door-sounds-v1.0) | [貓咪與門的音效](resourcepacks/cat-door-sounds/README.md) |
 
-| Pack | Type | Source | Latest release | Minecraft | Description |
-| --- | --- | ---: | ---: | --- | --- |
-| [`utilities`](datapacks/utilities) | Data pack | v3.8 | [`v3.8`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/utilities-v3.8) | Java 26.3 | Teleportation, waypoints, coordinate display, and general survival utility systems. |
-| [`warehouse`](datapacks/warehouse) | Data pack | v4.7 | [`v4.7`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/warehouse-v4.7) | Java 26.3 | Automatic sorting, shared inventory API, durable refunds, search/Highlight, and survival Pick. |
-| [`copy-paste`](datapacks/copy-paste) | Data pack | v1.8 | [`v1.8`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/copy-paste-v1.8) | Java 26.3 | Survival building editor: Blueprint preview/micro-adjust, construction from the player's inventory and Warehouse, player-relative rotate/flip, Cut/Move, and material-aware Undo/Redo. |
-| [`cat-door-sounds`](resourcepacks/cat-door-sounds) | Resource pack | v1.0 | [`v1.0`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/cat-door-sounds-v1.0) | Java 26.2 | Custom cat meow replacement and an extra wooden-door opening sound layer. |
+三包 Datapack 預設搭配 Minecraft Java 26.3。Warehouse 提供全服材料來源，Copy/Paste 的 Build 先用玩家背包，才向 Warehouse 扣料。
 
-Each pack is stored as unpacked source. Release ZIPs are generated artifacts rather than development source.
+**安裝：** 到 [Releases](https://github.com/sunnychen0708/packs-minecraft-inno/releases) 下載 ZIP，Datapack 放 `<world>/datapacks/`、Resource Pack 放 `.minecraft/resourcepacks/`。更新時刪除同一包的舊 ZIP，**不能同時安裝兩版**。介面 registry JSON 變更時，退出世界再登入才能完整更新 Dialog；`/reload` 不能取代重新進入世界。
 
-Source versions and latest releases are aligned: Utilities **v3.8**, Warehouse **v4.7**, Copy/Paste **v1.8**, cat-door-sounds **v1.0**.
+遊戲內入口：Warehouse 按 **G**；Copy/Paste 按 **G → 建築工具**，或 `/trigger cphelp` 查看指令；Utilities 用 `/trigger help`。
 
-Copy/Paste builds from a Blueprint preview using materials from the player's own inventory first and the shared Warehouse second. Warehouse is the shared sorting/storage backend and its API is what Copy/Paste and Pick use.
+## 開發與操作文件
 
-Per-pack details and version history: [Utilities](datapacks/utilities/README.md), [Warehouse](datapacks/warehouse/CHANGELOG.md), [Copy/Paste](datapacks/copy-paste/README.md).
+| 文件 | 內容 |
+| --- | --- |
+| [AGENTS.md](AGENTS.md) | inno／innotest 安全規則、240 秒測試、Git 作者規範 |
+| [Datapack 驗證與 Release](docs/datapack-validation.md) | CI／runtime／live／真人 client 的差異、發佈條件、證據 |
+| [innotest 功能覆蓋表](docs/innotest-coverage.md) | 三包各功能的已驗／未驗、live run |
+| [exaroton 操作](docs/exaroton-operations.md) | 伺服器權限、Mineflayer、UUID 遷移、request 與最後確認狀態 |
 
-## Current validation status
-
-The current Java 26.3 source has passed:
-
-- generic static validation and pack-specific regressions;
-- dedicated Utilities, Warehouse, and Copy/Paste official-server runtime regressions;
-- all-datapacks Java 26.3 compatibility runtime;
-- Utilities v3.8 live compatibility on `innotest`, including v3.7 saved waypoint/settings data surviving the v3.8 load;
-- Warehouse v4.7 live cross-dimension compact/merge regression on `innotest`;
-- Copy/Paste v1.8 full 3D-house multiplayer regression on `innotest`: all `MCCMP_CHECK` assertions passed, including the v1.8 Clipboard orientation reset, exact Blueprint states/transforms, all direct Move/Rotate/Flip directions, Undo/Redo guards, Cut/Paste, and player isolation ([run 37718900567](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37718900567));
-- Copy/Paste v1.8 full Java 26.3 Blueprint matcher live gate: 35,724 checks (35,720 legal states + 4 duplicate regression cases), `fail=0`, `air_ret=0` ([run 37719130915](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37719130915)).
-
-Copy/Paste v1.8 was originally published through the owner-requested direct/no-gate path, so it is still incorrect to claim that its **release-time gated workflow** passed. The exact v1.8 build has since passed the full innotest house regression and full matcher live gate above. `innotest.exaroton.me` is normally kept ONLINE after routine testing unless the owner explicitly asks to stop it (see [`AGENTS.md`](AGENTS.md)).
-
-This does **not** replace the Windows real-client stages for UI clicks, G-key flow, Dialog behavior, or crosshair raycasts. See [`docs/datapack-validation.md`](docs/datapack-validation.md) for the validation layers and [`docs/HANDOFF.md`](docs/HANDOFF.md) for the current handoff state.
-
-## Installation
-
-Download the pack you want from [GitHub Releases](https://github.com/sunnychen0708/packs-minecraft-inno/releases).
-
-### Data packs
-
-Place the downloaded ZIP directly in:
-
-```text
-<world>/datapacks/
-```
-
-Then leave and re-enter the world. `/reload` refreshes functions only; Dialog pages stored as JSON are loaded when the world opens, so after an update always re-enter the world when Dialog registry JSON changed.
-
-### Resource packs
-
-Place the downloaded ZIP directly in:
-
-```text
-.minecraft/resourcepacks/
-```
-
-Then enable it from Minecraft's Resource Packs menu.
-
-## Repository layout
-
-```text
-packs-minecraft-inno/
-├─ datapacks/
-│  ├─ utilities/
-│  ├─ warehouse/
-│  └─ copy-paste/
-├─ resourcepacks/
-│  └─ cat-door-sounds/
-├─ scripts/
-│  ├─ build-pack.sh
-│  ├─ validate-datapack.py
-│  ├─ test-<pack>.py
-│  ├─ test-*-runtime.py
-│  ├─ test-datapack-compatibility.py
-│  ├─ build-copy-paste-multiplayer-test.py
-│  ├─ exaroton_innotest.py
-│  ├─ exaroton_inno_uuid_migrate.py
-│  ├─ mineflayer26/
-│  └─ real-client/
-├─ ops/
-│  ├─ exaroton-request.json
-│  ├─ mineflayer-request.json
-│  └─ inno-maintenance-request.json
-├─ tests/evidence/
-├─ docs/
-│  ├─ datapack-validation.md
-│  ├─ exaroton-operations.md
-│  └─ HANDOFF.md
-└─ .github/workflows/
-   ├─ validate-datapacks.yml
-   ├─ release-pack.yml
-   ├─ exaroton-innotest.yml
-   ├─ mineflayer-innotest.yml
-   └─ exaroton-inno-maintenance.yml
-```
-
-Each pack remains self-contained, while shared build, validation, live-test, and release tooling stays at repository level.
-
-## Development
-
-Edit source directly inside the relevant pack:
-
-```text
-datapacks/<pack-name>/
-resourcepacks/<pack-name>/
-```
-
-Keep `pack.mcmeta` at the root of the pack directory. Functions, JSON files, sounds, assets, and other source files stay unpacked so Git can show useful diffs.
-
-Generated ZIP files go to `dist/`, which is ignored by Git.
-
-### Build locally
+原始碼：`datapacks/{utilities,warehouse,copy-paste}/`、`resourcepacks/cat-door-sounds/`；共用腳本在 `scripts/`，GitHub Actions 在 `.github/workflows/`，一次性遠端 request 在 `ops/`（平時都應是 `noop`）。ZIP 由 `scripts/build-pack.sh` 輸出到已忽略的 `dist/`，不直接提交產物。
 
 ```bash
+# 建置
 ./scripts/build-pack.sh utilities v3.8
 ./scripts/build-pack.sh warehouse v4.7
 ./scripts/build-pack.sh copy-paste v1.8
-./scripts/build-pack.sh cat-door-sounds v1.0
-```
 
-The resulting ZIP is written to `dist/` with the correct Minecraft pack structure at the archive root. `build-pack.sh` needs the `zip` command; the release workflow runs it on Linux.
-
-### Validate datapacks
-
-Run the generic validator before treating a datapack build as ready:
-
-```bash
+# 靜態驗證
 python3 scripts/validate-datapack.py utilities
 python3 scripts/validate-datapack.py warehouse
 python3 scripts/validate-datapack.py copy-paste
-```
-
-If a pack has `scripts/test-<pack-name>.py`, that pack-specific regression suite is also part of the validation gate. GitHub Actions runs both automatically on datapack-related pushes and pull requests.
-
-Cross-pack compatibility is a separate gate for the three datapacks that are intended to coexist:
-
-```bash
 python3 scripts/test-datapack-compatibility.py
 ```
 
-That static check rejects namespace/resource collisions, duplicate scoreboard objectives, unsafe foreign storage writes, and load/tick tag replacement. CI also boots **Utilities + Warehouse + Copy/Paste together on the official Minecraft 26.3 server** and verifies their representative objectives, storage initialization, and shared Warehouse API coexist.
+官方 runtime、innotest live 與真人 client 驗證方式見 [驗證文件](docs/datapack-validation.md)；**CI PASS 不代表 innotest live PASS**。遠端測試預設三位非 SunnyChen bot，例行結束不關機；每次測試最多 **4 分鐘／240 秒**，完整 coverage 須拆 shard。
 
-For isolated runtime validation, the repository also has dedicated Utilities, Warehouse, and Copy/Paste harnesses. Example:
-
-```bash
-python3 scripts/validate-datapack.py copy-paste \
-  --java /path/to/java \
-  --server-jar /path/to/server.jar \
-  --accept-eula
-```
-
-See [`docs/datapack-validation.md`](docs/datapack-validation.md) for exact coverage and release rules.
-
-## exaroton and live multiplayer testing
-
-Operational automation is kept separate from normal pack source:
-
-- `.github/workflows/exaroton-innotest.yml` controls only `innotest.exaroton.me` for normal test-server work.
-- `.github/workflows/mineflayer-innotest.yml` provides one-player probes plus persistent three-bot sessions by default; all four test identities are available only when a test really needs SunnyChen too.
-- `.github/workflows/exaroton-inno-maintenance.yml` is the separate owner-authorized **offline production UUID maintenance** path.
-
-All three workflows are request-driven through `ops/*.json`. The checked-in clean baseline is `noop`; request files are operation triggers, not a queue of unfinished work.
-
-The GitHub secret `EXAROTON_API_TOKEN` must never be committed or copied into an ops request.
-
-For the complete safety model, Java 26.3 player-data layout, online-UUID -> offline-UUID test-world migration, Mineflayer constraints, and the current live-regression sequence, read [`docs/exaroton-operations.md`](docs/exaroton-operations.md).
-
-## Releases
-
-All packs use the same tag format:
-
-```text
-<pack-name>-v<version>
-```
-
-Examples:
-
-```text
-utilities-v3.4
-warehouse-v4.4
-copy-paste-v1.2
-cat-door-sounds-v1.0
-```
-
-When a matching tag is pushed, `.github/workflows/release-pack.yml` locates the matching datapack or resource pack, validates it, builds its ZIP, and publishes a GitHub Release.
-
-Release notes are generated by `scripts/generate-release-notes.py` for both the normal gated release workflow and the owner-requested direct release path. The script compares **only that pack's files** between its last older version tag and the new release source tree, without relying on common Git commit history. This remains accurate after the October 2026 history squash; old release tags and assets are preserved. Notes report changed source files rather than attributing unrelated PR commits or claiming unverified gameplay changes.
-
-## Repository conventions
-
-| Area | Convention |
-| --- | --- |
-| Data packs | `datapacks/<pack-name>/` |
-| Resource packs | `resourcepacks/<pack-name>/` |
-| Release tags | `<pack-name>-v<version>` |
-| Build output | `dist/<pack-name>-<version>.zip` |
-| Source | Unpacked and committed |
-| Release ZIPs | Generated and attached to Releases |
-| Operational requests | `ops/*.json`, clean baseline = `noop` |
-| Server-operation docs | `docs/exaroton-operations.md` |
-| Maintainer handoff | `docs/HANDOFF.md` |
-
-New packs should follow the same directory and release conventions so they work with the existing Git workflow without special handling.
+一般 Release 由 `release-pack.yml` 驗證並以 `<pack>-v<major>.<minor>` 發佈；只有使用者明確要求才可走 direct/no-gate，跳過部分不可聲稱 PASS。2026-10-08 壓縮 Git 歷史後，Release notes 改以 `scripts/generate-release-notes.py` 比較同一 Pack 前後版本的**檔案內容**，不依賴共同 commit 祖先。

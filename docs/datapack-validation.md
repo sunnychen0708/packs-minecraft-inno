@@ -1,211 +1,62 @@
-# Datapack validation workflow
+# Datapack 驗證與 Release
 
-This repository treats datapack validation as a release gate, not as a player-only task.
+> **測試規則與限制**以 [AGENTS.md](../AGENTS.md) 為準。這裡說明層級、工具、證據與發佈條件；不要把不同層級的 PASS 混為一談。
 
-## Validation levels
+## 驗證層級
 
-## 1. Generic static validation
+| 層級 | 工具 | 能證明的事 |
+| --- | --- | --- |
+| 靜態與回歸 | `scripts/validate-datapack.py <pack>`、`scripts/test-<pack>.py` | JSON／function／macro／Dialog 語法、已知 Bug 回歸、版本標籤及 ZIP 結構 |
+| 跨包相容 | `scripts/test-datapack-compatibility.py` | 三包 namespace、scoreboard、storage、load/tick 互不衝突 |
+| 官方 Java 26.3 runtime | 下方專用 harness（`--java`、`--server-jar`、`--accept-eula`） | 真的在原版伺服器上載入、執行函式、比對方塊／資料 |
+| **innotest live** | `exaroton-innotest.yml`、Mineflayer、live harness | 真玩家身分、世界資料、多人隔離、實際操作流程 |
+| **真人 client** | `scripts/real-client/`（Windows） | G 鍵、實際 Dialog 點擊／版面、滑鼠準星、client 行為 |
 
-Run for every datapack change:
+測試原則：修 Bug 時盡可能補回歸；不以「成功載入／沒報錯」代替功能驗證。CI／官方 server 測試是輔助，**只有 innotest 的結果才算符合本專案實機驗證**。以測試腳本自行產生的 PASS 訊息作佐證時，也要核對真實世界結果。
 
-```bash
-python3 scripts/validate-datapack.py <pack-name>
-```
-
-The validator checks:
-
-- `pack.mcmeta` exists and parses.
-- Every JSON file parses.
-- `data/` and function paths use valid namespaces/paths.
-- Every literal function reference resolves to an existing function.
-- Function tags resolve to existing functions or function tags.
-- Macro functions are not called without arguments.
-- Lines marked as macros with `$` must actually reference at least one `$(...)` variable.
-- A `$(...)` placeholder on a line without the `$` prefix fails; Dialog `dynamic/run_command` templates are exempt.
-- A `multi_action` Dialog shown from a function must have at least one action.
-- Trigger objectives are inventoried; missing obvious enable/reset handling is reported as a warning.
-- User-facing trigger lifecycle is enforced in the pack-specific regression test when the pack depends on it.
-- A test ZIP can be built with `pack.mcmeta` and `data/` at archive root.
-- ZIP CRC passes and there is no accidental extra parent directory.
-
-Passing this stage means **static validated**. It does not prove gameplay behavior.
-
-## 2. Pack-specific regression tests
-
-Behavior that matters to one pack belongs in:
-
-```text
-scripts/test-<pack-name>.py
-```
-
-Examples include:
-
-- a previously reported bug reproduced as a regression test;
-- scoreboard dispatch/reset behavior;
-- storage migration and old-world compatibility;
-- macro instantiation with realistic arguments;
-- block-state transforms, coordinate math, limits, and undo buffers;
-- expected block/entity changes from core functions.
-
-If a matching script exists, CI runs it automatically after the generic validator.
-
-A bug fix is not considered complete until its regression case is added when it can be automated.
-
-## 3. Vanilla server smoke test
-
-Before calling a behavior-changing datapack runtime-validated, boot the target vanilla server when an official server JAR is available:
+常用指令（`<pack>` = `utilities`、`warehouse`、`copy-paste`）：
 
 ```bash
-python3 scripts/validate-datapack.py <pack-name> \
-  --java /path/to/java \
-  --server-jar /path/to/server.jar \
-  --accept-eula
-```
-
-This creates an isolated test world, installs a freshly built ZIP, starts vanilla Minecraft, runs `/reload`, asks the server for the enabled datapacks, and scans the console for function/datapack parser failures.
-
-Evidence is saved under:
-
-```text
-dist/validation/<pack>-<timestamp>/console.log
-```
-
-Passing this stage means the pack can boot and reload on the tested vanilla server without the checked parser/load errors. It still does not prove every gameplay path.
-
-## 4. Runtime regression harness
-
-For systems that change the world, the preferred automated server test is an isolated harness that creates deterministic fixtures and checks results with commands.
-
-Warehouse has a dedicated 26.3 harness:
-
-```bash
-python3 scripts/test-warehouse-runtime.py \
-  --java /path/to/java \
-  --server-jar /path/to/server.jar \
-  --accept-eula
-```
-
-It boots the official server, performs `/reload`, rejects parser/datapack errors, verifies the sharded search index, exercises reset/re-registration while preserving custom data, tests the shared count/take/refund API including durable queued refunds and stale-source rejection, and covers the Resolve Block / Pick path.
-
-Utilities has a dedicated 26.3 harness:
-
-```bash
-python3 scripts/test-utilities.py \
-  --java /path/to/java \
-  --server-jar /path/to/server.jar \
-  --accept-eula
-```
-
-It drives tree felling, vein mining, XP ranges, Silk Touch, the pickaxe tier gate, tool durability, crop seeds, the real tick dispatch, waypoint preservation across reload, and macro instantiation.
-
-Copy/Paste has a dedicated 26.3 behavioral harness:
-
-```bash
-python3 scripts/test-copy-paste-runtime.py \
-  --java /path/to/java \
-  --server-jar /path/to/server.jar \
-  --accept-eula
-```
-
-It loads Copy/Paste together with Warehouse and checks Blueprint-only Copy/V behavior, Blueprint nudges, overwrite confirmation, read-only material reporting, all-or-nothing material-backed Build, inventory-before-Warehouse charging, material-aware Undo/Redo, Cut, Move, direct Rotate, five-level history, and Dialog parsing.
-
-## 5. Cross-pack compatibility gate
-
-Utilities, Warehouse, and Copy/Paste are designed to be installed together:
-
-```bash
+python3 scripts/validate-datapack.py <pack>
+python3 scripts/test-<pack>.py
 python3 scripts/test-datapack-compatibility.py
+
+# 官方 Minecraft 26.3 server；替換成環境中的路徑
+python3 scripts/test-utilities.py --java /path/to/java --server-jar /path/to/server.jar --accept-eula
+python3 scripts/test-warehouse-runtime.py --java /path/to/java --server-jar /path/to/server.jar --accept-eula
+python3 scripts/test-copy-paste-runtime.py --java /path/to/java --server-jar /path/to/server.jar --accept-eula
+python3 scripts/test-datapack-compatibility.py --java /path/to/java --server-jar /path/to/server.jar --accept-eula
 ```
 
-The static mode rejects overlapping non-Minecraft namespaces/resources, duplicate scoreboard objectives, replacement of the shared `minecraft:load` / `minecraft:tick` tags, and undeclared writes into another pack's command storage.
+以上官方 runtime 會建立獨立測試世界，只能說明該層已驗，**不能取代 innotest**。如果使用者要求直接 release/no-gate，必須如實標示跳過哪些 gates。
 
-With the official server available:
+## innotest 必守事項
 
-```bash
-python3 scripts/test-datapack-compatibility.py \
-  --java /path/to/java \
-  --server-jar /path/to/server.jar \
-  --accept-eula
-```
+- **每次測試 4 分鐘（240 秒）內**；長套件切成可各自 PASS／FAIL、清理及還原資料的 shard。完整覆蓋不能因時限縮水，也不能用單次 40 分鐘 `--full`。
+- 先讀 server 狀態；用非 SunnyChen 三 bot，保留 SunnyChen 給真人；不要用 `execute as` 冒充玩家操作。
+- Copy/Paste 使用 `scripts/mcc_house.py` 3D house（樓梯、門、台階、箱子、blockstate）逐格比對，不再用少量方塊當完整回歸。Utilities 真挖礦／砍樹／補種；Warehouse 必須依 **inno 地圖上的玩家自訂分類**驗真實箱子與庫存。
+- 操作後還原世界、玩家、Warehouse 與測試檔案。測完**不關機**，除非使用者另有指示。
+- 每項功能驗法、已驗／未驗及證據只維護在 [innotest 覆蓋表](innotest-coverage.md)，版本更新要同步維護。
 
-That boots all three datapacks in one Java 26.3 world and verifies representative Utilities, Warehouse, and Copy/Paste objectives/storage plus the shared Warehouse API.
+## 已知證據與限制
 
-## 6. innotest live multiplayer regression
+| 版本 | 已驗證的範圍 | 證據 |
+| --- | --- | --- |
+| Utilities v3.8 | innotest 功能回歸；v3.7 世界據點／設定載入新版 | [37642068254](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37642068254)，及 [覆蓋表](innotest-coverage.md) |
+| Warehouse v4.7 | 真倉庫、滿箱溢位、背景 Compact、G 導航；跨主世界／地獄／終界 27 checkpoints | [37641685439](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37641685439)、[37656341833](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37656341833) |
+| Copy/Paste v1.8 | **完整 3D house 兩玩家**、新 Copy/Cut 方向歸零、Undo/Redo、Flip/Rotate 等 `MCCMP_CHECK` 全過 | [37718900567](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37718900567) |
+| Copy/Paste v1.8 | 全部 35,720 種合法 Java 26.3 block state + 4 個重複案例：`states=35724 expected=35724 fail=0 air_ret=0` | [37719130915](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37719130915) |
 
-Multiplayer-sensitive Copy/Paste changes have an additional live layer on `innotest.exaroton.me`.
+**尚未證明**：Copy/Paste v1.8 兩位真人 client 同時點 UI；部分 Warehouse Highlight 視覺結果、Copy/Paste Warehouse 混合材料等 live 流程也仍須補（見覆蓋表）。v1.8 **發佈當下**是使用者要求的 direct/no-gate，後來補跑 exact-build live PASS；不能把當時跳過的 release-time gate 寫成 PASS，也不能寫成「v1.8 尚未 live 驗」。
 
-The temporary test datapack is generated by:
+Issue #49／PR #52 的歷史證據：v1.7 matcher [37599912705](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37599912705) 全 state PASS；[37600389867](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37600389867) 為 18/18 多人 PASS。更早的 Windows 真人 UI 只證明當時能按 G、選 Pos1／Pos2／Copy／Paste、旋轉 `oak_stairs` 的 `facing` 並保留其他 property；**不代表 v1.8 UI 已重測**。CI 的 ID tree matcher 會驗每種合法 property 組合，並非只比對總數。歷史 log 中的舊 commit SHA 可能因 Git 歷史壓縮而與目前 main 不同，workflow run URL 仍可追溯。
 
-```text
-scripts/build-copy-paste-multiplayer-test.py
-```
+## Release 規則
 
-The server-side controller operation is:
+一般使用 `.github/workflows/release-pack.yml`：驗證 source 版號與 tag 一致、執行靜態及三包共存 runtime，以及適用的各包 runtime，通過後打包並發佈。只有使用者明確要求直接發佈，才使用 `release-direct`；**跳過驗證不等於 PASS**。
 
-```text
-run-copy-paste-multiplayer-test
-```
+Tag 格式：`<pack>-v<major>.<minor>`；Release ZIP 為 `dist/<pack>-v<version>.zip`。
 
-Normal automation uses a persistent three-bot Mineflayer 26.3 session (`penguin0531`, `geena0701`, `Felicitypeng`) when live players are needed and reserves SunnyChen for the owner/real client. Each harness declares the player names it actually needs; use all four identities only when a test genuinely needs SunnyChen too.
+**2026-10-08 Git 歷史壓縮後**，舊 Release Tag 不移動。一般與 direct Release **都**使用 `scripts/generate-release-notes.py`，直接比較同一 pack 前一版本 tag 與新版的檔案 tree（新增／修改／刪除），不靠共同 commit 祖先或自動 PR 列表，因此舊歷史分岔不會污染更新紀錄。此處是檔案變更摘要，**不是**未經驗證的功能宣稱。
 
-The regression checks:
-
-- independent `pos1` / `pos2` selection state;
-- independent Copy clipboards;
-- unique `mcc_id` allocation;
-- two simultaneous Blueprint previews and cleanup;
-- simultaneous Move;
-- separate work / Undo / Redo lanes;
-- simultaneous Undo and Redo;
-- simultaneous direct Rotate plus isolated Undo;
-- simultaneous `x` Cut and paste;
-- A-only Undo/Redo not changing B;
-- B independent Undo.
-
-The runner writes `MCCMP_CHECK PASS/FAIL ...` for each assertion and ends with `MCCMP_RESULT PASS` only when the entire current run succeeds.
-
-Important implementation rules:
-
-- wait for the harness-declared player names before starting; the normal session has three non-SunnyChen bots, while the current house harness uses `penguin0531` + `geena0701` as its two actors;
-- tag each run with a unique marker so an old `MCCMP_RESULT` cannot be reused accidentally;
-- do not use a fixed sleep as completion detection — exaroton can report `Can't keep up` and scheduled functions may run late;
-- clean the reserved test area, tags, scoreboard objective, temporary test ZIP, and reload only after the current run has produced a result or timed out;
-- distinguish harness/parser/bot infrastructure failures from datapack assertion failures before changing datapack code.
-
-The latest exact-build run is Copy/Paste **v1.8** on 2026-10-08: [run 37718900567](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37718900567) passed every `MCCMP_CHECK` and ended with `MCCMP_RESULT PASS` / `COPY_PASTE_MULTIPLAYER_LIVE_TEST=PASS`. Three non-SunnyChen bots were online and `penguin0531` + `geena0701` were the two actors. The separate v1.8 full Blueprint matcher live gate also passed in [run 37719130915](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37719130915) with `states=35724 expected=35724 fail=0 air_ret=0`.
-
-This layer is **not** the same as two Windows users manually operating the UI. It proves multiplayer server-side state separation with real player entities and real `/trigger`-compatible identities, not mouse/UI ergonomics.
-
-Operational details are in [`exaroton-operations.md`](exaroton-operations.md).
-
-## 7. Real-client verification
-
-Some things a headless server or Mineflayer presence test cannot show: G-key flow, whether Dialog buttons can be clicked and fit the window, crosshair raycasts, and Dialog JSON that only loads when a world is opened.
-
-For these, `scripts/real-client/` (Windows) drives the real Minecraft client with OS-level keyboard and mouse input in a disposable test world and judges results from saved world files rather than trusting a datapack's own PASS message.
-
-- `mcdrive.py` sends input only when Minecraft is foreground.
-- `realplay.py` verifies real command/trigger/reload feedback.
-- `mcworld.py` reads save data; `defaults.json` fills 26.3 block-state defaults omitted from palettes.
-- `stage*.py` scripts cover Warehouse registration/sorting, Copy/Paste Build/Undo/Redo, transforms, charging, Dialog navigation, Utilities vein behavior, and combined-pack scenarios.
-
-GitHub Actions does not run these stages. A green CI run or a green Mineflayer multiplayer run therefore does not prove G, Dialog clicks, real mouse targeting, or crosshair raycasts.
-
-Two simultaneous Windows real clients have not been tested yet; when a client-only check remains, document exactly what was not covered.
-
-## Release rule
-
-For datapacks:
-
-1. Generic static validation must pass.
-2. Pack-specific regression tests must pass when present.
-3. The cross-pack static compatibility gate must pass.
-4. Datapack releases must pass the combined official Minecraft 26.3 Utilities + Warehouse + Copy/Paste runtime compatibility gate.
-5. Utilities, Warehouse, and Copy/Paste releases must also pass their dedicated 26.3 runtime harnesses.
-6. For multiplayer-sensitive Copy/Paste state changes, run the innotest live multiplayer regression before calling the change multiplayer-validated.
-7. Do not describe a pack as real-client validated if only CI or Mineflayer testing was run.
-8. The normal release path is gated. If the owner explicitly requests a direct/no-gate release, that exception may skip validation, but the release must be documented as unvalidated for the skipped layer; never turn a skipped or failing run into a PASS claim.
-
-GitHub Actions runs generic validation, pack-specific regressions, cross-pack static compatibility, dedicated Utilities/Warehouse/Copy-Paste runtime jobs, and the all-datapacks 26.3 compatibility job on relevant `main` pushes and pull requests.
-
-The release workflow verifies the tag version against `pack.mcmeta`, reruns the combined all-datapacks runtime gate for every datapack tag, reruns the dedicated Utilities, Warehouse or Copy/Paste runtime gate when applicable, then builds and publishes the ZIP. Publishing is idempotent: runs for the same tag are serialized, and when the release already exists the ZIP is uploaded to it instead of failing. A release can also be started manually (`workflow_dispatch` on `main` with a `tag` input such as `utilities-v3.8`): the same gates run first, and only then does the workflow create the annotated tag on that `main` commit; it refuses a tag that already points at another commit. Generated release notes start at the same pack's previous release tag (e.g. `copy-paste-v1.5` for `copy-paste-v1.6`), not at whichever pack was tagged last.
+詳細遠端操作見 [exaroton 操作](exaroton-operations.md)。

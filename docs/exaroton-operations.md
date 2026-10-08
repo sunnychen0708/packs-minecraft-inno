@@ -1,157 +1,46 @@
-# exaroton operations and live multiplayer testing
+# exaroton 與伺服器操作
 
-Last updated: **2026-10-07**
+> 規則以 [AGENTS.md](../AGENTS.md) 為準；本頁保留必要的操作方式與 **2026-10-08 最後確認**的狀態，並非即時伺服器狀態。
 
-This document describes the operational tooling for the two exaroton servers used by this repository.
+## 伺服器與權限
 
-## Server roles
-
-| Server | Role | Normal policy |
+| Server | 用途 | 規則 |
 | --- | --- | --- |
-| `inno.exaroton.me` | Production world | Reading is always fine. **Any write** (installing a datapack, changing files, running commands, starting/stopping, UUID maintenance `apply`) needs an explicit instruction from the owner each time. The offline UUID maintenance workflow also requires the server to remain OFFLINE before any write. |
-| `innotest.exaroton.me` | Test server | May be started/stopped, have datapacks deployed, run commands, and run automated multiplayer regressions. |
+| `inno.exaroton.me` | 正式世界 | 唯讀可直接查；**寫入、下指令、開／關／重啟、UUID apply、安裝**每次都需使用者明確授權。不要自行開機。 |
+| `innotest.exaroton.me` | 測試服 | 可依測試需求操作；**測完保持開機**，只有使用者明確要求才關機。必要重啟完成後仍須保持開機。 |
 
-The API token is stored only as the GitHub Actions secret `EXAROTON_API_TOKEN`. Never put the token, a replacement token, or any other credential in the repository or an ops request file.
+API Token 只放 GitHub Actions Secret `EXAROTON_API_TOKEN`，不得寫進 repo 或 request。所有 `ops/*-request.json` 都是一次性操作，執行完恢復 `noop`，不是待辦清單。
 
-## Request files
-
-The repository keeps operational requests in `ops/` so an action is explicit and auditable.
-
-| File | Workflow | Purpose |
+| Request | Workflow | 功能 |
 | --- | --- | --- |
-| `ops/exaroton-request.json` | `exaroton-innotest.yml` | innotest status/log/start/stop/commands/deploy/live regression and controlled identity operations |
-| `ops/mineflayer-request.json` | `mineflayer-innotest.yml` | one-player probe, persistent three-bot default session, or optional four-player session on innotest |
-| `ops/inno-maintenance-request.json` | `exaroton-inno-maintenance.yml` | production UUID maintenance while inno is OFFLINE; `apply` only on the owner's explicit instruction |
+| `ops/exaroton-request.json` | `exaroton-innotest.yml` | innotest 狀態、部署、指令與 live suite |
+| `ops/mineflayer-request.json` | `mineflayer-innotest.yml` | 測試玩家連線 |
+| `ops/inno-maintenance-request.json` | `exaroton-inno-maintenance.yml` | inno 唯讀／離線 UUID 維護 |
+| `ops/release-request.json` | `release-request.yml` | 版本發佈 |
 
-The checked-in baseline for all request files should be `noop`. Change the request only when intentionally triggering an operation, then return it to `noop` after the operation is complete.
+## 玩家身分與資料遷移
 
-## Current innotest identity model
+- `innotest` 為 `online-mode=false`。預設使用 `penguin0531`、`geena0701`、`Felicitypeng` 三個 Mineflayer bot；**`SunnyChen` 留給使用者真人登入**，必要時才作第四個 bot。
+- 正確資料遷移方向是 **inno 的 online UUID → innotest 的 offline UUID**；offline UUID 由 `OfflinePlayer:<name>` 的 UUIDv3 規則產生，不是直接搬舊的 production offline 玩家檔。
+- Java 26.3 玩家資料路徑是 `world/players/data/<uuid>.dat`（含 `.dat_old`）、`world/players/advancements/<uuid>.json`、`world/players/stats/<uuid>.json`；不是舊的 `world/playerdata`、`world/advancements`、`world/stats`。
+- `migrate-inno-online-to-innotest-offline` 會複製玩家檔、改寫確切 UUID 參照、處理 entity region owner UUID、更新白名單與 OP UUID，並保留備份及驗證結果。
+- Production UUID maintenance 僅由獨立的 `exaroton-inno-maintenance.yml` 進行；`uuid-migrate-dry-run` 唯讀，`uuid-migrate-apply` 必須得到當次明確授權且確認 **inno OFFLINE**，不得因此啟動 inno。合併 online/offline stats 時，數字計數器**相加**，用 `uuid-migration-stats-sum-state.json` 避免重複加入。
 
-`innotest` currently runs with `online-mode=false` so the four allowed test identities can log in without Microsoft authorization. Normal automation uses the three non-SunnyChen bots and reserves SunnyChen for the owner/real client. The four allowed bot identities are:
+## Mineflayer 與實機驗證
 
-- `SunnyChen`
-- `penguin0531`
-- `geena0701`
-- `Felicitypeng`
+`scripts/mineflayer26/bootstrap.py`、`scripts/mineflayer26/keepalive.js` 支援 26.3 測試身分；只允許四個名稱，且鎖定 innotest。連線會序列化，閒置 bot 停用自主物理並抑制部分移動封包以避開 26.3 相容問題。因此它們適合測**玩家在線、Trigger、多人狀態隔離**，不能假裝是可正常走動、滑鼠操作的真人 client。
 
-Minecraft offline UUIDs are computed from `OfflinePlayer:<name>` using the standard version-3 UUID algorithm.
+Copy/Paste 正式多人回歸用 `scripts/build-copy-paste-multiplayer-test.py` 產生 3D 房屋測試包，再由 innotest controller 執行 `run-copy-paste-multiplayer-test`。A、B 分別為 `penguin0531`／`geena0701`；等指定玩家穩定在線，檢查**本次**唯一 run marker 與全部 `MCCMP_CHECK`，只在收到 `MCCMP_RESULT PASS` 後判成功，不得重用舊 log 或用固定 sleep 當完成依據。
 
-The important migration direction is:
+- 使用精確的三包來源，不要保留同一 pack 的兩個 ZIP（重複載入會干擾測試）。
+- 清除測試建築、暫存 harness、tag、scoreboard、測試用 forceload，還原玩家及倉庫資料；需要 `/reload` 時只在清理／部署範圍內操作。
+- **每次 innotest 測試最多 240 秒**；完整 coverage 切成獨立 shard，不可因時限少驗。Utilities／Warehouse 用 `run-live-suite`；重查可用 `utilities-recheck`、`warehouse-recheck`，Copy/Paste 用 `recheck`。
+- 把 parser、bot disconnect、chunk 未載入、timeout 與真正的 datapack assertion FAIL 分開處理。CI／Mineflayer PASS 不代表真人 G 鍵、Dialog 或準星操作 PASS。
 
-**production inno online-mode UUID data -> innotest offline-mode UUID data**
+詳細測試層級與證據見 [驗證方式](datapack-validation.md) 和 [功能覆蓋表](innotest-coverage.md)。
 
-Do not use an old offline UUID from production as the source identity for innotest.
+## 最後確認的部署與狀態（2026-10-08）
 
-For Minecraft Java 26.3, per-player files are under:
-
-```text
-world/players/data/<uuid>.dat
-world/players/data/<uuid>.dat_old
-world/players/advancements/<uuid>.json
-world/players/stats/<uuid>.json
-```
-
-The older `world/playerdata`, `world/advancements`, and `world/stats` layout is not the correct 26.3 layout for this server.
-
-The `migrate-inno-online-to-innotest-offline` operation reads the production online UUID identities, copies the matching 26.3 player files to the target offline UUID names on innotest, rewrites exact online UUID references inside copied player NBT, scans every entity-region directory and rewrites matching entity UUID/owner references to the four offline UUIDs, preserves changed target files as timestamped backups, updates whitelist/ops identity UUIDs, and verifies written content. Production is the source; innotest is the destination.
-
-## Mineflayer 26.3 test clients
-
-The Mineflayer stack is bootstrapped by `scripts/mineflayer26/bootstrap.py` and is pinned to the 26.3 protocol work used by this repository.
-
-`keepalive.js` is intentionally conservative:
-
-- target is hard-locked to `innotest.exaroton.me`;
-- only the four names above are accepted;
-- bot logins are serialized instead of opening all clients at once; the normal session is penguin0531 + geena0701 + Felicitypeng, with SunnyChen added only when required;
-- autonomous physics is disabled;
-- client-originated movement packets are suppressed for idle test clients while teleport confirmations, keepalive traffic, chat, and other required protocol traffic continue normally.
-
-The movement suppression exists because the current patched 26.3 Mineflayer stack can emit an invalid movement packet after a server-side teleport. These clients are reliable for presence, `/trigger`-driven datapack state, and server-side multiplayer regression, but they should not be treated as a general-purpose walking client until upstream 26.3 movement support is complete.
-
-## Live Copy/Paste multiplayer regression
-
-The live multiplayer regression is built by:
-
-```text
-scripts/build-copy-paste-multiplayer-test.py
-```
-
-The innotest controller operation is:
-
-```text
-run-copy-paste-multiplayer-test
-```
-
-The controller:
-
-1. requires innotest to be ONLINE;
-2. deploys the exact checked-out `utilities`, `warehouse`, and `copy-paste` sources;
-3. builds and installs a temporary `mcc-multiplayer-test.zip`;
-4. waits for the player names declared by the generated harness; normal suites use only the bots they actually need;
-5. uses `penguin0531` as player A and `geena0701` as player B; `Felicitypeng` may remain online as the third default bot, while `SunnyChen` stays reserved for the owner/real client;
-6. runs same-tick multiplayer checks;
-7. waits for the current run's unique marker and `MCCMP_RESULT` instead of relying on a fixed sleep;
-8. removes the test area, tags, scoreboard objective, temporary harness ZIP, and reloads after completion.
-
-The regression covers:
-
-- independent `pos1` / `pos2` selections;
-- independent Copy clipboards and unique `mcc_id`;
-- simultaneous Blueprint creation and clearing;
-- simultaneous Move;
-- separate work/Undo/Redo lanes;
-- simultaneous Undo and Redo;
-- simultaneous direct Rotate and isolated Undo;
-- simultaneous `x` Cut and paste;
-- A-only Undo/Redo not modifying B;
-- B independent Undo.
-
-The latest full 3D-house Copy/Paste live run is **v1.8**, run [37718900567](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37718900567) on 2026-10-08. Every emitted `MCCMP_CHECK` passed, including the v1.8 new-Copy orientation reset, Blueprint Flip/rotate/reset, all six Move directions, Rotate 90/left/180, both Flip axes, Undo/Redo guards, Cut/Paste, Cut→Undo→Redo orientation rebuilding, and A/B isolation; it ended with `MCCMP_RESULT PASS` / `COPY_PASTE_MULTIPLAYER_LIVE_TEST=PASS`. The separate full Java 26.3 Blueprint matcher live gate also passed on v1.8 in run [37719130915](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37719130915): `states=35724 expected=35724 fail=0 air_ret=0`.
-
-Keep only the controller's fixed file names (`utilities.zip`, `warehouse.zip`, `copy-paste.zip`) in innotest's `world/datapacks`. A second copy of the same pack under another name (for example `copy-paste-v1.5.zip`) is loaded alongside it and contaminates the run; that happened once and was cleaned up before the clean run.
-
-## Recommended live-test sequence
-
-For a multiplayer-sensitive Copy/Paste change:
-
-1. Let normal GitHub validation finish first.
-2. Make sure `innotest` is ONLINE; start it only if it is not.
-3. Reuse the persistent three-bot Mineflayer session (penguin0531, geena0701, Felicitypeng); start/replace it only if the required bots are not already online. Use the four-bot mode only when SunnyChen is actually required.
-4. Wait until the required player names are stably online; the normal default session is the three non-SunnyChen bots, and the current house harness uses `penguin0531` + `geena0701` as actors.
-5. Run `run-copy-paste-multiplayer-test` through the innotest controller.
-6. Require `COPY_PASTE_MULTIPLAYER_LIVE_TEST=PASS` / `MCCMP_RESULT PASS`.
-7. Let the temporary harness clean itself up.
-8. Leave `innotest` ONLINE. Do not stop it as routine cleanup; clean up test state only (see `AGENTS.md`).
-9. Verify a final read-only status of `ONLINE`; persistent test bots may remain online by design.
-10. Return every ops request touched by the operation to `noop`; the repository clean baseline has all four request files at `noop`.
-
-Routine policy is to leave `innotest` ONLINE after testing because repeated stop/start costs more exaroton credits than idling. Restart it only when an installation cannot be completed without a restart, and leave it ONLINE afterwards. Stop it only when the user explicitly asks. **Current exception:** after the 2026-10-08 Copy/Paste v1.8 live run, the owner explicitly requested shutdown; final status was `OFFLINE`, 0 players ([run 37719692728](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37719692728)).
-
-## Production UUID maintenance
-
-Production maintenance is intentionally separate from normal innotest control:
-
-```text
-.github/workflows/exaroton-inno-maintenance.yml
-scripts/exaroton_inno_uuid_migrate.py
-ops/inno-maintenance-request.json
-```
-
-Supported request operations are:
-
-```text
-noop
-uuid-migrate-dry-run
-uuid-migrate-apply
-```
-
-The production maintenance path writes to inno, so `apply` runs only on the owner's explicit instruction each time (`dry-run` only reads); it is constrained to offline UUID maintenance. It must verify that `inno` is OFFLINE and must never start the production server as part of the operation. Offline/online Minecraft statistics are merged by **summing numeric counters**, because they represent separate play histories. The migration records `uuid-migration-stats-sum-state.json` so the same offline source is not added twice on a later rerun. If an earlier max-per-counter migration backup exists, the migration reconstructs the original online baseline from that backup, converts the result to a true sum, and preserves any later online progress. Run `dry-run` before `apply` whenever the source world or identity set has changed.
-
-## Operational cleanup rules
-
-- Never leave a temporary multiplayer harness installed after a test.
-- Never leave a request JSON pointing at the last destructive/state-changing operation; reset it to `noop`.
-- Do not claim a live multiplayer pass from the static/runtime CI jobs alone.
-- Do not claim a real Windows client pass from the Mineflayer live test; they cover different layers.
-- If a live test fails, first distinguish test infrastructure failure (parser error, bot disconnect, timeout, stale log result) from an actual datapack assertion failure before changing datapack behavior.
+- **inno**：正式世界的 `world/datapacks` 已安裝 `utilities-v3.8.zip`、`warehouse-v4.7.zip`、`copy-paste-v1.8.zip`，舊 ZIP 已移除。當次 checksum／部署及唯讀查核 PASS（run `37659192281`），**當次保持 OFFLINE**。
+- **innotest**：Copy/Paste 驗證完成後，使用者當次明確要求關機；最後 `OFFLINE`、0 players（[run 37719692728](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37719692728)）。這是**歷史快照**，下次操作前要再讀即時狀態；不是「一般測完要關機」。
+- **現行版本**：Utilities v3.8、Warehouse v4.7、Copy/Paste v1.8；詳細驗證結果見 [功能覆蓋表](innotest-coverage.md)。

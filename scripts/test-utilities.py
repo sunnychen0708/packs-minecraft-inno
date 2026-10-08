@@ -45,8 +45,8 @@ def static_checks():
     meta = json.loads((PACK / 'pack.mcmeta').read_text(encoding='utf-8-sig'))
     assert meta['pack']['min_format'] == meta['pack']['max_format'] == [121, 0]
     version = re.search(r'v(\d+\.\d+)', meta['pack']['description'])[1]
-    for doc in ('README.md', 'COMPATIBILITY-26.3.md'):
-        assert f'v{version}' in (PACK / doc).read_text(encoding='utf-8').splitlines()[0], f'{doc} not synced to v{version}'
+    # Utilities compatibility notes are consolidated into the pack README.
+    assert f'v{version}' in (PACK / 'README.md').read_text(encoding='utf-8').splitlines()[0], 'README.md version not synced'
     assert f'version set value "26.3-{version}"' in (DATA / 'sunny_nav/function/load.mcfunction').read_text(encoding='utf-8'), f'sunny_nav:meta not synced to v{version}'
     assert f'v{version} 功能總覽' in (DATA / 'allinone/function/help.mcfunction').read_text(encoding='utf-8'), f'help not synced to v{version}'
     logs = json.loads((DATA / 'survival_utils/tags/block/natural_logs.json').read_text())['values']

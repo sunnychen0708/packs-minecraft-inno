@@ -1,91 +1,58 @@
 # Utilities v3.8
 
-> Source: **v3.8** · Latest release: **utilities-v3.8** · Download: **utilities-v3.8.zip** · Previous package name: **整合_v3.2**.
+Minecraft Java 26.3（Data Pack 121.0）。最新 Release：[utilities-v3.8.zip](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/utilities-v3.8)；舊版名稱曾為「整合_v3.2」。
 
-遊戲內名稱「屁眼派對」：Minecraft Java 26.3 資料包，整合生存便利三合一、回家與自訂據點、座標顯示。
+提供傳送與據點、座標顯示、連鎖砍樹、礦脈挖掘與自動補種。遊戲內輸入 **`/trigger help`** 可查看指令教學。
 
-The actual pack source lives directly in this directory. Keep `pack.mcmeta` and `data/` here so Git can track individual changes.
+## 玩家指令
 
-## 核心功能
-
-- 生存便利：自動補種、連鎖砍樹、礦脈挖掘（連鎖挖到的礦照原版給經驗）
-- 座標顯示：Action Bar
-- 固定據點：5 個（家、礦坑、村莊、傳送門、臨時點）
-- 自訂據點：個人 8 個 + 共用 8 個
-- 自訂據點命名與覆蓋位置
-- `/trigger back`：返回上次傳送位置
-- `/trigger deathloc`：返回最近死亡地點
-
-## 指令
-
-輸入 `/trigger help` 查看所有功能。
-
-- 個人：/trigger plist；/trigger pset set 1；/trigger pgo set 1（slot 1～8）
-- 共用：/trigger slist；/trigger sset set 1；/trigger sgo set 1（slot 1～8）
-- 返回上次位置：/trigger back
-- 最近死亡地點：/trigger deathloc
-
-管理員／function API：
-
-- /function nav:set_personal {slot:1,name:"名稱"}
-- /function nav:set_shared {slot:1,name:"名稱"}
-- /function nav:rename_personal {slot:1,name:"新名稱"}
-- /function nav:rename_shared {slot:1,name:"新名稱"}
-- /function nav:back
-- /function nav:death
-
-## 版本歷史
-
-| 版本 | 主要更新 |
+| 用途 | 指令 |
 | --- | --- |
-| **1.0** | 三個 Minecraft 資料包合一（`allinone` 統一調度）；新增 `/trigger help` 統一說明選單 |
-| **1.1** | 新增臨時據點（`/trigger settemp`、`/trigger temp`）；完整固定據點系列（家、礦坑、村莊、傳送門、臨時點） |
-| **1.2** | 刪除所有據點刪除/清除指令（`/trigger pdel`、`/trigger sdel`、`/trigger clearhome` 等）；新增 `[自訂名稱]` 對話框按鈕；移除 help 文字中的粗體符號 |
-| **1.3** | **修正清單顯示 Bug**：1～8 列不顯示，改用 `/dialog show` 指令按鈕；help 改為純文字無任何符號修飾 |
-| **1.4** | **完全移除 dialog 檔**（16 個檔案刪除）；`[自訂名稱]` 改為 `suggest_command`，點擊自動在聊天欄填好管理員指令 `/function nav:set_personal {slot:N,name:"名稱"}`，玩家只需修改「名稱」後送出 |
-| **2.0** | 重新導入 **Dialog 名稱輸入介面**；個人／共用據點可直接點 `[自訂名稱]` 輸入名稱並設定位置，同時保留 `/function` 管理員指令方式；舊據點資料結構維持不變 |
-| **2.1** | **升級至 Minecraft Java 26.3**；Data Pack 格式升至 121.0；修正 Loot Function／Predicate 26.3 語法；連鎖砍樹清單新增白楊木（挖掘事件漏接，於 v3.3 修正）；確保所有 26.2 舊座標、據點、名稱與設定可直接沿用 |
-| **2.2** | 修正 `[自訂名稱]` 找不到 `minecraft:dialog` 元素的問題；名稱輸入改成 **inline Dialog**，不再依賴 Dialog registry 或重新登入 |
-| **3.0** | 修正 `plist` 顯示；將**改名與改位置分離**；新增 `/trigger back` 返回上次位置、`/trigger deathloc` 返回最近死亡地點；共用據點暫時擴充至 16 格 |
-| **3.1** | 共用據點恢復 8 格；`[改位置]` 改回 `[覆蓋]`；第一次設定據點可**同時命名＋儲存位置**；重新加入可點擊、自動填入的「指令教學」；保留 Back／死亡地點 |
-| **3.2** | 正式刪除共用據點 9～16 的相關資料與功能；help 改為**指令教學在上、操作按鈕在下**；固定據點取消直接按鈕；Dialog 按鈕改白色；**Esc／取消不再送出任何指令**，只有確認設定／儲存才會修改資料 |
-| **3.3** | 補齊 Poplar 原木挖掘事件及重置，修復三色 Poplar 連鎖砍樹；修正砍樹／挖礦共用耐久扣除、Unbreaking／Unbreakable 與工具耗盡停止；完成 26.3 相容性審核與官方伺服器回歸測試。 |
-| **3.4** | 依使用者要求撤回 v3.3 的砍樹／挖礦耐久修正，完整恢復 v3.2 的工具耐久處理；保留 Poplar 挖掘事件與 26.3 相容性修正。v3.2、v3.3 release 保持不變。 |
-| **3.5** | 拿掉載入時與玩家第一次加入時的聊天訊息（「[屁眼派對] 已載入」「[傳送系統] 已啟用」「自動補種、連鎖砍樹、礦脈挖掘已預設開啟」）；功能說明仍可用 `/trigger help` 查看。 |
-| **3.6** | 礦脈挖掘連鎖挖到的礦會照原版掉經驗：煤 0～2、青金石 2～5、紅石 1～5、鑽石 3～7、綠寶石 3～7、石英 2～5、地獄金礦 0～1；鐵、銅、金礦與遠古遺骸原版不掉經驗，維持不給。用絲綢之觸挖不給經驗，和原版相同。工具耐久處理不變。 |
-| **3.7** | 礦脈挖掘檢查鎬的等級：連鎖中的每一顆礦都先確認主手的鎬能採這種礦（依原版 `incorrect_for_*_tool` 方塊標籤，例如鑽石／綠寶石／金／紅石礦要鐵鎬以上、遠古遺骸要鑽石鎬以上），等級不夠就整條停止，不掉落、不給經驗、不扣耐久，礦留在原地。原版用等級不夠的鎬挖第一顆本來就不會觸發連鎖；v3.6 以前的漏洞是挖完第一顆後在同一刻換成低階鎬，連鎖仍會用低階鎬挖出鑽石等掉落物與經驗（`loot … mine` 本身不檢查等級）。 |
-| **3.8** | 修正所有據點傳送（家、礦坑、村莊、傳送門、臨時點、個人／共用據點、Back、死亡地點）落點偏半格：原本會傳到四塊方塊的交角，旁邊有牆時會卡進牆裡，現在一律落在方塊正中央（主世界、地獄、終界皆同）。連鎖砍樹的「附近有沒有樹葉」檢查改成由近到遠找、找到就停，檢查範圍不變，判斷結果與舊版相同，只是一般的樹檢查得更快。 |
+| 功能教學／座標顯示 | `/trigger help`、`/trigger coords` |
+| 個人據點（1–8） | `/trigger plist`、`/trigger pset set 1`、`/trigger pgo set 1` |
+| 共用據點（1–8） | `/trigger slist`、`/trigger sset set 1`、`/trigger sgo set 1` |
+| 返回上次傳送位置／死亡地點 | `/trigger back`、`/trigger deathloc` |
+| 生存便利開關 | `/trigger treecap`、`/trigger veinmine`、`/trigger replant` |
 
-## 安裝與更新
+將例子中的 `1` 換成 1–8。固定據點包含家、礦坑、村莊、傳送門、臨時點；所有據點傳送都落在方塊中央，支援主世界、地獄與終界。
 
-下載 [utilities-v3.8.zip](https://github.com/sunnychen0708/packs-minecraft-inno/releases/download/utilities-v3.8/utilities-v3.8.zip)，移除世界 `datapacks/` 中的舊 Utilities ZIP（utilities-v3.7.zip、utilities-v3.6.zip、utilities-v3.5.zip、utilities-v3.4.zip、utilities-v3.3.zip、utilities-v3.2.zip、整合_v3.2.zip 或 vanilla-utilities-v3.2.zip），ZIP 不用解壓直接放入，再執行 `/reload`。不要同時載入兩份。
+連鎖砍樹需蹲下、持斧頭，附近要有樹葉；單次最多 64 根，支援 Poplar 三色樹葉。礦脈挖掘照原版礦石給經驗，絲綢之觸不給；鎬的材質等級不足則不會連鎖挖取。自動補種需有可用種子。
 
-蹲下並持斧頭挖掉 Poplar 原木即可觸發；紅／橙／黃葉皆支援。單次最多連鎖 64 根，仍需附近有樹葉；無葉倒木及建築木材不會因這次更新取消保護。
+## 管理與資料相容
 
-工具耐久處理已恢復為 v3.2 行為；v3.3 新增的逐塊扣耐久與耗盡停止邏輯已撤回。
+據點名稱可透過遊戲內 Dialog 管理；管理員也可用：
 
-礦脈挖掘時，你親手挖的第一顆照原版給經驗；連鎖挖掉的每一顆會在原位置掉一顆經驗球，數值照原版該礦的隨機範圍。抽到 0 時不掉經驗球。
+```mcfunction
+/function nav:set_personal {slot:1,name:"名稱"}
+/function nav:rename_personal {slot:1,name:"新名稱"}
+/function nav:set_shared {slot:1,name:"名稱"}
+/function nav:rename_shared {slot:1,name:"新名稱"}
+```
 
-礦脈挖掘只連鎖主手鎬等級採得到的礦（鑽石／綠寶石／金／紅石礦要鐵鎬以上，鐵／銅／青金石礦要石鎬或銅鎬以上，遠古遺骸要鑽石鎬以上）；等級不夠時整條礦脈不動。
+**v3.8 不更換**既有 storage／scoreboard ID；固定、個人／共用據點、名稱、玩家開關可延用。舊 world v3.7 → v3.8 已在 innotest 驗證 PASS，證據見 [覆蓋表](../../docs/innotest-coverage.md)。
 
-## 舊資料相容
+重要的既有設計：**v3.4 撤回了 v3.3 工具逐塊扣耐久的修正，恢復 v3.2 的耐久處理**（包含舊的工具修復行為）；沒有在新版偷偷重新引入逐塊扣耐久。新增 Poplar mined objective 與 26.3 相容修正保留。資料包對應原版 Java 26.3 格式 `[121,0]`。
 
-- 家、礦坑、村莊、傳送門、臨時點、個人據點 1～8、共用據點 1～8、名稱、功能開關全部沿用。
-- storage ID 與既有 scoreboard objective 名稱不更動。
+## 版本重點
 
-## 注意
+| 版本 | 更新 |
+| --- | --- |
+| v1.x–v2.x | 三包整合、5 種固定與個人／共用據點、Dialog 命名、升級 Minecraft 26.3 |
+| v3.0–v3.2 | Back／死亡點、各 8 格據點、清理無用功能與介面 |
+| v3.3–v3.4 | 補上 Poplar 挖掘事件；撤回耐久改動，保持 v3.2 行為 |
+| v3.5 | 移除載入與首次加入的多餘聊天訊息 |
+| v3.6 | 礦脈連鎖掉落的原版 XP（煤、青金石、紅石、鑽石、綠寶石、石英、地獄金礦） |
+| v3.7 | 礦脈鎬階檢查，防止等級不足的鎬取得高階礦掉落 |
+| **v3.8** | 修正所有傳送點落在方塊交角的問題；樹葉檢查改為近到遠、找到即停 |
 
-- 名稱輸入視窗送出時仍由 Vanilla dynamic/run_command 呼叫 function；若伺服器限制一般玩家執行 function，可能受權限規則影響。
-- Esc／取消不會執行該 dynamic/run_command。
-- back／死亡地點與原傳送系統支援主世界、地獄、終界。
-- Data Pack 格式：121.0（Minecraft Java 26.3）。
+## 安裝與驗證
 
-詳見 [26.3 相容性審核與測試](COMPATIBILITY-26.3.md)。
+移除舊 Utilities ZIP（含 `整合_v3.2.zip`／`vanilla-utilities-v3.2.zip`），只放入目前版本的 ZIP 至世界 `datapacks/`，再依情況 `/reload`；**勿同時載入兩份**。使用 Dialog 時，變更 registry JSON 可能需要重入世界。
 
-## Release naming
+```bash
+python3 scripts/validate-datapack.py utilities
+python3 scripts/test-utilities.py
+python3 scripts/test-utilities.py --java /path/to/java --server-jar /path/to/server.jar --accept-eula
+```
 
-Use `utilities-v<version>` for release tags and `utilities-v<version>.zip` for downloads.
-
-[Utilities v3.2](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/utilities-v3.2) replaces the former `vanilla-utilities-v3.2` release name. This naming-only re-release preserves v3.2 gameplay and saved data; the original Git tag remains as a historical alias. Replace the old ZIP rather than loading both copies.
-
-Example: `utilities-v3.8`
+官方 26.3 runtime 檢查 Poplar、無葉保護、砍樹／挖礦、鎬階、XP、耐久、補種與舊據點資料；但它不取代 [innotest 功能覆蓋](../../docs/innotest-coverage.md)，真人 UI 也要獨立驗證。舊 Release Tag 與歷史仍在 GitHub Releases。

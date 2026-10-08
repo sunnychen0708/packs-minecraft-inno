@@ -1,44 +1,20 @@
 # Warehouse v4.7
 
-Minecraft Java 26.3 automatic sorting warehouse data pack.
+Minecraft Java 26.3 自動分類倉庫 Datapack。最新 [warehouse-v4.7.zip](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/warehouse-v4.7)。
 
-The actual pack source lives directly in this directory. Keep `pack.mcmeta` and `data/` here so Git can track individual changes.
+按 **G** 開倉庫主畫面：查詢物品、分類設定、箱子管理、查看倉庫、Pick；也可導向 Copy/Paste 建築工具。
 
-## Release
+## 安裝與玩家操作
 
-Current version: `v4.7`
+1. 從世界 `datapacks/` 移除舊 `Minecraft_Warehouse_*.zip`／`warehouse-v*.zip`，只保留新版 ZIP。
+2. 放入 `warehouse-v4.7.zip`，**退出世界再進入**以載入 Dialog registry；`/reload` 不保證更新這類 Dialog。
+3. 不會重置既有 **61 箱註冊、箱名、玩家自訂分類覆寫、scoreboard**。移除 Warehouse 前，先執行 `/function warehouse:chunks/release` 釋放本包擁有的 forceload。
 
-Latest published release: `warehouse-v4.7.zip`
+在 G →「查詢物品」可搜尋繁中名稱、分類名稱、Minecraft ID 或一個中文字；上限 30 筆。點結果可調整分類、Highlight 箱子或「取一組」。分類修改後，舊主箱的相同 item ID 會背景搬移，依序主箱 → 溢位箱 → 保留在入口箱，**滿箱不刪物品**。原版自由文字 Dialog 的權限確認頁無法用純 Vanilla 隱藏。
 
-## v4.7 修正
+玩家看著約 6 格內方塊，可用 `/trigger pick`（或 Dialog「Pick 一組」）從 Warehouse 取最多一組原版堆疊。不能可靠偵測滑鼠中鍵，故不用滑鼠中鍵當入口。
 
-修正背景堆疊與共用搬運合併的箱子 NBT 讀取維度：來源依 `dimension`、主箱目的依 `dest_dimension`、溢位目的依 `ov_dimension`，避免地獄／終界倉庫誤讀主世界同座標箱子的庫存。既有註冊、分類與物品格式不變，不需要 migration。
-
-## 玩家說明
-
-按 **G** 開啟自動分類倉庫主畫面。
-
-### 安裝／升級
-
-1. 移除舊版 Minecraft_Warehouse_26.2_v*.zip、Minecraft_Warehouse_26.3_v*.zip 或舊 warehouse-v*.zip；不要同時載入兩份。
-2. 將 warehouse-v4.7.zip 放入世界 datapacks 資料夾。
-3. 退出世界再重新進入（Dialog 介面只在進入世界時載入，只打 /reload 不會更新介面）。
-4. 既有 61 箱註冊、玩家分類覆寫、自訂箱名、scoreboard 與其他世界資料會沿用；migration 不會重設這些資料。
-
-移除 Warehouse 前先執行 `/function warehouse:chunks/release`，釋放 Warehouse 自己加的倉庫 chunk forceload（不會動到別人加的）。
-
-### 查詢／分類設定
-
-- G →「查詢物品」，或「分類設定」→「打字選擇物品」。
-- 支援繁中名稱、分類名稱、Minecraft ID；一個中文字也可搜尋。
-- 查詢結果會顯示目前分類箱與有庫存／無庫存／箱未註冊／箱失效狀態。
-- 點結果可新增、移動或移除分類，並可直接 Highlight 或取一組。
-- 修改分類後，舊主分類箱內相同 base item ID 的既有庫存會背景搬往新分類箱。
-- 搬移沿用主箱 → 同區溢位箱 → 放不下保留來源的安全搬運邏輯。
-- 每次搜尋最多採用前 30 筆結果。
-- 自由文字 Dialog 仍會出現 Minecraft 原版高權限確認頁，純 Vanilla 無法取消。
-
-### 自動整理控制（需 OP）
+管理員開關：
 
 ```mcfunction
 /function warehouse:system/on
@@ -46,151 +22,59 @@ Latest published release: `warehouse-v4.7.zip`
 /function warehouse:system/toggle
 ```
 
-預設開啟。
+倉庫 chunk 自 v4.6 起會依註冊維持 forceload，背景 sorting、查詢、Pick 與 API 不必玩家在場；**如果整個 server 因無玩家而暫停 tick，背景整理仍不會進行**。只支援原版三維度，未正式支援自訂維度。
 
-### 舊資料相容性
+## 舊資料／版本
 
-- 可從 Minecraft 26.2 v3.2、26.3 v3.3/v3.4、Warehouse v4.0～v4.6 直接升級。
-- 不重設 warehouse:chests：61 箱座標、dimension 與其他既有註冊 metadata 保留。
-- 不重設 warehouse:boxnames：玩家自訂箱名保留。
-- 不重設 warehouse:rules overrides：玩家新增／移動／移除的分類覆寫保留。
-- 不更名既有 scoreboard objectives；既有玩家與系統分數可繼續使用。
-- v4.0～v4.6 migrations 都以可再生成資料或版本 marker 為主；目前 v4.6 marker 不會清空既有世界資料。
-- 搜尋索引屬可重建資料；v4.2 起使用 72-shard 建立流程。
+- 可以從 26.2 v3.2、26.3 v3.3/v3.4、Warehouse v4.0–v4.6 升級，玩家自訂分類優先於預設規則；索引是可重建資料。
+- v4.2 起將搜尋索引拆為 72 shard，每 tick 一份，避免 65,536 command-chain 上限。
+- v4.7 修正背景 Compact 與跨維度搬運讀取來源／主箱／溢位箱時，誤把地獄或終界註冊箱當主世界座標的問題；**不改既有存檔格式、不需 migration**。
 
-### 目前限制
+| 版本 | 主要變更 |
+| --- | --- |
+| v0.x–v1.x | 61 箱架構、倉庫註冊、54 分類箱／6 溢位、查詢與玩家覆寫 |
+| v2.x–v3.x | Dialog 搜尋、分類搬移／庫存狀態、Minecraft 26.3 相容 |
+| v4.0–v4.2 | 26.3 物品（Poplar、混凝土／羊毛階梯與半磚、Explorer Maps 等）、reset hotfix、72-shard 搜尋 |
+| v4.3 | 64-source 去重材料 API、持久退款 queue、Highlight |
+| v4.4–v4.5 | Pick、Resolve Block、分類／Dialog／Runtime 修正 |
+| v4.6 | 註冊箱 chunk forceload、遠端庫存查詢與 Compact 最佳化 |
+| **v4.7** | 修正主世界／地獄／終界跨維度讀取與合併 |
 
-- 尚未提供「依箱子瀏覽全部分類規則」與「一鍵清空該箱全部分類」。
-- 尚未提供入口箱「未分類物品清單 → 直接批次設定」頁面。
-- 尚未提供完整的滿箱／溢位滿／箱子失效通知中心與快速重新註冊提示。
-- v4.6 起，已註冊箱子所在的 chunk 會一直保持 forceload（inno 的 61 箱只占 3 個 chunk），所以就算沒有人在倉庫附近，背景整理、查詢、Pick 與共用材料 API 都照常運作。只在註冊、刪除註冊、重設註冊與載入時重建，另外每 10 秒補回被其他 datapack 拿掉的 forceload；原本就由別人 forceload 的 chunk 不會被記錄或移除。
-- 伺服器在沒有任何玩家時若設定 `pause-when-empty-seconds` 會暫停整個世界，這段時間背景整理也不會跑。
-- 尚未正式支援自訂維度。
-- 查看倉庫遇到名稱表之外的新物品時，可能顯示 Minecraft ID。
-- 純 Vanilla Datapack 無法提供伺服器硬崩潰瞬間的資料庫級 transaction 保證。
-- 真正的滑鼠中鍵事件無法由純 Vanilla datapack 可靠偵測，因此 Pick 使用 Trigger / Dialog。
+## 給其他 Datapack 的共用 API
 
-### Minecraft 26.3 新物品分類（v4.0 起）
-
-- 28 交通運輸：楊木船、儲物箱楊木船。
-- 35 沙岩建材：16 色混凝土階梯、16 色混凝土半磚。
-- 36 原木木材：楊木原木、楊木塊、剝皮楊木原木、剝皮楊木塊、楊木材。
-- 37 木製建材：楊木階梯、半磚、柵欄、柵欄門、按鈕、壓力板、門、地板門、告示牌、懸掛式告示牌、展示架。
-- 41 探索導航：26.3 的 16 種獨立 Explorer Map 物品。
-- 52 羊毛織染：16 色羊毛階梯、16 色羊毛半磚、16 色坐墊、乾草床。
-- 56 林地生態：楊木樹苗、紅／橙／黃楊木樹葉、層孔菇、紅灌木。
-
-## Version history
-
-See [CHANGELOG.md](CHANGELOG.md) for the Warehouse version history and known issues.
-
-
-## Shared API
-
-Warehouse is the shared inventory backend for other packs that are installed alongside it.
-
-The shared material-source snapshot is rebuilt with:
-
-`function warehouse:api/material_sources/refresh`
-
-It exports registered and valid Warehouse containers to `storage warehouse:api material_sources`, writes the number of exported sources to `material_source_count`, and publishes `material_source_limit:64`. The current Warehouse layout has 61 registration slots, so it fits inside the 64-source contract without changing existing registration data. If the same physical large chest is registered under multiple codes, the public snapshot exports it only once (including reversed A/B registration) so inventory cannot be double-counted.
-
-### Count item
-
-Call the public macro function with an item ID:
+Warehouse 是 Copy/Paste 的共享材料後端。有效的註冊容器會去重（同一個大箱兩半／重複編號不重複算），最多 **64 個來源**；目前設計有 61 個註冊箱位。
 
 ```mcfunction
+function warehouse:api/material_sources/refresh
 function warehouse:api/count_item {item_id:"minecraft:stone"}
-```
-
-The result is written to `storage warehouse:api result`:
-
-```snbt
-{
-  ok:1b,
-  complete:1b,
-  item_id:"minecraft:stone",
-  available:128,
-  sources_scanned:61,
-  stale_sources:0,
-  source_limit:64
-}
-```
-
-The endpoint refreshes the public material-source snapshot first, temporarily force-loads only the chunks needed for each registered source, and never removes a force-load ticket that already existed before the API call. If a source is still registered/valid in storage but the physical large chest is missing or inaccessible, `complete` and `ok` become `0b` and `stale_sources` is incremented instead of silently reporting a trustworthy total.
-
-### Take item
-
-```mcfunction
 function warehouse:api/take_item {item_id:"minecraft:stone",count:50}
-```
-
-The endpoint consumes only **plain stacks** of the requested item ID. A stack is plain when its `components` compound is absent or has zero direct children; named/container/custom-data variants are skipped.
-
-Withdrawal is **all-or-nothing**. The API first counts the same plain stacks across a deduplicated snapshot of physical Warehouse containers. If any source is stale or the total is below `count`, it removes nothing and reports `error:"source_unavailable"` or `error:"insufficient_stock"`. If preflight succeeds, count and withdrawal run synchronously in the same function call, then the exact requested amount is removed.
-
-### Refund item
-
-```mcfunction
 function warehouse:api/refund_item {item_id:"minecraft:stone",count:50}
 ```
 
-Refund always targets Warehouse entry chest `c00`; Warehouse's normal sorter remains responsible for routing returned items afterward. The endpoint probes the item's vanilla max stack size, merges into existing plain stacks first, then uses empty entry slots.
+`material_sources/refresh` 更新 `storage warehouse:api material_sources`，並公開 `material_source_count`／`material_source_limit:64`。其他 API 以 `storage warehouse:api result` 回傳狀態。
 
-Refund is durable: if `c00` is full, temporarily unavailable, stale, or not currently registered, the physical remainder is appended to `storage warehouse:api pending_refunds` before the API returns. The result reports `inserted`, `queued`, `deferred`, and leaves `remaining:0` once Warehouse has accepted responsibility for a valid positive refund. `warehouse:tick` retries one pending entry per tick without overwriting the last public API result. This lets callers such as Copy/Paste finish an Undo safely even when the entry chest cannot accept every returned stack immediately.
-
-### Highlight
-
-Warehouse 已提供玩家可見的 Highlight API：
+- **Count**：回傳 `ok`、`complete`、`available`、`sources_scanned`、`stale_sources`、`source_limit`。實體箱缺失或不可讀時 `complete=0b`、`ok=0b`，不能把不完整數量當可用庫存。
+- **Take**：僅取普通 stack（無 `components` 或為空），**all-or-nothing**。任何來源 stale／總數不足時不移動物品，回傳 `source_unavailable`／`insufficient_stock`；成功 preflight 後同步扣足指定數量。
+- **Refund**：先歸還至 `c00` 入口箱；空間不足、箱子暫時不可用或未註冊時，剩餘材料記錄到 `storage warehouse:api pending_refunds`，由 `warehouse:tick` 重試，每 tick 處理一筆。不以掉到地上的物品替代退款。
+- **Highlight**：對執行的玩家顯示註冊箱的 `end_rod` 粒子與箱號／維度／A+B 座標；未註冊／失效會拒絕。
 
 ```mcfunction
 data modify storage warehouse:api request set value {code:11}
 function warehouse:api/highlight
-```
 
-API 直接讀取既有 `warehouse:chests` 註冊資料，不建立第二份箱子座標表。有效箱位會只對呼叫玩家顯示 `end_rod` 粒子 Highlight，並在聊天列印箱號、維度與 A/B 兩半座標；未註冊或失效箱位會拒絕 Highlight。
-
-遊戲內「物品查詢」也共用這條路徑：搜尋物品 → 點選結果 → 分類結果頁 →「Highlight 箱子」。因此搜尋與分類設定使用同一份 `wh_rulebox` / Warehouse 註冊資料，不需要額外同步。
-
-### Resolve block
-
-`warehouse:api/resolve_block` 會在目前執行位置讀取方塊，使用 Silk Touch loot 模擬解析其可取得的生存物品，但不破壞來源方塊：
-
-```mcfunction
 execute positioned 100 64 100 run function warehouse:api/resolve_block
 ```
 
-成功時 `storage warehouse:api result` 會包含 `operation:"resolve_block"`、`item_id` 與該物品的 `max_stack`。沒有正常生存掉落對應的方塊會回報 `no_survival_item`，不會憑空建立物品。
+`resolve_block` 讀取執行座標上的方塊，模擬 Silk Touch loot 解析可生存取得的 item ID／原版最大堆疊，不破壞方塊；無對應時回傳 `no_survival_item`。
 
-## Pick
+## 已知限制與驗證
 
-玩家看著方塊後可直接：
+尚無分類規則全覽／一鍵清空分類、未分類物品批次設定、完整滿箱通知中心；部分新物品可能以 Minecraft ID 顯示。純 Vanilla 不提供硬崩潰瞬間的資料庫級交易保證。
 
-```mcfunction
-/trigger pick
-```
-
-Pick 最遠約 6 格，會忽略空氣與水／岩漿等流體，解析準星方塊後使用共用 Warehouse `count_item` / `take_item` API 取料。一次最多拿該物品的原版最大堆疊數；若倉庫只有較少數量，會拿現有數量。只消耗 Warehouse API 認定的普通、無自訂 components 堆疊。
-
-真正的滑鼠中鍵事件無法由純 Vanilla datapack 可靠偵測，因此 Phase 4 的入口是 `/trigger pick` 與 Warehouse 主 Dialog 的「Pick 一組」按鈕。物品查詢也共用同一條取料路徑：搜尋物品 → 點選結果 →「取一組」，不另外維護第二套庫存或扣料邏輯。
-
-## Validation
-
-Static and pack-specific checks:
-
-```console
+```bash
 python3 scripts/validate-datapack.py warehouse
 python3 scripts/test-warehouse.py
-python3 scripts/test-datapack-compatibility.py
+python3 scripts/test-warehouse-runtime.py --java /path/to/java --server-jar /path/to/server.jar --accept-eula
 ```
 
-Official Minecraft 26.3 behavioral regression:
-
-```console
-python3 scripts/test-warehouse-runtime.py \
-  --java /path/to/java \
-  --server-jar /path/to/server.jar \
-  --accept-eula
-```
-
-CI runs the dedicated Warehouse runtime regression and a second combined runtime gate with Utilities + Warehouse + Copy/Paste loaded together. Datapack release tags rerun the combined compatibility gate, and Warehouse releases also rerun the dedicated Warehouse runtime gate before publishing.
+v4.7 三維度 Compact／merge 在 innotest 通過 27 checkpoints。詳見 [驗證證據與限制](../../docs/innotest-coverage.md)；不要把 API 驗證直接當成 Highlight 的玩家視覺確認。

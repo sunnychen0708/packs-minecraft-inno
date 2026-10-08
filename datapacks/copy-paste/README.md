@@ -1,291 +1,116 @@
-# Minecraft Copy/Paste Datapack v1.8
+# Copy/Paste v1.8
 
-> Source: **v1.8** · Latest release: **copy-paste-v1.8** · Download: **copy-paste-v1.8.zip**
+Minecraft Java 26.3（Data Pack 121.0）生存建築工具。最新 [copy-paste-v1.8.zip](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/copy-paste-v1.8)。按 **G → 建築工具**（需同裝 Warehouse）進入 Dialog；所有玩家指令也可輸入 `/trigger cphelp` 查看。
 
-適用：Minecraft Java Edition 26.3（Data Pack 121.0）
-
-純 Vanilla datapack。操作使用 Trigger 或 Dialog。施工材料先從玩家背包（含副手）拿，不夠再從同 repo 的 Warehouse datapack 共用材料來源拿。
-
-## v1.8
-
-- 修正新的 Copy／Cut 會繼承上一個 Blueprint 的 Rotate／Flip 狀態：現在每次新的 Copy、Cut，以及 Cut → Undo → Redo 重建 Clipboard，都從原方向（0°、未翻面）開始。
-
-## v1.7
-
-- Blueprint 讀取方塊狀態變快：原本把 26.3 的 35,720 個方塊狀態逐一完整比對（一般方塊約 500 個指令），現在先用依常見程度排序的方塊標籤樹找出方塊 ID，再逐一判斷每個屬性（石頭、泥土 6 個指令，所有狀態平均約 24 個、最多 78 個）。複製出來的 Blueprint 內容和舊版完全相同；不改世界資料，不需要 migration。
-- **Undo／Redo 安全檢查不再看 block state**：同一個 block ID 的 state 變化一律忽略（例如門開關、樓梯方向、waterlogged）；方塊種類被換掉或 Block Entity 內容（例如箱子物品）被改過仍會拒絕。
-- **Undo／Redo 被擋下時直接列差異**：需要補回的材料／方塊數量、需要移除的多餘方塊、Block Entity／容器內容異常，以及實際世界座標（一次最多 20 筆；修好後重試會繼續列下一批）。
-- **沒有自訂 Anchor 時 Flip 以外框中心原地鏡射**（Blueprint 與直接 Flip 都一樣），不會把整個結構推到另一側；有自訂 Anchor 時才以 Anchor 為基準。
-- 修正直接 Rotate／Flip 的目標位置原本有方塊時，來源方塊會被吃掉：現在先在隱藏 Work 區轉好，再整塊覆蓋到目標。
-- Cut Clipboard 用 `v` 真正貼上時，翻面規則和 Blueprint 一致：沒有自訂 Anchor 一律以外框中心原地翻面，有自訂 Anchor 才以 Anchor 為基準。
-- Undo／Redo 安全檢查：範圍超過 16,384 格，或差異格太多（一個 tick 內比不完）時，不做「忽略 block state」的逐格比對，退回「完全一致才放行」，避免指令數超過上限時 Undo 沒有任何反應。
-
-## v1.6
-
-- v1.4 已不再建立舊 trigger objective：`rotate`、`mirror`、`rotate90`、`rotate270`、`flipx`、`flipz`。這些名稱是全世界共用，Minecraft 沒有 objective ownership metadata，因此 v1.6 **不會在 `/reload` 自動刪除**，避免誤刪其他 datapack 同名 objective。從 v1.3 以前升級、且管理員確認這六個名稱沒有被其他 datapack 使用時，可手動執行 `/function mcc:admin/cleanup_legacy_triggers` 清理。`rotate180` 和其他現行指令不受影響。
-
-## v1.5
-
-- 修正微調 Blueprint 後、覆蓋檢查還沒跑完就清除預覽（`previewclear`、Copy）或旋轉／翻面重建時，舊的覆蓋檢查不會停止：清除後仍會跑完並說「Blueprint 覆蓋檢查更新完成」，重建時可能留下舊暫存區的永久 forceload。現在清除或重建 Blueprint 會先取消進行中的覆蓋檢查並解除它的 forceload。
-
-## v1.4
-
-- 拿掉載入時與第一次使用時的聊天訊息；介面一律從 G →「建築工具」開啟。
-- 移除舊指令 `rotate`、`mirror`、`rotate90`、`rotate270`、`flipx`、`flipz`；改用以玩家面向為準的 `bpturnright`／`bpturnleft`／`bpflip`／`bpflipfb`／`bpreset` 與 `turnright`／`turnleft`／`flip`／`flipfb`（`rotate180` 保留）。
-
-## v1.3
-
-- **修正「材料檢查」會直接扣料施工（v1.1 起）**：材料足夠時按 `/trigger materials`，原本會一路執行到扣料並蓋出建築；現在只列出材料表。材料不足時也不再多印「材料不足，未施工」。
-- **施工也從玩家背包拿材料**：先用背包（主背包與副手）的一般物品，不夠再從 Warehouse 扣；改名、附魔等帶自訂 components 的物品不會被使用。Undo 時從背包扣的退回背包（塞不下的退 Warehouse，不會掉在地上），從 Warehouse 扣的退回 Warehouse。材料檢查會分開顯示「背包 N + Warehouse M」。
-- **轉向／翻面指令改成以玩家面對的方向為準**，不再有 X/Z 與 `set 10/20/30/40` 代碼：Blueprint 用 `bpturnright`／`bpturnleft`／`bpflip`（左右翻）／`bpflipfb`（前後翻）／`bpreset`；直接改原本建築用 `turnright`／`turnleft`／`flip`／`flipfb`。舊指令仍可用。
-- **控制面板精簡**：主畫面只剩 Pos1、Pos2、Copy、Cut、Paste、Build、Undo、「調整預覽…」、「更多…」；其他功能移到子頁。貼上模式按鈕直接顯示目前模式（完全取代／保留原方塊），切換後立即更新。所有頁面由 function 產生，`/reload` 即可更新。
-- **材料清單顯示物品名稱**：缺料清單與材料檢查使用遊戲翻譯鍵，玩家看到自己語言的名稱（例如「橡木門」），滑鼠移上去顯示 item ID。
-- `/trigger cphelp` 教學改成 1～5 步驟：選範圍 → 複製 → 放預覽 → 調預覽 → 蓋出來，另列「直接改原本的建築」。
-
-- **防複製修正**：所有真實世界編輯（Cut、Move、Flip、Rotate、貼上、Build）的 Undo/Redo 都會先比對「操作完成後的世界快照」；只要該區域之後被改過（包含箱子內容物），就拒絕 Undo/Redo，避免把已拿走的物品還原回來。
-- **Cut → Undo 會作廢目前的 Cut Clipboard**：來源被還原後，不能再用 `/trigger v` 把同一批方塊或箱子內容物貼第二次。
-- **Cut → Undo → Redo 會重新建立原本的 Cut Clipboard**：即使 Undo 後做過別的 Copy，Redo 也會恢復當初 Cut 的內容，可再用 `/trigger v` 搬移。
-- 修正 Rotate／Mirror 後的 Masked 貼上會退回 Replace：來源是空氣的格子不再覆蓋目標既有方塊。
-- 修正有自訂 Anchor 時 Flip X/Z 會移動 Anchor 本身：現在 Anchor 固定不動，結構以 Anchor 所在平面為鏡像軸翻轉。
-- 修正長距離 Move／外部 Anchor Rotate：來源加目的地的 Z 跨度超過 200 格時，搬過去的前幾排會被內部暫存區覆蓋而遺失。
-- **有門的建築現在可以施工**：門上半部、床腳、雙格植物上半部不再被誤判成「無法換算材料」；材料算在另一半。
-- **修正 Cut／Move／Flip／直接 Rotate 會複製物品**：清空來源與內部暫存不再觸發方塊更新，吊燈籠、門、牆上火把不會再掉成多出來的物品。
-- 舊版沒有防複製快照的 Undo/Redo 歷史會被拒絕執行，並提示從下一次編輯開始建立新的安全歷史。
-- 材料檢查／施工／材料型 Redo 進行中時按下的 Copy、Cut、V、Undo/Redo、Move/Flip/Rotate 與 Blueprint 微調，現在會提示「這個指令沒有執行」，不再無聲忽略。
-- **Blueprint 預覽不再歪半格**：預覽方塊原本用整數座標召喚，Minecraft 會自動把 X/Z 置中加 0.5，整個預覽往斜角偏半格；現在精確對齊方塊格。
-- `/trigger cphelp` 指令教學改成聊天室訊息（跟 Utilities 一樣），點指令會自動填入聊天欄，滑鼠移上去看說明；不再開 Dialog。
-
-## v1.2.1
-
-- 修正 active `/trigger copypaste` Dialog 缺少「清 Anchor」操作；現在可直接執行 `/trigger anchor set 2` 回到 Pos1 預設 Anchor。
-- 驗證改為直接檢查實際使用中的 Dialog，不再拿未被主流程呼叫的 legacy `panel.mcfunction` 當玩家 UI 證據。
-- v1.2 真人 Trigger harness 補上「可重新選新區域／未重選則持續使用目前選區」、外部 Anchor、清 Anchor、Pos1 非最小角的預設 Anchor、Warehouse Build。
-- 官方 26.3 headless regression 補上選區外 Anchor 的 Blueprint 直接／旋轉／鏡像精確座標，並在同一個 server world 載入生成的真人 harness 以檢查所有測試 function 可被 Vanilla 解析。
-- 明確區分 headless armor-stand regression 與真人 client 驗證；沒有真人 evidence 時不再宣稱「實機全部驗過」。
-
-## v1.2
-
-- 修正 Pos1/Pos2 重新選取後 Copy/Cut 必須使用目前選區，且未重新選取時選區持續可用。
-- 修正預設 Anchor/Blueprint 精確定位，沒有自訂 Anchor 時固定以 Pos1 為 pivot。
-- 自訂 Anchor 可位於選區外，支援繞外部 pivot 的大半徑 Rotate，並加入連續旋轉 runtime regression。
-- 新增 `/trigger cphelp` 與遊戲內指令教學 Dialog。
-- 擴充 Rotate/Mirror、Move、Flip、Cut、Undo/Redo 的官方 Minecraft 26.3 behavioral regression。
-- 完成 Warehouse 共用材料 API 整合，不再維護 Copy/Paste 私有材料箱。
-- Build 的 Undo/Redo 會同步退款／重新扣料，並保留防複製 guard 與持久退款 queue。
-- Blueprint 支援六方向微調、只讀材料報表、覆蓋重算與二次施工確認。
-- 加入 Dialog 控制面板，並可與 Warehouse 主頁互相導覽。
-- Phase 3 路徑已納入官方 Minecraft 26.3 runtime regression。
-
-## 核心流程
-
-Copy 現在是「先 Blueprint、再用真實材料施工」：
+## 如何使用
 
 ```text
-選取 → /trigger c → /trigger v
-                    ↓
-             Blueprint 預覽
-                    ↓
-          轉向 / 翻面 / 微調 / 重新 V 定位
-                    ↓
-              /trigger build
-                    ↓
-     背包 + Warehouse 材料來源
-          ↙                 ↘
-      全部足夠             有缺料
-      扣除材料             不扣材料
-      真正施工             不修改世界
-      清除預覽             保留 Blueprint
-                         精確列出缺少 ID × 數量
+Pos1、Pos2 → Copy (/trigger c) → Paste (/trigger v)
+                                     ↓
+                               Blueprint 預覽
+                                     ↓
+                            旋轉／翻面／微調
+                                     ↓
+                           Build (/trigger build)
+                                     ↓
+                         背包先扣，倉庫補足
 ```
 
-Cut、Move、直接轉向／翻面仍維持直接修改真實世界的方式。
+**Copy + V 只建立 Blueprint，不會免費生成真實方塊。** Build 先計算材料（BOM），不足時不扣料也不施工，並保留預覽。Cut 則會真正移除來源，下次 V 是搬移貼上，成功後 Cut Clipboard 即被消耗。
 
-## 材料來源
+| 操作 | 指令 |
+| --- | --- |
+| 選區／自訂 Anchor | `/trigger pos1`、`/trigger pos2`、`/trigger anchor` |
+| Copy／Cut／Paste／Build | `/trigger c`、`/trigger x`、`/trigger v`、`/trigger build` |
+| 查材料（只讀） | `/trigger materials` |
+| Undo／Redo／說明 | `/trigger undo`、`/trigger redo`、`/trigger cphelp` |
+| 遊戲內面板 | G →「建築工具」或 `/trigger copypaste` |
 
-Copy/Paste 不再維護自己的材料箱註冊表。施工與材料型 Redo **先使用玩家自己背包（主背包 0～35 格與副手）裡的一般物品**，不夠的部分再使用 Warehouse 的共用材料來源。
+**Anchor 規則：** 未設定自訂 Anchor 時，**Pos1** 是 Copy／Blueprint 定位及 Rotate 的預設 pivot；V 會把它對齊準星選定的目標格。**自訂 Anchor 可以在選區外**，可用來做大半徑 Rotate；重新指定 Pos1／Pos2 就會清除舊自訂 Anchor。**Flip 特例**：沒自訂 Anchor 時，Blueprint 與直接 Flip 都以目前外框中心**原地鏡射**；有自訂 Anchor 才繞該 Anchor 鏡射。左右／前後與轉向是**相對玩家面向**，不是以 X/Z 軸或指令輸入位置任意猜方向。
 
-Warehouse API 會從已註冊且有效的 Warehouse 容器建立最多 64 個材料來源；目前 Warehouse 既有配置為 61 個可能容器，因此不需要重複註冊。
+## Blueprint 與直接編輯
 
-`/trigger build` 會依 BOM 逐項計算「背包 + Warehouse」庫存；全部足夠後，逐項先從背包扣，再由 Warehouse API 原子扣除其餘。若 Warehouse 有失效的註冊來源，施工會停止，而不是把不完整的庫存統計當成可信結果。
-
-## Copy / Blueprint / Build
+以下只改**預覽**，不改來源世界：
 
 ```mcfunction
-/trigger pos1
-/trigger pos2
-/trigger anchor
-/trigger c
-/trigger v
+/trigger bpturnright
+/trigger bpturnleft
+/trigger bpflip
+/trigger bpflipfb
+/trigger bpreset
+
+/trigger bpleft set 1
+/trigger bpright set 1
+/trigger bpforward set 1
+/trigger bpbackward set 1
+/trigger bpup set 1
+/trigger bpdown set 1
 ```
 
-`anchor` 是選用的；**沒有手動設定 Anchor 時，Pos1 就是預設 Anchor**。執行 `v` 時，準星指向方塊旁邊的目標格代表「Anchor 要落在這一格」，因此預設情況就是讓 Pos1 對齊目標格；若有自訂 Anchor，則由自訂 Anchor 對齊。未旋轉／鏡像與已旋轉／鏡像都遵守同一套定位語意。
+微調距離可用 **1–128**。調整後會重新計算覆蓋區，檢查未完成前不能施工；移除／重建預覽會取消進行中的檢查並釋放暫存 forceload。若目標會覆蓋既有非空氣方塊，首次 Build 僅警告，**再次確認**才會繼續扣料；位置或方向再變更後重置確認。單純 `/trigger materials` 只列材料、背包／Warehouse 庫存與缺額，不會施工。
 
-**自訂 Anchor 可以位於選取範圍外。** 它是同維度的空間 pivot，不是選區內的特殊方塊；因此可以把 Anchor 放在遠離建築的位置，讓 Blueprint 或直接 Rotate 繞外部中心做大半徑旋轉。重新設定 Pos1 或 Pos2 會清除舊的自訂 Anchor，並回到「Pos1 為預設 Anchor」；若要自訂 Anchor，請在目前選取範圍確定後再設定。
-
-`v` 只建立或重定位 Blueprint，不會直接生成真實方塊。
-
-Blueprint 建立完成後可以先調整方向（只動預覽，不動原本建築；左右前後以你面對的方向為準）。**沒有自訂 Anchor 時，Flip 會以目前 Blueprint 外框中心原地鏡射，不會把整個預覽推到另一側；有自訂 Anchor 時才以 Anchor 為鏡射基準。**
+以下會**直接修改真實選區**：
 
 ```mcfunction
-/trigger bpturnright   # 預覽向右轉 90°（順時針）
-/trigger bpturnleft    # 預覽向左轉 90°（逆時針）
-/trigger bpflip        # 預覽左右翻（像照鏡子）
-/trigger bpflipfb      # 預覽前後翻
-/trigger bpreset       # 回到原本方向
+/trigger right set 1
+/trigger left set 1
+/trigger forward set 1
+/trigger backward set 1
+/trigger up set 1
+/trigger down set 1
+
+/trigger turnright
+/trigger turnleft
+/trigger rotate180
+/trigger flip
+/trigger flipfb
 ```
 
-每次調整後聊天欄會顯示目前方向（例如「右轉 90°，並翻面」），預覽立即重建，不必重新 Copy。每次新的 Copy／Cut 都會從原方向開始；只有之後明確執行的 Rotate／Flip 才會改變方向。
+移動距離同樣可用 **1–128**；保留 `rotate180` 這個名字，不改成 `turn180`。自訂 Anchor／外框中心規則與 Blueprint 相同。每次新的 Copy、Cut，或 Cut→Undo→Redo 重建 Clipboard，都會將方向重置為 **0°、未翻面**。
 
-確認後：
+## 材料、安全與多人
 
-```mcfunction
-/trigger build
-```
+- 施工從**玩家主背包 0–35 格＋副手**的一般物品先扣，不足才使用全服共享 Warehouse。無 `components` 或空 `components` 才視為可用材料，改名／自訂資料／附魔物品不拿來消耗。Warehouse 來源最多 64 個、去重大箱，庫存不足或註冊來源 stale 時停止，不會免費施工。
+- Blueprint 的 Block Entity 儲物內容不會被複製；不支援沒有安全生存掉落材料的方塊。貼上模式包括 Replace／Masked，Masked 的來源空氣不覆蓋目標。普通 Copy/Build 不是複製箱子內的物品。
+- **每位玩家各有獨立** Pos1、Pos2、Anchor、Clipboard、Blueprint、BOM、材料紀錄與最近 **5 筆** Undo／Redo。隱藏工作區依 `mcc_id` 分 lane（間距 256 格，5+5 筆 history），Structure Template 名稱也含玩家 ID；共享暫存 function 同步執行。Warehouse 庫存刻意全服共用。Blueprint `block_display` 是世界實體，附近玩家看得到預覽。
+- 不鎖定兩位玩家同時修改的**真實世界區域**；若 A/B 編輯相同方塊，按伺服器執行順序發生衝突是可能的，玩家資料隔離不等於地圖區域 transaction lock。
 
-系統先建立 BOM（Bill of Materials），再計算玩家背包與 Warehouse 的庫存。只有所有材料都足夠才進入扣料與施工。
+## Undo／Redo 防複製
 
-材料不足時會顯示例如：
+每筆真實編輯保留操作完成時的世界快照。**方塊 ID 不同**或容器／Block Entity 內容有變，Undo／Redo 會拒絕，列出缺少／多餘方塊、世界座標等差異；**只改相同 ID 的 block state**（門開關、樓梯方向、水浸等）不阻擋。過大或一 tick 內比不完的區域會退回嚴格一致檢查，避免超出指令上限。
 
-```text
-[Copy/Paste] 材料不足，未施工；Blueprint 已保留。
-缺少材料：
-  石磚 ×12
-  燈籠 ×3
-共缺少 2 種、15 個物品。
-```
+Cut→Undo 會還原來源並作廢目前 Cut Clipboard，避免重複貼上；Cut→Undo→Redo 則會恢復原本 Cut Clipboard。Build→Undo 會退回實際扣除的材料：原本從背包扣的先退背包，放不下的與 Warehouse 來源退到倉庫入口 `c00`；入口滿時由 Warehouse 持久排隊重試。Redo 需重新有足夠材料才施工。舊版沒有防複製快照的 history 會拒絕執行。
 
-物品名稱使用遊戲翻譯鍵，每位玩家看到自己語言的名稱；滑鼠移到名稱上會顯示精確的 item ID。名稱與最大堆疊表由 `scripts/gen-item-names.py` 從 26.3 server reports 產生，換 Minecraft 版本時要重新產生。
+## 限制與升級
 
-## Phase 3：Blueprint 微調、材料報表與覆蓋保護
+| 範圍 | 限制 |
+| --- | --- |
+| 準星 raycast | 128 格 |
+| Copy／Cut | 每軸 ≤128 格，且受 `minecraft:max_block_modifications` 限制 |
+| Structure Template Rotate／Flip | 每軸 ≤48 格；以外部 Anchor 翻面亦受限 |
+| Move／直接 Rotate 的來源＋目標 Undo 範圍 | 每軸 ≤256 格 |
+| Blueprint matcher | Java 26.3 的 1,283 種非空氣 block ID／35,720 合法 states |
+| 實體 | 不在 Copy/Cut/Blueprint 處理範圍內 |
 
-Blueprint 建立完成後，不必重新用 `v` 定位就能直接微調。左右／前後是以玩家目前面向為基準，上下則是世界 Y 軸：
+更新前移除舊 ZIP，**不要同時載入兩份**。升級 v1.3 前後留下的 `rotate`、`mirror`、`rotate90`、`rotate270`、`flipx`、`flipz` 是全域 scoreboard objective，不會自動刪除；**只有管理員確認未被其他包使用**後，才可呼叫 `/function mcc:admin/cleanup_legacy_triggers`。`rotate180` 與現行轉向指令正常保留。
 
-```mcfunction
-/trigger bpleft set <1..128>
-/trigger bpright set <1..128>
-/trigger bpforward set <1..128>
-/trigger bpbackward set <1..128>
-/trigger bpup set <1..128>
-/trigger bpdown set <1..128>
-```
-
-微調只移動 Blueprint display 與施工目標，不會重新 Copy，也不會修改來源世界。每次微調後會分批重新計算目標區域可能覆蓋的既有非空氣方塊；覆蓋檢查尚未完成時，系統會暫停下一次微調與施工。
-
-施工前可先做只讀檢查：
-
-```mcfunction
-/trigger materials
-```
-
-這會列出 Blueprint 每種材料的需求量、背包與 Warehouse 各有多少、缺少量，不會扣除任何物品，也不會施工，同時保留目前的覆蓋統計。
-
-如果目前位置會覆蓋既有非空氣方塊，第一次 `/trigger build` 只顯示警告並要求再次確認，不會扣材料或修改世界；第二次施工才會進入正常材料檢查。只要 Blueprint 再次移動、旋轉、鏡像或覆蓋重算，確認狀態就會重置。
-
-按 **G** →「建築工具」開啟 Dialog 控制面板（需要同時安裝 Warehouse；也可用 `/trigger copypaste`）。主畫面只有常用的 Pos1、Pos2、Copy、Cut、Paste、Build、Undo；「調整預覽…」（`/trigger copypaste set 2`）有轉向、翻面、移動預覽、清除預覽與材料檢查；「更多…」（`set 3`）有 Anchor、貼上模式、直接改原本建築（`set 4`）、Redo 與指令教學。若 Warehouse 同時安裝，也可以從 Warehouse 主頁（G）直接進入建築工具。
-
-## 遊戲內指令教學
-
-輸入：
-
-```mcfunction
-/trigger cphelp
-```
-
-會在聊天室列出指令教學（點指令自動填入聊天欄，滑鼠移上去看說明）；主控制面板也有「指令教學」按鈕。教學依步驟列出：選範圍 → 複製 → 放預覽 → 調預覽（轉向、翻面、移動）→ 蓋出來，以及「直接改原本的建築」（搬家、移動、轉向、翻面）與 Undo/Redo、Anchor、貼上模式。
-
-## 生存安全
-
-Copy/Paste 不會把 Copy 當成免費 Clone：
-
-- 施工只消耗玩家背包與 Warehouse 共用材料來源中的一般、無自訂 components 的物品堆疊。
-- Block Entity 的物品內容在 Blueprint buffer 中會被移除；箱子、熔爐、木桶、潛影盒等不會複製內含物。
-- 沒有可對應生存材料、或會把儲存資源狀態直接複製出來的方塊會拒絕施工。
-- 材料不足時完全不修改目標世界，也不扣除任何材料。
-- 若 Warehouse 在檢查與扣料之間被其他玩家改動，施工會取消；已扣的普通材料仍沿用既有交易補償流程。
-
-## Cut
-
-```mcfunction
-/trigger x
-/trigger v
-```
-
-Cut 是搬移，不需要材料箱。來源先被真正移除，下一次 `v` 真正貼上，成功後 Cut Clipboard 被消耗。
-
-## 直接移動 / 轉向 / 翻面
-
-直接修改真實選取（左右前後以你面對的方向為準）。**沒有自訂 Anchor 時，Flip 以目前選區外框中心原地鏡射；有自訂 Anchor 時才以 Anchor 為鏡射基準。**
-
-```mcfunction
-/trigger right set <1..128>
-/trigger left set <1..128>
-/trigger up set <1..128>
-/trigger down set <1..128>
-/trigger forward set <1..128>
-/trigger backward set <1..128>
-
-/trigger turnright     # 原地向右轉 90°
-/trigger turnleft      # 原地向左轉 90°
-/trigger rotate180     # 原地轉 180°
-/trigger flip          # 原地左右翻
-/trigger flipfb        # 原地前後翻
-```
-
-
-## Undo / Redo
-
-```mcfunction
-/trigger undo
-/trigger redo
-```
-
-每位玩家保留最近 5 次真實世界修改。Build 成功也會進入世界 Undo/Redo 歷史。
-
-每筆 Undo/Redo 都附帶一份「操作完成時的世界快照」。執行 Undo/Redo 前會先比對目前世界；若方塊種類被換掉，或箱子、木桶等容器的內容物被改過，就不執行，以免把已經被拿走的物品還原回來；同一種方塊只改 block state（門開關、方向等）不影響 Undo/Redo。被擋下時會列出差異與座標。
-
-Cut 的 Undo 會還原來源，同時作廢目前的 Cut Clipboard；Redo 會再次清除來源並重新建立原本的 Cut Clipboard，之後可以照常 `/trigger v`。
-
-Build 的 Undo/Redo 會連材料交易一起處理：Undo 在施工區仍與 Build 完成狀態一致時，還原世界並退回該次實際消耗的材料：從玩家背包扣的退回背包（背包塞不下的部分改退 Warehouse），從 Warehouse 扣的退回 Warehouse `c00` 入口箱，再由 Warehouse 自動分類；若入口箱當下塞不下，Warehouse 會把剩餘退款持久化排隊並逐 tick 重試。Redo 會重新計算背包與 Warehouse，材料全部足夠才再次扣料（同樣先扣背包）並恢復建築。若 Build 後施工區曾被修改且目前狀態不再吻合，材料型 Undo 會拒絕執行，以避免退款造成資源複製。
-
-## 多人
-
-- 每位玩家有獨立 Clipboard、Blueprint、BOM 與 5 層 Undo/Redo；材料先用自己的背包，再用全伺服器共用的 Warehouse。
-- Blueprint display 所有附近玩家都看得到。
-- Warehouse 材料來源是共用財產；Copy/Paste 不再保存玩家私人材料箱座標。
-- 多人同時施工時，每次 Build/Redo 都會重新扣料（背包，再透過 Warehouse API 原子扣除）；材料在前一次檢查後被其他玩家取走時，不會免費施工。
-
-## 限制
-
-- Raycast：128 格。
-- 一般 Copy / Cut：每軸最多 128 格，總體積受 `minecraft:max_block_modifications` 限制。
-- Rotate / Mirror Structure Template：每軸 ≤ 48；有自訂 Anchor 的 Flip X/Z 也走這條路徑，同樣每軸 ≤ 48。
-- Move / 直接 Rotate 的 Undo 範圍（來源加目的地）每軸 ≤ 256。
-- Warehouse 共用材料來源上限為 64；Copy/Paste 不再有自己的材料箱上限或註冊資料。
-- Blueprint exact-state matcher 覆蓋 Java 26.3 的 1,283 種非空氣 block IDs、35,720 個合法 block states；live harness 另外重複 4 個 regression case，所以完整 live 計數是 35,724。它由 `scripts/gen-blueprint-matcher.py` 依官方 block report 產生：先用依出現頻率加權的 block-tag 樹找出 block ID，再逐一判斷每個 property（2 值 property 先寫預設值、再判斷一次），不再逐一列舉完整 state（#49）。
-- 實體不包含在 Copy/Cut/Blueprint 中。
+| 版本 | 重點 |
+| --- | --- |
+| v1.2 | Blueprint、外部 Anchor、Warehouse 材料、材料型 Undo |
+| v1.3 | 背包材料優先、多人防複製、玩家相對轉向與精簡 Dialog |
+| v1.4–v1.6 | 現行轉向 Trigger、取消殘留覆蓋檢查、舊 Trigger 安全清理 |
+| v1.7 | 依 block ID／property 的 matcher 加速；Undo 忽略相同 ID 的 state 改動、列出差異；Flip 原地鏡射；修 Rotate/Flip 吃方塊 |
+| **v1.8** | 每次新 Copy／Cut、Cut→Undo→Redo 都重置 Clipboard 方向 |
 
 ## 驗證
 
-本地靜態與 pack-specific regression：
-
-```console
+```bash
 python3 scripts/validate-datapack.py copy-paste
 python3 scripts/gen-blueprint-matcher.py --check
 python3 scripts/test-copy-paste.py
-python3 scripts/test-datapack-compatibility.py
+python3 scripts/test-copy-paste-runtime.py --java /path/to/java --server-jar /path/to/server.jar --accept-eula
 ```
 
-`test-copy-paste.py` 會離線模擬 generated matcher，逐一驗證 35,720 個 state 的輸出；`test-copy-paste-runtime.py` 會在官方 26.3 server 上逐一放置這些 state，並比對 matcher 寫出的 `{id, properties}`。
+**v1.8 exact-build 已在 innotest 通過**完整兩人 3D-house regression：[run 37718900567](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37718900567)，全部 `MCCMP_CHECK` PASS；全量 35,720 合法 states + 4 重複案例 [run 37719130915](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37719130915) 為 `states=35724 expected=35724 fail=0 air_ret=0`。這是**發佈後補跑**，v1.8 當時由使用者要求走 direct/no-gate，不可聲稱發佈當下 gate PASS。
 
-官方 Minecraft 26.3 行為 regression：
-
-```console
-python3 scripts/test-copy-paste-runtime.py \
-  --java /path/to/java \
-  --server-jar /path/to/server.jar \
-  --accept-eula
-```
-
-目前 CI 會同時跑 Copy/Paste 專用 26.3 runtime，以及 Utilities + Warehouse + Copy/Paste 三包一起載入的 26.3 compatibility gate。一般 release 走這組 gate；v1.8 當時依使用者明確要求走 direct/no-gate release，因此不能把**發布當下被跳過的 gated workflow**寫成 PASS。不過 v1.8 exact build 已在發布後補跑正式 innotest：3D-house multiplayer run [37718900567](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37718900567) 全部 PASS；全量 Blueprint matcher run [37719130915](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37719130915) 為 `states=35724 expected=35724 fail=0 air_ret=0`。更完整的覆蓋範圍與仍需真人 client 驗證的項目見 [LIVE-VALIDATION.md](LIVE-VALIDATION.md)；多人隔離設計與雙人測試方式見 [MULTIPLAYER-VALIDATION.md](MULTIPLAYER-VALIDATION.md)。
-
-正式版本仍統一由 `<pack-name>-v<version>` tag 觸發 `release-pack.yml` 驗證、打包與發布 ZIP。
+CI 的靜態 64-player buffer 隔離與 headless runtime **不等於兩位真人 UI**；v1.8 G、Dialog 點擊、準星手感與部分 Warehouse 材料路徑仍須實機驗。完整已驗／未驗清單見 [innotest 覆蓋表](../../docs/innotest-coverage.md)，方法見 [驗證與 Release](../../docs/datapack-validation.md)。
