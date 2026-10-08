@@ -177,7 +177,7 @@ for dim in worlds:
     y = 250 if dim == "overworld" else 220
     s.cleanup(run_dim(dim, f"fill -305 {y-1} 71 -265 {y+6} 111 air"))
 s.cleanup("execute if data storage cpg:save a run function cpg:restore with storage cpg:save a",
-          "data remove storage cpg:save",
+          "data remove storage cpg:save a",
           f"scoreboard players set {WHO} mcc_mask 0",
           f"scoreboard players set {WHO} mcc_hasa 0")
 steps = s.write(OUT)
