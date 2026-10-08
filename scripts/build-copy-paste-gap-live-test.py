@@ -18,7 +18,7 @@ import xform
 from innotest_harness import Suite
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--case", choices=("external", "modes", "dimensions"), required=True)
+ap.add_argument("--case", choices=("external", "modes", "dimensions", "history"), required=True)
 CASE = ap.parse_args().case
 
 OUT = ROOT / "dist" / "copy-paste-gap-live-test"
@@ -143,6 +143,25 @@ elif CASE == "modes":
         s.trigger("a", "undo")
         s.step(f"scoreboard players set {WHO} mcc_mask 0")
 
+elif CASE == "history":
+    dim = "overworld"
+    prepare(dim, S, T)
+    source_select(dim, S)
+    # Five consecutive real edits, then five real Undo operations. Compare the
+    # entire multi-block house at every level (not just a marker block).
+    for i in range(1, 6):
+        s.trigger("a", "up", 1)
+        shifted = (S[0], S[1] + i, S[2])
+        s.check("five layer edit " + str(i), *state_conditions(dim, shifted))
+    s.check("history capacity five", f"score {WHO} mcc_ucnt matches 5")
+    for i in range(4, -1, -1):
+        s.trigger("a", "undo")
+        shifted = (S[0], S[1] + i, S[2])
+        s.check("five layer undo " + str(5-i), *state_conditions(dim, shifted))
+    s.check("all five undo entries consumed",
+            f"score {WHO} mcc_ucnt matches 0",
+            f"score {WHO} mcc_rcnt matches 5")
+
 elif CASE == "dimensions":
     for dim in DIMS:
         src = (S[0], 220, S[2])
@@ -175,7 +194,7 @@ elif CASE == "dimensions":
 worlds = ("overworld",) if CASE != "dimensions" else DIMS
 for dim in worlds:
     y = 250 if dim == "overworld" else 220
-    s.cleanup(run_dim(dim, f"fill -305 {y-1} 71 -265 {y+6} 111 air"))
+    s.cleanup(run_dim(dim, f"fill -305 {y-1} 71 -265 {y+10} 111 air"))
 s.cleanup("execute if data storage cpg:save a run function cpg:restore with storage cpg:save a",
           "data remove storage cpg:save a",
           f"scoreboard players set {WHO} mcc_mask 0",
