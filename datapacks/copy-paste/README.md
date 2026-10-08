@@ -1,11 +1,24 @@
-# Minecraft Copy/Paste Datapack v1.1
+# Minecraft Copy/Paste Datapack v1.2.1
 
 適用：Minecraft Java Edition 26.3（Data Pack 121.0）
 
 純 Vanilla datapack。操作使用 Trigger。材料施工依賴同 repo 的 Warehouse datapack，並直接使用 Warehouse 共用註冊資料與 API。
 
-## v1.1
+## v1.2.1（source，尚未發布）
 
+- 修正 active `/trigger copypaste` Dialog 缺少「清 Anchor」操作；現在可直接執行 `/trigger anchor set 2` 回到 Pos1 預設 Anchor。
+- 驗證改為直接檢查實際使用中的 Dialog，不再拿未被主流程呼叫的 legacy `panel.mcfunction` 當玩家 UI 證據。
+- v1.2 真人 Trigger harness 補上「可重新選新區域／未重選則持續使用目前選區」、外部 Anchor、清 Anchor、Pos1 非最小角的預設 Anchor、Warehouse Build。
+- 官方 26.3 headless regression 補上選區外 Anchor 的 Blueprint 直接／旋轉／鏡像精確座標，並在同一個 server world 載入生成的真人 harness 以檢查所有測試 function 可被 Vanilla 解析。
+- 明確區分 headless armor-stand regression 與真人 client 驗證；沒有真人 evidence 時不再宣稱「實機全部驗過」。
+
+## v1.2
+
+- 修正 Pos1/Pos2 重新選取後 Copy/Cut 必須使用目前選區，且未重新選取時選區持續可用。
+- 修正預設 Anchor/Blueprint 精確定位，沒有自訂 Anchor 時固定以 Pos1 為 pivot。
+- 自訂 Anchor 可位於選區外，支援繞外部 pivot 的大半徑 Rotate，並加入連續旋轉 runtime regression。
+- 新增 `/trigger cphelp` 與遊戲內指令教學 Dialog。
+- 擴充 Rotate/Mirror、Move、Flip、Cut、Undo/Redo 的官方 Minecraft 26.3 behavioral regression。
 - 完成 Warehouse 共用材料 API 整合，不再維護 Copy/Paste 私有材料箱。
 - Build 的 Undo/Redo 會同步退款／重新扣料，並保留防複製 guard 與持久退款 queue。
 - Blueprint 支援六方向微調、只讀材料報表、覆蓋重算與二次施工確認。
@@ -53,6 +66,10 @@ Warehouse API 會從已註冊且有效的 Warehouse 容器建立最多 64 個材
 /trigger c
 /trigger v
 ```
+
+`anchor` 是選用的；**沒有手動設定 Anchor 時，Pos1 就是預設 Anchor**。執行 `v` 時，準星指向方塊旁邊的目標格代表「Anchor 要落在這一格」，因此預設情況就是讓 Pos1 對齊目標格；若有自訂 Anchor，則由自訂 Anchor 對齊。未旋轉／鏡像與已旋轉／鏡像都遵守同一套定位語意。
+
+**自訂 Anchor 可以位於選取範圍外。** 它是同維度的空間 pivot，不是選區內的特殊方塊；因此可以把 Anchor 放在遠離建築的位置，讓 Blueprint 或直接 Rotate 繞外部中心做大半徑旋轉。重新設定 Pos1 或 Pos2 會清除舊的自訂 Anchor，並回到「Pos1 為預設 Anchor」；若要自訂 Anchor，請在目前選取範圍確定後再設定。
 
 `v` 只建立或重定位 Blueprint，不會直接生成真實方塊。
 
@@ -119,6 +136,16 @@ Blueprint 建立完成後，不必重新用 `v` 定位就能直接微調。左�
 如果目前位置會覆蓋既有非空氣方塊，第一次 `/trigger build` 只顯示警告並要求再次確認，不會扣材料或修改世界；第二次施工才會進入正常材料檢查。只要 Blueprint 再次移動、旋轉、鏡像或覆蓋重算，確認狀態就會重置。
 
 `/trigger copypaste` 會開啟 Dialog 控制面板，包含 Pos1/Pos2/Anchor、Copy/Cut、Blueprint 六方向微調、Rotate/Mirror、材料／覆蓋檢查、施工與 Undo/Redo。若 Warehouse 同時安裝，也可以從 Warehouse 主頁直接進入建築工具。
+
+## 遊戲內指令教學
+
+輸入：
+
+```mcfunction
+/trigger cphelp
+```
+
+會開啟遊戲內「Copy/Paste 指令教學」Dialog；主控制面板也有「指令教學」按鈕。教學包含 Pos1/Pos2/Anchor、Copy/Blueprint/Build、Cut、Blueprint 微調、Rotate/Mirror、Move/Flip、Undo/Redo 等指令與目前的 Anchor/選區語意。
 
 ## 生存安全
 
@@ -188,9 +215,23 @@ Build 的 Undo/Redo 會連材料交易一起處理：Undo 在施工區仍與 Bui
 
 ## 驗證
 
+本地靜態與 pack-specific regression：
+
 ```console
 python3 scripts/validate-datapack.py copy-paste
 python3 scripts/test-copy-paste.py
+python3 scripts/test-datapack-compatibility.py
 ```
 
-CI 另外會使用官方 Minecraft 26.3 server 執行 runtime smoke test。正式版本仍統一由 `<pack-name>-v<version>` tag 觸發 `release-pack.yml` 驗證、打包與發布 ZIP。
+官方 Minecraft 26.3 行為 regression：
+
+```console
+python3 scripts/test-copy-paste-runtime.py \
+  --java /path/to/java \
+  --server-jar /path/to/server.jar \
+  --accept-eula
+```
+
+目前 CI 會同時跑 Copy/Paste 專用 26.3 runtime，以及 Utilities + Warehouse + Copy/Paste 三包一起載入的 26.3 compatibility gate。`copy-paste-v1.2` release 已經經過同一組 release gate。更完整的覆蓋範圍與仍需真人 client 驗證的項目見 [LIVE-VALIDATION.md](LIVE-VALIDATION.md)；多人隔離設計與雙人測試方式見 [MULTIPLAYER-VALIDATION.md](MULTIPLAYER-VALIDATION.md)。
+
+正式版本仍統一由 `<pack-name>-v<version>` tag 觸發 `release-pack.yml` 驗證、打包與發布 ZIP。

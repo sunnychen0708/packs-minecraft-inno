@@ -11,13 +11,13 @@
 | Pack | Type | Source | Latest release | Minecraft | Description |
 | --- | --- | ---: | ---: | --- | --- |
 | [`utilities`](datapacks/utilities) | Data pack | v3.4 | [`v3.4`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/utilities-v3.4) | Java 26.3 | Teleportation, waypoints, coordinate display, and general survival utility systems. |
-| [`warehouse`](datapacks/warehouse) | Data pack | **v4.4** | [`v4.2`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/warehouse-v4.2) | Java 26.3 | Automatic sorting, shared inventory API, durable refunds, search/Highlight, and survival Pick. |
-| [`copy-paste`](datapacks/copy-paste) | Data pack | **v1.1** | [`v1.0`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/copy-paste-v1.0) | Java 26.3 | Survival building editor: Blueprint preview/micro-adjust, material-backed construction, Cut/Move/Rotate/Flip, and material-aware Undo/Redo. |
+| [`warehouse`](datapacks/warehouse) | Data pack | **v4.4** | [`v4.4`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/warehouse-v4.4) | Java 26.3 | Automatic sorting, shared inventory API, durable refunds, search/Highlight, and survival Pick. |
+| [`copy-paste`](datapacks/copy-paste) | Data pack | **v1.2.1** | [`v1.2`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/copy-paste-v1.2) | Java 26.3 | Survival building editor: Blueprint preview/micro-adjust, material-backed construction, Cut/Move/Rotate/Flip, and material-aware Undo/Redo. |
 | [`cat-door-sounds`](resourcepacks/cat-door-sounds) | Resource pack | v1.0 | [`v1.0`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/cat-door-sounds-v1.0) | Java 26.2 | Custom cat meow replacement and an extra wooden-door opening sound layer. |
 
 Each pack is stored as unpacked source. Release ZIPs are generated artifacts rather than development source.
 
-Copy/Paste source is **v1.1** and Warehouse source is **v4.4**. These source versions include the completed Phase 3 Blueprint/Highlight work and are newer than the currently published v1.0/v4.2 release ZIPs. Copy uses Blueprint-first, material-backed construction backed by the shared Warehouse registration data and inventory API; Undo/Redo stays five-level per player and material-aware. See its [multiplayer validation notes](datapacks/copy-paste/MULTIPLAYER-VALIDATION.md).
+Copy/Paste source is **v1.2.1** while its latest published release is **v1.2**; Warehouse source/release is **v4.4**. Copy/Paste v1.2 includes the external-Anchor pivot fix, persistent/reselectable selection semantics, command tutorial, and expanded 26.3 behavioral regression. Copy uses Blueprint-first, material-backed construction backed by the shared Warehouse registration data and inventory API; Undo/Redo stays five-level per player and material-aware. See its [multiplayer validation notes](datapacks/copy-paste/MULTIPLAYER-VALIDATION.md).
 
 ## Installation
 
@@ -90,7 +90,7 @@ Generated ZIP files go to `dist/`, which is ignored by Git.
 ```bash
 ./scripts/build-pack.sh utilities v3.4
 ./scripts/build-pack.sh warehouse v4.4
-./scripts/build-pack.sh copy-paste v1.1
+./scripts/build-pack.sh copy-paste v1.2.1
 ./scripts/build-pack.sh cat-door-sounds v1.0
 ```
 
@@ -106,9 +106,17 @@ python3 scripts/validate-datapack.py warehouse
 python3 scripts/validate-datapack.py copy-paste
 ```
 
-If a pack has `scripts/test-<pack-name>.py`, that pack-specific regression suite is also part of the validation gate. GitHub Actions runs both automatically on datapack-related pushes and pull requests, and the release workflow repeats them before building a datapack release.
+If a pack has `scripts/test-<pack-name>.py`, that pack-specific regression suite is also part of the validation gate. GitHub Actions runs both automatically on datapack-related pushes and pull requests.
 
-For an isolated vanilla server smoke test:
+Cross-pack compatibility is a separate gate for the three datapacks that are intended to coexist:
+
+```bash
+python3 scripts/test-datapack-compatibility.py
+```
+
+That static check rejects namespace/resource collisions, duplicate scoreboard objectives, unsafe foreign storage writes, and load/tick tag replacement. CI also boots **Utilities + Warehouse + Copy/Paste together on the official Minecraft 26.3 server** and verifies their representative objectives, storage initialization, and shared Warehouse API coexist.
+
+For isolated runtime validation, the repository also has dedicated Warehouse and Copy/Paste harnesses. A basic smoke test can be run with:
 
 ```bash
 python3 scripts/validate-datapack.py copy-paste \
@@ -116,6 +124,8 @@ python3 scripts/validate-datapack.py copy-paste \
   --server-jar /path/to/server.jar \
   --accept-eula
 ```
+
+On `main`, Warehouse and Copy/Paste get dedicated official 26.3 behavioral runtime regressions in addition to the combined all-datapacks compatibility job. Every datapack release tag reruns the combined 26.3 compatibility gate; Warehouse and Copy/Paste release tags also rerun their dedicated runtime gates before the ZIP is published.
 
 See [`docs/datapack-validation.md`](docs/datapack-validation.md) for the validation levels, release rules, and what each result does or does not prove.
 
@@ -132,7 +142,7 @@ Examples:
 ```text
 utilities-v3.4
 warehouse-v4.4
-copy-paste-v1.1
+copy-paste-v1.2
 cat-door-sounds-v1.0
 ```
 
