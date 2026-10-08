@@ -10,14 +10,14 @@
 
 | Pack | Type | Source | Latest release | Minecraft | Description |
 | --- | --- | ---: | ---: | --- | --- |
-| [`utilities`](datapacks/utilities) | Data pack | v3.8 | [`v3.7`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/utilities-v3.7) | Java 26.3 | Teleportation, waypoints, coordinate display, and general survival utility systems. |
-| [`warehouse`](datapacks/warehouse) | Data pack | v4.6 | [`v4.5`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/warehouse-v4.5) | Java 26.3 | Automatic sorting, shared inventory API, durable refunds, search/Highlight, and survival Pick. |
-| [`copy-paste`](datapacks/copy-paste) | Data pack | v1.7 | [`v1.6`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/copy-paste-v1.6) | Java 26.3 | Survival building editor: Blueprint preview/micro-adjust, construction from the player's inventory and Warehouse, player-relative turn/flip, Cut/Move, and material-aware Undo/Redo. |
+| [`utilities`](datapacks/utilities) | Data pack | v3.8 | [`v3.8`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/utilities-v3.8) | Java 26.3 | Teleportation, waypoints, coordinate display, and general survival utility systems. |
+| [`warehouse`](datapacks/warehouse) | Data pack | v4.7 | [`v4.7`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/warehouse-v4.7) | Java 26.3 | Automatic sorting, shared inventory API, durable refunds, search/Highlight, and survival Pick. |
+| [`copy-paste`](datapacks/copy-paste) | Data pack | v1.8 | [`v1.8`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/copy-paste-v1.8) | Java 26.3 | Survival building editor: Blueprint preview/micro-adjust, construction from the player's inventory and Warehouse, player-relative rotate/flip, Cut/Move, and material-aware Undo/Redo. |
 | [`cat-door-sounds`](resourcepacks/cat-door-sounds) | Resource pack | v1.0 | [`v1.0`](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/cat-door-sounds-v1.0) | Java 26.2 | Custom cat meow replacement and an extra wooden-door opening sound layer. |
 
 Each pack is stored as unpacked source. Release ZIPs are generated artifacts rather than development source.
 
-Source versions: Utilities **v3.8**, Warehouse **v4.6**, Copy/Paste **v1.7**, cat-door-sounds **v1.0**. Latest releases: Utilities **v3.7**, Warehouse **v4.5**, Copy/Paste **v1.6**, cat-door-sounds **v1.0** — Utilities v3.8, Warehouse v4.6 and Copy/Paste v1.7 are not released yet.
+Source versions and latest releases are aligned: Utilities **v3.8**, Warehouse **v4.7**, Copy/Paste **v1.8**, cat-door-sounds **v1.0**.
 
 Copy/Paste builds from a Blueprint preview using materials from the player's own inventory first and the shared Warehouse second. Warehouse is the shared sorting/storage backend and its API is what Copy/Paste and Pick use.
 
@@ -30,9 +30,12 @@ The current Java 26.3 source has passed:
 - generic static validation and pack-specific regressions;
 - dedicated Utilities, Warehouse, and Copy/Paste official-server runtime regressions;
 - all-datapacks Java 26.3 compatibility runtime;
-- an `innotest` live multiplayer Copy/Paste regression with four Mineflayer player connections online, including independent selection/clipboard state, Blueprint, simultaneous Move, Undo/Redo, Rotate, Cut/Paste, and per-player history isolation.
+- Utilities v3.8 live compatibility on `innotest`, including v3.7 saved waypoint/settings data surviving the v3.8 load;
+- Warehouse v4.7 live cross-dimension compact/merge regression on `innotest`;
+- Copy/Paste v1.8 full 3D-house multiplayer regression on `innotest`: all `MCCMP_CHECK` assertions passed, including the v1.8 Clipboard orientation reset, exact Blueprint states/transforms, all direct Move/Rotate/Flip directions, Undo/Redo guards, Cut/Paste, and player isolation ([run 37718900567](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37718900567));
+- Copy/Paste v1.8 full Java 26.3 Blueprint matcher live gate: 35,724 checks (35,720 legal states + 4 duplicate regression cases), `fail=0`, `air_ret=0` ([run 37719130915](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37719130915)).
 
-The latest live multiplayer run (2026-10-07, freshly started innotest session) passed the current-session server-error gate: every check passed, `MCCMP_RESULT PASS`, and the session log has no `ERROR` lines. `innotest.exaroton.me` is kept ONLINE after testing (see [`AGENTS.md`](AGENTS.md)).
+Copy/Paste v1.8 was originally published through the owner-requested direct/no-gate path, so it is still incorrect to claim that its **release-time gated workflow** passed. The exact v1.8 build has since passed the full innotest house regression and full matcher live gate above. `innotest.exaroton.me` is normally kept ONLINE after routine testing unless the owner explicitly asks to stop it (see [`AGENTS.md`](AGENTS.md)).
 
 This does **not** replace the Windows real-client stages for UI clicks, G-key flow, Dialog behavior, or crosshair raycasts. See [`docs/datapack-validation.md`](docs/datapack-validation.md) for the validation layers and [`docs/HANDOFF.md`](docs/HANDOFF.md) for the current handoff state.
 
@@ -116,9 +119,9 @@ Generated ZIP files go to `dist/`, which is ignored by Git.
 ### Build locally
 
 ```bash
-./scripts/build-pack.sh utilities v3.7
-./scripts/build-pack.sh warehouse v4.5
-./scripts/build-pack.sh copy-paste v1.6
+./scripts/build-pack.sh utilities v3.8
+./scripts/build-pack.sh warehouse v4.7
+./scripts/build-pack.sh copy-paste v1.8
 ./scripts/build-pack.sh cat-door-sounds v1.0
 ```
 
@@ -160,14 +163,14 @@ See [`docs/datapack-validation.md`](docs/datapack-validation.md) for exact cover
 Operational automation is kept separate from normal pack source:
 
 - `.github/workflows/exaroton-innotest.yml` controls only `innotest.exaroton.me` for normal test-server work.
-- `.github/workflows/mineflayer-innotest.yml` provides one-player probes or four-player 26.3 test sessions.
+- `.github/workflows/mineflayer-innotest.yml` provides one-player probes plus persistent three-bot sessions by default; all four test identities are available only when a test really needs SunnyChen too.
 - `.github/workflows/exaroton-inno-maintenance.yml` is the separate owner-authorized **offline production UUID maintenance** path.
 
 All three workflows are request-driven through `ops/*.json`. The checked-in clean baseline is `noop`; request files are operation triggers, not a queue of unfinished work.
 
 The GitHub secret `EXAROTON_API_TOKEN` must never be committed or copied into an ops request.
 
-For the complete safety model, Java 26.3 player-data layout, online-UUID -> offline-UUID test-world migration, Mineflayer constraints, and the four-player live regression sequence, read [`docs/exaroton-operations.md`](docs/exaroton-operations.md).
+For the complete safety model, Java 26.3 player-data layout, online-UUID -> offline-UUID test-world migration, Mineflayer constraints, and the current live-regression sequence, read [`docs/exaroton-operations.md`](docs/exaroton-operations.md).
 
 ## Releases
 

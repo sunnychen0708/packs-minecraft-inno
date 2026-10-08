@@ -1,0 +1,54 @@
+name: Innotest issue request
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  actions: write
+  contents: read
+  issues: write
+
+jobs:
+  dispatch:
+    if: github.event.issue.author_association == 'OWNER' && startsWith(github.event.issue.title, 'innotest ')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve safe operation
+        id: request
+        env:
+          TITLE: ${{ github.event.issue.title }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          OP="${TITLE#innotest }"
+          case "$OP" in
+            recover-warehouse-compact-live-test|run-warehouse-compact-live-test|deploy-warehouse-v4.7-no-reload)
+              ;;
+            *)
+              echo "Unsupported innotest issue operation: $OP"
+              exit 1
+              ;;
+          esac
+          if [[ "$OP" == "deploy-warehouse-v4.7-no-reload" ]]; then
+            echo "operation=deploy-datapack-no-reload" >> "$GITHUB_OUTPUT"
+            echo "pack=warehouse" >> "$GITHUB_OUTPUT"
+          else
+            echo "operation=$OP" >> "$GITHUB_OUTPUT"
+            echo "pack=warehouse" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Dispatch protected innotest workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OPERATION: ${{ steps.request.outputs.operation }}
+          PACK: ${{ steps.request.outputs.pack }}
+        shell: bash
+        run: gh workflow run exaroton-innotest.yml -R "$GITHUB_REPOSITORY" --ref main -f operation="$OPERATION" -f pack="$PACK"
+
+      - name: Close innotest request issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ github.event.issue.number }}
+        shell: bash
+        run: gh issue close "$ISSUE" --comment "Innotest workflow dispatched."

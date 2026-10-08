@@ -2,9 +2,11 @@
 
 ## 結論與範圍
 
-Copy/Paste v1.7 的 ID tree + per-property matcher 可用於目前 26.3 的 35,720 個支援 state。沿用 `{id, properties}` 與原本 summon 路徑；沒有持久資料格式變更，不需要 migration。未安裝到 inno，也未發布或合併。
+Copy/Paste v1.7 的 ID tree + per-property matcher 可用於目前 26.3 的 35,720 個支援 state。沿用 `{id, properties}` 與原本 summon 路徑；沒有持久資料格式變更，不需要 migration。**這句狀態是本次驗證當下的歷史快照**：當時尚未安裝到 inno、發布或合併；之後 v1.7 已合併發布，並由 v1.8 hotfix 取代，v1.8 也已部署到 inno。
 
 本次接手保持原本 generated matcher 不變，補強 report 匯入驗證與 innotest 測試工具。Report 必須包含每一種合法 property 組合且不得重複，不能只靠 state 數量相等推論 Cartesian product。
+
+**後續最新證據：** v1.8 exact build 已在 2026-10-08 再跑同一類全量 matcher live gate，[run 37719130915](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37719130915) 為 `states=35724 expected=35724 fail=0 air_ret=0`；本文件下方的 run 37599912705 保留作 Issue #49 當時的歷史證據。
 
 ## 可重查的證據
 
@@ -40,4 +42,4 @@ Copy/Paste v1.7 的 ID tree + per-property matcher 可用於目前 26.3 的 35,7
 
 ## 清理
 
-兩個遠端 harness 已由 controller 移除並 reload；單一真人樣本位於 `-280 80 90`，驗完移除，預覽清除、方向重設。SunnyChen 已回到原區域 `588.5 95 -415.5` 並恢復生存模式。測試會改到 innotest 的選區、Clipboard 與 Undo/Redo 測試歷史，不代表還原了所有玩家測試狀態。三個 ops request 維持 noop，innotest 保持 ONLINE。
+兩個遠端 harness 已由 controller 移除並 reload；單一真人樣本位於 `-280 80 90`，驗完移除，預覽清除、方向重設。SunnyChen 已回到原區域 `588.5 95 -415.5` 並恢復生存模式。測試會改到 innotest 的選區、Clipboard 與 Undo/Redo 測試歷史，不代表還原了所有玩家測試狀態。當時觸及的 ops request 維持 noop，且該次歷史驗證結束時 innotest 保持 ONLINE；**目前伺服器狀態以 `docs/HANDOFF.md` 為準**。

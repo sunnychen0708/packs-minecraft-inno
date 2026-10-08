@@ -1,8 +1,8 @@
-# Copy/Paste 驗證狀態（v1.7）
+# Copy/Paste 驗證狀態（v1.8）
 
-**2026-10-07 v1.7 最新驗證：** innotest 全 state 35,724 次比對零失敗、SunnyChen 真人 client + 三 Bot 的多人回歸 18/18，以及 G → 選點 / Copy / Paste → 樓梯預覽旋轉 / 清除皆通過。測試層級、限制與 workflow 連結見 [Issue #49 驗證](../../docs/issue-49-validation.md)。下方 v1.3 真人紀錄是歷史證據，不代表此次重跑。
+**目前版本 v1.8。** v1.8 exact build 已在 2026-10-08 完成兩個正式 innotest live gate：完整 3D-house multiplayer regression [37718900567](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37718900567) 全部 `MCCMP_CHECK` PASS；全量 Java 26.3 Blueprint matcher [37719130915](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37719130915) 為 `states=35724 expected=35724 fail=0 air_ret=0`（35,720 個合法 state + 4 個重複 regression case）。v1.8 發布當時確實依使用者要求直接發布/部署、沒有先跑 gated release；這是 release-time 歷史，不代表 v1.8 現在缺 live evidence。Issue #49 的真人 UI 證據仍是 v1.7 時期的歷史證據，v1.8 尚未重跑真人 client UI。
 
-目前版本 **v1.7**：Blueprint 方塊狀態比對改成先找方塊 ID、再逐一判斷屬性，結果不變、速度較快。v1.6 不再自動刪除全域舊 trigger objective；需要清理 v1.3 殘留時，由管理員確認無其他 datapack 使用同名 objective 後手動執行 cleanup。v1.5 清除或重建 Blueprint 時會取消還在跑的覆蓋檢查。v1.4 拿掉載入與第一次使用時的聊天訊息，並移除舊的轉向／翻面指令。目標 Minecraft Java 26.3（Data Pack 121.0）。
+目前版本 **v1.8**：每次新的 Copy／Cut，以及 Cut → Undo → Redo 重建 Clipboard，都會回到原方向（0°、未翻面）。v1.7 的 Blueprint matcher 改成先找方塊 ID、再逐一判斷屬性，結果不變、速度較快。v1.6 不再自動刪除全域舊 trigger objective；需要清理 v1.3 殘留時，由管理員確認無其他 datapack 使用同名 objective 後手動執行 cleanup。v1.5 清除或重建 Blueprint 時會取消還在跑的覆蓋檢查。v1.4 拿掉載入與第一次使用時的聊天訊息，並移除舊的轉向／翻面指令。目標 Minecraft Java 26.3（Data Pack 121.0）。
 
 這份文件把「官方 server headless regression」和「真人 client 驗證」分開寫。兩者不能互相冒充。
 
@@ -15,7 +15,7 @@
 | Behavioral runtime | `python3 scripts/test-copy-paste-runtime.py ...` | 在官方 26.3 server 以 armor stand actor 驗真實方塊、display、storage、scoreboard、材料交易 |
 | Cross-pack runtime | `python3 scripts/test-datapack-compatibility.py ...` | Utilities + Warehouse + Copy/Paste 同時載入與共用 API 共存 |
 | **真人 client** | `scripts/real-client/`（Windows） | 用作業系統層級的鍵盤／滑鼠真的操作遊戲，**讀世界存檔逐格判定** |
-| 雙人 harness | `python3 scripts/build-copy-paste-multiplayer-test.py` | 兩位真人同時操作（尚未執行過） |
+| innotest 3D-house multiplayer harness | `python3 scripts/build-copy-paste-multiplayer-test.py` | 兩位測試玩家同 tick 操作；v1.8 exact build 完整 live run 37718900567 已 PASS |
 
 **GitHub Actions 只跑前四層。** CI 不會執行 `scripts/real-client/`（要 Windows 上真的開著的 Minecraft client），對兩個 trigger harness 也只確認「產生得出來」，不會讓真人玩家去跑。所以 CI 綠燈不能證明 G、Dialog 點擊、真人 `/trigger` dispatch、準星 raycast 這條路徑沒問題。`test-copy-paste.py` 只會確認 `scripts/real-client/*.py` 能編譯、沒有在等已經拿掉的載入訊息。
 
@@ -80,9 +80,9 @@
 
 2026-10-06 晚間三包一起重跑時，一度出現「材料表是空的、施工沒扣料」：原因是測試用小屋在 18:08 被手動 Cut 搬走，測試等於在複製空氣，並不是 pack 的問題。`stage3_house.snapshot()` 現在發現小屋不完整就直接停止。
 
-## 舊的 Trigger harness
+## 已移除的舊 Trigger harness
 
-`scripts/build-copy-paste-live-test.py` 產生 `mcc_test:start` 測試 datapack，走真人玩家的 trigger dispatch。它的 **Warehouse 段落不可信**：用兩個 `setblock chest` 單箱並直接寫 `warehouse:chests`，沒有走玩家註冊流程。CI 只檢查它能產生；正式驗證以上一節的真人 client 工具為準。
+舊的 `scripts/build-copy-paste-live-test.py` 已移除，避免再被誤當正式 regression。現在多人功能以 `scripts/build-copy-paste-multiplayer-test.py` 的 3D house harness + innotest controller 為準；G 鍵、Dialog 點擊與真人準星手感仍由 `scripts/real-client/` 或真人 client 驗證。
 
 `tests/evidence/copy-paste-live-20260930.txt` 是 v0.4.2 時期的真人 evidence，只代表當時版本。
 

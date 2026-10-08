@@ -20,14 +20,14 @@ The repository keeps operational requests in `ops/` so an action is explicit and
 | File | Workflow | Purpose |
 | --- | --- | --- |
 | `ops/exaroton-request.json` | `exaroton-innotest.yml` | innotest status/log/start/stop/commands/deploy/live regression and controlled identity operations |
-| `ops/mineflayer-request.json` | `mineflayer-innotest.yml` | one-player probe or four-player Mineflayer session on innotest |
+| `ops/mineflayer-request.json` | `mineflayer-innotest.yml` | one-player probe, persistent three-bot default session, or optional four-player session on innotest |
 | `ops/inno-maintenance-request.json` | `exaroton-inno-maintenance.yml` | production UUID maintenance while inno is OFFLINE; `apply` only on the owner's explicit instruction |
 
 The checked-in baseline for all request files should be `noop`. Change the request only when intentionally triggering an operation, then return it to `noop` after the operation is complete.
 
 ## Current innotest identity model
 
-`innotest` currently runs with `online-mode=false` so four test clients can log in without Microsoft authorization. The four allowed bot identities are:
+`innotest` currently runs with `online-mode=false` so the four allowed test identities can log in without Microsoft authorization. Normal automation uses the three non-SunnyChen bots and reserves SunnyChen for the owner/real client. The four allowed bot identities are:
 
 - `SunnyChen`
 - `penguin0531`
@@ -63,7 +63,7 @@ The Mineflayer stack is bootstrapped by `scripts/mineflayer26/bootstrap.py` and 
 
 - target is hard-locked to `innotest.exaroton.me`;
 - only the four names above are accepted;
-- four-player logins are serialized instead of opening all clients at once;
+- bot logins are serialized instead of opening all clients at once; the normal session is penguin0531 + geena0701 + Felicitypeng, with SunnyChen added only when required;
 - autonomous physics is disabled;
 - client-originated movement packets are suppressed for idle test clients while teleport confirmations, keepalive traffic, chat, and other required protocol traffic continue normally.
 
@@ -88,8 +88,8 @@ The controller:
 1. requires innotest to be ONLINE;
 2. deploys the exact checked-out `utilities`, `warehouse`, and `copy-paste` sources;
 3. builds and installs a temporary `mcc-multiplayer-test.zip`;
-4. waits until at least four players are online;
-5. uses `SunnyChen` as player A and `penguin0531` as player B while the other two clients remain online;
+4. waits for the player names declared by the generated harness; normal suites use only the bots they actually need;
+5. uses `penguin0531` as player A and `geena0701` as player B; `Felicitypeng` may remain online as the third default bot, while `SunnyChen` stays reserved for the owner/real client;
 6. runs same-tick multiplayer checks;
 7. waits for the current run's unique marker and `MCCMP_RESULT` instead of relying on a fixed sleep;
 8. removes the test area, tags, scoreboard objective, temporary harness ZIP, and reloads after completion.
@@ -107,7 +107,7 @@ The regression covers:
 - A-only Undo/Redo not modifying B;
 - B independent Undo.
 
-The final assertion sequence on 2026-10-07 produced `MCCMP_RESULT PASS` with every check above passing while four bot players were online, and the final four-bot hold completed the full five-minute session. The controller places a unique session marker before deployment/reload and rejects any current-session `/ERROR]:` line before accepting PASS. A fresh run on a newly started innotest session passed that gate on 2026-10-07 ([run 37561053135](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37561053135)): all 18 checks passed, `COPY_PASTE_MULTIPLAYER_LIVE_TEST=PASS`, zero `ERROR` lines in the session log, and the four clients held the full five minutes and disconnected normally. This is a clean-log live validation.
+The latest full 3D-house Copy/Paste live run is **v1.8**, run [37718900567](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37718900567) on 2026-10-08. Every emitted `MCCMP_CHECK` passed, including the v1.8 new-Copy orientation reset, Blueprint Flip/rotate/reset, all six Move directions, Rotate 90/left/180, both Flip axes, Undo/Redo guards, Cut/Paste, Cut→Undo→Redo orientation rebuilding, and A/B isolation; it ended with `MCCMP_RESULT PASS` / `COPY_PASTE_MULTIPLAYER_LIVE_TEST=PASS`. The separate full Java 26.3 Blueprint matcher live gate also passed on v1.8 in run [37719130915](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37719130915): `states=35724 expected=35724 fail=0 air_ret=0`.
 
 Keep only the controller's fixed file names (`utilities.zip`, `warehouse.zip`, `copy-paste.zip`) in innotest's `world/datapacks`. A second copy of the same pack under another name (for example `copy-paste-v1.5.zip`) is loaded alongside it and contaminates the run; that happened once and was cleaned up before the clean run.
 
@@ -117,16 +117,16 @@ For a multiplayer-sensitive Copy/Paste change:
 
 1. Let normal GitHub validation finish first.
 2. Make sure `innotest` is ONLINE; start it only if it is not.
-3. Start a four-player Mineflayer request for 300000 ms.
-4. Wait until the Mineflayer log shows `READY 4/4`.
+3. Reuse the persistent three-bot Mineflayer session (penguin0531, geena0701, Felicitypeng); start/replace it only if the required bots are not already online. Use the four-bot mode only when SunnyChen is actually required.
+4. Wait until the required player names are stably online; the normal default session is the three non-SunnyChen bots, and the current house harness uses `penguin0531` + `geena0701` as actors.
 5. Run `run-copy-paste-multiplayer-test` through the innotest controller.
 6. Require `COPY_PASTE_MULTIPLAYER_LIVE_TEST=PASS` / `MCCMP_RESULT PASS`.
 7. Let the temporary harness clean itself up.
 8. Leave `innotest` ONLINE. Do not stop it as routine cleanup; clean up test state only (see `AGENTS.md`).
-9. Verify a final read-only status of `ONLINE` and `0/10`.
-10. Return all three ops request files to `noop`.
+9. Verify a final read-only status of `ONLINE`; persistent test bots may remain online by design.
+10. Return every ops request touched by the operation to `noop`; the repository clean baseline has all four request files at `noop`.
 
-`innotest` stays ONLINE after testing: repeated stop/start costs more exaroton credits than idling. Restart it only when an installation cannot be completed without a restart, and leave it ONLINE afterwards. Stop it only when the user explicitly asks.
+Routine policy is to leave `innotest` ONLINE after testing because repeated stop/start costs more exaroton credits than idling. Restart it only when an installation cannot be completed without a restart, and leave it ONLINE afterwards. Stop it only when the user explicitly asks. **Current exception:** after the 2026-10-08 Copy/Paste v1.8 live run, the owner explicitly requested shutdown; final status was `OFFLINE`, 0 players ([run 37719692728](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37719692728)).
 
 ## Production UUID maintenance
 
