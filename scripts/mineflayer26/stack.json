@@ -1,0 +1,30 @@
+{
+  "minecraft_version": "26.3",
+  "protocol_version": 777,
+  "node_minecraft_data": {
+    "repo": "https://github.com/PrismarineJS/node-minecraft-data.git",
+    "commit": "15a307389532725eb6544e5ef6a39e0d9aa4e652",
+    "data_repo": "https://github.com/DallasCarraher/minecraft-data.git",
+    "data_commit": "924e26d6b3bb8f97a5d1e73d6190b09879c2e1e2"
+  },
+  "minecraft_protocol": {
+    "repo": "https://github.com/DallasCarraher/node-minecraft-protocol.git",
+    "commit": "a1a33809c49553e544a7efd3d8bc03eb0867f4ab"
+  },
+  "prismarine_chunk": {
+    "repo": "https://github.com/DallasCarraher/prismarine-chunk.git",
+    "commit": "7382b4fef1c56290524665e7b9af58b7d1f34791"
+  },
+  "prismarine_physics": {
+    "repo": "https://github.com/DallasCarraher/prismarine-physics.git",
+    "commit": "6f9cbf1500ab56b51f24dc3a861aea2e6435d9e3"
+  },
+  "mineflayer": {
+    "repo": "https://github.com/DallasCarraher/mineflayer.git",
+    "commit": "865e73db4131bb9900c533963c321f40e3ee2166"
+  },
+  "mineflayer_mapper_fix": {
+    "source_pr": "https://github.com/PrismarineJS/mineflayer/pull/4120",
+    "head_commit": "f5660cf567b94cbd6b8597f242ee351a81da4b79"
+  }
+}

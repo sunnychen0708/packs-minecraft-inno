@@ -1,0 +1,87 @@
+name: exaroton innotest control
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "ops/exaroton-request.json"
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Operation to run on innotest.exaroton.me
+        required: true
+        type: choice
+        default: status
+        options:
+          - status
+          - log
+          - start
+          - stop
+          - restart
+          - command
+          - deploy-datapack
+      command:
+        description: Console command (only used by command)
+        required: false
+        type: string
+      pack:
+        description: Datapack to deploy (only used by deploy-datapack)
+        required: false
+        type: choice
+        default: all
+        options:
+          - all
+          - utilities
+          - warehouse
+          - copy-paste
+
+permissions:
+  contents: read
+
+concurrency:
+  group: exaroton-innotest-control
+  cancel-in-progress: false
+
+jobs:
+  control:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Build manual request
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          EX_OPERATION: ${{ inputs.operation }}
+          EX_COMMAND: ${{ inputs.command }}
+          EX_PACK: ${{ inputs.pack }}
+          EX_REQUEST_ID: ${{ github.run_id }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+
+          request = {
+              "request_id": int(os.environ["EX_REQUEST_ID"]),
+              "operation": os.environ["EX_OPERATION"],
+              "command": os.environ.get("EX_COMMAND", ""),
+              "pack": os.environ.get("EX_PACK", ""),
+          }
+          with open("/tmp/exaroton-request.json", "w", encoding="utf-8") as handle:
+              json.dump(request, handle, ensure_ascii=False)
+          PY
+
+      - name: Run safe exaroton control
+        shell: bash
+        env:
+          EXAROTON_API_TOKEN: ${{ secrets.EXAROTON_API_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            request=/tmp/exaroton-request.json
+          else
+            request=ops/exaroton-request.json
+          fi
+          python3 scripts/exaroton_innotest.py "$request"

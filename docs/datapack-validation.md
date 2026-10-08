@@ -99,6 +99,17 @@ python3 scripts/test-warehouse-runtime.py \
 
 It boots the official server, performs `/reload`, rejects parser/datapack errors, verifies the sharded search index, exercises reset/re-registration while preserving custom data, tests the shared count/take/refund API including durable queued refunds and stale-source rejection, and covers the v4.4 Resolve Block / Pick path.
 
+Utilities has a dedicated 26.3 harness:
+
+```bash
+python3 scripts/test-utilities.py \
+  --java /path/to/java \
+  --server-jar /path/to/server.jar \
+  --accept-eula
+```
+
+It drives tree felling, vein mining (chain, vanilla XP ranges, Silk Touch, and the pickaxe tier gate: one-tier-too-low pickaxes leave the vein untouched while the minimum tier still chains), tool durability, crop seeds, the real tick dispatch, waypoint preservation across reload, and instantiates every macro.
+
 Copy/Paste also has a dedicated 26.3 behavioral harness:
 
 ```bash
@@ -135,9 +146,11 @@ That boots all three datapacks in one Java 26.3 world and verifies representativ
 
 Some things a headless server cannot show: `/trigger` dispatch for a real player, whether Dialog buttons can be clicked and fit the window, crosshair raycasts, and Dialog JSON that only loads when a world is opened. For these, `scripts/real-client/` (Windows) drives the real Minecraft client with OS-level keyboard and mouse input in a disposable test world and judges every result from the saved world files (region, entities, command storage, player data) — never from a datapack's own PASS messages.
 
-- `mcdrive.py` sends input to the Minecraft window and refuses to type when it is not in the foreground; every command must reach the log as a real command, every trigger must be confirmed by the game's "triggered" line, and `/reload` must be followed by the pack's load message.
+- `mcdrive.py` sends input to the Minecraft window and refuses to type when it is not in the foreground; every command must reach the log as a real command, every trigger must be confirmed by the game's "triggered" line, and `/reload` must be confirmed by the game's own reload line plus `/datapack list enabled` (the packs print no load message).
 - `mcworld.py` reads the save; `defaults.json` fills in the block-state defaults that 26.3 omits from palettes.
 - `stage*.py` scripts cover Warehouse registration and sorting, Copy/Paste Build/Undo/Redo, transforms, multi-chest charging, inventory charging, Dialog navigation and more; see `datapacks/copy-paste/LIVE-VALIDATION.md` and `docs/HANDOFF.md`.
+
+GitHub Actions does not run these stages (they need a real Windows client), and for the Trigger harnesses it only checks that they can be generated; the headless runtime regression drives an armor-stand actor that calls internal functions directly. A green CI run therefore says nothing about G, Dialog clicks, real-player `/trigger` dispatch or crosshair raycasts. `scripts/test-copy-paste.py` only checks that `scripts/real-client/*.py` compile and do not wait for a load message the packs no longer print.
 
 Two simultaneous real clients have not been tested yet; when a client-only check remains, document exactly what was not covered.
 
@@ -149,8 +162,8 @@ For datapacks:
 2. Pack-specific regression tests must pass when present.
 3. The cross-pack static compatibility gate must pass.
 4. Datapack releases must pass the combined official Minecraft 26.3 Utilities + Warehouse + Copy/Paste runtime compatibility gate.
-5. Warehouse and Copy/Paste behavior-changing releases must also pass their dedicated 26.3 runtime harnesses.
+5. Utilities, Warehouse and Copy/Paste releases must also pass their dedicated 26.3 runtime harnesses.
 6. Do not describe a pack as "runtime validated" if only static checks were run.
 7. Do not create a release from a known failing validation run.
 
-GitHub Actions runs generic validation, pack-specific regressions, cross-pack static compatibility, dedicated Warehouse/Copy-Paste runtime jobs, and the all-datapacks 26.3 compatibility job on relevant `main` pushes and pull requests. The release workflow verifies the tag version against `pack.mcmeta`, reruns the combined all-datapacks runtime gate for every datapack tag, reruns the dedicated Warehouse or Copy/Paste runtime gate when applicable, then builds and publishes the ZIP.
+GitHub Actions runs generic validation, pack-specific regressions, cross-pack static compatibility, dedicated Utilities/Warehouse/Copy-Paste runtime jobs, and the all-datapacks 26.3 compatibility job on relevant `main` pushes and pull requests. The release workflow verifies the tag version against `pack.mcmeta`, reruns the combined all-datapacks runtime gate for every datapack tag, reruns the dedicated Utilities, Warehouse or Copy/Paste runtime gate when applicable, then builds and publishes the ZIP. Publishing is idempotent: runs for the same tag are serialized, and when the release already exists the ZIP is uploaded to it instead of failing.
