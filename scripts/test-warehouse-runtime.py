@@ -314,6 +314,43 @@ def integration(java: Path, server: Path) -> None:
     )
     check("if block 16 70 5 minecraft:bedrock", "api_resolve_unsupported_preserves_source")
 
+    # Cross-dimensional Pick: actor in the Nether, warehouse chest in the Overworld.
+    # This must resolve the Nether target but read and take stock from the chest's own dimension.
+    lines.extend(
+        [
+            'data modify block 20 70 5 Items set value [{Slot:0b,id:"minecraft:stone",count:20}]',
+            "data remove block 21 70 5 Items",
+            "execute in minecraft:the_nether run forceload add 15 5",
+            "execute in minecraft:the_nether run setblock 15 70 5 minecraft:stone",
+            f'execute as {actor} in minecraft:the_nether run function warehouse:api/count_item {{item_id:"minecraft:stone"}}',
+        ]
+    )
+    check('if data storage warehouse:api result{ok:1b,complete:1b,available:20,stale_sources:0}', "nether_actor_counts_overworld_stock")
+    lines.append(f"execute as {actor} in minecraft:the_nether positioned 15 70 5 run function warehouse:pick/hit")
+    check('if data storage warehouse:pick result{ok:1b,item_id:"minecraft:stone",count:20}', "nether_pick_from_overworld_stock")
+    check('unless data block 20 70 5 Items[{id:"minecraft:stone"}]', "nether_pick_deducts_overworld_stock")
+    check("in minecraft:the_nether if block 15 70 5 minecraft:stone", "nether_pick_preserves_target_block")
+
+    # Inverse case: player in the Overworld, registered stock physically in the Nether.
+    lines.extend(
+        [
+            "execute in minecraft:the_nether run forceload add 30 5",
+            "execute in minecraft:the_nether run setblock 30 70 5 minecraft:chest",
+            "execute in minecraft:the_nether run setblock 31 70 5 minecraft:chest",
+            'execute in minecraft:the_nether run data modify block 30 70 5 Items set value [{Slot:0b,id:"minecraft:stone",count:13}]',
+            'data modify storage warehouse:chests c11.dimension set value "minecraft:the_nether"',
+            "data modify storage warehouse:chests c11.a_x set value 30",
+            "data modify storage warehouse:chests c11.b_x set value 31",
+            f'execute as {actor} in minecraft:overworld run function warehouse:api/count_item {{item_id:"minecraft:stone"}}',
+        ]
+    )
+    check('if data storage warehouse:api result{ok:1b,complete:1b,available:13,stale_sources:0}', "overworld_actor_counts_nether_stock")
+    lines.append(f'execute as {actor} in minecraft:overworld run function warehouse:api/take_item {{item_id:"minecraft:stone",count:7}}')
+    check('if data storage warehouse:api result{ok:1b,complete:1b,taken:7,remaining:0}', "overworld_actor_takes_nether_stock")
+    check('in minecraft:the_nether if data block 30 70 5 Items[{id:"minecraft:stone",count:6}]', "overworld_take_deducts_nether_stock")
+    lines.extend(["execute in minecraft:the_nether run forceload remove 15 5",
+                  "execute in minecraft:the_nether run forceload remove 30 5"])
+
     # Core sorting: entry c00 -> main box -> region overflow -> stays in entry.
     # Layout (inside the force-loaded chunk 0,0 at y=75): c00 A/B (1/2), c10 overflow (4/5),
     # c11 main (7/8), c12 main (10/11). Sorting deliberately skips unloaded boxes.

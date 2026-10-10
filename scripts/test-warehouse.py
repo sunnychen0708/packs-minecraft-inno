@@ -110,6 +110,8 @@ def main() -> None:
     api_count_stack = (PACK / "data/warehouse/function/api/internal/count_stack.mcfunction").read_text(encoding="utf-8")
     api_take = (PACK / "data/warehouse/function/api/take_item.mcfunction").read_text(encoding="utf-8")
     api_take_stack = (PACK / "data/warehouse/function/api/internal/take_stack.mcfunction").read_text(encoding="utf-8")
+    api_count_half = (PACK / "data/warehouse/function/api/internal/count_half.mcfunction").read_text(encoding="utf-8")
+    api_take_half = (PACK / "data/warehouse/function/api/internal/take_half.mcfunction").read_text(encoding="utf-8")
     api_refund = (PACK / "data/warehouse/function/api/refund_item.mcfunction").read_text(encoding="utf-8")
     api_refund_entry = (PACK / "data/warehouse/function/api/internal/refund_entry.mcfunction").read_text(encoding="utf-8")
     api_refund_finalize = (PACK / "data/warehouse/function/api/internal/refund_finalize.mcfunction").read_text(encoding="utf-8")
@@ -120,6 +122,9 @@ def main() -> None:
     assert "forceload add" in api_count_source
     assert "forceload remove" in api_count_source
     assert "unless loaded" not in api_count_source
+    # Player and registered boxes may be in different dimensions: never read Items in the caller dimension.
+    for half in (api_count_half, api_take_half):
+        assert "$execute in $(dimension) run data modify storage warehouse:api work.inv set from block $(x) $(y) $(z) Items" in half
     assert 'id:"$(item_id)"' in api_count_stack
     assert "data get storage warehouse:api work.stack.components" in api_count_stack
     assert "result.available" in api_count
