@@ -50,7 +50,28 @@ def run():
                     owners[key] = owners.get(key, 0) + 1
                     if status in {"known-old-offline", "other-owner"}:
                         notable.append({**pet, "owner_status": status})
+                near_target = []
+                if p.endswith("/overworld/entities/r.1.-1.mca"):
+                    x0, y0, z0 = 570, 96, -413
+                    for pet in pets:
+                        pos = pet["position"]
+                        if pos is None:
+                            continue
+                        distance_squared = sum((a - b) ** 2 for a, b in zip(pos, (x0, y0, z0)))
+                        if distance_squared <= 20 * 20:
+                            name = next((
+                                player_name
+                                for player_name, uuids in migration.PLAYER_MAP.items()
+                                if pet["owner"] == uuids[1]
+                            ), None)
+                            near_target.append({
+                                **pet,
+                                "distance_to_player": round(distance_squared ** 0.5, 2),
+                                "online_player_name": name,
+                            })
+                    near_target.sort(key=lambda e: e["distance_to_player"])
                 diagnosis = {
+                    "near_player_570_96_minus413": near_target,
                     "species_by_owner_status": owners,
                     "unexpected_owner_pets": notable[:50],
                     "unexpected_owner_pets_truncated": len(notable) > 50,
