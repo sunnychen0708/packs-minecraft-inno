@@ -7,7 +7,7 @@ Minecraft Java Datapacks 與 Resource Pack 專案；遊戲內名詞使用台灣�
 | Pack | 最新 Release | 功能／教學 |
 | --- | --- | --- |
 | Utilities | [v3.8](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/utilities-v3.8) | [據點、傳送、連鎖砍樹／礦脈／補種與指令](datapacks/utilities/README.md) |
-| Warehouse | [v4.7](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/warehouse-v4.7) | [自動分類、查詢、箱子管理、Pick、API](datapacks/warehouse/README.md) |
+| Warehouse | [v4.8](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/warehouse-v4.8) | [自動分類、查詢、箱子管理、Pick、API](datapacks/warehouse/README.md) |
 | Copy/Paste | [v1.8](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/copy-paste-v1.8) | [Blueprint、Build、Move、Rotate、Flip、Undo/Redo 與指令](datapacks/copy-paste/README.md) |
 | cat-door-sounds | [v1.0](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/cat-door-sounds-v1.0) | [貓咪與門的音效](resourcepacks/cat-door-sounds/README.md) |
 
@@ -31,7 +31,7 @@ Minecraft Java Datapacks 與 Resource Pack 專案；遊戲內名詞使用台灣�
 ```bash
 # 建置
 ./scripts/build-pack.sh utilities v3.8
-./scripts/build-pack.sh warehouse v4.7
+./scripts/build-pack.sh warehouse v4.8
 ./scripts/build-pack.sh copy-paste v1.8
 
 # 靜態驗證

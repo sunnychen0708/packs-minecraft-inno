@@ -1,13 +1,13 @@
-# Warehouse v4.7
+# Warehouse v4.8
 
-Minecraft Java 26.3 自動分類倉庫 Datapack。最新 [warehouse-v4.7.zip](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/warehouse-v4.7)。
+Minecraft Java 26.3 自動分類倉庫 Datapack。最新 [warehouse-v4.8.zip](https://github.com/sunnychen0708/packs-minecraft-inno/releases/tag/warehouse-v4.8)。
 
 按 **G** 開倉庫主畫面：查詢物品、分類設定、箱子管理、查看倉庫、Pick；也可導向 Copy/Paste 建築工具。
 
 ## 安裝與玩家操作
 
 1. 從世界 `datapacks/` 移除舊 `Minecraft_Warehouse_*.zip`／`warehouse-v*.zip`，只保留新版 ZIP。
-2. 放入 `warehouse-v4.7.zip`，**退出世界再進入**以載入 Dialog registry；`/reload` 不保證更新這類 Dialog。
+2. 放入 `warehouse-v4.8.zip`，**退出世界再進入**以載入 Dialog registry；`/reload` 不保證更新這類 Dialog。
 3. 不會重置既有 **61 箱註冊、箱名、玩家自訂分類覆寫、scoreboard**。移除 Warehouse 前，先執行 `/function warehouse:chunks/release` 釋放本包擁有的 forceload。
 
 在 G →「查詢物品」可搜尋繁中名稱、分類名稱、Minecraft ID 或一個中文字；上限 30 筆。點結果可調整分類、Highlight 箱子或「取一組」。分類修改後，舊主箱的相同 item ID 會背景搬移，依序主箱 → 溢位箱 → 保留在入口箱，**滿箱不刪物品**。原版自由文字 Dialog 的權限確認頁無法用純 Vanilla 隱藏。
@@ -28,7 +28,7 @@ Minecraft Java 26.3 自動分類倉庫 Datapack。最新 [warehouse-v4.7.zip](ht
 
 - 可以從 26.2 v3.2、26.3 v3.3/v3.4、Warehouse v4.0–v4.6 升級，玩家自訂分類優先於預設規則；索引是可重建資料。
 - v4.2 起將搜尋索引拆為 72 shard，每 tick 一份，避免 65,536 command-chain 上限。
-- v4.7 修正背景 Compact 與跨維度搬運讀取來源／主箱／溢位箱時，誤把地獄或終界註冊箱當主世界座標的問題；**不改既有存檔格式、不需 migration**。
+- v4.8 修正 `/trigger pick` 從地獄／終界取出位於其他維度的倉庫物品時，未切換到註冊箱維度讀取 Items 的問題；**不改存檔格式、不需 migration**。\n- v4.7 修正背景 Compact 與跨維度搬運讀取來源／主箱／溢位箱時，誤把地獄或終界註冊箱當主世界座標的問題；**不改既有存檔格式、不需 migration**。
 
 | 版本 | 主要變更 |
 | --- | --- |
@@ -38,7 +38,7 @@ Minecraft Java 26.3 自動分類倉庫 Datapack。最新 [warehouse-v4.7.zip](ht
 | v4.3 | 64-source 去重材料 API、持久退款 queue、Highlight |
 | v4.4–v4.5 | Pick、Resolve Block、分類／Dialog／Runtime 修正 |
 | v4.6 | 註冊箱 chunk forceload、遠端庫存查詢與 Compact 最佳化 |
-| **v4.7** | 修正主世界／地獄／終界跨維度讀取與合併 |
+| v4.7 | 修正主世界／地獄／終界跨維度讀取與合併 |\n| **v4.8** | 修正 Pick／共用材料 API 的跨維度箱子內容讀取 |
 
 ## 給其他 Datapack 的共用 API
 
@@ -77,4 +77,4 @@ python3 scripts/test-warehouse.py
 python3 scripts/test-warehouse-runtime.py --java /path/to/java --server-jar /path/to/server.jar --accept-eula
 ```
 
-v4.7 三維度 Compact／merge 在 innotest 通過 27 checkpoints。詳見 [驗證證據與限制](../../docs/innotest-coverage.md)；不要把 API 驗證直接當成 Highlight 的玩家視覺確認。
+v4.7 三維度 Compact／merge 在 innotest 通過 27 checkpoints；v4.8 地獄玩家 Pick → 主世界倉庫扣料／退款實機 PASS（run 38028496536）。詳見 [驗證證據與限制](../../docs/innotest-coverage.md)；不要把 API 驗證直接當成 Highlight 的玩家視覺確認。

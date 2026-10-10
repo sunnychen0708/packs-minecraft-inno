@@ -23,7 +23,7 @@
 | Dialog 名稱輸入 | `nav:set_*`、`nav:rename_*` 的等效指令 | PASS（非真人點擊） |
 | v3.7 → v3.8 舊資料 | 玩家據點、名稱與設定保留 | PASS |
 
-## Warehouse v4.7
+## Warehouse v4.8
 
 功能與 recheck：[37624017827](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37624017827)、[37629667234](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37629667234)；release targeted gate [37641685439](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37641685439)；跨維度 [37656341833](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/37656341833)。
 
@@ -32,7 +32,7 @@
 | 自動分類／玩家自訂分類 | 真實入口箱、當下 `warehouse:rules overrides`、新增／搬移／刪除分類及庫存回收 | PASS |
 | 箱子管理 | 註冊／解除、命名、查詢、瀏覽、分頁；恢復測試資料 | PASS |
 | 滿箱／溢位／保留入口 | 主箱滿 → 溢位；都滿 → 留在入口箱 | PASS |
-| Pick／共享材料 API | Count、Take、Refund、Material Sources、Resolve Block、pending refund 與 Pick | PASS |
+| Pick／共享材料 API | Count、Take、Refund、Material Sources、Resolve Block、pending refund 與 Pick | PASS |\n| **地獄 Pick → 主世界倉庫** | 實際 `penguin0531` 在地獄觸發 Pick，確認取料與主世界箱子扣料數量完全一致、原方塊不變、退料後庫存恢復；[38028496536](https://github.com/sunnychen0708/packs-minecraft-inno/actions/runs/38028496536) 9 項 PASS | **PASS** |
 | Compact／背景整理 | 自動 tick 合併 40+30→64+6、數量不變；跨三維度 27 checkpoints | PASS |
 | Chunk forceload | 已註冊箱常駐，別人的 forceload 不受影響 | PASS |
 | 開關／遷移 | system on/off、v4.0–v4.6 舊資料重跑 | PASS |
