@@ -45,7 +45,8 @@ class DashboardTests(unittest.TestCase):
         embed = payload["embeds"][0]
         self.assertEqual([f["name"] for f in embed["fields"]],
                          [*dashboard.PLAYERS, "全服合計"])
-        self.assertIn("虎斑", embed["fields"][0]["value"])
+        self.assertIn("黑貓", embed["fields"][0]["value"])
+        self.assertNotIn("虎斑", embed["fields"][0]["value"])
         self.assertIn("全服未收集", embed["fields"][-1]["value"])
         self.assertIn("2026-10-09", embed["timestamp"])
         self.assertIn("OFFLINE", embed["description"])
