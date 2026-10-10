@@ -1271,6 +1271,7 @@ def migrate_inno_online_to_innotest_offline(client, token):
 LIVE_SUITES = {
     "utilities": ("build-utilities-live-test.py", "utilities-live-test"),
     "warehouse": ("build-warehouse-live-test.py", "warehouse-live-test"),
+    "warehouse-pick-nether": ("build-warehouse-pick-nether-live-test.py", "warehouse-pick-nether-live-test"),
     **{
         "copy-paste-gap-" + case: ("build-copy-paste-gap-live-test.py", "copy-paste-gap-live-test")
         for case in ("external", "modes", "dimensions", "history", "materials", "ui-packets")
