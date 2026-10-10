@@ -39,6 +39,8 @@ jobs:
               mode, scope = "dry-run", "all"
           elif op == "uuid-migrate-apply":
               mode, scope = "apply", "all"
+          elif op == "uuid-owners-audit":
+            mode, scope = "audit", "owners"
           elif op == "uuid-stats-dry-run":
               mode, scope = "dry-run", "stats"
           elif op == "uuid-stats-apply":
@@ -88,7 +90,7 @@ jobs:
           set -euo pipefail
           python3 scripts/exaroton_inno_datapack_deploy.py
 
-      - name: Run requested offline maintenance
+      - name: Run requested maintenance or read-only animal audit
         if: steps.request.outputs.mode != 'noop' && steps.request.outputs.scope != 'datapacks'
         shell: bash
         env:
@@ -135,5 +137,9 @@ jobs:
                   raise
 
           migration.Client.read_file_optional = _read_file_optional
+          if scope == "owners":
+              from inno_animal_owner_audit import audit_animal_owners
+              audit_animal_owners(migration.Client(__import__("os").environ.get("EXAROTON_API_TOKEN", "")))
+              raise SystemExit(0)
           migration.plan_or_apply(mode)
           PY
