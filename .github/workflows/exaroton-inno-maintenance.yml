@@ -49,6 +49,8 @@ jobs:
               mode, scope = "apply", "stats"
           elif op == "datapacks-apply":
               mode, scope = "apply", "datapacks"
+          elif op == "datapacks-warehouse-apply":
+              mode, scope = "apply", "warehouse"
           else:
               raise SystemExit(f"unsupported maintenance operation: {op!r}")
 
@@ -62,35 +64,41 @@ jobs:
         run: echo "Production maintenance request is idle (noop)."
 
       - name: Install NBT parser
-        if: steps.request.outputs.mode != 'noop' && steps.request.outputs.scope != 'datapacks'
+        if: steps.request.outputs.mode != 'noop' && steps.request.outputs.scope != 'datapacks' && steps.request.outputs.scope != 'warehouse'
         run: python3 -m pip install "nbtlib==1.12.1"
 
       - name: Download verified datapack releases
-        if: steps.request.outputs.scope == 'datapacks'
+        if: steps.request.outputs.scope == 'datapacks' || steps.request.outputs.scope == 'warehouse'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           mkdir -p dist/inno-deploy
-          gh release download utilities-v3.8 -p utilities-v3.8.zip -D dist/inno-deploy --clobber
-          gh release download warehouse-v4.7 -p warehouse-v4.7.zip -D dist/inno-deploy --clobber
-          gh release download copy-paste-v1.8 -p copy-paste-v1.8.zip -D dist/inno-deploy --clobber
+          if [[ "${{ steps.request.outputs.scope }}" == "datapacks" ]]; then
+            gh release download utilities-v3.8 -p utilities-v3.8.zip -D dist/inno-deploy --clobber
+            gh release download copy-paste-v1.8 -p copy-paste-v1.8.zip -D dist/inno-deploy --clobber
+          fi
+          gh release download warehouse-v4.8 -p warehouse-v4.8.zip -D dist/inno-deploy --clobber
           cd dist/inno-deploy
-          {
-            echo "83972f44606a21d7746c564ce2644c574987ecafadae0af2bca281399bd6222a  utilities-v3.8.zip"
-            echo "fd5716d11d078d9679a481fd54b308ba7306a27a743e4b2ee97653024b7fb53b  warehouse-v4.7.zip"
-            echo "73d9294b8b100a9ad1ffa168b401afe32d867db228e91140b1a68c36d186111d  copy-paste-v1.8.zip"
-          } | sha256sum -c -
+          if [[ "${{ steps.request.outputs.scope }}" == "datapacks" ]]; then
+            echo "83972f44606a21d7746c564ce2644c574987ecafadae0af2bca281399bd6222a  utilities-v3.8.zip" | sha256sum -c -
+            echo "73d9294b8b100a9ad1ffa168b401afe32d867db228e91140b1a68c36d186111d  copy-paste-v1.8.zip" | sha256sum -c -
+          fi
+          echo "0d5945f0eba2970cb803623a9685803b618a7f2c9158d106ee3aad75c9e1506e  warehouse-v4.8.zip" | sha256sum -c -
 
       - name: Deploy verified datapacks while production is offline
-        if: steps.request.outputs.scope == 'datapacks'
+        if: steps.request.outputs.scope == 'datapacks' || steps.request.outputs.scope == 'warehouse'
         shell: bash
         env:
           EXAROTON_API_TOKEN: ${{ secrets.EXAROTON_API_TOKEN }}
         run: |
           set -euo pipefail
-          python3 scripts/exaroton_inno_datapack_deploy.py
+          if [[ "${{ steps.request.outputs.scope }}" == "warehouse" ]]; then
+            INNO_DATAPACK_TARGET=warehouse python3 scripts/exaroton_inno_datapack_deploy.py
+          else
+            python3 scripts/exaroton_inno_datapack_deploy.py
+          fi
 
       - name: Run requested maintenance or read-only animal audit
         if: steps.request.outputs.mode != 'noop' && steps.request.outputs.scope != 'datapacks'
