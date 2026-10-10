@@ -327,6 +327,13 @@ def integration(java: Path, server: Path) -> None:
         ]
     )
     check('if data storage warehouse:api result{ok:1b,complete:1b,available:20,stale_sources:0}', "nether_actor_counts_overworld_stock")
+    check("in minecraft:the_nether if loaded 15 70 5", "nether_pick_fixture_chunk_loaded")
+    check("in minecraft:the_nether if block 15 70 5 minecraft:stone", "nether_pick_fixture_is_stone")
+    check("in minecraft:the_nether if entity @e[type=minecraft:armor_stand,tag=wh_nether_actor]", "nether_pick_actor_present")
+    lines.append(f'execute as {actor} in minecraft:the_nether run function warehouse:api/count_item {{item_id:"minecraft:stone"}}')
+    check('if data storage warehouse:api result{ok:1b,complete:1b,available:20,stale_sources:0}', "cross_dimension_count_with_overworld_executor")
+    lines.append(f"execute as {actor} in minecraft:the_nether positioned 15 70 5 run function warehouse:api/resolve_block")
+    check('if data storage warehouse:api result{operation:"resolve_block",ok:1b,item_id:"minecraft:stone",max_stack:64}', "cross_dimension_resolve_with_overworld_executor")
     lines.append("execute in minecraft:the_nether as @e[type=minecraft:armor_stand,tag=wh_nether_actor,limit=1] at @s positioned 15 70 5 run function warehouse:api/resolve_block")
     check('if data storage warehouse:api result{operation:"resolve_block",ok:1b,item_id:"minecraft:stone",max_stack:64}', "nether_block_resolves_to_stone")
     lines.append("execute in minecraft:the_nether as @e[type=minecraft:armor_stand,tag=wh_nether_actor,limit=1] at @s positioned 15 70 5 run function warehouse:pick/hit")
