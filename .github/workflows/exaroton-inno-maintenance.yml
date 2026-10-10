@@ -39,6 +39,8 @@ jobs:
               mode, scope = "dry-run", "all"
           elif op == "uuid-migrate-apply":
               mode, scope = "apply", "all"
+          elif op == "uuid-region-probe":
+            mode, scope = "audit", "region-probe"
           elif op == "uuid-owners-audit":
             mode, scope = "audit", "owners"
           elif op == "uuid-stats-dry-run":
@@ -137,6 +139,10 @@ jobs:
                   raise
 
           migration.Client.read_file_optional = _read_file_optional
+          if scope == "region-probe":
+              from inno_region_integrity_probe import run
+              run()
+              raise SystemExit(0)
           if scope == "owners":
               from inno_animal_owner_audit import audit_animal_owners
               audit_animal_owners(migration.Client(__import__("os").environ.get("EXAROTON_API_TOKEN", "")))
