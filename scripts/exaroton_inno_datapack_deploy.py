@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -15,7 +16,7 @@ STATUS_OFFLINE = 0
 
 DESIRED = {
     "utilities": "utilities-v3.8.zip",
-    "warehouse": "warehouse-v4.7.zip",
+    "warehouse": "warehouse-v4.8.zip",
     "copy-paste": "copy-paste-v1.8.zip",
 }
 
@@ -115,6 +116,13 @@ class Client:
             raw_response=True,
         )
 
+    def read_binary_file(self, path: str) -> bytes:
+        return self.req(
+            "GET",
+            f"/servers/{self._sidq()}/files/data/{remote_path(path)}",
+            raw_response=True,
+        )
+
     def file_info(self, path: str):
         return self.req("GET", f"/servers/{self._sidq()}/files/info/{remote_path(path)}/")
 
@@ -157,9 +165,13 @@ def recognized_pack(name: str):
 
 
 def main():
+    selection = os.environ.get("INNO_DATAPACK_TARGET", "all").strip()
+    if selection not in {"all", "warehouse"}:
+        raise Error(f"invalid production datapack selection: {selection!r}")
+    desired = DESIRED if selection == "all" else {"warehouse": DESIRED["warehouse"]}
     root = Path(os.environ.get("INNO_DATAPACK_DIR", "dist/inno-deploy"))
     payloads = {}
-    for pack, filename in DESIRED.items():
+    for pack, filename in desired.items():
         path = root / filename
         if not path.is_file():
             raise Error(f"missing release asset: {path}")
@@ -180,35 +192,49 @@ def main():
         "status": int(server.get("status", -1)),
         "world": world,
         "before": before,
-        "desired": list(DESIRED.values()),
+        "desired": list(desired.values()),
     }, ensure_ascii=False, indent=2))
 
     # Upload every desired release first. If an upload fails, legacy files remain,
     # and the server is still offline, so we do not leave production without a pack.
-    for pack, filename in DESIRED.items():
+    for pack, filename in desired.items():
         dst = f"{datapacks_dir}/{filename}"
         client.write_file(dst, payloads[pack])
-        print(f"uploaded {pack} -> {dst} ({len(payloads[pack])} bytes)")
+        try:
+            uploaded = client.read_binary_file(dst)
+            if hashlib.sha256(uploaded).digest() != hashlib.sha256(payloads[pack]).digest():
+                raise Error(f"post-upload checksum mismatch: {dst}")
+        except Exception:
+            # Keep the old ZIP rather than leaving a corrupt extra version.
+            if filename not in before:
+                client.delete_file(dst)
+            raise
+        print(f"uploaded and SHA-256 verified {pack} -> {dst} ({len(payloads[pack])} bytes)")
 
     # Remove only old ZIPs that are positively recognized as one of our three packs.
     for name in before:
         pack = recognized_pack(name)
-        if not pack:
+        if not pack or pack not in desired:
             continue
-        if name == DESIRED[pack]:
+        if name == desired[pack]:
             continue
         client.delete_file(f"{datapacks_dir}/{name}")
         print(f"removed old {pack} datapack -> {name}")
 
     client.require_offline()
     after = child_names(client.file_info(datapacks_dir))
-    missing = [name for name in DESIRED.values() if name not in after]
+    missing = [name for name in desired.values() if name not in after]
     stale = [
         name for name in after
-        if (pack := recognized_pack(name)) and name != DESIRED[pack]
+        if (pack := recognized_pack(name)) and pack in desired and name != desired[pack]
     ]
-    if missing or stale:
-        raise Error(f"post-deploy verification failed: missing={missing}, stale={stale}")
+    unchanged_before = sorted(name for name in before if recognized_pack(name) not in desired)
+    unchanged_after = sorted(name for name in after if recognized_pack(name) not in desired)
+    if missing or stale or unchanged_before != unchanged_after:
+        raise Error(
+            f"post-deploy verification failed: missing={missing}, stale={stale}, "
+            f"other_files_unchanged={unchanged_before == unchanged_after}"
+        )
 
     print(json.dumps({
         "status": "PASS",
