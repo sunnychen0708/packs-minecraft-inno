@@ -101,7 +101,7 @@ jobs:
           fi
 
       - name: Run requested maintenance or read-only animal audit
-        if: steps.request.outputs.mode != 'noop' && steps.request.outputs.scope != 'datapacks'
+        if: steps.request.outputs.mode != 'noop' && steps.request.outputs.scope != 'datapacks' && steps.request.outputs.scope != 'warehouse'
         shell: bash
         env:
           EXAROTON_API_TOKEN: ${{ secrets.EXAROTON_API_TOKEN }}
