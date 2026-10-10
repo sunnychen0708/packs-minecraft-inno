@@ -23,23 +23,28 @@ def decode_owner(value):
     return None
 
 
+def entity_compounds(node):
+    """Support flat and nested region NBT layouts, including lowercase keys."""
+    if isinstance(node, nbtlib.tag.Compound):
+        if "id" in node and "Pos" in node:
+            yield node
+            return
+        for child in node.values():
+            yield from entity_compounds(child)
+    elif isinstance(node, nbtlib.tag.List):
+        for child in node:
+            yield from entity_compounds(child)
+
+
 def scan_region(raw, path):
     rows = []
     for chunk in migration.parse_region(raw).values():
         root = nbtlib.File.parse(io.BytesIO(migration.decode_chunk(
             chunk.compression_byte, chunk.payload
         )))
-        entities = root.get("Entities")
-        if entities is None:
-            entities = root.get("entities")
-        if entities is None:
-            # Some region chunks contain no entity list.
-            continue
-        for entity in entities:
-            if not isinstance(entity, nbtlib.tag.Compound):
-                continue
+        for entity in entity_compounds(root):
             animal = str(entity.get("id", ""))
-            if animal not in {"minecraft:wolf", "minecraft:cat"}:
+            if animal not in {"minecraft:wolf", "minecraft:cat", "wolf", "cat"}:
                 continue
             key = "Owner" if "Owner" in entity else (
                 "OwnerUUID" if "OwnerUUID" in entity else None
