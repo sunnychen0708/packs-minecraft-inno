@@ -681,6 +681,10 @@ def integration(java: Path, server: Path) -> None:
         proc.stdin.flush()
         time.sleep(2)
         proc.stdin.write("reload\n")
+        # Load the Nether fixtures ahead of the synchronous run function; a new forceload
+        # ticket permits block commands immediately but entities wait for chunk activation.
+        proc.stdin.write("execute in minecraft:the_nether run forceload add 15 5\n")
+        proc.stdin.write("execute in minecraft:the_nether run forceload add 30 5\n")
         proc.stdin.flush()
         time.sleep(8)
         proc.stdin.write("forceload add 0 0\n")
