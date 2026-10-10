@@ -1,6 +1,6 @@
 {
-  "request_id": 20261010140603,
-  "operation": "start",
+  "request_id": 20261010140605,
+  "operation": "run-live-suite",
   "command": "",
-  "pack": ""
+  "pack": "warehouse-pick-nether"
 }
