@@ -31,7 +31,10 @@ def scan_region(raw, path):
         )))
         entities = root.get("Entities")
         if entities is None:
-            raise migration.Error(f"Entities list missing in {path} chunk {chunk.index}")
+            entities = root.get("entities")
+        if entities is None:
+            # Some region chunks contain no entity list.
+            continue
         for entity in entities:
             if not isinstance(entity, nbtlib.tag.Compound):
                 continue
