@@ -82,8 +82,14 @@ def audit_animal_owners(client=None):
             # Never count an unavailable region as verified clean.
             unreadable.append(path)
             continue
+        try:
+            animals = scan_region(raw, path)
+        except (migration.Error, OSError, ValueError, EOFError) as exc:
+            # A single malformed/truncated region must not hide other dogs.
+            unreadable.append({"path": path, "error": str(exc)})
+            continue
         read_regions += 1
-        for entry in scan_region(raw, path):
+        for entry in animals:
             owner = entry["owner"]
             player = label_by_uuid.get(owner)
             if entry["owner_tag"] is None:
