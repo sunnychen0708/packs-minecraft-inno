@@ -1,6 +1,6 @@
 {
-  "request_id": 20261010140601,
-  "operation": "inno-storage-status",
+  "request_id": 20261010140602,
+  "operation": "status",
   "command": "",
   "pack": ""
 }
