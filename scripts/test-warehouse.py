@@ -87,8 +87,15 @@ def main() -> None:
     assert "execute unless data storage warehouse:meta v42 run function warehouse:migrate_v42" in load
     assert "execute unless data storage warehouse:meta v43 run function warehouse:migrate_v43" in load
     current_marker = "v" + version.replace(".", "")
-    assert f"warehouse:meta {current_marker}" in load, "current source version has no migration marker"
-    assert f"warehouse:migrate_{current_marker}" in load, "current source version has no migration function"
+    # Warehouse v4.8 is a pure command-execution-context hotfix (no new persisted data).
+    # Keep migration enforcement for versions that do introduce a storage schema.
+    migration_free_hotfixes = {"4.8"}
+    if version in migration_free_hotfixes:
+        assert f"warehouse:meta {current_marker}" not in load, "migration-free hotfix unexpectedly records a new marker"
+        assert f"warehouse:migrate_{current_marker}" not in load, "migration-free hotfix unexpectedly runs a migration"
+    else:
+        assert f"warehouse:meta {current_marker}" in load, "current source version has no migration marker"
+        assert f"warehouse:migrate_{current_marker}" in load, "current source version has no migration function"
 
     api_refresh = (PACK / "data/warehouse/function/api/material_sources/refresh.mcfunction").read_text(encoding="utf-8")
     api_append = (PACK / "data/warehouse/function/api/material_sources/append.mcfunction").read_text(encoding="utf-8")
