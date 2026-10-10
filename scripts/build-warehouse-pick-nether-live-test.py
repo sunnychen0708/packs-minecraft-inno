@@ -89,4 +89,10 @@ t = p.read_text(encoding="utf-8")
 t = t.replace("execute if score #got htest matches 1.. run function wpk:remove_pick with storage wpk:arg", 
               "execute if score #got htest matches 1.. store result storage wpk:arg count int 1 run scoreboard players get #got htest\nexecute if score #got htest matches 1.. run function wpk:remove_pick with storage wpk:arg")
 p.write_text(t, encoding="utf-8")
+(OUT / "suite.json").write_text(
+    __import__("json").dumps(
+        {"ns": "wpk", "prefix": "WPK", "players": {"a": "penguin0531"}, "timeout_s": 220},
+        ensure_ascii=False, indent=2
+    ) + "\n", encoding="utf-8"
+)
 print("Built Nether Pick live shard with", len(s.steps), "steps")
