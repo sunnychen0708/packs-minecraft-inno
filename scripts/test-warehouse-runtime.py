@@ -322,11 +322,14 @@ def integration(java: Path, server: Path) -> None:
             "data remove block 21 70 5 Items",
             "execute in minecraft:the_nether run forceload add 15 5",
             "execute in minecraft:the_nether run setblock 15 70 5 minecraft:stone",
-            f'execute as {actor} in minecraft:the_nether run function warehouse:api/count_item {{item_id:"minecraft:stone"}}',
+            'execute in minecraft:the_nether run summon minecraft:armor_stand 15 70 5 {Tags:["wh_nether_actor"],NoGravity:1b,Invisible:1b}',
+            'execute in minecraft:the_nether as @e[type=minecraft:armor_stand,tag=wh_nether_actor,limit=1] at @s run function warehouse:api/count_item {item_id:"minecraft:stone"}',
         ]
     )
     check('if data storage warehouse:api result{ok:1b,complete:1b,available:20,stale_sources:0}', "nether_actor_counts_overworld_stock")
-    lines.append(f"execute as {actor} in minecraft:the_nether positioned 15 70 5 run function warehouse:pick/hit")
+    lines.append("execute in minecraft:the_nether as @e[type=minecraft:armor_stand,tag=wh_nether_actor,limit=1] at @s positioned 15 70 5 run function warehouse:api/resolve_block")
+    check('if data storage warehouse:api result{operation:"resolve_block",ok:1b,item_id:"minecraft:stone",max_stack:64}', "nether_block_resolves_to_stone")
+    lines.append("execute in minecraft:the_nether as @e[type=minecraft:armor_stand,tag=wh_nether_actor,limit=1] at @s positioned 15 70 5 run function warehouse:pick/hit")
     check('if data storage warehouse:pick result{ok:1b,item_id:"minecraft:stone",count:20}', "nether_pick_from_overworld_stock")
     check('unless data block 20 70 5 Items[{id:"minecraft:stone"}]', "nether_pick_deducts_overworld_stock")
     check("in minecraft:the_nether if block 15 70 5 minecraft:stone", "nether_pick_preserves_target_block")
@@ -348,7 +351,8 @@ def integration(java: Path, server: Path) -> None:
     lines.append(f'execute as {actor} in minecraft:overworld run function warehouse:api/take_item {{item_id:"minecraft:stone",count:7}}')
     check('if data storage warehouse:api result{ok:1b,complete:1b,taken:7,remaining:0}', "overworld_actor_takes_nether_stock")
     check('in minecraft:the_nether if data block 30 70 5 Items[{id:"minecraft:stone",count:6}]', "overworld_take_deducts_nether_stock")
-    lines.extend(["execute in minecraft:the_nether run forceload remove 15 5",
+    lines.extend(["execute in minecraft:the_nether run kill @e[type=minecraft:armor_stand,tag=wh_nether_actor]",
+                  "execute in minecraft:the_nether run forceload remove 15 5",
                   "execute in minecraft:the_nether run forceload remove 30 5"])
 
     # Core sorting: entry c00 -> main box -> region overflow -> stays in entry.
