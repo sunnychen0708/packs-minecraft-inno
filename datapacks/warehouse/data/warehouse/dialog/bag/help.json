@@ -1,0 +1,44 @@
+{
+  "type": "minecraft:multi_action",
+  "title": {
+    "text": "背包交換說明"
+  },
+  "external_title": {
+    "text": "背包交換說明"
+  },
+  "body": [
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "/trigger bag：身上 27 格與個人 A 箱交換，B 箱必須為空。/trigger sbag：切換共用背包；同時僅限 1 人使用。可隨時換 A 箱註冊，箱內物品不動。快捷列、裝備、副手皆不受影響。"
+      },
+      "width": 390
+    }
+  ],
+  "pause": false,
+  "can_close_with_escape": true,
+  "after_action": "close",
+  "columns": 2,
+  "actions": [
+    {
+      "label": {
+        "text": "返回背包箱管理"
+      },
+      "width": 150,
+      "action": {
+        "type": "show_dialog",
+        "dialog": "warehouse:bag/manage"
+      }
+    }
+  ],
+  "exit_action": {
+    "label": {
+      "text": "返回背包箱管理"
+    },
+    "width": 200,
+    "action": {
+      "type": "show_dialog",
+      "dialog": "warehouse:bag/manage"
+    }
+  }
+}

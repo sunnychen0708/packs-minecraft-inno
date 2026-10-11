@@ -1,0 +1,134 @@
+{
+  "type": "minecraft:multi_action",
+  "title": {
+    "text": "背包箱取消註冊"
+  },
+  "external_title": {
+    "text": "背包箱取消註冊"
+  },
+  "body": [
+    {
+      "type": "minecraft:plain_message",
+      "contents": {
+        "text": "僅取消綁定，絕不清除箱內物品、也不強迫換回其他背包。05 使用中禁止取消。"
+      },
+      "width": 390
+    }
+  ],
+  "pause": false,
+  "can_close_with_escape": true,
+  "after_action": "close",
+  "columns": 2,
+  "actions": [
+    {
+      "label": {
+        "text": "01-A"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_bag_unreg set 1"
+      }
+    },
+    {
+      "label": {
+        "text": "01-B"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_bag_unreg set 2"
+      }
+    },
+    {
+      "label": {
+        "text": "02-A"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_bag_unreg set 3"
+      }
+    },
+    {
+      "label": {
+        "text": "02-B"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_bag_unreg set 4"
+      }
+    },
+    {
+      "label": {
+        "text": "03-A"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_bag_unreg set 5"
+      }
+    },
+    {
+      "label": {
+        "text": "03-B"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_bag_unreg set 6"
+      }
+    },
+    {
+      "label": {
+        "text": "04-A"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_bag_unreg set 7"
+      }
+    },
+    {
+      "label": {
+        "text": "04-B"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_bag_unreg set 8"
+      }
+    },
+    {
+      "label": {
+        "text": "05-A"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_bag_unreg set 9"
+      }
+    },
+    {
+      "label": {
+        "text": "05-B"
+      },
+      "width": 150,
+      "action": {
+        "type": "run_command",
+        "command": "trigger wh_bag_unreg set 10"
+      }
+    }
+  ],
+  "exit_action": {
+    "label": {
+      "text": "返回背包箱管理"
+    },
+    "width": 200,
+    "action": {
+      "type": "show_dialog",
+      "dialog": "warehouse:bag/manage"
+    }
+  }
+}

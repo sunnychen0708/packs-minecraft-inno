@@ -12,6 +12,8 @@ from pathlib import Path
 import subprocess
 import sys
 import threading
+
+from minecraft_ci_server import wait_for_server_ready
 import time
 import uuid
 import zipfile
@@ -1208,7 +1210,7 @@ def integration(java: Path, server: Path):
             if 'MCCST_REGRESSION_DONE' in line: done.set()
     thread=threading.Thread(target=reader,daemon=True); thread.start()
     try:
-        assert ready.wait(90),'Server did not become ready'
+        wait_for_server_ready(ready, proc, output, work, label='Copy/Paste runtime')
         assert proc.stdin is not None
         for x0,z0,x1,z1 in FORCELOAD:
             proc.stdin.write(f'forceload add {x0} {z0} {x1} {z1}\n'); proc.stdin.flush()

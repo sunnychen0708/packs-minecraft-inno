@@ -7,6 +7,8 @@ import json
 from pathlib import Path
 import subprocess
 import threading
+
+from minecraft_ci_server import wait_for_server_ready
 import time
 import uuid
 import zipfile
@@ -675,7 +677,7 @@ def integration(java: Path, server: Path) -> None:
     thread = threading.Thread(target=reader, daemon=True)
     thread.start()
     try:
-        assert ready.wait(90), "Server did not become ready"
+        wait_for_server_ready(ready, proc, output, work, label="Warehouse runtime")
         assert proc.stdin is not None
         proc.stdin.write("forceload add 0 0\n")
         proc.stdin.flush()

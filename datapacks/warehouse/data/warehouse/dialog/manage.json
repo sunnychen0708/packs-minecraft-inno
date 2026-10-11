@@ -59,6 +59,16 @@
         "type": "run_command",
         "command": "trigger wh_nav set 70"
       }
+    },
+    {
+      "label": {
+        "text": "背包箱 (01–05)"
+      },
+      "width": 150,
+      "action": {
+        "type": "show_dialog",
+        "dialog": "warehouse:bag/manage"
+      }
     }
   ],
   "exit_action": {
